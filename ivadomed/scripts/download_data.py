@@ -105,7 +105,7 @@ def download_data(urls):
                 # instead of a specific file. e.g. https://osf.io/ugscu/?action=view.
                 raise ValueError("Unable to determine target filename for URL: %s" % (url,))
 
-            tmp_path = Path(tempfile.mkdtemp()).joinpath(filename)
+            tmp_path = Path(tempfile.mkdtemp(), filename)
 
             logger.info('Downloading: %s' % filename)
 
@@ -232,7 +232,7 @@ def install_data(url, dest_folder, keep=False):
         if path_object.is_dir():
             if path_object.name not in ("__MACOSX",):
                 relpath = path_object.relative_to(bundle_folder)
-                dstpath = Path(dest_folder).joinpath(relpath)
+                dstpath = Path(dest_folder, relpath)
                 if dstpath.exists():
                     logger.debug("- d- %s", str(relpath))
                 else:
@@ -240,7 +240,7 @@ def install_data(url, dest_folder, keep=False):
                     dstpath.mkdir(parents=True)
         if path_object.is_file():
             relpath = path_object.relative_to(bundle_folder)
-            dstpath = Path(dest_folder).joinpath(relpath)
+            dstpath = Path(dest_folder, relpath)
             if dstpath.exists():
                 logger.debug("- f! %s", relpath)
                 logger.warning("Updating existing “%s”", dstpath)
@@ -275,7 +275,7 @@ def main(args=None):
     data_name = arguments.d
 
     if arguments.output is None:
-        dest_folder = str(Path.cwd().absolute().joinpath(data_name))
+        dest_folder = str(Path(Path.cwd().absolute(), data_name))
     else:
         dest_folder = arguments.output
 
