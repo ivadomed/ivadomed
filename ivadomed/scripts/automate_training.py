@@ -711,7 +711,7 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, p
                 new_config_list = []
                 for config in config_list:
                     # Delete path_pred
-                    path_pred = Path(config['path_output']).joinpath('pred_masks')
+                    path_pred = Path(config['path_output'], 'pred_masks')
                     if path_pred.is_dir() and n_iterations > 1:
                         try:
                             shutil.rmtree(str(path_pred))
@@ -719,7 +719,7 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, p
                             logging.info("Error: %s - %s." % (e.filename, e.strerror))
 
                     # Take the config file within the path_output because binarize_prediction may have been updated
-                    json_path = Path(config['path_output']).joinpath('config_file.json')
+                    json_path = Path(config['path_output'], 'config_file.json')
                     new_config = imed_config_manager.ConfigurationManager(str(json_path)).get_config()
                     new_config["gpu_ids"] = config["gpu_ids"]
                     new_config_list.append(new_config)
@@ -761,11 +761,11 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, p
                 combined_df = val_df
 
             results_df = pd.concat([results_df, combined_df])
-            results_df.to_csv(str(Path(output_dir).joinpath("temporary_results.csv")))
-            eval_df.to_csv(str(Path(output_dir).joinpath("average_eval.csv")))
+            results_df.to_csv(str(Path(output_dir, "temporary_results.csv")))
+            eval_df.to_csv(str(Path(output_dir, "average_eval.csv")))
 
     results_df = format_results(results_df, config_list, param_list)
-    results_df.to_csv(str(Path(output_dir).joinpath("detailed_results.csv")))
+    results_df.to_csv(str(Path(output_dir, "detailed_results.csv")))
 
     logging.info("Detailed results")
     logging.info(results_df)
