@@ -281,9 +281,9 @@ class SegmentationPair(object):
         extension = imed_loader_utils.get_file_extension(filename)
         # TODO: remove "ome" from condition when implementing OMETIFF support (#739)
         if (not extension) or ("ome" in extension):
-            raise RuntimeError("The input file extension '{}' of '{}' is not supported. ivadomed supports the following "
-                               "file extensions: '.nii', '.nii.gz', '.png', '.tif', '.tiff', '.jpg' and '.jpeg'."
-                               .format(extension, Path(filename).stem))
+            raise RuntimeError(f"The input file extension '{extension}' of '{Path(filename).stem}' is not "
+                               f"supported. ivadomed supports the following "
+                               f"file extensions: '.nii', '.nii.gz', '.png', '.tif', '.tiff', '.jpg' and '.jpeg'.")
 
         if "nii" in extension:
             # For '.nii' and '.nii.gz' extentions
