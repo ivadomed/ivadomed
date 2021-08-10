@@ -59,8 +59,12 @@ class MRI2DSegmentationDataset(Dataset):
 
     """
 
-    def __init__(self, filename_pairs, length=[], stride=[], slice_axis=2, cache=True, transform=None,
+    def __init__(self, filename_pairs, length=None, stride=None, slice_axis=2, cache=True, transform=None,
                  slice_filter_fn=None, task="segmentation", roi_params=None, soft_gt=False, is_input_dropout=False):
+        if length is None:
+            length = []
+        if stride is None:
+            stride = []
         self.indexes = []
         self.handlers = []
         self.filename_pairs = filename_pairs
@@ -178,7 +182,7 @@ class MRI2DSegmentationDataset(Dataset):
             seg_pair_slice, roi_pair_slice = copy.deepcopy(self.indexes[index])
 
         # In case multiple raters
-        if seg_pair_slice['gt'] is not None and isinstance(seg_pair_slice['gt'][0], list):
+        if seg_pair_slice['gt'] and isinstance(seg_pair_slice['gt'][0], list):
             # Randomly pick a rater
             idx_rater = random.randint(0, len(seg_pair_slice['gt'][0]) - 1)
             # Use it as ground truth for this iteration

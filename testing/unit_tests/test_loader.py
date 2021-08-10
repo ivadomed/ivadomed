@@ -3,6 +3,7 @@ import pytest
 import csv_diff
 import logging
 import torch
+import numpy as np
 
 from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__, download_data_testing_test_files, path_repo_root
 from testing.common_testing_util import remove_tmp_dir
@@ -159,7 +160,8 @@ def test_dropout_input(seg_pair):
 def test_load_dataset_2d_png(download_data_testing_test_files,
                              loader_parameters, model_parameters, transform_parameters):
     """
-    Test to make sure load_dataset runs with 2D PNG file and write corresponding NifTI file.
+    Test to make sure load_dataset runs with 2D PNG files, writes corresponding NIfTI files,
+    and binarizes ground-truth values to 0 and 1.
     """
     loader_parameters.update({"model_params": model_parameters})
     bids_df = imed_loader_utils.BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
@@ -173,6 +175,7 @@ def test_load_dataset_2d_png(download_data_testing_test_files,
     assert os.path.exists(fname_nii) == 1
     assert ds[0]['input'].shape == (1, 756, 764)
     assert ds[0]['gt'].shape == (1, 756, 764)
+    assert np.unique(ds[0]['gt']).tolist() == [0, 1]
 
 
 @pytest.mark.parametrize('loader_parameters', [{
