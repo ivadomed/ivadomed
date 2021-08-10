@@ -59,8 +59,12 @@ class MRI2DSegmentationDataset(Dataset):
 
     """
 
-    def __init__(self, filename_pairs, length=[], stride=[], slice_axis=2, cache=True, transform=None,
+    def __init__(self, filename_pairs, length=None, stride=None, slice_axis=2, cache=True, transform=None,
                  slice_filter_fn=None, task="segmentation", roi_params=None, soft_gt=False, is_input_dropout=False):
+        if length is None:
+            length = []
+        if stride is None:
+            stride = []
         self.indexes = []
         self.handlers = []
         self.filename_pairs = filename_pairs
