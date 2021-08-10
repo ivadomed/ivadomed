@@ -117,7 +117,7 @@ def generate_bounding_box_file(subject_path_list, model_path, path_output, gpu_i
             object_mask = imed_postpro.keep_largest_object(object_mask)
         mask_path = Path(path_output, "detection_mask")
         if not mask_path.exists():
-            mask_path.mkdir()
+            mask_path.mkdir(parents=True)
         nib.save(object_mask, Path(mask_path, subject_path.split("/")[-1]))
         ras_orientation = nib.as_closest_canonical(object_mask)
         hwd_orientation = imed_loader_utils.orient_img_hwd(ras_orientation.get_fdata(), slice_axis)
@@ -239,12 +239,12 @@ def load_bounding_boxes(object_detection_params, subject_path_list, slice_axis, 
     bounding_box_dict = {}
     if object_detection_params is None or object_detection_params['object_detection_path'] is None:
         return bounding_box_dict
-    bounding_box_path = Path(object_detection_params['path_output'], 'bounding_boxes.json')
+    bounding_box_path = Path(object_detection_params.get('path_output'), 'bounding_boxes.json')
     if bounding_box_path.exists():
         with bounding_box_path.open(mode='r') as fp:
             bounding_box_dict = json.load(fp)
     elif object_detection_params['object_detection_path'] is not None and \
-            Path(object_detection_params['object_detection_path']).exists():
+            Path(object_detection_params.get('object_detection_path')).exists():
         bounding_box_dict = generate_bounding_box_file(subject_path_list,
                                                        object_detection_params['object_detection_path'],
                                                        object_detection_params['path_output'],
