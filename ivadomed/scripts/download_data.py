@@ -225,7 +225,7 @@ def install_data(url, dest_folder, keep=False):
             bundle_folder = path_object
     else:
         # bomb scenario -> stay here
-        bundle_folder = Path(extraction_folder)
+        bundle_folder: Path = Path(extraction_folder)
 
     # Copy over
     for path_object in bundle_folder.glob("**/*"):
