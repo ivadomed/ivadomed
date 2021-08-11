@@ -13,6 +13,7 @@ import argparse
 import textwrap
 
 from ivadomed import utils as imed_utils
+from ivadomed.keywords import *
 
 
 DICT_URL = {
@@ -211,7 +212,7 @@ def install_data(url, dest_folder, keep=False):
     has_dir = False
     nb_entries = 0
     for path_object in Path(extraction_folder).iterdir():
-        if path_object.name in ("__MACOSX",):
+        if path_object.name in (IgnoredFolderKW.MACOSX,):
             continue
         nb_entries += 1
         if path_object.is_dir():
@@ -220,7 +221,7 @@ def install_data(url, dest_folder, keep=False):
     if nb_entries == 1 and has_dir:
         # tarball with single-directory -> go under
         for path_object in Path(extraction_folder).iterdir():
-            if path_object.name in ("__MACOSX",):
+            if path_object.name in (IgnoredFolderKW.MACOSX,):
                 continue
             bundle_folder = path_object
     else:
@@ -230,7 +231,7 @@ def install_data(url, dest_folder, keep=False):
     # Copy over
     for path_object in bundle_folder.glob("**/*"):
         if path_object.is_dir():
-            if path_object.name not in ("__MACOSX",):
+            if path_object.name not in (IgnoredFolderKW.MACOSX,):
                 relpath = path_object.relative_to(bundle_folder)
                 dstpath = Path(dest_folder, relpath)
                 if dstpath.exists():
