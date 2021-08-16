@@ -42,7 +42,7 @@ def test_hdf5(download_data_testing_test_files, loader_parameters):
     target_suffix = loader_parameters["target_suffix"]
     roi_params = loader_parameters["roi_params"]
 
-    train_lst = ['sub-unf01']
+    train_lst = ['sub-unf01_T1w.nii.gz', 'sub-unf01_T2w.nii.gz', 'sub-unf01_T2star.nii.gz']
 
     training_transform_dict = {
         "Resample":

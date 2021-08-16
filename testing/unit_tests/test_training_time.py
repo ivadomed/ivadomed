@@ -30,10 +30,9 @@ def setup_function():
     create_tmp_dir()
 
 
-@pytest.mark.parametrize('train_lst', [['sub-unf01']])
 @pytest.mark.parametrize('target_lst', [["_lesion-manual"]])
-@pytest.mark.parametrize('config', [
-    {
+@pytest.mark.parametrize('train_lst, config', [
+    (['sub-unf01_T2w.nii.gz'], {
         "transforms_params": {"Resample": {"wspace": 0.75, "hspace": 0.75},
                               "ROICrop": {"size": [48, 48]},
                               "NumpyToTensor": {}},
@@ -41,8 +40,8 @@ def setup_function():
         "contrast_params": {"contrast_lst": ['T2w'], "balance": {}},
         "multichannel": False,
         "model_params": {"name": "Unet"},
-    },
-    {
+    }),
+    (['sub-unf01_T1w.nii.gz', 'sub-unf01_T2w.nii.gz'], {
         "transforms_params": {"Resample": {"wspace": 0.75, "hspace": 0.75},
                               "ROICrop": {"size": [48, 48]},
                               "NumpyToTensor": {}},
@@ -50,8 +49,8 @@ def setup_function():
         "contrast_params": {"contrast_lst": ['T1w', 'T2w'], "balance": {}},
         "multichannel": True,
         "model_params": {"name": "Unet"},
-    },
-    {
+    }),
+    (['sub-unf01_T1w.nii.gz', 'sub-unf01_T2w.nii.gz'], {
         "transforms_params": {"CenterCrop": {"size": [96, 96, 16]},
                               "NumpyToTensor": {}},
         "roi_params": {"suffix": None, "slice_filter_roi": 0},
@@ -59,8 +58,8 @@ def setup_function():
         "multichannel": False,
         "model_params": {"name": "Modified3DUNet", "length_3D": [96, 96, 16], "n_filters": 8, "stride_3D": [96, 96, 16],
                          "attention": True},
-    },
-    {
+    }),
+    (['sub-unf01_T1w.nii.gz', 'sub-unf01_T2w.nii.gz'], {
         "transforms_params": {"CenterCrop": {"size": [96, 96, 16]},
                               "NumpyToTensor": {}},
         "roi_params": {"suffix": None, "slice_filter_roi": 0},
@@ -68,8 +67,8 @@ def setup_function():
         "multichannel": False,
         "model_params": {"name": "Modified3DUNet", "length_3D": [96, 96, 16], "n_filters": 8, "stride_3D": [96, 96, 16],
                          "attention": False},
-    },
-    {
+    }),
+    (['sub-unf01_T1w.nii.gz', 'sub-unf01_T2w.nii.gz'], {
         "transforms_params": {"CenterCrop": {"size": [96, 96, 16]},
                               "NumpyToTensor": {}},
         "roi_params": {"suffix": None, "slice_filter_roi": 0},
@@ -78,8 +77,8 @@ def setup_function():
         "model_params": {"name": "Modified3DUNet", "length_3D": [96, 96, 16], "n_filters": 8, "stride_3D": [96, 96, 16],
                          "attention": False, "metadata": "contrasts", "film_layers": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
                          "n_metadata": 2},
-    },
-    {
+    }),
+    (['sub-unf01_T2w.nii.gz'], {
         "transforms_params": {"CenterCrop": {"size": [96, 96, 16]},
                               "NumpyToTensor": {}},
         "roi_params": {"suffix": "_seg-manual", "slice_filter_roi": 10},
@@ -87,7 +86,7 @@ def setup_function():
         "multichannel": False,
         "model_params": {"name": "Unet", 'is_2d': False, "length_3D": [96, 96, 16], "n_filters": 8,
                          "stride_3D": [96, 96, 16]},
-    }
+    })
 ])
 def test_unet_time(download_data_testing_test_files, train_lst, target_lst, config):
     cuda_available, device = imed_utils.define_device(GPU_ID)
