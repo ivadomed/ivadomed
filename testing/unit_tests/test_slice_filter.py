@@ -38,7 +38,7 @@ def _cmpt_slice(ds_loader):
     {"Resample": {"wspace": 0.75, "hspace": 0.75, "applied_to": ["im", "gt"]},
      "CenterCrop": {"size": [100, 100], "applied_to": ["im", "gt"]},
      "NumpyToTensor": {"applied_to": ["im", "gt"]}}])
-@pytest.mark.parametrize('train_lst', [['sub-unf01']])
+@pytest.mark.parametrize('train_lst', [['sub-unf01_T2w.nii.gz']])
 @pytest.mark.parametrize('target_lst', [["_lesion-manual"]])
 @pytest.mark.parametrize('slice_filter_params', [
     {"filter_empty_mask": False, "filter_empty_input": True},

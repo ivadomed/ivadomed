@@ -159,7 +159,7 @@ def display_selected_transfoms(params, dataset_type):
         logger.info('\t{}: {}'.format(k, params[k]))
 
 
-def plot_transformed_sample(before, after, list_title=[], fname_out="", cmap="jet"):
+def plot_transformed_sample(before, after, list_title=None, fname_out="", cmap="jet"):
     """Utils tool to plot sample before and after transform, for debugging.
 
     Args:
@@ -171,6 +171,8 @@ def plot_transformed_sample(before, after, list_title=[], fname_out="", cmap="je
     """
     import matplotlib
     import matplotlib.pyplot as plt
+    if list_title is None:
+        list_title = []
     if len(list_title) == 0:
         list_title = ['Sample before transform', 'Sample after transform']
 
@@ -266,8 +268,12 @@ def get_arguments(parser, args):
             args = parser.parse_args(args)
         else:
             args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
-    except SystemExit:
-        raise ArgParseException('Error parsing args')
+    except SystemExit as e:
+        if e.code != 0:  # Calling `--help` raises SystemExit with 0 exit code (i.e. not an ArgParseException)
+            raise ArgParseException('Error parsing args')
+        else:
+            sys.exit(0)
+
     return args
 
 
