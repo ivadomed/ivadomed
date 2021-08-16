@@ -56,11 +56,11 @@ class DiceLoss(nn.Module):
         self.smooth = smooth
 
     def forward(self, prediction, target):
-        iflat = prediction.reshape(-1)
-        tflat = target.reshape(-1)
-        intersection = (iflat * tflat).sum()
+        iflat = prediction.reshape(prediction.shape[0], -1)
+        tflat = target.reshape(target.shape[0], -1)
+        intersection = (iflat * tflat).sum(dim = 1)
 
-        return - (2.0 * intersection + self.smooth) / (iflat.sum() + tflat.sum() + self.smooth)
+        return - ((2.0 * intersection + self.smooth) / (iflat.sum(dim = 1) + tflat.sum(dim = 1) + self.smooth)).mean()
 
 
 class BinaryCrossEntropyLoss(nn.Module):
