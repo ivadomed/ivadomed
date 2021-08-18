@@ -50,6 +50,7 @@ class DiceLoss(nn.Module):
 
     Attributes:
         smooth (float): Value to avoid division by zero when images and predictions are empty.
+        sample_wise (bool): If set, dice loss is averaged over sample instead of over batch
     """
     def __init__(self, smooth=1.0, sample_wise=False):
         super(DiceLoss, self).__init__()
