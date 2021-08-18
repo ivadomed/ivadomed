@@ -51,11 +51,14 @@ class DiceLoss(nn.Module):
     Attributes:
         smooth (float): Value to avoid division by zero when images and predictions are empty.
     """
-    def __init__(self, smooth=1.0):
+    def __init__(self, smooth=1.0, sample_wise=False):
         super(DiceLoss, self).__init__()
         self.smooth = smooth
+        self.sample_wise = sample_wise
 
     def forward(self, prediction, target):
+        if not self.sample_wise:
+            prediction, target = prediction.unsqueeze(dim=0), target.unsqueeze(dim=0)
         iflat = prediction.reshape(prediction.shape[0], -1)
         tflat = target.reshape(target.shape[0], -1)
         intersection = (iflat * tflat).sum(dim = 1)
