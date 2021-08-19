@@ -335,7 +335,8 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
                               example: ["10", "20", "10vox"] (remove objects smaller than 10 voxels for class 1 and 3,
                               and smaller than 20 voxels for class 2).
             * 'pixel_size': (list of float) List of microscopy pixel size in micrometers.
-                            Length equals 2 [X, Y] for 2D or 3 [X, Y, Z] for 3D.
+                            Length equals 2 [PixelSizeX, PixelSizeY] for 2D or 3 [PixelSizeX, PixelSizeY, PixelSizeZ] for 3D,
+                            where X is the width, Y the height and Z the depth of the image.
             * 'overlap_2D': (list of int) List of overlaps in pixels for 2D patching. Length equals 2 [X, Y].
             * 'metadata': (str) Film metadata.
             * 'fname_prior': (str) An image filename (e.g., .nii.gz) containing processing information
