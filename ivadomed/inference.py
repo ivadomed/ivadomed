@@ -337,7 +337,8 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
             * 'pixel_size': (list of float) List of microscopy pixel size in micrometers.
                             Length equals 2 [PixelSizeX, PixelSizeY] for 2D or 3 [PixelSizeX, PixelSizeY, PixelSizeZ] for 3D,
                             where X is the width, Y the height and Z the depth of the image.
-            * 'overlap_2D': (list of int) List of overlaps in pixels for 2D patching. Length equals 2 [X, Y].
+            * 'overlap_2D': (list of int) List of overlaps in pixels for 2D patching. Length equals 2 [OverlapX, OverlapY],
+                            where X is the width and Y the height of the image.
             * 'metadata': (str) Film metadata.
             * 'fname_prior': (str) An image filename (e.g., .nii.gz) containing processing information
                 (e.g., spinal cord segmentation, spinal location or MS lesion classification, spinal cord centerline), 
@@ -393,9 +394,13 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
     stride_2D = context["default_model"]["stride_2D"] if "stride_2D" in context["default_model"] else []
     is_2d_patch = bool(length_2D)
 
-    # Adjust stride_2D with overlap_2D option if present
     if is_2d_patch and (options is not None) and ('overlap_2D' in options):
-        stride_2D = [x1 - x2 for (x1, x2) in zip(length_2D, options['overlap_2D'])]
+        overlap_2D = options['overlap_2D']
+        # Swap OverlapX and OverlapY resulting in an array in order [OverlapY, OverlapX]
+        # to match length_2D and stride_2D in [Height, Width] orientation.
+        overlap_2D[1], overlap_2D[0] = overlap_2D[0], overlap_2D[1]
+        # Adjust stride_2D with overlap_2D
+        stride_2D = [x1 - x2 for (x1, x2) in zip(length_2D, overlap_2D)]
 
     # Add microscopy pixel size from options to metadata for filenames_pairs
     if (options is not None) and ('pixel_size' in options):
