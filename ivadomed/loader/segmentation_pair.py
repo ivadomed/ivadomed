@@ -346,13 +346,12 @@ class SegmentationPair(object):
         * "pixdim" (zooms) for Nifti1Image object is extracted as follows:
             * For train, test and segment commands, PixelSize is taken from the metadata in BIDS JSON sidecar file.
             * For inference with the segment_volume function, PixelSize must be provided in the 'options' argument.
-        * PixelSize definition in example dataset is a scalar in micrometers (BIDS BEP031 v0.0.2)
-        * PixelSize definition changed for list of 2-numbers [PixelSizeX, PixelSizeY]
-          or 3-numbers [PixelSizeX, PixelSizeY, PixelSizeZ] in micrometers for 2D and 3D respectively,
-          where X is the width, Y the height and Z the depth of the image (BIDS BEP031 v0.0.4).
-        * Both PixelSize definitions are supported in this function.
-        * In BIDS BEP031 v0.0.5, a separate field PixelSizeUnits is used to describe the unit pf PixelSize. The only
-          accepted value is "um" but could be expand in the future. This function assumes that the unit is micrometers.
+        * The function supports the PixelSize definition of BIDS BEP031 v0.0.4 as a list of 2-numbers
+          [PixelSizeX, PixelSizeY] or 3-numbers [PixelSizeX, PixelSizeY, PixelSizeZ] in micrometers for 2D and 3D
+          respectively, where X is the width, Y the height and Z the depth of the image.
+        * The function also supports the previous definition of PixelSize as a float (BIDS BEP031 v0.0.2).
+        * In the future BIDS BEP031 v0.0.5 version, a separate field PixelSizeUnits will be used to describe the unit
+          of PixelSize. The only accepted value will be "um" but could be expand in the future.
 
         Returns:
             ndrray: Pixel size in millimeters in order (PixelSizeY, PixelSizeX, PixelSizeZ), where Y is the height,
