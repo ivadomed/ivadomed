@@ -7,6 +7,8 @@ import torch.backends.cudnn as cudnn
 from torch import optim
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+
+from ivadomed.loader.bids_dataframe import BidsDataframe
 import ivadomed.transforms as imed_transforms
 from ivadomed import losses
 from ivadomed import models
@@ -48,7 +50,7 @@ def setup_function():
 def test_HeMIS(download_data_testing_test_files, loader_parameters, p=0.0001):
     print('[INFO]: Starting test ... \n')
 
-    bids_df = imed_loader_utils.BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
+    bids_df = BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
 
     contrast_params = loader_parameters["contrast_params"]
     target_suffix = loader_parameters["target_suffix"]

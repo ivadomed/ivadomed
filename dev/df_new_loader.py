@@ -12,6 +12,7 @@
 # IMPORTS
 import os
 
+from ivadomed.loader.bids_dataframe import BidsDataframe
 from ivadomed import config_manager as imed_config_manager
 from ivadomed.loader import utils as imed_loader_utils
 
@@ -42,7 +43,7 @@ else:
     print('Output path already exists: {}'.format(path_output))
 
 # CREATE BIDSDataframe OBJECT
-bids_df = imed_loader_utils.BidsDataframe(loader_params, path_output, derivatives)
+bids_df = BidsDataframe(loader_params, path_output, derivatives)
 df = bids_df.df
 
 # DROP "path" COLUMN AND SORT BY FILENAME FOR TESTING PURPOSES WITH data-testing
