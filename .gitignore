@@ -27,6 +27,7 @@ log.txt
 # IvadoMed pytest downloaded data file, anywhere:
 data_testing/
 data_functional_testing/
+data_multi_sessions_contrasts_testing
 
 # OS Specific hidden file
 .DS_Store
