@@ -73,14 +73,14 @@ def test(model_params, dataset_test, testing_params, path_output, device, cuda_a
         n_monteCarlo = 1
 
     for i_monteCarlo in range(n_monteCarlo):
-        preds_npy, gt_npy = run_inference(test_loader, model, model_params, testing_params, path_3Dpred,
+        preds_npy, gt_npy = run_inference(test_loader, model, model_params, testing_params, str(path_3Dpred),
                                           cuda_available, i_monteCarlo, postprocessing)
         metric_mgr(preds_npy, gt_npy)
         # If uncertainty computation, don't apply it on last iteration for prediction
         if testing_params['uncertainty']['applied'] and (n_monteCarlo - 2 == i_monteCarlo):
             testing_params['uncertainty']['applied'] = False
             # COMPUTE UNCERTAINTY MAPS
-            imed_uncertainty.run_uncertainty(ifolder=path_3Dpred)
+            imed_uncertainty.run_uncertainty(ifolder=str(path_3Dpred))
 
     metrics_dict = metric_mgr.get_results()
     metric_mgr.reset()
@@ -277,7 +277,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                 if last_sample_bool:
                     pred_undo = np.array(pred_undo)
                     if ofolder:
-                        fname_pred = str(Path(ofolder, fname_ref.split('/')[-1]))
+                        fname_pred = str(Path(ofolder, Path(fname_ref).name))
                         fname_pred = fname_pred.split(testing_params['target_suffix'][0])[0] + '_pred.nii.gz'
                         # If uncertainty running, then we save each simulation result
                         if testing_params['uncertainty']['applied']:
