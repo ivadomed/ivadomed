@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import os
 import argparse
 import numpy as np
 from collections import defaultdict
@@ -9,6 +8,7 @@ import matplotlib.pyplot as plt
 from textwrap import wrap
 from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
 from ivadomed import utils as imed_utils
+from pathlib import Path
 
 
 def get_parser():
@@ -43,10 +43,9 @@ def check_events_numbers(input_folder):
     Args:
         input_folder (str): Input folder path.
     """
-    for fold in os.listdir(input_folder):
-        fold_path = os.path.join(input_folder, fold)
-        if os.path.isdir(fold_path):
-            event_list = [f for f in os.listdir(fold_path) if f.startswith("events.out.tfevents.")]
+    for fold_path in Path(input_folder).iterdir():
+        if fold_path.is_dir():
+            event_list = [f.name for f in fold_path.iterdir() if f.name.startswith("events.out.tfevents.")]
             if len(event_list):
                 if len(event_list) > 1:
                     raise ValueError(f"Multiple summary found in this folder: {fold_path}.\n"
@@ -131,11 +130,11 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
     plt_dict = {}
 
     # Create output folder
-    if os.path.isdir(output_folder):
+    if Path(output_folder).is_dir():
         print(f"Output folder already exists: {output_folder}.")
     else:
         print(f"Creating output folder: {output_folder}.")
-        os.makedirs(output_folder)
+        Path(output_folder).mkdir(parents=True)
 
     # Config subplots
     if len(group_list) > 1:
@@ -145,24 +144,24 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
         n_cols, n_rows = 1, 1
 
     for i_subplot, input_folder in enumerate(group_list):
-        input_folder = os.path.expanduser(input_folder)
+        input_folder = Path(input_folder).expanduser()
         # Find training folders:
         if multiple_training:
-            prefix = str(input_folder.split('/')[-1])
-            input_folder = '/'.join(input_folder.split('/')[:-1])
-            input_folder_list = [os.path.join(input_folder, f) for f in os.listdir(input_folder) if
-                                 f.startswith(prefix)]
+            prefix = input_folder.name
+            input_folder = input_folder.parent
+            input_folder_list = [f for f in input_folder.iterdir() if
+                                 f.name.startswith(prefix)]
         else:
-            prefix = str(input_folder.split('/')[-1])
+            prefix = input_folder.name
             input_folder_list = [input_folder]
 
         events_df_list = []
         for path_output in input_folder_list:
             # Find tf folders
-            check_events_numbers(path_output)
+            check_events_numbers(str(path_output))
 
             # Get data as dataframe
-            events_vals_df = tensorboard_retrieve_event(path_output)
+            events_vals_df = tensorboard_retrieve_event(str(path_output))
 
             # Store data
             events_df_list.append(events_vals_df)
@@ -170,8 +169,8 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
         # Plot train and valid losses together
         loss_keys = [k for k in events_df_list[0].keys() if k.endswith("loss")]
         if i_subplot == 0:  # Init plot
-            plt_dict[os.path.join(output_folder, "losses.png")] = plt.figure(figsize=(10 * n_cols, 5 * n_rows))
-        ax = plt_dict[os.path.join(output_folder, "losses.png")].add_subplot(n_rows, n_cols, i_subplot + 1)
+            plt_dict[str(Path(output_folder, "losses.png"))] = plt.figure(figsize=(10 * n_cols, 5 * n_rows))
+        ax = plt_dict[str(Path(output_folder, "losses.png"))].add_subplot(n_rows, n_cols, i_subplot + 1)
         plot_curve([df[loss_keys] for df in events_df_list],
                    y_label="loss",
                    fig_ax=ax,
@@ -182,8 +181,8 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
         for tag in events_df_list[0].keys():
             if not tag.endswith("loss"):
                 if i_subplot == 0:  # Init plot
-                    plt_dict[os.path.join(output_folder, tag + ".png")] = plt.figure(figsize=(10 * n_cols, 5 * n_rows))
-                ax = plt_dict[os.path.join(output_folder, tag + ".png")].add_subplot(n_rows, n_cols, i_subplot + 1)
+                    plt_dict[str(Path(output_folder, tag + ".png"))] = plt.figure(figsize=(10 * n_cols, 5 * n_rows))
+                ax = plt_dict[str(Path(output_folder, tag + ".png"))].add_subplot(n_rows, n_cols, i_subplot + 1)
                 plot_curve(data_list=[df[[tag]] for df in events_df_list],
                            y_label=tag,
                            fig_ax=ax,
@@ -213,7 +212,7 @@ def tensorboard_retrieve_event(path_output):
 
     # Each element in the summary iterator represent an element (e.g., scalars, images..)
     # stored in the summary for all epochs in the form of event.
-    summary_iterators = [EventAccumulator(os.path.join(path_output, dname)).Reload() for dname in os.listdir(path_output)]
+    summary_iterators = [EventAccumulator(str(dname)).Reload() for dname in Path(path_output).iterdir()]
 
     metrics = defaultdict(list)
     num_metrics = 0
