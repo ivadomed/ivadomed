@@ -12,6 +12,7 @@ from ivadomed.loader.segmentation_pair import SegmentationPair
 from ivadomed import transforms as imed_transforms
 from ivadomed.loader import utils as imed_loader_utils, film as imed_film
 from ivadomed.object_detection import utils as imed_obj_detect
+from ivadomed.keywords import *
 from ivadomed import utils as imed_utils
 
 
@@ -282,7 +283,7 @@ class BIDStoHDF5:
         if(not is_over_thresh):
             target_filename, roi_filename = self.get_filenames(bids_df, subject, all_deriv, target_suffix, roi_params)
 
-            if (not any(target_filename)) or (not (roi_params["suffix"] is None) and (roi_filename is None)):
+            if (not any(target_filename)) or (not (roi_params[ROIParamsKW.SUFFIX] is None) and (roi_filename is None)):
                 return
 
             metadata = df_sub.to_dict(orient='records')[0]
@@ -317,7 +318,7 @@ class BIDStoHDF5:
             for idx, suffix in enumerate(target_suffix):
                 if suffix in deriv:
                     target_filename[idx] = deriv
-            if not (roi_params["suffix"] is None) and roi_params["suffix"] in deriv:
+            if not (roi_params[ROIParamsKW.SUFFIX] is None) and roi_params[ROIParamsKW.SUFFIX] in deriv:
                 roi_filename = [deriv]
         
         return target_filename, roi_filename
@@ -500,26 +501,29 @@ class HDF5Dataset:
     def __init__(self, bids_df, subject_file_lst, model_params, target_suffix, contrast_params,
                  slice_axis=2, transform=None, metadata_choice=False, dim=2, complet=True,
                  slice_filter_fn=None, roi_params=None, object_detection_params=None, soft_gt=False):
-        self.cst_lst = copy.deepcopy(contrast_params["contrast_lst"])
-        self.gt_lst = copy.deepcopy(model_params["target_lst"] if "target_lst" in model_params else None)
-        self.roi_lst = copy.deepcopy(model_params["roi_lst"] if "roi_lst" in model_params else None)
+        self.cst_lst = copy.deepcopy(contrast_params[ContrastParamsKW.CONTRAST_LST])
+        self.gt_lst = copy.deepcopy(model_params[ModelParamsKW.TARGET_LST]
+                                    if ModelParamsKW.TARGET_LST in model_params else None)
+        self.roi_lst = copy.deepcopy(model_params[ModelParamsKW.ROI_LST]
+                                     if ModelParamsKW.ROI_LST in model_params else None)
         self.dim = dim
-        self.roi_params = roi_params if roi_params is not None else {"suffix": None, "slice_filter_roi": None}
+        self.roi_params = roi_params if roi_params is not None else \
+            {ROIParamsKW.SUFFIX: None, ROIParamsKW.SLICE_FILTER_ROI: None}
         self.filter_slices = slice_filter_fn
         self.prepro_transforms, self.transform = transform
 
         metadata_choice = False if metadata_choice is None else metadata_choice
         # Getting HDS5 dataset file
-        if not Path(model_params["path_hdf5"]).exists():
+        if not Path(model_params[ModelParamsKW.PATH_HDF5]).exists():
             logger.info("Computing hdf5 file of the data")
             bids_to_hdf5 = BIDStoHDF5(bids_df=bids_df,
                                       subject_file_lst=subject_file_lst,
-                                      path_hdf5=model_params["path_hdf5"],
+                                      path_hdf5=model_params[ModelParamsKW.PATH_HDF5],
                                       target_suffix=target_suffix,
                                       roi_params=self.roi_params,
                                       contrast_lst=self.cst_lst,
                                       metadata_choice=metadata_choice,
-                                      contrast_balance=contrast_params["balance"],
+                                      contrast_balance=contrast_params[ContrastParamsKW.BALANCE],
                                       slice_axis=slice_axis,
                                       slice_filter_fn=slice_filter_fn,
                                       transform=transform,
@@ -528,11 +532,11 @@ class HDF5Dataset:
 
             self.path_hdf5 = bids_to_hdf5.path_hdf5
         else:
-            self.path_hdf5 = model_params["path_hdf5"]
+            self.path_hdf5 = model_params[ModelParamsKW.PATH_HDF5]
 
         # Loading dataframe object
         with h5py.File(self.path_hdf5, "r") as hdf5_file:
-            self.df_object = Dataframe(hdf5_file, self.cst_lst, model_params["csv_path"],
+            self.df_object = Dataframe(hdf5_file, self.cst_lst, model_params[ModelParamsKW.CSV_PATH],
                                        target_suffix=self.gt_lst, roi_suffix=self.roi_lst,
                                        dim=self.dim, filter_slices=slice_filter_fn)
             if complet:
@@ -549,7 +553,7 @@ class HDF5Dataset:
             # RAM status
             self.status = {ct: False for ct in self.df_object.contrasts}
 
-            ram = model_params["ram"] if "ram" in model_params else True
+            ram = model_params[ModelParamsKW.RAM] if ModelParamsKW.RAM in model_params else True
             if ram:
                 self.load_into_ram(self.cst_lst)
 

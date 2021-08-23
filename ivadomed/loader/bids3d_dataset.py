@@ -1,5 +1,6 @@
 from ivadomed.loader.bids_dataset import BidsDataset
 from ivadomed.loader.mri3d_subvolume_segmentation_dataset import MRI3DSubVolumeSegmentationDataset
+from ivadomed.keywords import *
 
 
 class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
@@ -40,6 +41,7 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
                               object_detection_params=object_detection_params,
                               is_input_dropout=is_input_dropout)
 
-        super().__init__(dataset.filename_pairs, length=model_params["length_3D"], stride=model_params["stride_3D"],
+        super().__init__(dataset.filename_pairs, length=model_params[ModelParamsKW.LENGTH_3D],
+                         stride=model_params[ModelParamsKW.STRIDE_3D],
                          transform=transform, slice_axis=slice_axis, task=task, soft_gt=soft_gt,
                          is_input_dropout=is_input_dropout)
