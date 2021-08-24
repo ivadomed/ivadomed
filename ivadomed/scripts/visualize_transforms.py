@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 
-import os
 import argparse
 import nibabel as nib
 import numpy as np
 import random
 import torch
 
+from pathlib import Path
 from ivadomed import config_manager as imed_config_manager
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed import transforms as imed_transforms
@@ -97,8 +97,8 @@ def run_visualization(input, config, number, output, roi):
     context = imed_config_manager.ConfigurationManager(config).get_config()
 
     # Create output folder
-    if not os.path.isdir(output):
-        os.makedirs(output)
+    if not Path(output).is_dir():
+        Path(output).mkdir(parents=True)
 
     # Slice extracted according to below axis
     axis = imed_utils.AXIS_DCT[context["loader_parameters"]["slice_axis"]]
@@ -115,7 +115,7 @@ def run_visualization(input, config, number, output, roi):
     training_transforms, _, _ = imed_transforms.get_subdatasets_transforms(context["transformation"])
 
     if "ROICrop" in training_transforms:
-        if roi and os.path.isfile(roi):
+        if roi and Path(roi).is_file():
             roi_img, roi_data = get_data(roi, axis)
         else:
             raise ValueError("\nPlease provide ROI image (-r) in order to apply ROICrop transformation.")
@@ -142,7 +142,7 @@ def run_visualization(input, config, number, output, roi):
             metadata = imed_loader_utils.SampleMetadata({"zooms": zooms, "data_type": "gt" if is_mask else "im"})
 
             # Apply transformations to ROI
-            if "CenterCrop" in training_transforms or ("ROICrop" in training_transforms and os.path.isfile(roi)):
+            if "CenterCrop" in training_transforms or ("ROICrop" in training_transforms and Path(roi).is_file()):
                 metadata.__setitem__('crop_params', {})
 
             # Apply transformations to image
@@ -151,7 +151,7 @@ def run_visualization(input, config, number, output, roi):
                                               data_type="im")
 
             # Plot before / after transformation
-            fname_out = os.path.join(output, stg_transforms+"slice"+str(i)+".png")
+            fname_out = str(Path(output, stg_transforms+"slice"+str(i)+".png"))
             print("Fname out: {}.".format(fname_out))
             print("\t{}".format(dict(metadata)))
             # rescale intensities
