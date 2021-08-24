@@ -6,7 +6,6 @@ import shutil
 
 from ivadomed.loader.bids_dataframe import BidsDataframe
 from ivadomed.loader import loader as imed_loader
-from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.object_detection import utils as imed_obj_detect
 import logging
 from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__, download_data_testing_test_files

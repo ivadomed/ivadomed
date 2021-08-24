@@ -14,8 +14,6 @@ import os
 
 from ivadomed.loader.bids_dataframe import BidsDataframe
 from ivadomed import config_manager as imed_config_manager
-from ivadomed.loader import utils as imed_loader_utils
-
 
 # GET LOADER PARAMETERS FROM IVADOMED CONFIG FILE
 # The loader parameters have 2 new fields: "bids_config" and "extensions".
