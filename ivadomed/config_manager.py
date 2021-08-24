@@ -1,7 +1,7 @@
 import json
-import os
 import collections.abc
 from loguru import logger
+from pathlib import Path
 from ivadomed import utils as imed_utils
 import copy
 
@@ -87,7 +87,7 @@ class ConfigurationManager(object):
         self.key_change_dict = KEY_CHANGE_DICT
         self.key_split_dataset_change_lst = KEY_SPLIT_DATASET_CHANGE_LST
         self._validate_path()
-        default_config_path = os.path.join(imed_utils.__ivadomed_dir__, "ivadomed", "config", "config_default.json")
+        default_config_path = str(Path(imed_utils.__ivadomed_dir__, "ivadomed", "config", "config_default.json"))
         self.config_default = load_json(default_config_path)
         self.context_original = load_json(path_context)
         self.config_updated = {}
@@ -154,6 +154,6 @@ class ConfigurationManager(object):
     def _validate_path(self):
         """Ensure validity of configuration file path.
         """
-        if not os.path.isfile(self.path_context) or not self.path_context.endswith('.json'):
+        if not Path(self.path_context).is_file() or not self.path_context.endswith('.json'):
             raise ValueError(
                 "\nERROR: The provided configuration file path (.json) is invalid: {}\n".format(self.path_context))
