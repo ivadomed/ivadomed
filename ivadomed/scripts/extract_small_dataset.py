@@ -47,7 +47,10 @@ def remove_some_contrasts(folder, subject_list, good_contrast_list):
     for s in subject_list:
         for f in Path(folder, s, "anat").iterdir():
             file_list.append(f)
-    rm_file_list: List[Path] = [f for f in file_list if not is_good_contrast(str(f), good_contrast_list)]
+    rm_file_list: List[Path] = []
+    for file in file_list:
+        if not is_good_contrast(str(file), good_contrast_list):
+            rm_file_list.append(file)
     for file in rm_file_list:
         file.unlink()
 
@@ -100,26 +103,26 @@ def extract_small_dataset(input, output, n=10, contrast_list=None, include_deriv
 
     # Loop across subjects
     for subject in subject_random_list:
-        print("\nSubject: {}".format(subject))
+        print(f"\nSubject: {subject}")
         # Copy images
-        in_subjfolder = Path(input, subject)
-        out_subjfolder = Path(output, subject)
-        assert in_subjfolder.is_dir()
-        print("\tCopying {} to {}.".format(in_subjfolder, out_subjfolder))
-        shutil.copytree(str(in_subjfolder), str(out_subjfolder))
+        in_subj_folder = Path(input, subject)
+        out_subj_folder = Path(output, subject)
+        assert in_subj_folder.is_dir()
+        print(f"\tCopying {in_subj_folder} to {out_subj_folder}.")
+        shutil.copytree(str(in_subj_folder), str(out_subj_folder))
         # Remove dwi data
         if Path(output, subject, "dwi").is_dir():
             shutil.rmtree(str(Path(output, subject, "dwi")))
         # Copy labels
         if include_derivatives:
-            in_subjderivatives = Path(in_derivatives, subject)
-            out_subjderivatives = Path(out_derivatives, subject)
-            assert in_subjderivatives.is_dir()
-            print("\tCopying {} to {}.".format(in_subjderivatives, out_subjderivatives))
-            shutil.copytree(str(in_subjderivatives), str(out_subjderivatives))
+            in_subj_derivatives = Path(in_derivatives, subject)
+            out_subj_derivatives = Path(out_derivatives, subject)
+            assert in_subj_derivatives.is_dir()
+            print(f"\tCopying {in_subj_derivatives} to {out_subj_derivatives}.")
+            shutil.copytree(str(in_subj_derivatives), str(out_subj_derivatives))
             # Remove dwi data
-            if Path(out_subjderivatives, subject, "dwi").is_dir():
-                shutil.rmtree(str(Path(out_subjderivatives, subject, "dwi")))
+            if Path(out_subj_derivatives, subject, "dwi").is_dir():
+                shutil.rmtree(str(Path(out_subj_derivatives, subject, "dwi")))
 
     if contrast_list:
         remove_some_contrasts(output, subject_random_list, contrast_list)
@@ -128,21 +131,21 @@ def extract_small_dataset(input, output, n=10, contrast_list=None, include_deriv
                                   subject_random_list, contrast_list)
 
     # Copy dataset_description.json
-    in_datasetjson = Path(input, "dataset_description.json")
-    out_datasetjson = Path(output, "dataset_description.json")
-    shutil.copyfile(str(in_datasetjson), str(out_datasetjson))
+    in_dataset_json = Path(input, "dataset_description.json")
+    out_dataset_json = Path(output, "dataset_description.json")
+    shutil.copyfile(str(in_dataset_json), str(out_dataset_json))
     # Copy participants.json if it exist
     if Path(input).joinpath("participants.json").is_file():
-        in_participantsjson = Path(input, "participants.json")
-        out_participantsjson = Path(output, "participants.json")
-        shutil.copyfile(str(in_participantsjson), str(out_participantsjson))
+        in_participants_json = Path(input, "participants.json")
+        out_participants_json = Path(output, "participants.json")
+        shutil.copyfile(str(in_participants_json), str(out_participants_json))
     # Copy participants.tsv
-    in_participantstsv = Path(input, "participants.tsv")
-    out_participantstsv = Path(output, "participants.tsv")
-    df = pd.read_csv(str(in_participantstsv), sep='\t')
+    in_participants_tsv = Path(input, "participants.tsv")
+    out_participants_tsv = Path(output, "participants.tsv")
+    df = pd.read_csv(str(in_participants_tsv), sep='\t')
     # Drop subjects
     df = df[df.participant_id.isin(subject_random_list)]
-    df.to_csv(str(out_participantstsv), sep='\t', index=False)
+    df.to_csv(str(out_participants_tsv), sep='\t', index=False)
 
 
 def main(args=None):
