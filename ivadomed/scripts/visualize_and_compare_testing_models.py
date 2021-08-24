@@ -88,7 +88,7 @@ def onclick(event, df):
         plt.show()
 
 
-def visualize_and_compare_models(ofolders, metric="dice_class0", metadata=[]):
+def visualize_and_compare_models(ofolders, metric="dice_class0", metadata=None):
     """
     This function allows violinplots visualization of multiple evaluation models simultaneously and performs a
     Kolmogorov–Smirnov significance test between each combination of models. The mean values of the datapoints for each
@@ -126,6 +126,8 @@ def visualize_and_compare_models(ofolders, metric="dice_class0", metadata=[]):
     # access CLI options
     print("ofolders: %r" % ofolders)
     print("metric: %r" % metric)
+    if metadata is None:
+        metadata = []
     if metadata:
         print("metadata: %r" % metadata)
 
