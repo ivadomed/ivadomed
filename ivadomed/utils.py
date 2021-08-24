@@ -159,7 +159,7 @@ def display_selected_transfoms(params, dataset_type):
         logger.info('\t{}: {}'.format(k, params[k]))
 
 
-def plot_transformed_sample(before, after, list_title=[], fname_out="", cmap="jet"):
+def plot_transformed_sample(before, after, list_title=None, fname_out="", cmap="jet"):
     """Utils tool to plot sample before and after transform, for debugging.
 
     Args:
@@ -171,6 +171,8 @@ def plot_transformed_sample(before, after, list_title=[], fname_out="", cmap="je
     """
     import matplotlib
     import matplotlib.pyplot as plt
+    if list_title is None:
+        list_title = []
     if len(list_title) == 0:
         list_title = ['Sample before transform', 'Sample after transform']
 
