@@ -187,3 +187,8 @@ class BinarizeProdictionKW:
 @dataclass
 class SliceFilterParamsKW:
     FILTER_EMPTY_MASK = "filter_empty_mask"
+
+
+@dataclass
+class IgnoredFolderKW:
+    MACOSX = "__MACOSX"
