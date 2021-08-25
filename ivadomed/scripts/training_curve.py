@@ -28,7 +28,8 @@ def get_parser():
                         help="""Indicates the limits on the y-axis for the loss plots, otherwise
                                 these limits are automatically defined. Please separate the lower
                                 and the upper limit by a comma, e.g. -1,0. Note: for the validation
-                                metrics: the y-limits are always 0.0 and 1.0.""",
+                                metrics: the y-limits are always 0.0 and 1.0 except for the hausdorff
+                                score where the limits are automatically defined.""",
                         metavar=imed_utils.Metavar.float)
     parser.add_argument("-o", "--output", required=True, type=str,
                         help="Output folder.", metavar=imed_utils.Metavar.file)
@@ -131,7 +132,10 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
             or not (``False``). Flag: ``--multiple``. All available folders with ``-i`` as prefix
             are considered. The plot represents the mean value (hard line) surrounded by the
             standard deviation (envelope).
-        y_lim_loss (list): List of the lower and upper limits of the y-axis of the loss plot.
+        y_lim_loss (list): List of the lower and upper limits of the y-axis of the loss plot, otherwise
+            these limits are automatically defined. Please separate the lower and the upper limit by a
+            comma, e.g. -1,0. Note: for the validation metrics: the y-limits are always 0.0 and 1.0 except
+            for the hausdorff score where the limits are automatically defined.
     """
     group_list = input_folder.split(",")
     plt_dict = {}
@@ -190,11 +194,12 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
                 if i_subplot == 0:  # Init plot
                     plt_dict[str(Path(output_folder, tag + ".png"))] = plt.figure(figsize=(10 * n_cols, 5 * n_rows))
                 ax = plt_dict[str(Path(output_folder, tag + ".png"))].add_subplot(n_rows, n_cols, i_subplot + 1)
+                y_lim = None if tag.startswith("hausdorff") else [0, 1]
                 plot_curve(data_list=[df[[tag]] for df in events_df_list],
                            y_label=tag,
                            fig_ax=ax,
                            subplot_title=prefix,
-                           y_lim=[0, 1])
+                           y_lim=y_lim)
 
     for fname_out in plt_dict:
         plt_dict[fname_out].savefig(fname_out)
