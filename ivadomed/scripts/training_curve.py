@@ -95,7 +95,7 @@ def plot_curve(data_list, y_label, fig_ax, subplot_title, y_lim=None):
 
 
 def run_plot_training_curves(input_folder, output_folder, multiple_training=False, y_lim_loss=None):
-    """Utility function to plot the training curves.
+    """Utility function to plot the training curves and save data as .csv files.
 
     This function uses the TensorFlow summary that is generated during a training to plot for each epoch:
 
@@ -171,8 +171,9 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
             # Find tf folders
             events_path_list = get_events_path_list(str(path_output))
 
-            # Get data as dataframe
+            # Get data as dataframe and save as .csv file
             events_vals_df = tensorboard_retrieve_event(events_path_list)
+            events_vals_df.to_csv(output_folder + str(path_output.name) + "_training_values.csv")
 
             # Store data
             events_df_list.append(events_vals_df)
