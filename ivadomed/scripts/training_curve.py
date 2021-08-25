@@ -48,6 +48,17 @@ def get_events_path_list(input_folder):
         list : a sorted list of events paths
     """
     events_path_list = []
+
+    # Check for events file at the root of input_folder
+    event_list = [f.name for f in Path(input_folder).iterdir() if f.name.startswith("events.out.tfevents.")]
+    if len(event_list):
+        if len(event_list) > 1:
+            raise ValueError(f"Multiple summary found in this folder: {Path(input_folder)}.\n"
+                             f"Please keep only one before running this script again.")
+        else:
+            events_path_list.append(Path(input_folder))
+
+    # Check for events file in sub-folders
     for fold_path in Path(input_folder).iterdir():
         if fold_path.is_dir():
             event_list = [f.name for f in fold_path.iterdir() if f.name.startswith("events.out.tfevents.")]
@@ -57,6 +68,7 @@ def get_events_path_list(input_folder):
                                      f"Please keep only one before running this script again.")
                 else:
                     events_path_list.append(fold_path)
+
     return sorted(events_path_list)
 
 
