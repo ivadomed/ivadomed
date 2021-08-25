@@ -47,6 +47,7 @@ def get_events_path_list(input_folder, learning_rate):
 
     Args:
         input_folder (str): Input folder path.
+        learning_rate (bool): Indicate if learning_rate is considered.
     Returns:
         list : a list of events paths
     """
@@ -212,7 +213,7 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
                    subplot_title=prefix,
                    y_lim=y_lim_loss)
 
-        # Plot each validation metric separetly
+        # Plot each validation metric and learning rate separately
         for tag in events_df_list[0].keys():
             if not tag.endswith("loss"):
                 if i_subplot == 0:  # Init plot
