@@ -74,7 +74,7 @@ def get_events_path_list(input_folder, learning_rate):
                 raise ValueError(f"Multiple summary found in this folder: {Path(input_folder)}.\n"
                                  f"Please keep only one before running this script again.")
             else:
-                # Append learning_rate events file at the end of event_path_list
+                # Append learning_rate events file at the end of events_path_list
                 events_path_list.append(Path(input_folder))
 
     return events_path_list
@@ -122,7 +122,7 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
 
         - the training against the validation loss,
         - the metrics computed on the validation sub-dataset,
-        - the learning rate if the option --lr is selected.
+        - the learning rate if learning_rate is True.
 
     It could consider one output path at a time, for example:
 
