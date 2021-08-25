@@ -18,7 +18,7 @@ def setup_function():
 
 
 def nii_dummy_seg(size_arr=(15, 15, 9), pixdim=(1, 1, 1), dtype=np.float64, orientation='LPI',
-                  shape='rectangle', radius_RL=3.0, radius_AP=2.0, zeroslice=[], softseg=False):
+                  shape='rectangle', radius_RL=3.0, radius_AP=2.0, zeroslice=None, softseg=False):
     """Create a dummy nibabel object.
 
     Create either an ellipse or rectangle of ones running from top to bottom in the 3rd
@@ -39,6 +39,8 @@ def nii_dummy_seg(size_arr=(15, 15, 9), pixdim=(1, 1, 1), dtype=np.float64, orie
     Retunrs:
         nibabel: Image object
     """
+    if zeroslice is None:
+        zeroslice = []
     # Create a 3d array, with dimensions corresponding to x: RL, y: AP, z: IS
     nx, ny, nz = [int(size_arr[i] * pixdim[i]) for i in range(3)]
     data = np.zeros((nx, ny, nz), dtype)

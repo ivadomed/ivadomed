@@ -59,8 +59,12 @@ class MRI2DSegmentationDataset(Dataset):
 
     """
 
-    def __init__(self, filename_pairs, length=[], stride=[], slice_axis=2, cache=True, transform=None,
+    def __init__(self, filename_pairs, length=None, stride=None, slice_axis=2, cache=True, transform=None,
                  slice_filter_fn=None, task="segmentation", roi_params=None, soft_gt=False, is_input_dropout=False):
+        if length is None:
+            length = []
+        if stride is None:
+            stride = []
         self.indexes = []
         self.handlers = []
         self.filename_pairs = filename_pairs
@@ -140,7 +144,7 @@ class MRI2DSegmentationDataset(Dataset):
                 if stride > length or stride <= 0:
                     raise RuntimeError('"stride_2D" must be greater than 0 and smaller or equal to "length_2D".')
                 if length > size:
-                    raise RuntimeError('"length_2D" must be smaller or equal to image dimensions.')
+                    raise RuntimeError('"length_2D" must be smaller or equal to image dimensions after resampling.')
 
             for x in range(0, (shape[0] - self.length[0] + self.stride[0]), self.stride[0]):
                 if x + self.length[0] > shape[0]:
