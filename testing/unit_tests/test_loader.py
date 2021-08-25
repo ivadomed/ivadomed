@@ -195,20 +195,21 @@ def test_load_dataset_2d_png(download_data_testing_test_files,
     "bn_momentum": 0.1,
     "final_activation": "sigmoid",
     "depth": 3,
-    "length_2D": [256, 256],
-    "stride_2D": [244, 244]
+    "length_2D": [256, 128],
+    "stride_2D": [244, 116]
     }])
 @pytest.mark.parametrize('transform_parameters', [{
     "Resample": {
-        "wspace": 0.0001,
+        "wspace": 0.0002,
         "hspace": 0.0001
     },
     "NumpyToTensor": {},
     }])
-def test_2d_patches(download_data_testing_test_files,
-                    loader_parameters, model_parameters, transform_parameters):
+def test_2d_patches_and_resampling(download_data_testing_test_files,
+                                   loader_parameters, model_parameters, transform_parameters):
     """
-    Test to make sure load_dataset runs with 2D PNG data.
+    Test that 2d patching is done properly.
+    Test that microscopy pixelsize and resampling are applied on the right dimensions.
     """
     loader_parameters.update({"model_params": model_parameters})
     bids_df = imed_loader_utils.BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
@@ -218,8 +219,9 @@ def test_2d_patches(download_data_testing_test_files,
                                                              'transforms_params': transform_parameters,
                                                              'dataset_type': 'training'}})
     assert ds.is_2d_patch == True
-    assert ds[0]['input'].shape == (1, 256, 256)
-    assert len(ds) == 16
+    assert ds[0]['input'].shape == (1, 256, 128)
+    assert ds[0]['input_metadata'][0].metadata['index_shape'] == (1512, 382)
+    assert len(ds) == 28
 
 
 @pytest.mark.parametrize('loader_parameters', [{
