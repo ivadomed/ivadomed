@@ -15,10 +15,10 @@ def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--input", required=True, type=str,
                         help="""Input path. If using --multiple, this parameter indicates
-                                the suffix path of all log directories of interest. To compare
-                                trainings or set of trainings (using ``--multiple``) with subplots,
-                                please list the paths by separating them with commas, e.g.
-                                path_output1,path_output2.""",
+                                the prefix path of all log directories of interest. To compare
+                                trainings (not using ``--multiple``) or set of trainings
+                                (using ``--multiple``) with subplots, please list the paths by separating
+                                them with commas, e.g. path_output1,path_output2.""",
                         metavar=imed_utils.Metavar.str)
     parser.add_argument("--multiple", required=False, dest="multiple", action='store_true',
                         help="""Multiple log directories are considered: all available folders
@@ -124,9 +124,9 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
 
     Args:
         input_folder (str): Input path name. Flag: ``--input``, ``-i``. If using ``--multiple``,
-            this parameter indicates the suffix path of all log directories of interest. To compare
-            trainings or set of trainings (using ``--multiple``) with subplots, please list the
-            paths by separating them with commas, e.g. path_output1, path_output2
+            this parameter indicates the prefix path of all log directories of interest. To compare
+            trainings (not using ``--multiple``) or set of trainings (using ``--multiple``) with subplots,
+            please list the paths by separating them with commas, e.g. path_output1, path_output2
         output_folder (str): Output folder. Flag: ``--output``, ``-o``.
         multiple_training (bool): Indicates if multiple log directories are considered (``True``)
             or not (``False``). Flag: ``--multiple``. All available folders with ``-i`` as prefix
