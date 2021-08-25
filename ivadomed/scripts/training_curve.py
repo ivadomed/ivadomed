@@ -46,6 +46,7 @@ def get_events_path_list(input_folder):
     Returns:
         list : a sorted list of events paths
     """
+    events_path_list = []
     for fold_path in Path(input_folder).iterdir():
         if fold_path.is_dir():
             event_list = [f.name for f in fold_path.iterdir() if f.name.startswith("events.out.tfevents.")]
