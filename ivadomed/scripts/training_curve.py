@@ -111,8 +111,9 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
 
     This function uses the TensorFlow summary that is generated during a training to plot for each epoch:
 
-        - the training against the validation loss
-        - the metrics computed on the validation sub-dataset.
+        - the training against the validation loss,
+        - the metrics computed on the validation sub-dataset,
+        - the learning rate.
 
     It could consider one output path at a time, for example:
 
@@ -207,7 +208,7 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
                 if i_subplot == 0:  # Init plot
                     plt_dict[str(Path(output_folder, tag + ".png"))] = plt.figure(figsize=(10 * n_cols, 5 * n_rows))
                 ax = plt_dict[str(Path(output_folder, tag + ".png"))].add_subplot(n_rows, n_cols, i_subplot + 1)
-                y_lim = None if tag.startswith("hausdorff") else [0, 1]
+                y_lim = None if (tag.startswith("hausdorff") or tag.startswith("learning_rate")) else [0, 1]
                 plot_curve(data_list=[df[[tag]] for df in events_df_list],
                            y_label=tag,
                            fig_ax=ax,
@@ -246,6 +247,7 @@ def tensorboard_retrieve_event(events_path_list):
     metrics = defaultdict(list)
     num_metrics = 0
     num_loss = 0
+    num_lr = 0
 
     for i in range(len(summary_iterators)):
         if summary_iterators[i].Tags()['scalars'] == ['Validation/Metrics']:
@@ -266,9 +268,15 @@ def tensorboard_retrieve_event(events_path_list):
                 out[events.step - 1] = events.value
             metrics[list_loss[num_loss]] = out
             num_loss += 1
+        elif summary_iterators[i].Tags()['scalars'] == ['learning_rate']:
+            out = [0 for i in range(len(summary_iterators[i].Scalars("learning_rate")))]
+            for events in summary_iterators[i].Scalars("learning_rate"):
+                out[events.step - 1] = events.value
+            metrics['learning_rate'] = out
+            num_lr += 1
 
-    if num_loss == 0 and num_metrics == 0:
-        raise Exception('No metrics or losses found in the event')
+    if num_loss == 0 and num_metrics == 0 and num_lr == 0:
+        raise Exception('No metrics, losses or learning rate found in the event')
     metrics_df = pd.DataFrame.from_dict(metrics)
     return metrics_df
 
