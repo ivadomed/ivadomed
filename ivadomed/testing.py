@@ -80,7 +80,7 @@ def test(model_params, dataset_test, testing_params, path_output, device, cuda_a
         if testing_params['uncertainty']['applied'] and (n_monteCarlo - 2 == i_monteCarlo):
             testing_params['uncertainty']['applied'] = False
             # COMPUTE UNCERTAINTY MAPS
-            imed_uncertainty.run_uncertainty(ifolder=str(path_3Dpred))
+            imed_uncertainty.run_uncertainty(image_folder=path_3Dpred)
 
     metrics_dict = metric_mgr.get_results()
     metric_mgr.reset()
