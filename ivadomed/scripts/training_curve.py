@@ -24,6 +24,9 @@ def get_parser():
                         help="""Multiple log directories are considered: all available folders
                                 with -i as prefix. The plot represents the mean value (hard line)
                                 surrounded by the standard deviation envelope.""")
+    parser.add_argument("--lr", required=False, dest="learning_rate", action='store_true',
+                        help="""Summary event file for learning rate is considered, the limits on
+                                the y-axis plot are automatically defined.""")
     parser.add_argument("-y", "--ylim_loss", required=False, type=str,
                         help="""Indicates the limits on the y-axis for the loss plots, otherwise
                                 these limits are automatically defined. Please separate the lower
@@ -36,7 +39,7 @@ def get_parser():
     return parser
 
 
-def get_events_path_list(input_folder):
+def get_events_path_list(input_folder, learning_rate):
     """Check to make sure there is at most one summary event in any folder or any subfolder,
     and returns a list of summary event paths.
 
@@ -49,14 +52,15 @@ def get_events_path_list(input_folder):
     """
     events_path_list = []
 
+    if learning_rate:
     # Check for events file at the root of input_folder
-    event_list = [f.name for f in Path(input_folder).iterdir() if f.name.startswith("events.out.tfevents.")]
-    if len(event_list):
-        if len(event_list) > 1:
-            raise ValueError(f"Multiple summary found in this folder: {Path(input_folder)}.\n"
-                             f"Please keep only one before running this script again.")
-        else:
-            events_path_list.append(Path(input_folder))
+        event_list = [f.name for f in Path(input_folder).iterdir() if f.name.startswith("events.out.tfevents.")]
+        if len(event_list):
+            if len(event_list) > 1:
+                raise ValueError(f"Multiple summary found in this folder: {Path(input_folder)}.\n"
+                                 f"Please keep only one before running this script again.")
+            else:
+                events_path_list.append(Path(input_folder))
 
     # Check for events file in sub-folders
     for fold_path in Path(input_folder).iterdir():
@@ -106,14 +110,15 @@ def plot_curve(data_list, y_label, fig_ax, subplot_title, y_lim=None):
     fig_ax.title.set_text('\n'.join(wrap(subplot_title, 80)))
 
 
-def run_plot_training_curves(input_folder, output_folder, multiple_training=False, y_lim_loss=None):
+def run_plot_training_curves(input_folder, output_folder, multiple_training=False, learning_rate=False,
+                             y_lim_loss=None):
     """Utility function to plot the training curves and save data as .csv files.
 
     This function uses the TensorFlow summary that is generated during a training to plot for each epoch:
 
         - the training against the validation loss,
         - the metrics computed on the validation sub-dataset,
-        - the learning rate.
+        - the learning rate if the option --lr is selected.
 
     It could consider one output path at a time, for example:
 
@@ -145,6 +150,8 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
             or not (``False``). Flag: ``--multiple``. All available folders with ``-i`` as prefix
             are considered. The plot represents the mean value (hard line) surrounded by the
             standard deviation (envelope).
+        learning_rate (bool): Indicates if the summary event file for learning rate is considered (``True``)
+            or not (``False``). Flag: ``--lr``. The limits on the y-axis plot are automatically defined.
         y_lim_loss (list): List of the lower and upper limits of the y-axis of the loss plot, otherwise
             these limits are automatically defined. Please separate the lower and the upper limit by a
             comma, e.g. -1,0. Note: for the validation metrics: the y-limits are always 0.0 and 1.0 except
@@ -182,7 +189,7 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
         events_df_list = []
         for path_output in input_folder_list:
             # Find tf folders
-            events_path_list = get_events_path_list(str(path_output))
+            events_path_list = get_events_path_list(str(path_output), learning_rate)
 
             # Get data as dataframe and save as .csv file
             events_vals_df = tensorboard_retrieve_event(events_path_list)
@@ -288,7 +295,8 @@ def main(args=None):
     y_lim_loss = [int(y) for y in args.ylim_loss.split(',')] if args.ylim_loss else None
 
     run_plot_training_curves(input_folder=args.input, output_folder=args.output,
-                             multiple_training=args.multiple, y_lim_loss=y_lim_loss)
+                             multiple_training=args.multiple, learning_rate=args.learning_rate,
+                             y_lim_loss=y_lim_loss)
 
 
 if __name__ == '__main__':
