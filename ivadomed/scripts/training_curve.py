@@ -209,16 +209,20 @@ def tensorboard_retrieve_event(events_path_list):
         df: a panda dataframe where the columns are the metric or loss and the row are the epochs.
 
     """
-    # TODO : Find a way to not hardcode this list of metrics/loss
-    # These list of metrics and losses are in the same order as in the training file (where they are written)
-    list_metrics = ['dice_score', 'multiclass dice_score', 'hausdorff_score', 'precision_score',
-                    'recall_score', 'specificity_score', 'intersection_over_union', 'accuracy_score']
-
-    list_loss = ['train_loss', 'validation_loss']
+    # Lists of metrics and losses in the same order as in events_path_list
+    list_metrics = []
+    list_loss = []
+    for events in events_path_list:
+        if str(events.name).startswith("Validation_Metrics_"):
+            metric_name = str(events.name.split("Validation_Metrics_")[1])
+            list_metrics.append(metric_name)
+        elif str(events.name).startswith("losses_"):
+            loss_name = str(events.name.split("losses_")[1])
+            list_loss.append(loss_name)
 
     # Each element in the summary iterator represent an element (e.g., scalars, images..)
-    # stored in the summary for all epochs in the form of event.
-    summary_iterators = [EventAccumulator(str(dname)).Reload() for dname in Path(path_output).iterdir()]
+    # stored in the summary for all epochs in the form of event, in the same order as in events_path_list.
+    summary_iterators = [EventAccumulator(str(events)).Reload() for events in events_path_list]
 
     metrics = defaultdict(list)
     num_metrics = 0
