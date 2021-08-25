@@ -72,9 +72,9 @@ def get_parser():
 
 
 def create_path_model(context, model_params, ds_train, path_output, train_onehotencoder):
-    path_model = Path(path_output, context["model_name"])
+    path_model = Path(path_output, context.get("model_name"))
     if not path_model.is_dir():
-        logger.info('Creating model directory: {}'.format(path_model))
+        logger.info(f'Creating model directory: {path_model}')
         path_model.mkdir(parents=True)
         if 'film_layers' in model_params and any(model_params['film_layers']):
             joblib.dump(train_onehotencoder, path_model.joinpath("one_hot_encoder.joblib"))
@@ -83,7 +83,7 @@ def create_path_model(context, model_params, ds_train, path_output, train_onehot
                 joblib.dump(metadata_dict, path_model.joinpath("metadata_dict.joblib"))
 
     else:
-        logger.info('Model directory already exists: {}'.format(path_model))
+        logger.info(f'Model directory already exists: {path_model}')
 
 
 def check_multiple_raters(is_train, loader_params):
@@ -126,7 +126,7 @@ def save_config_file(context, path_output):
     # Done after the threshold_analysis to propate this info in the config files
     with Path(path_output, "config_file.json").open(mode='w') as fp:
         json.dump(context, fp, indent=4)
-    with Path(path_output, context["model_name"], context["model_name"] + ".json").open(mode='w') as fp:
+    with Path(path_output, context.get("model_name"), context.get("model_name") + ".json").open(mode='w') as fp:
         json.dump(context, fp, indent=4)
 
 
@@ -203,10 +203,10 @@ def update_film_model_params(context, ds_test, model_params, path_output):
     clustering_path = Path(path_output, "clustering_models.joblib")
     metadata_clustering_models = joblib.load(clustering_path)
     # Model directory
-    ohe_path = Path(path_output, context["model_name"], "one_hot_encoder.joblib")
+    ohe_path = Path(path_output, context.get("model_name"), "one_hot_encoder.joblib")
     one_hot_encoder = joblib.load(ohe_path)
-    ds_test = imed_film.normalize_metadata(ds_test, metadata_clustering_models, context["debugging"],
-                                           model_params['metadata'])
+    ds_test = imed_film.normalize_metadata(ds_test, metadata_clustering_models, context.get("debugging"),
+                                           model_params.get('metadata'))
     model_params.update({"film_onehotencoder": one_hot_encoder,
                          "n_metadata": len([ll for l in one_hot_encoder.categories_ for ll in l])})
 
@@ -216,16 +216,16 @@ def update_film_model_params(context, ds_test, model_params, path_output):
 def run_segment_command(context, model_params):
     # BIDSDataframe of all image files
     # Indexing of derivatives is False for command segment
-    bids_df = imed_loader_utils.BidsDataframe(context['loader_parameters'], context['path_output'], derivatives=False)
+    bids_df = imed_loader_utils.BidsDataframe(context.get('loader_parameters'), context.get('path_output'), derivatives=False)
 
     # Append subjects filenames into a list
-    bids_subjects = sorted(bids_df.df['filename'].to_list())
+    bids_subjects = sorted(bids_df.df.get('filename').to_list())
 
     # Add postprocessing to packaged model
-    path_model = Path(context['path_output'], context['model_name'])
-    path_model_config = Path(path_model, context['model_name'] + ".json")
+    path_model = Path(context.get('path_output'), context.get('model_name'))
+    path_model_config = Path(path_model, context.get('model_name') + ".json")
     model_config = imed_config_manager.load_json(str(path_model_config))
-    model_config['postprocessing'] = context['postprocessing']
+    model_config['postprocessing'] = context.get('postprocessing')
     with path_model_config.open(mode='w') as fp:
         json.dump(model_config, fp, indent=4)
     options = {}
@@ -275,7 +275,7 @@ def run_segment_command(context, model_params):
                                                                    fname_images=fname_img,
                                                                    gpu_id=context['gpu_ids'][0],
                                                                    options=options)
-            pred_path = Path(context['path_output'], "pred_masks")
+            pred_path = Path(context.get('path_output'), "pred_masks")
             if not pred_path.exists():
                 pred_path.mkdir(parents=True)
 
@@ -317,11 +317,11 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
             * If "segment" command: No return value.
 
     """
-    command = copy.deepcopy(context["command"])
+    command = copy.deepcopy(context.get("command"))
     path_output = set_output_path(context)
-    log_file = Path(context['path_output'], context['log_file'])
+    path_log = Path(context.get('path_output'), context.get('log_file'))
     logger.remove()
-    logger.add(str(log_file))
+    logger.add(str(path_log))
     logger.add(sys.stdout)
 
     # Create a log with the version of the Ivadomed software and the version of the Annexed dataset (if present)
@@ -484,7 +484,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
 
 
 def create_dataset_and_ivadomed_version_log(context):
-    path_data = context['loader_parameters']['path_data']
+    path_data = context.get('loader_parameters').get('path_data')
 
     ivadomed_version = imed_utils._version_string()
     datasets_version = []
@@ -495,12 +495,12 @@ def create_dataset_and_ivadomed_version_log(context):
         for Dataset in path_data:
             datasets_version.append(imed_utils.__get_commit(path_to_git_folder=Dataset))
 
-    log_file = Path(context['path_output'], 'version_info.log')
+    path_log = Path(context.get('path_output'), 'version_info.log')
 
     try:
-        f = log_file.open(mode="w")
+        f = path_log.open(mode="w")
     except OSError as err:
-        logger.error("OS error: {0}".format(err))
+        logger.error(f"OS error: {err}")
         raise Exception("Have you selected a log folder, and do you have write permissions for that folder?")
 
     # IVADOMED
