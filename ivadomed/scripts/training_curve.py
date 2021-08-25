@@ -167,7 +167,7 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
             events_path_list = get_events_path_list(str(path_output))
 
             # Get data as dataframe
-            events_vals_df = tensorboard_retrieve_event(str(path_output))
+            events_vals_df = tensorboard_retrieve_event(events_path_list)
 
             # Store data
             events_df_list.append(events_vals_df)
@@ -199,11 +199,11 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
         plt_dict[fname_out].savefig(fname_out)
 
 
-def tensorboard_retrieve_event(path_output):
+def tensorboard_retrieve_event(events_path_list):
     """Retrieve data from tensorboard summary event.
 
     Args:
-        path_output (str): output path where the event files are located
+        events_path_list (list): list of events paths
 
     Returns:
         df: a panda dataframe where the columns are the metric or loss and the row are the epochs.
