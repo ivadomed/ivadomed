@@ -68,9 +68,6 @@ Step 4 : Install from source
 
     pip install -e .
 
-Note that this is NOT compatible with ComputeCanada because of their no anaconda policy: https://docs.computecanada.ca/wiki/Anaconda/en
-
-
 Approach 2: Venv
 -----------------
 
