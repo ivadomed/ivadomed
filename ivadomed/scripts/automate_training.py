@@ -255,7 +255,7 @@ def make_config_list(param_list, initial_config, all_combin, multi_params):
                 for hyper_option in combination:
                     new_config = update_dict(new_config, hyper_option.option, hyper_option.base_key)
                     folder_name_suffix = hyper_option.name
-                    folder_name_suffix = folder_name_suffix.translate({ord(i): None for i in '}{ \''})
+                    folder_name_suffix = folder_name_suffix.translate({ord(i): None for i in '[]}{ \''})
                     folder_name_suffix = folder_name_suffix.translate({ord(i): '-' for i in ':=,'})
                     path_output = path_output + folder_name_suffix
                 new_config["path_output"] = path_output
@@ -273,7 +273,7 @@ def make_config_list(param_list, initial_config, all_combin, multi_params):
                 hyper_option = base_key_dict[key][i]
                 new_config = update_dict(new_config, hyper_option.option, hyper_option.base_key)
                 folder_name_suffix = hyper_option.name
-                folder_name_suffix = folder_name_suffix.translate({ord(i): None for i in '}{ \''})
+                folder_name_suffix = folder_name_suffix.translate({ord(i): None for i in '[]}{ \''})
                 folder_name_suffix = folder_name_suffix.translate({ord(i): '-' for i in ':=,'})
                 path_output = path_output + folder_name_suffix
             new_config["path_output"] = path_output
@@ -283,7 +283,7 @@ def make_config_list(param_list, initial_config, all_combin, multi_params):
             new_config = copy.deepcopy(initial_config)
             update_dict(new_config, hyper_option.option, hyper_option.base_key)
             folder_name_suffix = hyper_option.name
-            folder_name_suffix = folder_name_suffix.translate({ord(i): None for i in '}{ \''})
+            folder_name_suffix = folder_name_suffix.translate({ord(i): None for i in '[]}{ \''})
             folder_name_suffix = folder_name_suffix.translate({ord(i): '-' for i in ':=,'})
             new_config["path_output"] = initial_config["path_output"] + folder_name_suffix
             config_list.append(new_config)
