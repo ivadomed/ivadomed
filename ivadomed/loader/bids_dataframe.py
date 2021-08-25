@@ -37,10 +37,13 @@ class BidsDataframe:
 
         # target_suffix and roi_suffix from loader parameters
         self.target_suffix = copy.deepcopy(loader_params['target_suffix'])
+
         # If `target_suffix` is a list of lists convert to list
         if any(isinstance(t, list) for t in self.target_suffix):
             self.target_suffix = list(itertools.chain.from_iterable(self.target_suffix))
+
         self.roi_suffix = loader_params['roi_params']['suffix']
+
         # If `roi_suffix` is not None, add to target_suffix
         if self.roi_suffix is not None:
             self.target_suffix.append(self.roi_suffix)
@@ -168,7 +171,6 @@ class BidsDataframe:
         self.df.dropna(axis=1, inplace=True, how='all')
 
     def add_tsv_metadata(self, df, path_data, layout):
-
         """Add tsv files metadata to dataframe.
         Args:
             layout (BIDSLayout): pybids BIDSLayout of the indexed files of the path_data
