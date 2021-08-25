@@ -1,4 +1,3 @@
-import os
 import nibabel as nib
 import numpy as np
 import onnxruntime
@@ -6,6 +5,7 @@ import torch
 import imageio
 import joblib
 from typing import List
+from pathlib import Path
 
 from loguru import logger
 from torch.utils.data import Dataset
@@ -106,7 +106,7 @@ def get_onehotencoder(context: dict, folder_model: str, options: dict, ds: Datas
     Returns:
         dict: onehotencoder used in the model params.
     """
-    metadata_dict = joblib.load(os.path.join(folder_model, 'metadata_dict.joblib'))
+    metadata_dict = joblib.load(Path(folder_model, 'metadata_dict.joblib'))
     for idx in ds.indexes:
         for i in range(len(idx)):
             idx[i]['input_metadata'][0][context['FiLMedUnet']['metadata']] = options['metadata']
@@ -114,7 +114,7 @@ def get_onehotencoder(context: dict, folder_model: str, options: dict, ds: Datas
 
     ds = imed_film.normalize_metadata(ds, None, context["debugging"], context['FiLMedUnet']['metadata'])
 
-    return joblib.load(os.path.join(folder_model, 'one_hot_encoder.joblib'))
+    return joblib.load(Path(folder_model, 'one_hot_encoder.joblib'))
 
 
 def pred_to_nib(data_lst: List[np.ndarray], z_lst: List[int], fname_ref: str, fname_out: str, slice_axis: int,
