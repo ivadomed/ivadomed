@@ -48,19 +48,9 @@ def get_events_path_list(input_folder, learning_rate):
     Args:
         input_folder (str): Input folder path.
     Returns:
-        list : a sorted list of events paths
+        list : a list of events paths
     """
     events_path_list = []
-
-    if learning_rate:
-    # Check for events file at the root of input_folder
-        event_list = [f.name for f in Path(input_folder).iterdir() if f.name.startswith("events.out.tfevents.")]
-        if len(event_list):
-            if len(event_list) > 1:
-                raise ValueError(f"Multiple summary found in this folder: {Path(input_folder)}.\n"
-                                 f"Please keep only one before running this script again.")
-            else:
-                events_path_list.append(Path(input_folder))
 
     # Check for events file in sub-folders
     for fold_path in Path(input_folder).iterdir():
@@ -72,8 +62,21 @@ def get_events_path_list(input_folder, learning_rate):
                                      f"Please keep only one before running this script again.")
                 else:
                     events_path_list.append(fold_path)
+    # Sort events_path_list alphabetically
+    events_path_list = sorted(events_path_list)
 
-    return sorted(events_path_list)
+    if learning_rate:
+    # Check for events file at the root of input_folder (contains learning_rate)
+        event_list = [f.name for f in Path(input_folder).iterdir() if f.name.startswith("events.out.tfevents.")]
+        if len(event_list):
+            if len(event_list) > 1:
+                raise ValueError(f"Multiple summary found in this folder: {Path(input_folder)}.\n"
+                                 f"Please keep only one before running this script again.")
+            else:
+                # Append learning_rate events file at the end of event_path_list
+                events_path_list.append(Path(input_folder))
+
+    return events_path_list
 
 
 def plot_curve(data_list, y_label, fig_ax, subplot_title, y_lim=None):
