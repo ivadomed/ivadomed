@@ -1,3 +1,51 @@
+## v2.8.0 (2021-08-25)
+[View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.7.4...release)
+
+**BUG**
+
+- Fix inverted dimensions in microscopy pixelsize.  [View pull request](https://github.com/ivadomed/ivadomed/pull/916)
+- Fix segment functions for models without pre-processing transforms.  [View pull request](https://github.com/ivadomed/ivadomed/pull/874)
+- Fix microscopy ground-truth range of values.  [View pull request](https://github.com/ivadomed/ivadomed/pull/870)
+- `utils.py`: Only raise ArgParseException for non-zero SystemExits.  [View pull request](https://github.com/ivadomed/ivadomed/pull/854)
+- Remove `anaconda` from explicit dependencies.  [View pull request](https://github.com/ivadomed/ivadomed/pull/845)
+- Fix multiclass evaluation bug.  [View pull request](https://github.com/ivadomed/ivadomed/pull/837)
+- Fix last slice missing in testing bug.  [View pull request](https://github.com/ivadomed/ivadomed/pull/835)
+- Skip all NumpyToTensor transformation for retrocompatibility.  [View pull request](https://github.com/ivadomed/ivadomed/pull/830)
+- remove all NumpyToTensor.  [View pull request](https://github.com/ivadomed/ivadomed/pull/826)
+- Add missing "-r" flags to installation.rst.  [View pull request](https://github.com/ivadomed/ivadomed/pull/820)
+- call NumpyToTensor last.  [View pull request](https://github.com/ivadomed/ivadomed/pull/818)
+- Fix bug in loader for multiple raters.  [View pull request](https://github.com/ivadomed/ivadomed/pull/806)
+- Hot patch to address Inference issue #803.  [View pull request](https://github.com/ivadomed/ivadomed/pull/804)
+- Add tmp and log file to gitignore.  [View pull request](https://github.com/ivadomed/ivadomed/pull/794)
+- Addressing Windows Path issue causing unit test_automated_training.py unit tests to fail.  [View pull request](https://github.com/ivadomed/ivadomed/pull/755)
+
+**DEPENDENCIES**
+
+- Remove `anaconda` from explicit dependencies.  [View pull request](https://github.com/ivadomed/ivadomed/pull/845)
+- Add lib versioning.  [View pull request](https://github.com/ivadomed/ivadomed/pull/759)
+
+**DOCUMENTATION**
+
+- change readme to point to the latest.  [View pull request](https://github.com/ivadomed/ivadomed/pull/875)
+- Installation instruction steps explicity recommended for MacOS but not Linux.  [View pull request](https://github.com/ivadomed/ivadomed/pull/847)
+- Clarified step 2 for pytorch/torchvision.  [View pull request](https://github.com/ivadomed/ivadomed/pull/842)
+- Add missing "-r" flags to installation.rst.  [View pull request](https://github.com/ivadomed/ivadomed/pull/820)
+- Update one class segmentation tutorial's output and segmentation image.  [View pull request](https://github.com/ivadomed/ivadomed/pull/779)
+- Update documentation with the solution to failing test_adaptive.py on MacOS.  [View pull request](https://github.com/ivadomed/ivadomed/pull/771)
+- Added link to JOSS paper.  [View pull request](https://github.com/ivadomed/ivadomed/pull/748)
+- Add link to GitHub wiki in readme.  [View pull request](https://github.com/ivadomed/ivadomed/pull/735)
+
+**ENHANCEMENT**
+
+- Fix microscopy ground-truth range of values.  [View pull request](https://github.com/ivadomed/ivadomed/pull/870)
+- fix generate_sha_256 for joblib files.  [View pull request](https://github.com/ivadomed/ivadomed/pull/866)
+- Add microscopy config file.  [View pull request](https://github.com/ivadomed/ivadomed/pull/850)
+- Add the inference steps for PNG/TIF microscopy data.  [View pull request](https://github.com/ivadomed/ivadomed/pull/834)
+- New loader: Load PNG/TIF/JPG microscopy files as Nibabel objects.  [View pull request](https://github.com/ivadomed/ivadomed/pull/813)
+- Speed up IvadoMed Import Speed.  [View pull request](https://github.com/ivadomed/ivadomed/pull/793)
+- Add logging for functions in main.py.  [View pull request](https://github.com/ivadomed/ivadomed/pull/764)
+- Remove data dependencies from `if` statements in the `Decoder()` forward pass.  [View pull request](https://github.com/ivadomed/ivadomed/pull/752)
+
 ## v2.7.4 (2021-03-15)
 
 See `2.7.3`. We had to re-release because the GitHub Action didn't get triggered to push the release
