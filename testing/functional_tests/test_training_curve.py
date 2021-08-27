@@ -22,10 +22,11 @@ def test_training_curve(download_functional_test_files):
     assert os.path.exists(os.path.join(__output_dir__, "hausdorff_score.png"))
     assert os.path.exists(os.path.join(__output_dir__, "intersection_over_union.png"))
     assert os.path.exists(os.path.join(__output_dir__, "losses.png"))
-    assert os.path.exists(os.path.join(__output_dir__, "multiclass dice_score.png"))
+    assert os.path.exists(os.path.join(__output_dir__, "multi_class_dice_score.png"))
     assert os.path.exists(os.path.join(__output_dir__, "precision_score.png"))
     assert os.path.exists(os.path.join(__output_dir__, "recall_score.png"))
     assert os.path.exists(os.path.join(__output_dir__, "specificity_score.png"))
+    assert os.path.exists(os.path.join(__output_dir__, "tensorboard_events_training_values.csv"))
 
 
 def teardown_function():
