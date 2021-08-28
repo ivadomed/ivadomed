@@ -18,7 +18,7 @@ import numpy as np
 from ivadomed.loader.bids_dataset import BidsDataset
 from ivadomed import config_manager as imed_config_manager
 from ivadomed.loader import utils as imed_loader_utils
-from ivadomed import utils as imed_utils
+from ivadomed.loader.slice_filter import SliceFilter
 from ivadomed import transforms as imed_transforms
 
 from torchvision import transforms as torch_transforms
@@ -64,7 +64,7 @@ def run_main(args):
                          metadata_choice=context["metadata"],
                          contrast_balance=context["contrast_balance"],
                          transform=transform_lst,
-                         slice_filter_fn=imed_loader_utils.SliceFilter())
+                         slice_filter_fn=SliceFilter())
 
         print("Loaded {} axial slices for the {} set.".format(len(ds), ds_name))
         ds_loader = DataLoader(ds, batch_size=1,

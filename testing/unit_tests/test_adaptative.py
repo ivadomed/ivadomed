@@ -8,6 +8,7 @@ from ivadomed.loader.bids_dataframe import BidsDataframe
 import ivadomed.transforms as imed_transforms
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative
+from ivadomed.loader.slice_filter import SliceFilter
 import logging
 from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__, download_data_testing_test_files
 from testing.common_testing_util import remove_tmp_dir
@@ -69,7 +70,7 @@ def test_hdf5(download_data_testing_test_files, loader_parameters):
                                               transform=transform_lst,
                                               contrast_balance={},
                                               slice_axis=2,
-                                              slice_filter_fn=imed_loader_utils.SliceFilter(
+                                              slice_filter_fn=SliceFilter(
                                                 filter_empty_input=True,
                                                 filter_empty_mask=True))
 
@@ -126,7 +127,7 @@ def test_hdf5(download_data_testing_test_files, loader_parameters):
                                               transform=transform_lst,
                                               metadata_choice=False,
                                               dim=2,
-                                              slice_filter_fn=imed_loader_utils.SliceFilter(
+                                              slice_filter_fn=SliceFilter(
                                                 filter_empty_input=True,
                                                 filter_empty_mask=True),
                                               roi_params=roi_params)

@@ -14,6 +14,7 @@ from ivadomed import losses
 from ivadomed import models
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative
+from ivadomed.loader.slice_filter import SliceFilter
 from ivadomed import training as imed_training
 import logging
 from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__, \
@@ -99,7 +100,7 @@ def test_HeMIS(download_data_testing_test_files, loader_parameters, p=0.0001):
                                           transform=transform_lst,
                                           metadata_choice=False,
                                           dim=2,
-                                          slice_filter_fn=imed_loader_utils.SliceFilter(
+                                          slice_filter_fn=SliceFilter(
                                               filter_empty_input=True,
                                               filter_empty_mask=True),
                                           roi_params=roi_params)
