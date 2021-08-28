@@ -8,7 +8,6 @@ import joblib
 from loguru import logger
 from sklearn.model_selection import train_test_split
 from torch._six import string_classes, int_classes
-from ivadomed import utils as imed_utils
 import nibabel as nib
 import random
 
@@ -342,118 +341,6 @@ def orient_shapes_hwd(data, slice_axis):
     elif slice_axis == 2:
         return np.array(data)
 
-class SampleMetadata(object):
-    """Metadata class to help update, get and set metadata values.
-
-    Args:
-        d (dict): Initial metadata.
-
-    Attributes:
-        metadata (dict): Image metadata.
-    """
-
-    def __init__(self, d=None):
-        self.metadata = {} or d
-
-    def __setitem__(self, key, value):
-        self.metadata[key] = value
-
-    def __getitem__(self, key):
-        return self.metadata[key]
-
-    def __contains__(self, key):
-        return key in self.metadata
-
-    def items(self):
-        return self.metadata.items()
-
-    def _update(self, ref, list_keys):
-        """Update metadata keys with a reference metadata.
-
-        A given list of metadata keys will be changed and given the values of the reference
-        metadata.
-
-        Args:
-            ref (SampleMetadata): Reference metadata object.
-            list_keys (list): List of keys that need to be updated.
-        """
-        for k in list_keys:
-            if (k not in self.metadata.keys() or not bool(self.metadata[k])) and k in ref.metadata.keys():
-                self.metadata[k] = ref.metadata[k]
-
-    def keys(self):
-        return self.metadata.keys()
-
-
-class BalancedSampler(torch.utils.data.sampler.Sampler):
-    """Estimate sampling weights in order to rebalance the
-    class distributions from an imbalanced dataset.
-
-    Args:
-        dataset (BidsDataset): Dataset containing input, gt and metadata.
-        metadata (str): Indicates which metadata to use to balance the sampler.
-
-    Attributes:
-        indices (list): List from 0 to length of dataset (number of elements in the dataset).
-        nb_samples (int): Number of elements in the dataset.
-        weights (Tensor): Weight of each dataset element equal to 1 over the frequency of a
-            given label (inverse of the frequency).
-        metadata_dict (dict): Stores the mapping from metadata string to index (int).
-        label_idx (int): Keeps track of the label indices already used for the metadata_dict.
-    """
-
-    def __init__(self, dataset, metadata='gt'):
-        self.indices = list(range(len(dataset)))
-
-        self.nb_samples = len(self.indices)
-        self.metadata_dict = {}
-        self.label_idx = 0
-
-        cmpt_label = {}
-        for idx in self.indices:
-            label = self._get_label(dataset, idx, metadata)
-            if label in cmpt_label:
-                cmpt_label[label] += 1
-            else:
-                cmpt_label[label] = 1
-
-        weights = [1.0 / cmpt_label[self._get_label(dataset, idx, metadata)]
-                   for idx in self.indices]
-
-        self.weights = torch.DoubleTensor(weights)
-
-    def _get_label(self, dataset, idx, metadata):
-        """Returns 1 if sample is not empty, 0 if it is empty (only zeros).
-
-        Args:
-            dataset (BidsDataset): Dataset containing input, gt and metadata.
-            idx (int): Element index.
-
-        Returns:
-            int: 0 or 1.
-        """
-        if metadata != 'gt':
-            label_str = dataset[idx]['input_metadata'][0][metadata]
-            if label_str not in self.metadata_dict:
-                self.metadata_dict[label_str] = self.label_idx
-                self.label_idx += 1
-            return self.metadata_dict[label_str]
-
-        else:
-            # For now, only supported with single label
-            sample_gt = np.array(dataset[idx]['gt'][0])
-            if np.any(sample_gt):
-                return 1
-            else:
-                return 0
-
-    def __iter__(self):
-        return (self.indices[i] for i in torch.multinomial(
-            self.weights, self.nb_samples, replacement=True))
-
-    def __len__(self):
-        return self.num_samples
-
 
 def update_metadata(metadata_src_lst, metadata_dest_lst):
     """Update metadata keys with a reference metadata.
@@ -475,71 +362,6 @@ def update_metadata(metadata_src_lst, metadata_dest_lst):
             for idx, _ in enumerate(metadata_dest_lst[0]):
                 metadata_dest_lst[0][idx]._update(metadata_src_lst[0], TRANSFORM_PARAMS)
     return metadata_dest_lst
-
-
-class SliceFilter(object):
-    """Filter 2D slices from dataset.
-
-    If a sample does not meet certain conditions, it is discarded from the dataset.
-
-    Args:
-        filter_empty_mask (bool): If True, samples where all voxel labels are zeros are discarded.
-        filter_empty_input (bool): If True, samples where all voxel intensities are zeros are discarded.
-        filter_absent_class (bool): If True, samples where all voxel labels are zero for one or more classes are discarded.
-        filter_classification (bool): If True, samples where all images fail a custom classifier filter are discarded.
-
-    Attributes:
-        filter_empty_mask (bool): If True, samples where all voxel labels are zeros are discarded.
-        filter_empty_input (bool): If True, samples where all voxel intensities are zeros are discarded.
-        filter_absent_class (bool): If True, samples where all voxel labels are zero for one or more classes are discarded.
-        filter_classification (bool): If True, samples where all images fail a custom classifier filter are discarded.
-
-    """
-
-    def __init__(self, filter_empty_mask=True,
-                 filter_empty_input=True,
-                 filter_classification=False,
-                 filter_absent_class=False,
-                 classifier_path=None, device=None, cuda_available=None):
-        self.filter_empty_mask = filter_empty_mask
-        self.filter_empty_input = filter_empty_input
-        self.filter_absent_class = filter_absent_class
-        self.filter_classification = filter_classification
-        self.device = device
-        self.cuda_available = cuda_available
-
-        if self.filter_classification:
-            if cuda_available:
-                self.classifier = torch.load(classifier_path, map_location=device)
-            else:
-                self.classifier = torch.load(classifier_path, map_location='cpu')
-
-    def __call__(self, sample):
-        input_data, gt_data = sample['input'], sample['gt']
-
-        if self.filter_empty_mask:
-            # Filter slices that do not have ANY ground truth (i.e. all masks are empty)
-            if not np.any(gt_data):
-                return False
-
-        if self.filter_absent_class:
-            # Filter slices that have absent classes (i.e. one or more masks are empty)
-            if not np.all([np.any(mask) for mask in gt_data]):
-                return False
-
-        if self.filter_empty_input:
-            # Filter set of images if one of them is empty or filled with constant value (i.e. std == 0)
-            if np.any([img.std() == 0 for img in input_data]):
-                return False
-
-        if self.filter_classification:
-            if not np.all([int(
-                    self.classifier(
-                        imed_utils.cuda(torch.from_numpy(img.copy()).unsqueeze(0).unsqueeze(0),
-                                        self.cuda_available))) for img in input_data]):
-                return False
-
-        return True
 
 
 def reorient_image(arr, slice_axis, nib_ref, nib_ref_canonical):

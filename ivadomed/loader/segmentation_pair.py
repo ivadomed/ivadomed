@@ -4,6 +4,7 @@ import nibabel as nib
 import numpy as np
 
 from ivadomed.loader import utils as imed_loader_utils
+from ivadomed.loader.sample_meta_data import SampleMetadata
 from ivadomed import postprocessing as imed_postpro
 
 
@@ -167,7 +168,7 @@ class SegmentationPair(object):
         for idx_class, gt in enumerate(self.gt_handle):
             if gt is not None:
                 if not isinstance(gt, list):  # this tissue has annotation from only one rater
-                    gt_meta_dict.append(imed_loader_utils.SampleMetadata({
+                    gt_meta_dict.append(SampleMetadata({
                         "zooms": imed_loader_utils.orient_shapes_hwd(gt.header.get_zooms(), self.slice_axis),
                         "data_shape": imed_loader_utils.orient_shapes_hwd(gt.header.get_data_shape(), self.slice_axis),
                         "gt_filenames": self.metadata[0]["gt_filenames"],
@@ -177,7 +178,7 @@ class SegmentationPair(object):
                         "crop_params": {}
                     }))
                 else:
-                    gt_meta_dict.append([imed_loader_utils.SampleMetadata({
+                    gt_meta_dict.append([SampleMetadata({
                         "zooms": imed_loader_utils.orient_shapes_hwd(gt_rater.header.get_zooms(), self.slice_axis),
                         "data_shape": imed_loader_utils.orient_shapes_hwd(gt_rater.header.get_data_shape(), self.slice_axis),
                         "gt_filenames": self.metadata[0]["gt_filenames"][idx_class][idx_rater],
@@ -198,7 +199,7 @@ class SegmentationPair(object):
 
         input_meta_dict = []
         for handle in self.input_handle:
-            input_meta_dict.append(imed_loader_utils.SampleMetadata({
+            input_meta_dict.append(SampleMetadata({
                 "zooms": imed_loader_utils.orient_shapes_hwd(handle.header.get_zooms(), self.slice_axis),
                 "data_shape": imed_loader_utils.orient_shapes_hwd(handle.header.get_data_shape(), self.slice_axis),
                 "data_type": 'im',
