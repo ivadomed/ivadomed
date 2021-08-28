@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 
+
 class BalancedSampler(torch.utils.data.sampler.Sampler):
     """Estimate sampling weights in order to rebalance the
     class distributions from an imbalanced dataset.

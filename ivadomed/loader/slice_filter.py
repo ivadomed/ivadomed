@@ -2,6 +2,7 @@ import torch
 import numpy as np
 from ivadomed import utils as imed_utils
 
+
 class SliceFilter(object):
     """Filter 2D slices from dataset.
 
