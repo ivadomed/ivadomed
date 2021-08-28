@@ -4,6 +4,7 @@ import h5py
 import torch
 from torch.utils.data import DataLoader
 
+from ivadomed.loader.bids_dataframe import BidsDataframe
 import ivadomed.transforms as imed_transforms
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative
@@ -36,7 +37,7 @@ def setup_function():
 def test_hdf5(download_data_testing_test_files, loader_parameters):
     print('[INFO]: Starting test ... \n')
 
-    bids_df = imed_loader_utils.BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
+    bids_df = BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
 
     contrast_params = loader_parameters["contrast_params"]
     target_suffix = loader_parameters["target_suffix"]
