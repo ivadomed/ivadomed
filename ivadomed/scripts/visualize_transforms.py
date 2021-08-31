@@ -9,6 +9,7 @@ import torch
 from pathlib import Path
 from ivadomed import config_manager as imed_config_manager
 from ivadomed.loader import utils as imed_loader_utils
+from ivadomed.loader.sample_meta_data import SampleMetadata
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
 from ivadomed import maths as imed_maths
@@ -139,7 +140,7 @@ def run_visualization(input, config, number, output, roi):
         for i in indexes:
             data = [input_data[:, :, i]]
             # Init metadata
-            metadata = imed_loader_utils.SampleMetadata({"zooms": zooms, "data_type": "gt" if is_mask else "im"})
+            metadata = SampleMetadata({"zooms": zooms, "data_type": "gt" if is_mask else "im"})
 
             # Apply transformations to ROI
             if "CenterCrop" in training_transforms or ("ROICrop" in training_transforms and Path(roi).is_file()):

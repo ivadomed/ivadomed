@@ -1,4 +1,3 @@
-import os
 import copy
 from pathlib import Path
 import nibabel as nib
@@ -8,6 +7,7 @@ import torch.backends.cudnn as cudnn
 from loguru import logger
 from torch.utils.data import DataLoader, ConcatDataset
 from tqdm import tqdm
+from pathlib import Path
 
 from ivadomed import metrics as imed_metrics
 from ivadomed import utils as imed_utils
@@ -47,7 +47,7 @@ def test(model_params, dataset_test, testing_params, path_output, device, cuda_a
                              num_workers=0)
 
     # LOAD TRAIN MODEL
-    fname_model = os.path.join(path_output, "best_model.pt")
+    fname_model = Path(path_output, "best_model.pt")
     logger.info('Loading model: {}'.format(fname_model))
     model = torch.load(fname_model, map_location=device)
     if cuda_available:
@@ -55,9 +55,9 @@ def test(model_params, dataset_test, testing_params, path_output, device, cuda_a
     model.eval()
 
     # CREATE OUTPUT FOLDER
-    path_3Dpred = os.path.join(path_output, 'pred_masks')
-    if not os.path.isdir(path_3Dpred):
-        os.makedirs(path_3Dpred)
+    path_3Dpred = Path(path_output, 'pred_masks')
+    if not path_3Dpred.is_dir():
+        path_3Dpred.mkdir(parents=True)
 
     # METRIC MANAGER
     metric_mgr = imed_metrics.MetricManager(metric_fns)
@@ -73,14 +73,14 @@ def test(model_params, dataset_test, testing_params, path_output, device, cuda_a
         n_monteCarlo = 1
 
     for i_monteCarlo in range(n_monteCarlo):
-        preds_npy, gt_npy = run_inference(test_loader, model, model_params, testing_params, path_3Dpred,
+        preds_npy, gt_npy = run_inference(test_loader, model, model_params, testing_params, str(path_3Dpred),
                                           cuda_available, i_monteCarlo, postprocessing)
         metric_mgr(preds_npy, gt_npy)
         # If uncertainty computation, don't apply it on last iteration for prediction
         if testing_params['uncertainty']['applied'] and (n_monteCarlo - 2 == i_monteCarlo):
             testing_params['uncertainty']['applied'] = False
             # COMPUTE UNCERTAINTY MAPS
-            imed_uncertainty.run_uncertainty(image_folder=path_3Dpred)
+            imed_uncertainty.run_uncertainty(image_folder=str(path_3Dpred))
 
     metrics_dict = metric_mgr.get_results()
     metric_mgr.reset()
@@ -150,7 +150,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
             input_samples = batch['input'][0]
 
         if model_params["name"] == "Modified3DUNet" and model_params["attention"] and ofolder:
-            imed_visualize.save_feature_map(batch, "attentionblock2", os.path.dirname(ofolder), model, input_samples,
+            imed_visualize.save_feature_map(batch, "attentionblock2", str(Path(ofolder).parent), model, input_samples,
                                             slice_axis=test_loader.dataset.slice_axis)
 
         if 'film_layers' in model_params and any(model_params['film_layers']):
@@ -221,7 +221,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                     and task != "classification"):
                     # save the completely processed file as a NifTI file
                     if ofolder:
-                        fname_pred = os.path.join(ofolder, Path(fname_ref).name)
+                        fname_pred = str(Path(ofolder, Path(fname_ref).name))
                         fname_pred = fname_pred.rsplit("_", 1)[0] + '_pred.nii.gz'
                         # If Uncertainty running, then we save each simulation result
                         if testing_params['uncertainty']['applied']:
@@ -277,7 +277,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                 if last_sample_bool:
                     pred_undo = np.array(pred_undo)
                     if ofolder:
-                        fname_pred = os.path.join(ofolder, fname_ref.split('/')[-1])
+                        fname_pred = str(Path(ofolder, Path(fname_ref).name))
                         fname_pred = fname_pred.split(testing_params['target_suffix'][0])[0] + '_pred.nii.gz'
                         # If uncertainty running, then we save each simulation result
                         if testing_params['uncertainty']['applied']:
