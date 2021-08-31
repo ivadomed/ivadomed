@@ -5,6 +5,7 @@ import logging
 import torch
 import numpy as np
 
+from ivadomed.loader.bids_dataframe import BidsDataframe
 from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__, download_data_testing_test_files, path_repo_root
 from testing.common_testing_util import remove_tmp_dir
 from ivadomed.loader import utils as imed_loader_utils
@@ -32,7 +33,7 @@ def test_bids_df_microscopy_png(download_data_testing_test_files, loader_paramet
     Test for when no contrast_params are provided
     """
 
-    bids_df = imed_loader_utils.BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
+    bids_df = BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
     df_test = bids_df.df.drop(columns=['path'])
     df_test = df_test.sort_values(by=['filename']).reset_index(drop=True)
     csv_ref = os.path.join(loader_parameters["path_data"][0], "df_ref.csv")
@@ -57,7 +58,7 @@ def test_bids_df_anat(download_data_testing_test_files, loader_parameters):
     Test behavior when "roi_suffix" is not None
     """
 
-    bids_df = imed_loader_utils.BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
+    bids_df = BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
     df_test = bids_df.df.drop(columns=['path'])
     df_test = df_test.sort_values(by=['filename']).reset_index(drop=True)
     csv_ref = os.path.join(loader_parameters["path_data"][0], "df_ref.csv")
@@ -81,7 +82,7 @@ def test_bids_df_multi(download_data_testing_test_files, loader_parameters):
     Test for multiple folders in path_data
     """
 
-    bids_df = imed_loader_utils.BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
+    bids_df = BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
     df_test = bids_df.df.drop(columns=['path'])
     df_test = df_test.sort_values(by=['filename']).reset_index(drop=True)
     csv_ref = os.path.join(loader_parameters["path_data"][0], "df_ref_multi.csv")
@@ -106,7 +107,7 @@ def test_bids_df_ctscan(download_data_testing_test_files, loader_parameters):
     Test for when dataset_description.json is not present in derivatives folder
     """
 
-    bids_df = imed_loader_utils.BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
+    bids_df = BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
     df_test = bids_df.df.drop(columns=['path'])
     df_test = df_test.sort_values(by=['filename']).reset_index(drop=True)
     csv_ref = os.path.join(loader_parameters["path_data"][0], "df_ref.csv")
@@ -164,7 +165,7 @@ def test_load_dataset_2d_png(download_data_testing_test_files,
     and binarizes ground-truth values to 0 and 1.
     """
     loader_parameters.update({"model_params": model_parameters})
-    bids_df = imed_loader_utils.BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
+    bids_df = BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
     data_lst = ['sub-rat3_ses-01_sample-data9_SEM.png']
     ds = imed_loader.load_dataset(bids_df,
                                   **{**loader_parameters, **{'data_list': data_lst,
@@ -212,7 +213,7 @@ def test_2d_patches_and_resampling(download_data_testing_test_files,
     Test that microscopy pixelsize and resampling are applied on the right dimensions.
     """
     loader_parameters.update({"model_params": model_parameters})
-    bids_df = imed_loader_utils.BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
+    bids_df = BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
     data_lst = ['sub-rat3_ses-01_sample-data9_SEM.png']
     ds = imed_loader.load_dataset(bids_df,
                                   **{**loader_parameters, **{'data_list': data_lst,
@@ -249,7 +250,7 @@ def test_get_target_filename_list(loader_parameters, model_parameters, transform
     Test that all target_suffix are considered for target filename when list
     """
     loader_parameters.update({"model_params": model_parameters})
-    bids_df = imed_loader_utils.BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
+    bids_df = BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
     data_lst = ['sub-rat3_ses-01_sample-data9_SEM.png']
     test_ds = imed_loader.load_dataset(bids_df,
                                        **{**loader_parameters, **{'data_list': data_lst,
@@ -285,7 +286,7 @@ def test_get_target_filename_list_multiple_raters(loader_parameters, model_param
     Test that all target_suffix are considered for target filename when list
     """
     loader_parameters.update({"model_params": model_parameters})
-    bids_df = imed_loader_utils.BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
+    bids_df = BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
     data_lst = ['sub-rat3_ses-01_sample-data9_SEM.png']
     test_ds = imed_loader.load_dataset(bids_df,
                                        **{**loader_parameters, **{'data_list': data_lst,
