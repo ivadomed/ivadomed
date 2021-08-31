@@ -27,7 +27,7 @@ If not set via CLI, then you MUST specify this field in the configuration file.
 ``config_file.json`` is a configuration file, which parameters are
 described in the :ref:`configuration_file:Configuration File`. This flag is *required*.
 
-``path/to/bids/data`` is the location of the dataset. As discussed in `Data <../data.rst>`__, the dataset
+``path/to/bids/data`` is the location of the dataset. As discussed in :doc:`Data <../data.rst>`, the dataset
 should conform to the BIDS standard. Modify the path so it points to the location of the downloaded dataset.
 
 ``path/to/output/directory`` is the folder name that will contain the output files (e.g., trained model, predictions, results)
