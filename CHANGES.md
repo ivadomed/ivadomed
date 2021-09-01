@@ -1,4 +1,4 @@
-## v.2.8.0 (2021-08-31)
+## v2.8.0 (2021-08-31)
 [View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.7.4...v.2.8.0)
 
 **FEATURE**
@@ -13,6 +13,7 @@
 
 **BUG**
 
+- Fix training_curve.py output.  [View pull request](https://github.com/ivadomed/ivadomed/pull/923)
 - Fix inverted dimensions in microscopy pixelsize.  [View pull request](https://github.com/ivadomed/ivadomed/pull/916)
 - Fix segment functions for models without pre-processing transforms.  [View pull request](https://github.com/ivadomed/ivadomed/pull/874)
 - Fix microscopy ground-truth range of values.  [View pull request](https://github.com/ivadomed/ivadomed/pull/870)
@@ -49,6 +50,7 @@
 
 **ENHANCEMENT**
 
+- Fix training_curve.py output.  [View pull request](https://github.com/ivadomed/ivadomed/pull/923)
 - Fix microscopy ground-truth range of values.  [View pull request](https://github.com/ivadomed/ivadomed/pull/870)
 - Fix generate_sha_256 for joblib files.  [View pull request](https://github.com/ivadomed/ivadomed/pull/866)
 - Add microscopy config file.  [View pull request](https://github.com/ivadomed/ivadomed/pull/850)
@@ -69,8 +71,10 @@
 
 **REFACTORING**
 
+- Extract class SliceFilter, BalancedSample and SampleMetaData from loader.util.  [View pull request](https://github.com/ivadomed/ivadomed/pull/928)
+- Extracted BidsDataFrame class outside of loader/utils.py.  [View pull request](https://github.com/ivadomed/ivadomed/pull/917)
 - Initialize the adoption of centralized management of keywords via keywords.py (Phase I: compilation of all keywords).  [View pull request](https://github.com/ivadomed/ivadomed/pull/904)
-- fix default parameter empty list.  [View pull request](https://github.com/ivadomed/ivadomed/pull/903)
+- Fix empty list default parameter antipattern..  [View pull request](https://github.com/ivadomed/ivadomed/pull/903)
 - Pathlib adoption for visualize.py.  [View pull request](https://github.com/ivadomed/ivadomed/pull/900)
 - Pathlib adoption for utils.py.  [View pull request](https://github.com/ivadomed/ivadomed/pull/899)
 - Pathlib adoption for uncertainty.py.  [View pull request](https://github.com/ivadomed/ivadomed/pull/898)
@@ -90,7 +94,7 @@
 - pathlib for script/automate_training.py.  [View pull request](https://github.com/ivadomed/ivadomed/pull/881)
 - pathlib change for object_detection/utils.py.  [View pull request](https://github.com/ivadomed/ivadomed/pull/880)
 - Pathlib adoption for loader/segmentation_pair.py.  [View pull request](https://github.com/ivadomed/ivadomed/pull/878)
-- pathlib adoption for loader/film.py.  [View pull request](https://github.com/ivadomed/ivadomed/pull/877)
+- Pathlib adoption for loader/film.py.  [View pull request](https://github.com/ivadomed/ivadomed/pull/877)
 - Pathlib adoption for adaptative.py.  [View pull request](https://github.com/ivadomed/ivadomed/pull/876)
 - Update config_bids.json following changes in microscopy BEP.  [View pull request](https://github.com/ivadomed/ivadomed/pull/838)
 - Extracted Loader Classes into separate files.  [View pull request](https://github.com/ivadomed/ivadomed/pull/828)
