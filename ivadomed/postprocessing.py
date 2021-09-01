@@ -1,7 +1,6 @@
 # Deals with postprocessing on generated segmentation.
 
 import functools
-import os
 
 import nibabel as nib
 import numpy as np
@@ -9,6 +8,7 @@ from loguru import logger
 from scipy.ndimage import label, generate_binary_structure
 from scipy.ndimage.morphology import binary_fill_holes
 from skimage.feature import peak_local_max
+from pathlib import Path
 
 
 def nifti_capable(wrapped):
@@ -309,7 +309,7 @@ class Postprocessing(object):
         """
         if thr >= 0:
             uncertainty_path = self.filename_prefix + suffix
-            if os.path.exists(uncertainty_path):
+            if Path(uncertainty_path).exists():
                 data_uncertainty = nib.load(uncertainty_path).get_fdata()
                 if suffix == "_unc-iou.nii.gz" or suffix == "_soft.nii.gz":
                     self.data_pred = mask_predictions(self.data_pred, data_uncertainty > thr)

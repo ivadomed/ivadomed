@@ -6,6 +6,7 @@ from torch import optim
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
+from ivadomed.loader.bids_dataframe import BidsDataframe
 from ivadomed import losses as imed_losses
 from ivadomed import models as imed_models
 from ivadomed import utils as imed_utils
@@ -104,7 +105,7 @@ def test_unet_time(download_data_testing_test_files, train_lst, target_lst, conf
     # Update loader_params with config
     loader_params.update(config)
     # Get Training dataset
-    bids_df = imed_loader_utils.BidsDataframe(loader_params, __tmp_dir__, derivatives=True)
+    bids_df = BidsDataframe(loader_params, __tmp_dir__, derivatives=True)
     ds_train = imed_loader.load_dataset(bids_df, **loader_params)
 
     # Loader

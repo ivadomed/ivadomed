@@ -1,4 +1,3 @@
-import os
 import shutil
 import logging
 import cgi
@@ -9,10 +8,12 @@ import zipfile
 import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util import Retry
+from pathlib import Path
 import argparse
 import textwrap
 
 from ivadomed import utils as imed_utils
+from ivadomed.keywords import *
 
 
 DICT_URL = {
@@ -22,7 +23,7 @@ DICT_URL = {
             `Spine Generic <https://github.com/spine-generic/data-multi-subject>`_.
             Used for Tutorial and example in Ivadomed."""},
     "data_testing": {
-        "url": ["https://github.com/ivadomed/data-testing/archive/r20210628.zip"],
+        "url": ["https://github.com/ivadomed/data-testing/archive/r20210823.zip"],
         "description": "Data Used for integration/unit test in Ivadomed."},
     "t2_tumor": {
         "url": ["https://github.com/ivadomed/t2_tumor/archive/r20200621.zip"],
@@ -93,30 +94,30 @@ def download_data(urls):
             response = session.get(url, stream=True)
             response.raise_for_status()
 
-            filename = os.path.basename(urllib.parse.urlparse(url).path)
+            filename = Path(urllib.parse.urlparse(url).path).name
             if "Content-Disposition" in response.headers:
                 _, content = cgi.parse_header(response.headers['Content-Disposition'])
                 filename = content["filename"]
 
             # protect against directory traversal
-            filename = os.path.basename(filename)
+            filename = Path(filename).name
             if not filename:
                 # this handles cases where you're loading something like an index page
                 # instead of a specific file. e.g. https://osf.io/ugscu/?action=view.
                 raise ValueError("Unable to determine target filename for URL: %s" % (url,))
 
-            tmp_path = os.path.join(tempfile.mkdtemp(), filename)
+            tmp_path = Path(tempfile.mkdtemp(), filename)
 
             logger.info('Downloading: %s' % filename)
 
-            with open(tmp_path, 'wb') as tmp_file:
+            with tmp_path.open(mode='wb') as tmp_file:
                 total = int(response.headers.get('content-length', 1))
 
                 for chunk in response.iter_content(chunk_size=8192):
                     if chunk:
                         tmp_file.write(chunk)
 
-            return tmp_path
+            return str(tmp_path)
 
         except Exception as e:
             logger.warning("Link download error, trying next mirror (error was: %s)" % e)
@@ -196,10 +197,10 @@ def install_data(url, dest_folder, keep=False):
         keep (bool): whether to keep existing data in the destination folder (if it exists). Flag ``-k``, ``--keep``
     """
 
-    if not keep and os.path.exists(dest_folder):
+    if not keep and Path(dest_folder).exists():
         logger.warning("Removing existing destination folder “%s”", dest_folder)
         shutil.rmtree(dest_folder)
-    os.makedirs(dest_folder, exist_ok=True)
+    Path(dest_folder).mkdir(parents=True, exist_ok=True)
 
     tmp_file = download_data(url)
 
@@ -208,58 +209,50 @@ def install_data(url, dest_folder, keep=False):
     unzip(tmp_file, extraction_folder)
 
     # Identify whether we have a proper archive or a tarbomb
-    with os.scandir(extraction_folder) as it:
-        has_dir = False
-        nb_entries = 0
-        for entry in it:
-            if entry.name in ("__MACOSX",):
-                continue
-            nb_entries += 1
-            if entry.is_dir():
-                has_dir = True
+    has_dir = False
+    nb_entries = 0
+    for path_object in Path(extraction_folder).iterdir():
+        if path_object.name in (IgnoredFolderKW.MACOSX,):
+            continue
+        nb_entries += 1
+        if path_object.is_dir():
+            has_dir = True
 
     if nb_entries == 1 and has_dir:
         # tarball with single-directory -> go under
-        with os.scandir(extraction_folder) as it:
-            for entry in it:
-                if entry.name in ("__MACOSX",):
-                    continue
-                bundle_folder = entry.path
+        for path_object in Path(extraction_folder).iterdir():
+            if path_object.name in (IgnoredFolderKW.MACOSX,):
+                continue
+            bundle_folder = path_object
     else:
         # bomb scenario -> stay here
-        bundle_folder = extraction_folder
+        bundle_folder: Path = Path(extraction_folder)
 
     # Copy over
-    for cwd, ds, fs in os.walk(bundle_folder):
-        ds.sort()
-        fs.sort()
-        ds[:] = [d for d in ds if d not in ("__MACOSX",)]
-        for d in ds:
-            srcpath = os.path.join(cwd, d)
-            relpath = os.path.relpath(srcpath, bundle_folder)
-            dstpath = os.path.join(dest_folder, relpath)
-            if os.path.exists(dstpath):
-                # lazy -- we assume existing is a directory, otherwise it will crash safely
-                logger.debug("- d- %s", relpath)
-            else:
-                logger.debug("- d+ %s", relpath)
-                os.makedirs(dstpath)
-
-        for f in fs:
-            srcpath = os.path.join(cwd, f)
-            relpath = os.path.relpath(srcpath, bundle_folder)
-            dstpath = os.path.join(dest_folder, relpath)
-            if os.path.exists(dstpath):
+    for path_object in bundle_folder.glob("**/*"):
+        if path_object.is_dir():
+            if path_object.name not in (IgnoredFolderKW.MACOSX,):
+                relpath = path_object.relative_to(bundle_folder)
+                dstpath = Path(dest_folder, relpath)
+                if dstpath.exists():
+                    logger.debug("- d- %s", str(relpath))
+                else:
+                    logger.debug("- d+ %s", relpath)
+                    dstpath.mkdir(parents=True)
+        if path_object.is_file():
+            relpath = path_object.relative_to(bundle_folder)
+            dstpath = Path(dest_folder, relpath)
+            if dstpath.exists():
                 logger.debug("- f! %s", relpath)
                 logger.warning("Updating existing “%s”", dstpath)
-                os.unlink(dstpath)
+                dstpath.unlink()
             else:
                 logger.debug("- f+ %s", relpath)
-            shutil.copy(srcpath, dstpath)
+            shutil.copy(str(path_object), str(dstpath))
 
     logger.info("Removing temporary folders...")
     logger.info("Folder Created: {}".format(dest_folder))
-    shutil.rmtree(os.path.dirname(tmp_file))
+    shutil.rmtree(str(Path(tmp_file).parent))
     shutil.rmtree(extraction_folder)
 
 
@@ -283,7 +276,7 @@ def main(args=None):
     data_name = arguments.d
 
     if arguments.output is None:
-        dest_folder = os.path.join(os.path.abspath(os.curdir), data_name)
+        dest_folder = str(Path(Path.cwd().absolute(), data_name))
     else:
         dest_folder = arguments.output
 

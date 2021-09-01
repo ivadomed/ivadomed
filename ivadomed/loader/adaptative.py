@@ -1,6 +1,4 @@
 import copy
-import os
-from os import path
 
 import h5py
 import nibabel as nib
@@ -8,12 +6,13 @@ import numpy as np
 import pandas as pd
 from loguru import logger
 from tqdm import tqdm
+from pathlib import Path
 
 from ivadomed.loader.segmentation_pair import SegmentationPair
 from ivadomed import transforms as imed_transforms
 from ivadomed.loader import utils as imed_loader_utils, film as imed_film
 from ivadomed.object_detection import utils as imed_obj_detect
-from ivadomed import utils as imed_utils
+from ivadomed.loader.sample_meta_data import SampleMetadata
 
 
 class Dataframe:
@@ -62,7 +61,7 @@ class Dataframe:
         self.filter = filter_slices
 
         # Data frame
-        if os.path.exists(path):
+        if Path(path).exists():
             self.load_dataframe(path)
         else:
             self.create_df(hdf5_file)
@@ -511,7 +510,7 @@ class HDF5Dataset:
 
         metadata_choice = False if metadata_choice is None else metadata_choice
         # Getting HDS5 dataset file
-        if not os.path.exists(model_params["path_hdf5"]):
+        if not Path(model_params["path_hdf5"]).exists():
             logger.info("Computing hdf5 file of the data")
             bids_to_hdf5 = BIDStoHDF5(bids_df=bids_df,
                                       subject_file_lst=subject_file_lst,
@@ -613,7 +612,7 @@ class HDF5Dataset:
 
                 input_tensors.append(input_tensor)
                 # input Metadata
-                metadata = imed_loader_utils.SampleMetadata({key: value for key, value in f['{}/inputs/{}'
+                metadata = SampleMetadata({key: value for key, value in f['{}/inputs/{}'
                                                             .format(line['Subjects'], ct)].attrs.items()})
                 metadata['slice_index'] = line["Slices"]
                 metadata['missing_mod'] = missing_modalities
@@ -631,7 +630,7 @@ class HDF5Dataset:
 
                 gt_data = gt_data.astype(np.uint8)
                 gt_img.append(gt_data)
-                gt_metadata.append(imed_loader_utils.SampleMetadata({key: value for key, value in
+                gt_metadata.append(SampleMetadata({key: value for key, value in
                                                                      f[line['gt/' + gt]].attrs.items()}))
                 gt_metadata[idx]['crop_params'] = {}
 
@@ -647,7 +646,7 @@ class HDF5Dataset:
                 roi_data = roi_data.astype(np.uint8)
                 roi_img.append(roi_data)
 
-                roi_metadata.append(imed_loader_utils.SampleMetadata({key: value for key, value in
+                roi_metadata.append(SampleMetadata({key: value for key, value in
                                                                       f[
                                                                           line['roi/' + self.roi_lst[0]]].attrs.items()}))
                 roi_metadata[0]['crop_params'] = {}
@@ -715,7 +714,7 @@ def HDF5ToBIDS(path_hdf5, subjects, path_dir):
     # Open FDH5 file
     with h5py.File(path_hdf5, "r") as hdf5_file:
         # check the dir exists:
-        if not path.exists(path_dir):
+        if not Path(path_dir).exists():
             raise FileNotFoundError("Directory {} doesn't exist. Stopping process.".format(path_dir))
 
         # loop over all subjects
@@ -723,11 +722,11 @@ def HDF5ToBIDS(path_hdf5, subjects, path_dir):
             path_sub = path_dir + '/' + sub + '/anat/'
             path_label = path_dir + '/derivatives/labels/' + sub + '/anat/'
 
-            if not path.exists(path_sub):
-                os.makedirs(path_sub)
+            if not Path(path_sub).exists():
+                Path(path_sub).mkdir(parents=True)
 
-            if not path.exists(path_label):
-                os.makedirs(path_label)
+            if not Path(path_label).exists():
+                Path(path_label).mkdir(parents=True)
 
             # Get Subject Group
             try:
@@ -741,7 +740,7 @@ def HDF5ToBIDS(path_hdf5, subjects, path_dir):
             for ct in cts:
                 input_data = np.array(grp['inputs/{}'.format(ct)])
                 nib_image = nib.Nifti1Image(input_data, np.eye(4))
-                filename = os.path.join(path_sub, sub + "_" + ct + ".nii.gz")
+                filename = Path(path_sub).joinpath(sub + "_" + ct + ".nii.gz")
                 nib.save(nib_image, filename)
 
             # GT
@@ -751,7 +750,7 @@ def HDF5ToBIDS(path_hdf5, subjects, path_dir):
                 for filename in grp['gt/{}'.format(ct)].attrs['gt_filenames']:
                     gt_data = grp['gt/{}'.format(ct)]
                     nib_image = nib.Nifti1Image(gt_data, np.eye(4))
-                    filename = os.path.join(path_label, filename.split("/")[-1])
+                    filename = Path(path_label).joinpath(filename.split("/")[-1])
                     nib.save(nib_image, filename)
 
             cts = grp['roi'].attrs['contrast']
@@ -760,6 +759,6 @@ def HDF5ToBIDS(path_hdf5, subjects, path_dir):
                 roi_data = grp['roi/{}'.format(ct)]
                 if np.any(roi_data.shape):
                     nib_image = nib.Nifti1Image(roi_data, np.eye(4))
-                    filename = os.path.join(path_label,
-                                            grp['roi/{}'.format(ct)].attrs['roi_filename'][0].split("/")[-1])
+                    filename = Path(path_label).joinpath(
+                        grp['roi/{}'.format(ct)].attrs['roi_filename'][0].split("/")[-1])
                     nib.save(nib_image, filename)
