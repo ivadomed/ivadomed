@@ -2,9 +2,10 @@ import copy
 from loguru import logger
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
-from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative
+from ivadomed.loader import adaptative as imed_adaptative
 from ivadomed.loader.bids3d_dataset import Bids3DDataset
 from ivadomed.loader.bids_dataset import BidsDataset
+from ivadomed.loader.slice_filter import SliceFilter
 
 
 def load_dataset(bids_df, data_list, transforms_params, model_params, target_suffix, roi_params,
@@ -75,7 +76,7 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
                                               slice_axis=imed_utils.AXIS_DCT[slice_axis],
                                               transform=tranform_lst,
                                               metadata_choice=metadata_type,
-                                              slice_filter_fn=imed_loader_utils.SliceFilter(**slice_filter_params,
+                                              slice_filter_fn=SliceFilter(**slice_filter_params,
                                                                                             device=device,
                                                                                             cuda_available=cuda_available),
                                               roi_params=roi_params,
@@ -95,7 +96,7 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
                               slice_axis=imed_utils.AXIS_DCT[slice_axis],
                               transform=tranform_lst,
                               multichannel=multichannel,
-                              slice_filter_fn=imed_loader_utils.SliceFilter(**slice_filter_params, device=device,
+                              slice_filter_fn=SliceFilter(**slice_filter_params, device=device,
                                                                             cuda_available=cuda_available),
                               soft_gt=soft_gt,
                               object_detection_params=object_detection_params,

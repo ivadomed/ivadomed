@@ -5,6 +5,7 @@ import torch
 from torch.utils.data import DataLoader
 import logging
 
+from ivadomed.loader.bids_dataframe import BidsDataframe
 from ivadomed.loader.bids3d_dataset import Bids3DDataset
 from ivadomed.loader.bids_dataset import BidsDataset
 from ivadomed.loader.segmentation_pair import SegmentationPair
@@ -38,7 +39,7 @@ def test_image_orientation(download_data_testing_test_files, loader_parameters):
         torch.cuda.set_device(device)
         print("Using GPU ID {}".format(device))
 
-    bids_df = imed_loader_utils.BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
+    bids_df = BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
 
     contrast_params = loader_parameters["contrast_params"]
     target_suffix = loader_parameters["target_suffix"]
