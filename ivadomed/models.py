@@ -169,7 +169,7 @@ class DenseNet(nn.Module):
                 num_input_features=num_features,
                 bn_size=bn_size,
                 growth_rate=growth_rate,
-                dropout_rate=dropout_rate,
+                drop_rate=dropout_rate,
                 memory_efficient=memory_efficient
             )
             self.features.add_module('denseblock%d' % (i + 1), block)
