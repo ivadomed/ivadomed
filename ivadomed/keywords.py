@@ -6,7 +6,7 @@ class ConfigKW:
     LOADER_PARAMETERS = "loader_parameters"
     TRAINING_PARAMETERS = "training_parameters"
     MODEL_NAME = "model_name"
-    MODIFIED3DUNET = "Modified3DUNet"
+    MODIFIED_3D_UNET = "Modified3DUNet"
     DEBUGGING = "debugging"
     FILMEDUNET = "FiLMedUnet"
     DEFAULT_MODEL = "default_model"
@@ -20,8 +20,8 @@ class ConfigKW:
     SPLIT_DATASET = "split_dataset"
     UNCERTAINTY = "uncertainty"
     UNDO_TRANSFORMS = "undo_transforms"
-    ELEVATION_PARAMETERS = "elevation_parameters"
-    HEMISUNET = "HeMISUnet"
+    EVALUATION_PARAMETERS = "evaluation_parameters"
+    HEMIS_UNET = "HeMISUnet"
     SPLIT_PATH = "split_path"
     TRAINING_SHA256 = "training_sha256"
 
@@ -82,7 +82,7 @@ class BalanceSamplesKW:
 
 @dataclass
 class ContrastParamsKW:
-    CONTRAST_LIST = "contrast_lst"  # The list help determine the number of model parameter inputs.
+    CONTRAST_LST = "contrast_lst"  # The list help determine the number of model parameter inputs.
     BALANCE = "balance"
     TRAINING_VALIDATION = "training_validation"
     TESTING = "testing"
@@ -104,8 +104,8 @@ class ModelParamsKW:
     IS_2D = "is_2d"
     IN_CHANNEL = "in_channel"
     OUT_CHANNEL = "out_channel"
-    TARGET_LIST = "target_list"
-    ROI_LIST = "roi_list"
+    TARGET_LST = "target_lst"
+    ROI_LST = "roi_lst"
     PATH_HDF5 = "path_hdf5"
     CSV_PATH = "csv_path"
     RAM = "ram"
