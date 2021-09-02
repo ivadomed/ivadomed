@@ -222,6 +222,7 @@ class DownConv(Module):
         out_feat (int): Number of channels in the output image.
         dropout_rate (float): Probability of dropout.
         bn_momentum (float): Batch normalization momentum.
+        is_2d (bool): Indicates dimensionality of model: True for 2D convolutions, False for 3D convolutions.
 
     Attributes:
         conv1 (Conv2d): First 2D down convolution with kernel size 3 and padding of 1.
@@ -271,6 +272,7 @@ class UpConv(Module):
         out_feat (int): Number of channels in the output image.
         dropout_rate (float): Probability of dropout.
         bn_momentum (float): Batch normalization momentum.
+        is_2d (bool): Indicates dimensionality of model: True for 2D convolutions, False for 3D convolutions.
 
     Attributes:
         downconv (DownConv): Down convolution.
@@ -304,6 +306,8 @@ class Encoder(Module):
         bn_momentum (float): Batch normalization momentum.
         n_metadata (dict): FiLM metadata see ivadomed.loader.film for more details.
         film_layers (list): List of 0 or 1 indicating on which layer FiLM is applied.
+        is_2d (bool): Indicates dimensionality of model: True for 2D convolutions, False for 3D convolutions.
+        n_filters (int):  Number of base filters in the U-Net.
 
     Attributes:
         depth (int): Number of down convolutions minus bottom down convolution.
@@ -371,7 +375,9 @@ class Decoder(Module):
         n_metadata (dict): FiLM metadata see ivadomed.loader.film for more details.
         film_layers (list): List of 0 or 1 indicating on which layer FiLM is applied.
         hemis (bool): Boolean indicating if HeMIS is on or not.
-        final_activation (str): Choice of final activation between "sigmoid", "relu" and "softmax"
+        final_activation (str): Choice of final activation between "sigmoid", "relu" and "softmax".
+        is_2d (bool): Indicates dimensionality of model: True for 2D convolutions, False for 3D convolutions.
+        n_filters (int):  Number of base filters in the U-Net.
 
     Attributes:
         depth (int): Number of down convolutions minus bottom down convolution.
