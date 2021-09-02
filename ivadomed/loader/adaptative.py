@@ -14,6 +14,7 @@ from ivadomed.loader import utils as imed_loader_utils, film as imed_film
 from ivadomed.object_detection import utils as imed_obj_detect
 from ivadomed.keywords import ROIParamsKW, ModelParamsKW, ContrastParamsKW
 from ivadomed import utils as imed_utils
+from ivadomed.loader.sample_meta_data import SampleMetadata
 
 
 class Dataframe:
@@ -616,7 +617,7 @@ class HDF5Dataset:
 
                 input_tensors.append(input_tensor)
                 # input Metadata
-                metadata = imed_loader_utils.SampleMetadata({key: value for key, value in f['{}/inputs/{}'
+                metadata = SampleMetadata({key: value for key, value in f['{}/inputs/{}'
                                                             .format(line['Subjects'], ct)].attrs.items()})
                 metadata['slice_index'] = line["Slices"]
                 metadata['missing_mod'] = missing_modalities
@@ -634,7 +635,7 @@ class HDF5Dataset:
 
                 gt_data = gt_data.astype(np.uint8)
                 gt_img.append(gt_data)
-                gt_metadata.append(imed_loader_utils.SampleMetadata({key: value for key, value in
+                gt_metadata.append(SampleMetadata({key: value for key, value in
                                                                      f[line['gt/' + gt]].attrs.items()}))
                 gt_metadata[idx]['crop_params'] = {}
 
@@ -650,7 +651,7 @@ class HDF5Dataset:
                 roi_data = roi_data.astype(np.uint8)
                 roi_img.append(roi_data)
 
-                roi_metadata.append(imed_loader_utils.SampleMetadata({key: value for key, value in
+                roi_metadata.append(SampleMetadata({key: value for key, value in
                                                                       f[
                                                                           line['roi/' + self.roi_lst[0]]].attrs.items()}))
                 roi_metadata[0]['crop_params'] = {}

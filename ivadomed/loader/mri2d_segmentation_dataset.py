@@ -145,7 +145,7 @@ class MRI2DSegmentationDataset(Dataset):
                 if stride > length or stride <= 0:
                     raise RuntimeError('"stride_2D" must be greater than 0 and smaller or equal to "length_2D".')
                 if length > size:
-                    raise RuntimeError('"length_2D" must be smaller or equal to image dimensions.')
+                    raise RuntimeError('"length_2D" must be smaller or equal to image dimensions after resampling.')
 
             for x in range(0, (shape[0] - self.length[0] + self.stride[0]), self.stride[0]):
                 if x + self.length[0] > shape[0]:

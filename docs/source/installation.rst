@@ -39,22 +39,34 @@ There are fundamentally two different approaches to install ``IvadoMed``:
 Approach 1: Conda
 ------------------
 
-Step 1: Create new Conda Env called IvadoMedEnv (may taken 5 to 15 minutes)
+Step 1: Clone the `ivadomed <https://github.com/ivadomed/ivadomed>`_ repository.
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+::
+
+    git clone https://github.com/neuropoly/ivadomed.git
+    cd ivadomed
+
+Step 2: Create new Conda Env called IvadoMedEnv (may take 5 to 15 minutes)
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 ::
 
     conda env create --file environment.yml
 
-Step 2 : Activate environment and use
+Step 3 : Activate environment and use
 ++++++++++++++++++++++++++++++++++++++
 
 ::
 
     conda activate IvadoMedEnv
 
-Note that this is NOT compatible with ComputeCanada because of their no anaconda policy: https://docs.computecanada.ca/wiki/Anaconda/en
+Step 4 : Install from source
+++++++++++++++++++++++++++++++++++++++
 
+::
+
+    pip install -e .
 
 Approach 2: Venv
 -----------------
@@ -62,7 +74,7 @@ Approach 2: Venv
 Step 1: Setup Python Virtual Environment.
 +++++++++++++++++++++++++++++++++++++++++
 
-``ivadomed`` requires Python >= 3.6 and <3.9. We recommend
+``ivadomed`` requires Python >= 3.6 and <3.9 (If you are using `Compute Canada <https://www.computecanada.ca/>`_, you can load modules (e.g. python 3.9) as mentioned  `here <https://intranet.neuro.polymtl.ca/computing-resources/compute-canada#modules>`_ and `also here <https://docs.computecanada.ca/wiki/Utiliser_des_modules/en#Loading_modules_automatically>`_ ). We recommend
 working under a virtual environment, which could be set as follows:
 
 ::
@@ -84,7 +96,7 @@ Step 2: Clone the `ivadomed <https://github.com/ivadomed/ivadomed>`_ repository.
 
 ::
 
-    git clone git@github.com:ivadomed/ivadomed.git
+    git clone https://github.com/ivadomed/ivadomed.git
     cd ivadomed
  
 
