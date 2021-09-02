@@ -3,7 +3,7 @@ from tqdm import tqdm
 from ivadomed.loader import film as imed_film
 from ivadomed.loader.mri2d_segmentation_dataset import MRI2DSegmentationDataset
 from ivadomed.object_detection import utils as imed_obj_detect
-from ivadomed.keywords import *
+from ivadomed.keywords import ROIParamsKW, ContrastParamsKW, ModelParamsKW
 
 
 class BidsDataset(MRI2DSegmentationDataset):

@@ -5,7 +5,7 @@ from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative
 from ivadomed.loader.bids3d_dataset import Bids3DDataset
 from ivadomed.loader.bids_dataset import BidsDataset
-from ivadomed.keywords import *
+from ivadomed.keywords import ROIParamsKW, TransformationKW, ModelParamsKW, ConfigKW
 
 
 def load_dataset(bids_df, data_list, transforms_params, model_params, target_suffix, roi_params,
@@ -52,7 +52,7 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
     if TransformationKW.ROICROP not in transforms_params:
         roi_params[ROIParamsKW.SLICE_FILTER_ROI] = None
 
-    if model_params[ModelParamsKW.NAME] == ConfigKW.MODIFIED3DUNET \
+    if model_params[ModelParamsKW.NAME] == ConfigKW.MODIFIED_3D_UNET \
             or (ModelParamsKW.IS_2D in model_params and not model_params[ModelParamsKW.IS_2D]):
         dataset = Bids3DDataset(bids_df=bids_df,
                                 subject_file_lst=data_list,
@@ -68,7 +68,7 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
                                 soft_gt=soft_gt,
                                 is_input_dropout=is_input_dropout)
 
-    elif model_params[ModelParamsKW.NAME] == ConfigKW.HEMISUNET:
+    elif model_params[ModelParamsKW.NAME] == ConfigKW.HEMIS_UNET:
         dataset = imed_adaptative.HDF5Dataset(bids_df=bids_df,
                                               subject_file_lst=data_list,
                                               model_params=model_params,
@@ -105,9 +105,9 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
                               is_input_dropout=is_input_dropout)
         dataset.load_filenames()
 
-    if model_params[ModelParamsKW.NAME] == ConfigKW.MODIFIED3DUNET:
+    if model_params[ModelParamsKW.NAME] == ConfigKW.MODIFIED_3D_UNET:
         logger.info("Loaded {} volumes of shape {} for the {} set.".format(len(dataset), dataset.length, dataset_type))
-    elif model_params[ModelParamsKW.NAME] != ConfigKW.HEMISUNET and dataset.length:
+    elif model_params[ModelParamsKW.NAME] != ConfigKW.HEMIS_UNET and dataset.length:
         logger.info("Loaded {} {} patches of shape {} for the {} set.".format(len(dataset), slice_axis, dataset.length,
                                                                               dataset_type))
     else:

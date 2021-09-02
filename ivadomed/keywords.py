@@ -6,7 +6,7 @@ class ConfigKW:
     LOADER_PARAMETERS = "loader_parameters"
     TRAINING_PARAMETERS = "training_parameters"
     MODEL_NAME = "model_name"
-    MODIFIED3DUNET = "Modified3DUNet"
+    MODIFIED_3D_UNET = "Modified3DUNet"
     DEBUGGING = "debugging"
     FILMEDUNET = "FiLMedUnet"
     DEFAULT_MODEL = "default_model"
@@ -21,7 +21,7 @@ class ConfigKW:
     UNCERTAINTY = "uncertainty"
     UNDO_TRANSFORMS = "undo_transforms"
     EVALUATION_PARAMETERS = "evaluation_parameters"
-    HEMISUNET = "HeMISUnet"
+    HEMIS_UNET = "HeMISUnet"
     SPLIT_PATH = "split_path"
     TRAINING_SHA256 = "training_sha256"
 

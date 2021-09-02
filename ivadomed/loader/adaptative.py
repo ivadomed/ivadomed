@@ -12,7 +12,7 @@ from ivadomed.loader.segmentation_pair import SegmentationPair
 from ivadomed import transforms as imed_transforms
 from ivadomed.loader import utils as imed_loader_utils, film as imed_film
 from ivadomed.object_detection import utils as imed_obj_detect
-from ivadomed.keywords import *
+from ivadomed.keywords import ROIParamsKW, ModelParamsKW, ContrastParamsKW
 from ivadomed import utils as imed_utils
 
 

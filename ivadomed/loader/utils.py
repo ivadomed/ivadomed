@@ -9,7 +9,7 @@ from loguru import logger
 from sklearn.model_selection import train_test_split
 from torch._six import string_classes, int_classes
 from ivadomed import utils as imed_utils
-from ivadomed.keywords import *
+from ivadomed.keywords import SplitDatasetKW, LoaderParamsKW, ROIParamsKW, ContrastParamsKW
 import nibabel as nib
 import bids as pybids  # "bids" is already taken by bids_neuropoly
 import itertools

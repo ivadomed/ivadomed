@@ -1,6 +1,6 @@
 from ivadomed.loader.bids_dataset import BidsDataset
 from ivadomed.loader.mri3d_subvolume_segmentation_dataset import MRI3DSubVolumeSegmentationDataset
-from ivadomed.keywords import *
+from ivadomed.keywords import ModelParamsKW
 
 
 class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
