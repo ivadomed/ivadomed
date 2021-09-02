@@ -2,8 +2,7 @@ Estimate uncertainty
 ====================
 
 This tutorial shows how to estimate uncertainty measures on the model predictions. The uncertainty measures implemented
-in ``ivadomed`` are detailed in
-:ref:`Technical features <Uncertainty-measures>`.
+in ``ivadomed`` are detailed in :ref:`Technical features <Uncertainty-measures>`.
 
 Download dataset
 ----------------
