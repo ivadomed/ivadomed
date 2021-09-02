@@ -8,6 +8,8 @@ import joblib
 from loguru import logger
 from sklearn.model_selection import train_test_split
 from torch._six import string_classes, int_classes
+from ivadomed import utils as imed_utils
+from ivadomed.keywords import SplitDatasetKW, LoaderParamsKW, ROIParamsKW, ContrastParamsKW
 import nibabel as nib
 import random
 
@@ -192,9 +194,9 @@ def get_subdatasets_subject_files_list(split_params, df, path_output, subject_se
     Returns:
         list, list list: Training, validation and testing filenames lists.
     """
-    if split_params["fname_split"]:
+    if split_params[SplitDatasetKW.FNAME_SPLIT]:
         # Load subjects lists
-        old_split = joblib.load(split_params["fname_split"])
+        old_split = joblib.load(split_params[SplitDatasetKW.FNAME_SPLIT])
         train_lst, valid_lst, test_lst = old_split['train'], old_split['valid'], old_split['test']
 
         # Backward compatibility for subject_file_lst containing participant_ids instead of filenames
@@ -214,14 +216,14 @@ def get_subdatasets_subject_files_list(split_params, df, path_output, subject_se
             test_lst = sorted(df_test['filename'].to_list())
     else:
         train_lst, valid_lst, test_lst = get_new_subject_file_split(df=df,
-                                                                    split_method=split_params['split_method'],
-                                                                    data_testing=split_params['data_testing'],
-                                                                    random_seed=split_params['random_seed'],
-                                                                    train_frac=split_params['train_fraction'],
-                                                                    test_frac=split_params['test_fraction'],
+                                                                    split_method=split_params[SplitDatasetKW.SPLIT_METHOD],
+                                                                    data_testing=split_params[SplitDatasetKW.DATA_TESTING],
+                                                                    random_seed=split_params[SplitDatasetKW.RANDOM_SEED],
+                                                                    train_frac=split_params[SplitDatasetKW.TRAIN_FRACTION],
+                                                                    test_frac=split_params[SplitDatasetKW.TEST_FRACTION],
                                                                     path_output=path_output,
-                                                                    balance=split_params['balance']
-                                                                    if 'balance' in split_params else None,
+                                                                    balance=split_params[SplitDatasetKW.BALANCE]
+                                                                    if SplitDatasetKW.BALANCE in split_params else None,
                                                                     subject_selection=subject_selection)
     return train_lst, valid_lst, test_lst
 
