@@ -32,7 +32,7 @@ def test_segment_volume_2d_NumpyToTensor_retrocompatibility(download_functional_
     model = imed_models.Unet(in_channel=1,
                              out_channel=1,
                              depth=2,
-                             drop_rate=DROPOUT,
+                             dropout_rate=DROPOUT,
                              bn_momentum=BN)
 
     if not os.path.exists(PATH_MODEL):
@@ -85,7 +85,7 @@ def test_segment_volume_2d(download_functional_test_files):
     model = imed_models.Unet(in_channel=1,
                              out_channel=1,
                              depth=2,
-                             drop_rate=DROPOUT,
+                             dropout_rate=DROPOUT,
                              bn_momentum=BN)
 
     if not os.path.exists(PATH_MODEL):
@@ -137,7 +137,7 @@ def test_segment_volume_2d_no_prepro_transform(download_functional_test_files):
     model = imed_models.Unet(in_channel=1,
                              out_channel=1,
                              depth=2,
-                             drop_rate=DROPOUT,
+                             dropout_rate=DROPOUT,
                              bn_momentum=BN)
 
     if not os.path.exists(PATH_MODEL):
@@ -183,7 +183,7 @@ def test_segment_volume_2d_with_patches(download_functional_test_files, center_c
     model = imed_models.Unet(in_channel=1,
                              out_channel=1,
                              depth=2,
-                             drop_rate=DROPOUT,
+                             dropout_rate=DROPOUT,
                              bn_momentum=BN)
 
     if not os.path.exists(PATH_MODEL):
