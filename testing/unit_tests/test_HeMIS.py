@@ -121,7 +121,7 @@ def test_HeMIS(download_data_testing_test_files, loader_parameters, p=0.0001):
 
     model = models.HeMISUnet(contrasts=contrast_params["contrast_lst"],
                              depth=3,
-                             drop_rate=DROPOUT,
+                             dropout_rate=DROPOUT,
                              bn_momentum=BN)
 
     print(model)
