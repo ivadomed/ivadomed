@@ -27,7 +27,7 @@ cudnn.benchmark = True
 
 GPU_ID = 0
 BATCH_SIZE = 4
-DROPOUT = 0.4
+DROPOUT = 0.3
 BN = 0.1
 N_EPOCHS = 10
 INIT_LR = 0.01

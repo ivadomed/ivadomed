@@ -11,7 +11,7 @@ from testing.functional_tests.t_utils import create_tmp_dir, __data_testing_dir_
 from testing.common_testing_util import remove_tmp_dir
 
 BATCH_SIZE = 1
-DROPOUT = 0.4
+DROPOUT = 0.3
 BN = 0.1
 SLICE_AXIS = 2
 LENGTH_3D = [96, 96, 16]
