@@ -256,7 +256,10 @@ def make_config_list(param_list, initial_config, all_combin, multi_params):
                 path_output = new_config["path_output"]
                 for hyper_option in combination:
                     new_config = update_dict(new_config, hyper_option.option, hyper_option.base_key)
-                    path_output = path_output + hyper_option.name
+                    folder_name_suffix = hyper_option.name
+                    folder_name_suffix = folder_name_suffix.translate({ord(i): None for i in '[]}{ \''})
+                    folder_name_suffix = folder_name_suffix.translate({ord(i): '-' for i in ':=,'})
+                    path_output = path_output + folder_name_suffix
                 new_config["path_output"] = path_output
                 config_list.append(new_config)
     elif multi_params:
@@ -271,14 +274,20 @@ def make_config_list(param_list, initial_config, all_combin, multi_params):
             for key in base_key_dict.keys():
                 hyper_option = base_key_dict[key][i]
                 new_config = update_dict(new_config, hyper_option.option, hyper_option.base_key)
-                path_output = path_output + hyper_option.name
+                folder_name_suffix = hyper_option.name
+                folder_name_suffix = folder_name_suffix.translate({ord(i): None for i in '[]}{ \''})
+                folder_name_suffix = folder_name_suffix.translate({ord(i): '-' for i in ':=,'})
+                path_output = path_output + folder_name_suffix
             new_config["path_output"] = path_output
             config_list.append(new_config)
     else:
         for hyper_option in param_list:
             new_config = copy.deepcopy(initial_config)
             update_dict(new_config, hyper_option.option, hyper_option.base_key)
-            new_config["path_output"] = initial_config["path_output"] + hyper_option.name
+            folder_name_suffix = hyper_option.name
+            folder_name_suffix = folder_name_suffix.translate({ord(i): None for i in '[]}{ \''})
+            folder_name_suffix = folder_name_suffix.translate({ord(i): '-' for i in ':=,'})
+            new_config["path_output"] = initial_config["path_output"] + folder_name_suffix
             config_list.append(new_config)
 
     return config_list
