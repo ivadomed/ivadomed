@@ -148,7 +148,7 @@ class DenseNet(nn.Module):
     """
 
     def __init__(self, growth_rate=32, block_config=(6, 12, 24, 16),
-                 num_init_features=64, bn_size=4, dropout_rate=0, num_classes=2, memory_efficient=False):
+                 num_init_features=64, bn_size=4, dropout_rate=0.3, num_classes=2, memory_efficient=False):
 
         super(DenseNet, self).__init__()
 
@@ -233,7 +233,7 @@ class DownConv(Module):
         conv2_drop (Dropout2d): Second 2D dropout.
     """
 
-    def __init__(self, in_feat, out_feat, dropout_rate=0.4, bn_momentum=0.1, is_2d=True):
+    def __init__(self, in_feat, out_feat, dropout_rate=0.3, bn_momentum=0.1, is_2d=True):
         super(DownConv, self).__init__()
         if is_2d:
             conv = nn.Conv2d
@@ -278,7 +278,7 @@ class UpConv(Module):
         downconv (DownConv): Down convolution.
     """
 
-    def __init__(self, in_feat, out_feat, dropout_rate=0.4, bn_momentum=0.1, is_2d=True):
+    def __init__(self, in_feat, out_feat, dropout_rate=0.3, bn_momentum=0.1, is_2d=True):
         super(UpConv, self).__init__()
         self.is_2d = is_2d
         self.downconv = DownConv(in_feat, out_feat, dropout_rate, bn_momentum, is_2d)
@@ -316,7 +316,7 @@ class Encoder(Module):
         film_bottom (FiLMlayer): FiLM layer applied to bottom convolution.
     """
 
-    def __init__(self, in_channel=1, depth=3, dropout_rate=0.4, bn_momentum=0.1, n_metadata=None, film_layers=None,
+    def __init__(self, in_channel=1, depth=3, dropout_rate=0.3, bn_momentum=0.1, n_metadata=None, film_layers=None,
                  is_2d=True, n_filters=64):
         super(Encoder, self).__init__()
         self.depth = depth
@@ -388,7 +388,7 @@ class Decoder(Module):
         softmax (Softmax): Softmax layer that can be applied as last layer.
     """
 
-    def __init__(self, out_channel=1, depth=3, dropout_rate=0.4, bn_momentum=0.1,
+    def __init__(self, out_channel=1, depth=3, dropout_rate=0.3, bn_momentum=0.1,
                  n_metadata=None, film_layers=None, hemis=False, final_activation="sigmoid", is_2d=True, n_filters=64):
         super(Decoder, self).__init__()
         self.depth = depth
@@ -492,7 +492,7 @@ class Unet(Module):
         decoder (Decoder): U-net decoder.
     """
 
-    def __init__(self, in_channel=1, out_channel=1, depth=3, dropout_rate=0.4, bn_momentum=0.1, final_activation='sigmoid',
+    def __init__(self, in_channel=1, out_channel=1, depth=3, dropout_rate=0.3, bn_momentum=0.1, final_activation='sigmoid',
                  is_2d=True, n_filters=64, **kwargs):
         super(Unet, self).__init__()
 
@@ -531,9 +531,9 @@ class FiLMedUnet(Unet):
         decoder (Decoder): U-net decoder.
     """
 
-    def __init__(self, in_channel=1, out_channel=1, depth=3, dropout_rate=0.4,
+    def __init__(self, in_channel=1, out_channel=1, depth=3, dropout_rate=0.3,
                  bn_momentum=0.1, n_metadata=None, film_layers=None, is_2d=True, n_filters=64, **kwargs):
-        super().__init__(in_channel=1, out_channel=1, depth=3, dropout_rate=0.4, bn_momentum=0.1)
+        super().__init__(in_channel=1, out_channel=1, depth=3, dropout_rate=0.3, bn_momentum=0.1)
 
         # Verify if the length of boolean FiLM layers corresponds to the depth
         if film_layers:
@@ -696,7 +696,7 @@ class HeMISUnet(Module):
         decoder (Decoder): U-Net decoder.
     """
 
-    def __init__(self, contrasts, out_channel=1, depth=3, dropout_rate=0.4, bn_momentum=0.1, **kwargs):
+    def __init__(self, contrasts, out_channel=1, depth=3, dropout_rate=0.3, bn_momentum=0.1, **kwargs):
         super(HeMISUnet, self).__init__()
         self.depth = depth
         self.contrasts = contrasts
@@ -771,7 +771,7 @@ class Modified3DUNet(nn.Module):
     Note: All layers are defined as attributes and used in the forward method.
     """
 
-    def __init__(self, in_channel, out_channel, n_filters=16, attention=False, dropout_rate=0.6, bn_momentum=0.1,
+    def __init__(self, in_channel, out_channel, n_filters=16, attention=False, dropout_rate=0.3, bn_momentum=0.1,
                  final_activation="sigmoid", n_metadata=None, film_layers=None, **kwargs):
         super(Modified3DUNet, self).__init__()
         self.in_channels = in_channel
@@ -1131,7 +1131,7 @@ class UNet3D(Modified3DUNet):
     """To ensure retrocompatibility, when calling UNet3D (old model name), Modified3DUNet will be called.
     see Modified3DUNet to learn more about parameters.
     """
-    def __init__(self, in_channel, out_channel, n_filters=16, attention=False, dropout_rate=0.6, bn_momentum=0.1,
+    def __init__(self, in_channel, out_channel, n_filters=16, attention=False, dropout_rate=0.3, bn_momentum=0.1,
                  final_activation="sigmoid", n_metadata=None, film_layers=None, **kwargs):
         super(UNet3D, self).__init__()
         Modified3DUNet(in_channel=in_channel, out_channel=out_channel, n_filters=n_filters, attention=attention,
