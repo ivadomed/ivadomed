@@ -533,7 +533,8 @@ class FiLMedUnet(Unet):
 
     def __init__(self, in_channel=1, out_channel=1, depth=3, dropout_rate=0.3,
                  bn_momentum=0.1, n_metadata=None, film_layers=None, is_2d=True, n_filters=64, **kwargs):
-        super().__init__(in_channel=1, out_channel=1, depth=3, dropout_rate=0.3, bn_momentum=0.1)
+        super().__init__(in_channel=in_channel, out_channel=out_channel, depth=depth,
+                         dropout_rate=dropout_rate, bn_momentum=bn_momentum)
 
         # Verify if the length of boolean FiLM layers corresponds to the depth
         if film_layers:
