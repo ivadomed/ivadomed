@@ -20,6 +20,7 @@ from ivadomed import models as imed_models
 from ivadomed import utils as imed_utils
 from ivadomed import visualize as imed_visualize
 from ivadomed.loader import utils as imed_loader_utils
+from ivadomed.loader.balanced_sampler import BalancedSampler
 
 cudnn.benchmark = True
 
@@ -366,7 +367,7 @@ def get_sampler(ds, balance_bool, metadata):
         Otherwise: Returns None and True.
     """
     if balance_bool:
-        return imed_loader_utils.BalancedSampler(ds, metadata), False
+        return BalancedSampler(ds, metadata), False
     else:
         return None, True
 

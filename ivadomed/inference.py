@@ -1,4 +1,3 @@
-import os
 import nibabel as nib
 import numpy as np
 import onnxruntime
@@ -6,6 +5,7 @@ import torch
 import imageio
 import joblib
 from typing import List
+from pathlib import Path
 
 from loguru import logger
 from torch.utils.data import Dataset
@@ -20,6 +20,7 @@ from ivadomed import models as imed_models
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
 from ivadomed.loader import utils as imed_loader_utils, film as imed_film
+from ivadomed.loader.slice_filter import SliceFilter
 from ivadomed.object_detection import utils as imed_obj_detect
 from ivadomed import utils as imed_utils
 from ivadomed import training as imed_training
@@ -106,7 +107,7 @@ def get_onehotencoder(context: dict, folder_model: str, options: dict, ds: Datas
     Returns:
         dict: onehotencoder used in the model params.
     """
-    metadata_dict = joblib.load(os.path.join(folder_model, 'metadata_dict.joblib'))
+    metadata_dict = joblib.load(Path(folder_model, 'metadata_dict.joblib'))
     for idx in ds.indexes:
         for i in range(len(idx)):
             idx[i]['input_metadata'][0][context['FiLMedUnet']['metadata']] = options['metadata']
@@ -114,7 +115,7 @@ def get_onehotencoder(context: dict, folder_model: str, options: dict, ds: Datas
 
     ds = imed_film.normalize_metadata(ds, None, context["debugging"], context['FiLMedUnet']['metadata'])
 
-    return joblib.load(os.path.join(folder_model, 'one_hot_encoder.joblib'))
+    return joblib.load(Path(folder_model, 'one_hot_encoder.joblib'))
 
 
 def pred_to_nib(data_lst: List[np.ndarray], z_lst: List[int], fname_ref: str, fname_out: str, slice_axis: int,
@@ -335,8 +336,10 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
                               example: ["10", "20", "10vox"] (remove objects smaller than 10 voxels for class 1 and 3,
                               and smaller than 20 voxels for class 2).
             * 'pixel_size': (list of float) List of microscopy pixel size in micrometers.
-                            Length equals 2 [X, Y] for 2D or 3 [X, Y, Z] for 3D.
-            * 'overlap_2D': (list of int) List of overlaps in pixels for 2D patching. Length equals 2 [X, Y].
+                            Length equals 2 [PixelSizeX, PixelSizeY] for 2D or 3 [PixelSizeX, PixelSizeY, PixelSizeZ] for 3D,
+                            where X is the width, Y the height and Z the depth of the image.
+            * 'overlap_2D': (list of int) List of overlaps in pixels for 2D patching. Length equals 2 [OverlapX, OverlapY],
+                            where X is the width and Y the height of the image.
             * 'metadata': (str) Film metadata.
             * 'fname_prior': (str) An image filename (e.g., .nii.gz) containing processing information
                 (e.g., spinal cord segmentation, spinal location or MS lesion classification, spinal cord centerline), 
@@ -392,9 +395,13 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
     stride_2D = context["default_model"]["stride_2D"] if "stride_2D" in context["default_model"] else []
     is_2d_patch = bool(length_2D)
 
-    # Adjust stride_2D with overlap_2D option if present
     if is_2d_patch and (options is not None) and ('overlap_2D' in options):
-        stride_2D = [x1 - x2 for (x1, x2) in zip(length_2D, options['overlap_2D'])]
+        overlap_2D = options['overlap_2D']
+        # Swap OverlapX and OverlapY resulting in an array in order [OverlapY, OverlapX]
+        # to match length_2D and stride_2D in [Height, Width] orientation.
+        overlap_2D[1], overlap_2D[0] = overlap_2D[0], overlap_2D[1]
+        # Adjust stride_2D with overlap_2D
+        stride_2D = [x1 - x2 for (x1, x2) in zip(length_2D, overlap_2D)]
 
     # Add microscopy pixel size from options to metadata for filenames_pairs
     if (options is not None) and ('pixel_size' in options):
@@ -416,7 +423,7 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
                                       slice_axis=slice_axis,
                                       cache=True,
                                       transform=tranform_lst,
-                                      slice_filter_fn=imed_loader_utils.SliceFilter(
+                                      slice_filter_fn=SliceFilter(
                                           **loader_params["slice_filter_params"]))
         ds.load_filenames()
         if is_2d_patch:
