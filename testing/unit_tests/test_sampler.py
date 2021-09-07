@@ -2,8 +2,11 @@ import numpy as np
 import pytest
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
+
+from ivadomed.loader.bids_dataframe import BidsDataframe
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
+from ivadomed.loader.balanced_sampler import BalancedSampler
 from testing.unit_tests.t_utils import create_tmp_dir,  __data_testing_dir__, __tmp_dir__, download_data_testing_test_files
 from testing.common_testing_util import remove_tmp_dir
 
@@ -46,7 +49,7 @@ def _cmpt_label(ds_loader):
         },
     "NumpyToTensor": {}
 }])
-@pytest.mark.parametrize('train_lst', [['sub-unf01']])
+@pytest.mark.parametrize('train_lst', [['sub-unf01_T2w.nii.gz']])
 @pytest.mark.parametrize('target_lst', [["_lesion-manual"]])
 @pytest.mark.parametrize('roi_params', [{"suffix": "_seg-manual", "slice_filter_roi": 10}])
 def test_sampler(download_data_testing_test_files, transforms_dict, train_lst, target_lst, roi_params):
@@ -71,7 +74,7 @@ def test_sampler(download_data_testing_test_files, transforms_dict, train_lst, t
         "multichannel": False
     }
     # Get Training dataset
-    bids_df = imed_loader_utils.BidsDataframe(loader_params, __tmp_dir__, derivatives=True)
+    bids_df = BidsDataframe(loader_params, __tmp_dir__, derivatives=True)
     ds_train = imed_loader.load_dataset(bids_df, **loader_params)
 
     print('\nLoading without sampling')
@@ -84,7 +87,7 @@ def test_sampler(download_data_testing_test_files, transforms_dict, train_lst, t
 
     print('\nLoading with sampling')
     train_loader_balanced = DataLoader(ds_train, batch_size=BATCH_SIZE,
-                                       sampler=imed_loader_utils.BalancedSampler(ds_train),
+                                       sampler=BalancedSampler(ds_train),
                                        shuffle=False, pin_memory=True,
                                        collate_fn=imed_loader_utils.imed_collate,
                                        num_workers=0)
@@ -93,7 +96,7 @@ def test_sampler(download_data_testing_test_files, transforms_dict, train_lst, t
     # Check if the loader is more balanced. The actual distribution comes from a probabilistic model
     # This is however not very efficient to get close to 50 %
     # in the case where we have 16 slices, with 87.5 % of one class (positive sample).
-    assert abs(neg_percent_bal - pos_percent_bal) < abs(neg_percent - pos_percent)
+    assert abs(neg_percent_bal - pos_percent_bal) <= abs(neg_percent - pos_percent)
 
 
 def teardown_function():

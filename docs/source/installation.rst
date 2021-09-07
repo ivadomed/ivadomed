@@ -6,7 +6,7 @@ Supported OS
 
 Currently, we only support ``MacOS`` and ``Linux`` operating systems. ``Windows``
 users have the possibility to install and use ``ivadomed`` via
-`Windows Subsystem for Linux (WSL) <https://docs.microsoft.com/en-us/windows/wsl/>`_.For MacOs users, we strongly recommend to follow the bellow steps before the installation.
+`Windows Subsystem for Linux (WSL) <https://docs.microsoft.com/en-us/windows/wsl/>`_. The steps below (about updating bashrc) are strongly recommended for MacOS users in the installation process but are optional for Linux users.
 
 Open your bash/zsh script file with editor on your computer.
 
@@ -17,6 +17,7 @@ Open your bash/zsh script file with editor on your computer.
 
     If you are using zsh shell
     ::
+        
         vim ~/.zshrc
 
 Write in your .bashrc/.zshrc file with following line.
@@ -38,23 +39,34 @@ There are fundamentally two different approaches to install ``IvadoMed``:
 Approach 1: Conda
 ------------------
 
-Step 1: Create new Conda Env called IvadoMedEnv (may taken 5 to 15 minutes)
+Step 1: Clone the `ivadomed <https://github.com/ivadomed/ivadomed>`_ repository.
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+::
+
+    git clone https://github.com/neuropoly/ivadomed.git
+    cd ivadomed
+
+Step 2: Create new Conda Env called IvadoMedEnv (may take 5 to 15 minutes)
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 ::
 
     conda env create --file environment.yml
 
-
-Step 2 : Activate environment and use
+Step 3 : Activate environment and use
 ++++++++++++++++++++++++++++++++++++++
 
 ::
 
     conda activate IvadoMedEnv
 
-Note that this is NOT compatible with ComputeCanada because of their no anaconda policy: https://docs.computecanada.ca/wiki/Anaconda/en
+Step 4 : Install from source
+++++++++++++++++++++++++++++++++++++++
 
+::
+
+    pip install -e .
 
 Approach 2: Venv
 -----------------
@@ -62,7 +74,7 @@ Approach 2: Venv
 Step 1: Setup Python Virtual Environment.
 +++++++++++++++++++++++++++++++++++++++++
 
-``ivadomed`` requires Python >= 3.6 and <3.9. We recommend
+``ivadomed`` requires Python >= 3.6 and <3.9 (If you are using `Compute Canada <https://www.computecanada.ca/>`_, you can load modules (e.g. python 3.9) as mentioned  `here <https://intranet.neuro.polymtl.ca/computing-resources/compute-canada#modules>`_ and `also here <https://docs.computecanada.ca/wiki/Utiliser_des_modules/en#Loading_modules_automatically>`_ ). We recommend
 working under a virtual environment, which could be set as follows:
 
 ::
@@ -78,24 +90,35 @@ working under a virtual environment, which could be set as follows:
 
      virtualenv venv-ivadomed --python=python3.6
 
+Step 2: Clone the `ivadomed <https://github.com/ivadomed/ivadomed>`_ repository.
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Step 2: Install PyTorch 1.5 and TorchVision (CPU)
-+++++++++++++++++++++++++++++++++++++++++++++++++++
+
+::
+
+    git clone https://github.com/ivadomed/ivadomed.git
+    cd ivadomed
+ 
+
+Step 3: Install PyTorch 1.5 and TorchVision
++++++++++++++++++++++++++++++++++++++++++++
+
+If you have a compatible NVIDIA GPU that supports CUDA, run the following command:
+
+::
+   
+   pip install -r requirements_gpu.txt
+
+
+If you do not have a compatible GPU, run the following installer to use ``ivadomed`` with CPU.
+
+
 ::
 
     pip install -r requirements.txt
 
 
-(Optional) Alternative Step 2: Install PyTorch 1.5 and TorchVision (GPU)
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-If you have a GPU and it has CUDA already setup etc, do the follow or use whatever CUDA version you have.
-
-::
-
-    pip install -r requirements_gpu.txt
-
-
-Step 3: Install from release (recommended)
+Step 4: Install from release (recommended)
 ++++++++++++++++++++++++++++++++++++++++++
 
 Install ``ivadomed`` and its requirements from
@@ -106,21 +129,20 @@ Install ``ivadomed`` and its requirements from
     pip install --upgrade pip
     pip install ivadomed
 
-(Optional) Alternative Step 3 for Developers: Install from source
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+(Optional) Alternative Step 4 for Developers: Install from source
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 Bleeding-edge developments are available on the project's master branch
-on Github. Installation procedure is the following:
+on Github. Installation procedure is the following at repository root:
 
 ::
 
-    git clone https://github.com/neuropoly/ivadomed.git
     cd ivadomed
     pip install -e .
 
 
-(Optional) Step 4 for Developers Install pre-commit hooks
-+++++++++++++++++++++++++++++++++++++++++++++++++++++
+(Optional) Step 5 for Developers Install pre-commit hooks
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 We use ``pre-commit`` to enforce a limit on file size.
 After you've installed ``ivadomed``, install the hooks:

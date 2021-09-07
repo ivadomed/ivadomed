@@ -1,12 +1,12 @@
-import os
-
 import nibabel as nib
 import numpy as np
 import pandas as pd
 from loguru import logger
 from scipy.ndimage import label, generate_binary_structure
 from tqdm import tqdm
+from pathlib import Path
 
+from ivadomed import inference as imed_inference
 from ivadomed import metrics as imed_metrics
 from ivadomed import postprocessing as imed_postpro
 from ivadomed.loader import utils as imed_loader_utils
@@ -29,19 +29,19 @@ def evaluate(bids_df, path_output, target_suffix, eval_params):
     Returns:
         pd.Dataframe: results for each image.
     """
-    path_preds = os.path.join(path_output, 'pred_masks')
+    path_preds = Path(path_output, 'pred_masks')
     logger.info('\nRun Evaluation on {}\n'.format(path_preds))
 
     # OUTPUT RESULT FOLDER
-    path_results = os.path.join(path_output, 'results_eval')
-    if not os.path.isdir(path_results):
-        os.makedirs(path_results)
+    path_results = Path(path_output, 'results_eval')
+    if not path_results.is_dir():
+        path_results.mkdir(parents=True)
 
     # INIT DATA FRAME
     df_results = pd.DataFrame()
 
     # LIST PREDS
-    subj_acq_lst = [f.split('_pred')[0] for f in os.listdir(path_preds) if f.endswith('_pred.nii.gz')]
+    subj_acq_lst = [f.name.split('_pred')[0] for f in path_preds.iterdir() if f.name.endswith('_pred.nii.gz')]
 
     # Get all derivatives filenames
     all_deriv = bids_df.get_deriv_fnames()
@@ -49,9 +49,18 @@ def evaluate(bids_df, path_output, target_suffix, eval_params):
     # LOOP ACROSS PREDS
     for subj_acq in tqdm(subj_acq_lst, desc="Evaluation"):
         # Fnames of pred and ground-truth
-        fname_pred = os.path.join(path_preds, subj_acq + '_pred.nii.gz')
-        fname_gt = bids_df.df[bids_df.df['filename']
+        fname_pred = path_preds.joinpath(subj_acq + '_pred.nii.gz')
+        derivatives = bids_df.df[bids_df.df['filename']
                           .str.contains('|'.join(bids_df.get_derivatives(subj_acq, all_deriv)))]['path'].to_list()
+        # Ordering ground-truth the same as target_suffix
+        fname_gt = [None] * len(target_suffix)
+        for deriv in derivatives:
+            for idx, suffix in enumerate(target_suffix):
+                if suffix in deriv:
+                    fname_gt[idx] = deriv
+
+        # Get filename extension of first ground-truth before updating path to NifTI
+        extension = imed_loader_utils.get_file_extension(fname_gt[0])
 
         # Check fname_gt extentions and update paths if not NifTI
         fname_gt = [imed_loader_utils.update_filename_to_nifti(fname) for fname in fname_gt]
@@ -67,7 +76,7 @@ def evaluate(bids_df, path_output, target_suffix, eval_params):
         n_classes = len(fname_gt)
         data_gt = np.zeros((h, w, d, n_classes))
         for idx, file in enumerate(fname_gt):
-            if os.path.exists(file):
+            if Path(file).exists():
                 data_gt[..., idx] = nib.load(file).get_fdata()
             else:
                 data_gt[..., idx] = np.zeros((h, w, d), dtype='u1')
@@ -78,7 +87,7 @@ def evaluate(bids_df, path_output, target_suffix, eval_params):
         results_pred, data_painted = eval.run_eval()
 
         # SAVE PAINTED DATA, TP FP FN
-        fname_paint = fname_pred.split('.nii.gz')[0] + '_painted.nii.gz'
+        fname_paint = str(fname_pred).split('.nii.gz')[0] + '_painted.nii.gz'
         nib_painted = nib.Nifti1Image(
             dataobj=data_painted,
             affine=nib_pred.header.get_best_affine(),
@@ -86,12 +95,20 @@ def evaluate(bids_df, path_output, target_suffix, eval_params):
         )
         nib.save(nib_painted, fname_paint)
 
+        # For Microscopy PNG/TIF files (TODO: implement OMETIFF behavior)
+        if "nii" not in extension:
+            painted_list = imed_inference.split_classes(nib_painted)
+            imed_inference.pred_to_png(painted_list,
+                                       target_suffix,
+                                       str(path_preds.joinpath(subj_acq)),
+                                       suffix="_painted")
+
         # SAVE RESULTS FOR THIS PRED
         results_pred['image_id'] = subj_acq
         df_results = df_results.append(results_pred, ignore_index=True)
 
     df_results = df_results.set_index('image_id')
-    df_results.to_csv(os.path.join(path_results, 'evaluation_3Dmetrics.csv'))
+    df_results.to_csv(str(path_results.joinpath('evaluation_3Dmetrics.csv')))
 
     logger.info(df_results.head(5))
     return df_results

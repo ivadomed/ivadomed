@@ -1,11 +1,10 @@
-import os
-
 from collections import OrderedDict
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import Module
 from torch.nn import init
+from pathlib import Path
 import torchvision.models
 
 
@@ -439,7 +438,9 @@ class Decoder(Module):
         if self.last_film:
             x, w_film = self.last_film(x, context, w_film)
 
-        if hasattr(self, "final_activation") and self.final_activation == "softmax":
+        if hasattr(self, "final_activation") and self.final_activation not in ["softmax", "relu", "sigmoid"]:
+            raise ValueError("final_activation value has to be either softmax, relu, or sigmoid")
+        elif hasattr(self, "final_activation") and self.final_activation == "softmax":
             preds = self.softmax(x)
         elif hasattr(self, "final_activation") and self.final_activation == "relu":
             preds = nn.ReLU()(x) / nn.ReLU()(x).max()
@@ -1107,7 +1108,9 @@ class Modified3DUNet(nn.Module):
             out, w_film = self.film_layer10(out, context, w_film)
         seg_layer = out
 
-        if hasattr(self, "final_activation") and self.final_activation == "softmax":
+        if hasattr(self, "final_activation") and self.final_activation not in ["softmax", "relu", "sigmoid"]:
+            raise ValueError("final_activation value has to be either softmax, relu, or sigmoid")
+        elif hasattr(self, "final_activation") and self.final_activation == "softmax":
             out = self.softmax(out)
         elif hasattr(self, "final_activation") and self.final_activation == "relu":
             out = nn.ReLU()(seg_layer) / nn.ReLU()(seg_layer).max() if bool(nn.ReLU()(seg_layer).max()) \
@@ -1486,17 +1489,17 @@ def get_model_filenames(folder_model):
     Returns:
         str, str: Paths of the model (.onnx) and its configuration file (.json).
     """
-    if os.path.isdir(folder_model):
-        prefix_model = os.path.basename(folder_model)
+    if Path(folder_model).is_dir():
+        prefix_model = Path(folder_model).name
         # Check if model and model metadata exist. Verify if ONNX model exists, if not try to find .pt model
-        fname_model = os.path.join(folder_model, prefix_model + '.onnx')
-        if not os.path.isfile(fname_model):
-            fname_model = os.path.join(folder_model, prefix_model + '.pt')
-            if not os.path.exists(fname_model):
+        fname_model = Path(folder_model, prefix_model + '.onnx')
+        if not fname_model.is_file():
+            fname_model = Path(folder_model, prefix_model + '.pt')
+            if not fname_model.exists():
                 raise FileNotFoundError(fname_model)
-        fname_model_metadata = os.path.join(folder_model, prefix_model + '.json')
-        if not os.path.isfile(fname_model_metadata):
+        fname_model_metadata = Path(folder_model, prefix_model + '.json')
+        if not fname_model_metadata.is_file():
             raise FileNotFoundError(fname_model)
     else:
-        raise FileNotFoundError(fname_model)
-    return fname_model, fname_model_metadata
+        raise FileNotFoundError(folder_model)
+    return str(fname_model), str(fname_model_metadata)

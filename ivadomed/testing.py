@@ -1,4 +1,3 @@
-import os
 import copy
 from pathlib import Path
 import nibabel as nib
@@ -8,6 +7,7 @@ import torch.backends.cudnn as cudnn
 from loguru import logger
 from torch.utils.data import DataLoader, ConcatDataset
 from tqdm import tqdm
+from pathlib import Path
 
 from ivadomed import metrics as imed_metrics
 from ivadomed import utils as imed_utils
@@ -47,7 +47,7 @@ def test(model_params, dataset_test, testing_params, path_output, device, cuda_a
                              num_workers=0)
 
     # LOAD TRAIN MODEL
-    fname_model = os.path.join(path_output, "best_model.pt")
+    fname_model = Path(path_output, "best_model.pt")
     logger.info('Loading model: {}'.format(fname_model))
     model = torch.load(fname_model, map_location=device)
     if cuda_available:
@@ -55,9 +55,9 @@ def test(model_params, dataset_test, testing_params, path_output, device, cuda_a
     model.eval()
 
     # CREATE OUTPUT FOLDER
-    path_3Dpred = os.path.join(path_output, 'pred_masks')
-    if not os.path.isdir(path_3Dpred):
-        os.makedirs(path_3Dpred)
+    path_3Dpred = Path(path_output, 'pred_masks')
+    if not path_3Dpred.is_dir():
+        path_3Dpred.mkdir(parents=True)
 
     # METRIC MANAGER
     metric_mgr = imed_metrics.MetricManager(metric_fns)
@@ -73,14 +73,14 @@ def test(model_params, dataset_test, testing_params, path_output, device, cuda_a
         n_monteCarlo = 1
 
     for i_monteCarlo in range(n_monteCarlo):
-        preds_npy, gt_npy = run_inference(test_loader, model, model_params, testing_params, path_3Dpred,
+        preds_npy, gt_npy = run_inference(test_loader, model, model_params, testing_params, str(path_3Dpred),
                                           cuda_available, i_monteCarlo, postprocessing)
         metric_mgr(preds_npy, gt_npy)
         # If uncertainty computation, don't apply it on last iteration for prediction
         if testing_params['uncertainty']['applied'] and (n_monteCarlo - 2 == i_monteCarlo):
             testing_params['uncertainty']['applied'] = False
             # COMPUTE UNCERTAINTY MAPS
-            imed_uncertainty.run_uncertainty(ifolder=path_3Dpred)
+            imed_uncertainty.run_uncertainty(image_folder=str(path_3Dpred))
 
     metrics_dict = metric_mgr.get_results()
     metric_mgr.reset()
@@ -107,7 +107,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
     """
     # INIT STORAGE VARIABLES
     preds_npy_list, gt_npy_list, filenames = [], [], []
-    pred_tmp_lst, z_tmp_lst, fname_tmp = [], [], ''
+    pred_tmp_lst, z_tmp_lst = [], []
     image = None
     volume = None
     weight_matrix = None
@@ -150,7 +150,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
             input_samples = batch['input'][0]
 
         if model_params["name"] == "Modified3DUNet" and model_params["attention"] and ofolder:
-            imed_visualize.save_feature_map(batch, "attentionblock2", os.path.dirname(ofolder), model, input_samples,
+            imed_visualize.save_feature_map(batch, "attentionblock2", str(Path(ofolder).parent), model, input_samples,
                                             slice_axis=test_loader.dataset.slice_axis)
 
         if 'film_layers' in model_params and any(model_params['film_layers']):
@@ -182,6 +182,9 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
 
             if model_params["is_2d"]:
                 preds_idx_arr = None
+                idx_slice = batch['input_metadata'][smp_idx][0]['slice_index']
+                n_slices = batch['input_metadata'][smp_idx][0]['data_shape'][-1]
+                last_slice_bool = (idx_slice + 1 == n_slices)
                 last_sample_bool = (last_batch_bool and smp_idx == len(preds_cpu) - 1)
 
                 length_2D = model_params["length_2D"] if "length_2D" in model_params else []
@@ -191,30 +194,34 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                     preds_idx_undo, metadata_idx, last_patch_bool, image, weight_matrix = \
                         imed_inference.image_reconstruction(batch, preds_cpu, testing_params['undo_transforms'],
                                                             smp_idx, image, weight_matrix)
-                    # If last patch of the slice
-                    if last_patch_bool:
-                        # preds_idx_undo is a list n_label arrays
-                        preds_idx_arr = np.array(preds_idx_undo)
-
-                        # TODO: gt_filenames should not be a list
-                        fname_ref = list(filter(None, metadata_idx[0]['gt_filenames']))[0]
-
                 else:
+                    # Set last_patch_bool to True (only one patch per slice)
+                    last_patch_bool = True
                     # undo transformations for slice
                     preds_idx_undo, metadata_idx = testing_params["undo_transforms"](preds_cpu[smp_idx],
                                                                                      batch['gt_metadata'][smp_idx],
                                                                                      data_type='gt')
+                if last_patch_bool:
                     # preds_idx_undo is a list n_label arrays
                     preds_idx_arr = np.array(preds_idx_undo)
 
                     # TODO: gt_filenames should not be a list
                     fname_ref = list(filter(None, metadata_idx[0]['gt_filenames']))[0]
 
+                if preds_idx_arr is not None:
+                    # add new sample to pred_tmp_lst, of size n_label X h X w ...
+                    pred_tmp_lst.append(preds_idx_arr)
+
+                    # TODO: slice_index should be stored in gt_metadata as well
+                    z_tmp_lst.append(int(idx_slice))
+                    filenames = metadata_idx[0]['gt_filenames']
+
                 # NEW COMPLETE VOLUME
-                if pred_tmp_lst and (fname_ref != fname_tmp or last_sample_bool) and task != "classification":
+                if (pred_tmp_lst and ((last_patch_bool and last_slice_bool) or last_sample_bool)
+                    and task != "classification"):
                     # save the completely processed file as a NifTI file
                     if ofolder:
-                        fname_pred = os.path.join(ofolder, Path(fname_tmp).name)
+                        fname_pred = str(Path(ofolder, Path(fname_ref).name))
                         fname_pred = fname_pred.rsplit("_", 1)[0] + '_pred.nii.gz'
                         # If Uncertainty running, then we save each simulation result
                         if testing_params['uncertainty']['applied']:
@@ -224,7 +231,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                         fname_pred = None
                     output_nii = imed_inference.pred_to_nib(data_lst=pred_tmp_lst,
                                                         z_lst=z_tmp_lst,
-                                                        fname_ref=fname_tmp,
+                                                        fname_ref=fname_ref,
                                                         fname_out=fname_pred,
                                                         slice_axis=slice_axis,
                                                         kernel_dim='2d',
@@ -243,21 +250,21 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                         # TODO: put back the code below. See #720
                         # imed_visualize.save_color_labels(np.stack(pred_tmp_lst, -1),
                         #                              False,
-                        #                              fname_tmp,
+                        #                              fname_ref,
                         #                              fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
                         #                              imed_utils.AXIS_DCT[testing_params['slice_axis']])
 
-                    # re-init pred_stack_lst
+                    # For Microscopy PNG/TIF files (TODO: implement OMETIFF behavior)
+                    extension = imed_loader_utils.get_file_extension(fname_ref)
+                    if "nii" not in extension and fname_pred:
+                        output_list = imed_inference.split_classes(output_nii)
+                        imed_inference.pred_to_png(output_list,
+                                                   testing_params['target_suffix'],
+                                                   fname_pred.split("_pred.nii.gz")[0])
+
+                    # re-init pred_stack_lst and last_slice_bool
                     pred_tmp_lst, z_tmp_lst = [], []
-
-                if preds_idx_arr is not None:
-                    # add new sample to pred_tmp_lst, of size n_label X h X w ...
-                    pred_tmp_lst.append(preds_idx_arr)
-
-                    # TODO: slice_index should be stored in gt_metadata as well
-                    z_tmp_lst.append(int(batch['input_metadata'][smp_idx][0]['slice_index']))
-                    fname_tmp = fname_ref
-                    filenames = metadata_idx[0]['gt_filenames']
+                    last_slice_bool = False
 
             else:
                 pred_undo, metadata, last_sample_bool, volume, weight_matrix = \
@@ -270,7 +277,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                 if last_sample_bool:
                     pred_undo = np.array(pred_undo)
                     if ofolder:
-                        fname_pred = os.path.join(ofolder, fname_ref.split('/')[-1])
+                        fname_pred = str(Path(ofolder, Path(fname_ref).name))
                         fname_pred = fname_pred.split(testing_params['target_suffix'][0])[0] + '_pred.nii.gz'
                         # If uncertainty running, then we save each simulation result
                         if testing_params['uncertainty']['applied']:
