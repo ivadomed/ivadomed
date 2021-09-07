@@ -79,7 +79,7 @@ def test_template():
     logger.info([f.name for f in Path(__data_testing_dir__).iterdir()])
 
     # Test Output Files: put your output files in tmp folder
-    Path(__tmp_dir__, 'my_output_dir').mkdir()
+    Path(__tmp_dir__, 'my_output_dir').mkdir(parents=True, exist_ok=True)
 
     assert 1 == 1
 

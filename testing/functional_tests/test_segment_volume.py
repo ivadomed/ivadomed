@@ -36,7 +36,7 @@ def test_segment_volume_2d_NumpyToTensor_retrocompatibility(download_functional_
                              bn_momentum=BN)
 
     if not PATH_MODEL.exists():
-        PATH_MODEL.mkdir()
+        PATH_MODEL.mkdir(parents=True, exist_ok=True)
 
     torch.save(model, Path(PATH_MODEL, "model_test.pt"))
     config = {

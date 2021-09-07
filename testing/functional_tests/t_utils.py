@@ -51,7 +51,7 @@ def create_tmp_dir(copy_data_testing_dir=True):
             into the ``tmp`` folder.
     """
     remove_tmp_dir()
-    Path(path_temp).mkdir()
+    Path(path_temp).mkdir(parents=True, exist_ok=True)
     if Path(path_data_functional_source).exists() and copy_data_testing_dir:
         shutil.copytree(path_data_functional_source,
                         path_data_functional_tmp)

@@ -109,7 +109,7 @@ def test_inference(download_data_testing_test_files, transforms_dict, test_lst, 
     metric_mgr = imed_metrics.MetricManager(metric_fns)
 
     if not __output_dir__.is_dir():
-        __output_dir__.mkdir(parents=True)
+        __output_dir__.mkdir(parents=True, exist_ok=True)
 
     preds_npy, gt_npy = imed_testing.run_inference(test_loader=test_loader,
                                                    model=model,
@@ -201,7 +201,7 @@ def test_inference_2d_microscopy(download_data_testing_test_files, transforms_di
     model.eval()
 
     if not __output_dir__.is_dir():
-        __output_dir__.mkdir(parents=True)
+        __output_dir__.mkdir(parents=True, exist_ok=True)
 
     preds_npy, gt_npy = imed_testing.run_inference(test_loader=test_loader,
                                                    model=model,

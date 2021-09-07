@@ -20,7 +20,7 @@ def test_tensorboard_save():
     gt = torch.tensor(np.zeros((1, 1, 15, 15)))
     pred = torch.tensor(np.zeros((1, 1, 15, 15)))
     dpath = Path(__tmp_dir__, "test_tensorboard_save")
-    dpath.mkdir(parents=True)
+    dpath.mkdir(parents=True, exist_ok=True)
     writer = SummaryWriter(log_dir=str(dpath))
     imed_visualize.save_tensorboard_img(writer, 1, "Training", inp, pred, gt)
     writer.flush()

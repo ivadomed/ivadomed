@@ -24,7 +24,7 @@ def load_dataset(split_params):
 
     # Create log path
     if not LOG_PATH.is_dir():
-        LOG_PATH.mkdir()
+        LOG_PATH.mkdir(parents=True, exist_ok=True)
 
     df = pd.read_csv(Path(PATH_DATA, "participants.tsv"), sep='\t')
     df['filename'] = df["participant_id"]
@@ -163,7 +163,7 @@ def test_per_center_balance(split_params):
 def create_tsvfile():
     # Create data path
     if not PATH_DATA.is_dir():
-        PATH_DATA.mkdir()
+        PATH_DATA.mkdir(parents=True, exist_ok=True)
 
     patient_mapping = {}
 
