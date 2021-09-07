@@ -6,11 +6,14 @@ import torch.backends.cudnn as cudnn
 from torch import optim
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+
+from ivadomed.loader.bids_dataframe import BidsDataframe
 import ivadomed.transforms as imed_transforms
 from ivadomed import losses
 from ivadomed import models
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative
+from ivadomed.loader.slice_filter import SliceFilter
 from ivadomed import training as imed_training
 from pathlib import Path
 import logging
@@ -48,7 +51,7 @@ def setup_function():
 def test_HeMIS(download_data_testing_test_files, loader_parameters, p=0.0001):
     print('[INFO]: Starting test ... \n')
 
-    bids_df = imed_loader_utils.BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
+    bids_df = BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
 
     contrast_params = loader_parameters["contrast_params"]
     target_suffix = loader_parameters["target_suffix"]
@@ -97,7 +100,7 @@ def test_HeMIS(download_data_testing_test_files, loader_parameters, p=0.0001):
                                           transform=transform_lst,
                                           metadata_choice=False,
                                           dim=2,
-                                          slice_filter_fn=imed_loader_utils.SliceFilter(
+                                          slice_filter_fn=SliceFilter(
                                               filter_empty_input=True,
                                               filter_empty_mask=True),
                                           roi_params=roi_params)
