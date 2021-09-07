@@ -438,7 +438,9 @@ class Decoder(Module):
         if self.last_film:
             x, w_film = self.last_film(x, context, w_film)
 
-        if hasattr(self, "final_activation") and self.final_activation == "softmax":
+        if hasattr(self, "final_activation") and self.final_activation not in ["softmax", "relu", "sigmoid"]:
+            raise ValueError("final_activation value has to be either softmax, relu, or sigmoid")
+        elif hasattr(self, "final_activation") and self.final_activation == "softmax":
             preds = self.softmax(x)
         elif hasattr(self, "final_activation") and self.final_activation == "relu":
             preds = nn.ReLU()(x) / nn.ReLU()(x).max()
@@ -1106,7 +1108,9 @@ class Modified3DUNet(nn.Module):
             out, w_film = self.film_layer10(out, context, w_film)
         seg_layer = out
 
-        if hasattr(self, "final_activation") and self.final_activation == "softmax":
+        if hasattr(self, "final_activation") and self.final_activation not in ["softmax", "relu", "sigmoid"]:
+            raise ValueError("final_activation value has to be either softmax, relu, or sigmoid")
+        elif hasattr(self, "final_activation") and self.final_activation == "softmax":
             out = self.softmax(out)
         elif hasattr(self, "final_activation") and self.final_activation == "relu":
             out = nn.ReLU()(seg_layer) / nn.ReLU()(seg_layer).max() if bool(nn.ReLU()(seg_layer).max()) \

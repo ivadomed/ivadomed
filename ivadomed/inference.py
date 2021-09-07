@@ -20,6 +20,7 @@ from ivadomed import models as imed_models
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
 from ivadomed.loader import utils as imed_loader_utils, film as imed_film
+from ivadomed.loader.slice_filter import SliceFilter
 from ivadomed.object_detection import utils as imed_obj_detect
 from ivadomed import utils as imed_utils
 from ivadomed import training as imed_training
@@ -422,7 +423,7 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
                                       slice_axis=slice_axis,
                                       cache=True,
                                       transform=tranform_lst,
-                                      slice_filter_fn=imed_loader_utils.SliceFilter(
+                                      slice_filter_fn=SliceFilter(
                                           **loader_params["slice_filter_params"]))
         ds.load_filenames()
         if is_2d_patch:

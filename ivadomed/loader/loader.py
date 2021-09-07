@@ -2,9 +2,11 @@ import copy
 from loguru import logger
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
-from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative
+from ivadomed.loader import adaptative as imed_adaptative
 from ivadomed.loader.bids3d_dataset import Bids3DDataset
 from ivadomed.loader.bids_dataset import BidsDataset
+from ivadomed.keywords import ROIParamsKW, TransformationKW, ModelParamsKW, ConfigKW
+from ivadomed.loader.slice_filter import SliceFilter
 
 
 def load_dataset(bids_df, data_list, transforms_params, model_params, target_suffix, roi_params,
@@ -48,10 +50,11 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
     tranform_lst, _ = imed_transforms.prepare_transforms(copy.deepcopy(transforms_params), requires_undo)
 
     # If ROICrop is not part of the transforms, then enforce no slice filtering based on ROI data.
-    if 'ROICrop' not in transforms_params:
-        roi_params["slice_filter_roi"] = None
+    if TransformationKW.ROICROP not in transforms_params:
+        roi_params[ROIParamsKW.SLICE_FILTER_ROI] = None
 
-    if model_params["name"] == "Modified3DUNet" or ('is_2d' in model_params and not model_params['is_2d']):
+    if model_params[ModelParamsKW.NAME] == ConfigKW.MODIFIED_3D_UNET \
+            or (ModelParamsKW.IS_2D in model_params and not model_params[ModelParamsKW.IS_2D]):
         dataset = Bids3DDataset(bids_df=bids_df,
                                 subject_file_lst=data_list,
                                 target_suffix=target_suffix,
@@ -66,7 +69,7 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
                                 soft_gt=soft_gt,
                                 is_input_dropout=is_input_dropout)
 
-    elif model_params["name"] == "HeMISUnet":
+    elif model_params[ModelParamsKW.NAME] == ConfigKW.HEMIS_UNET:
         dataset = imed_adaptative.HDF5Dataset(bids_df=bids_df,
                                               subject_file_lst=data_list,
                                               model_params=model_params,
@@ -75,7 +78,7 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
                                               slice_axis=imed_utils.AXIS_DCT[slice_axis],
                                               transform=tranform_lst,
                                               metadata_choice=metadata_type,
-                                              slice_filter_fn=imed_loader_utils.SliceFilter(**slice_filter_params,
+                                              slice_filter_fn=SliceFilter(**slice_filter_params,
                                                                                             device=device,
                                                                                             cuda_available=cuda_available),
                                               roi_params=roi_params,
@@ -83,7 +86,7 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
                                               soft_gt=soft_gt)
     else:
         # Task selection
-        task = imed_utils.get_task(model_params["name"])
+        task = imed_utils.get_task(model_params[ModelParamsKW.NAME])
 
         dataset = BidsDataset(bids_df=bids_df,
                               subject_file_lst=data_list,
@@ -95,7 +98,7 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
                               slice_axis=imed_utils.AXIS_DCT[slice_axis],
                               transform=tranform_lst,
                               multichannel=multichannel,
-                              slice_filter_fn=imed_loader_utils.SliceFilter(**slice_filter_params, device=device,
+                              slice_filter_fn=SliceFilter(**slice_filter_params, device=device,
                                                                             cuda_available=cuda_available),
                               soft_gt=soft_gt,
                               object_detection_params=object_detection_params,
@@ -103,9 +106,9 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
                               is_input_dropout=is_input_dropout)
         dataset.load_filenames()
 
-    if model_params["name"] == "Modified3DUNet":
+    if model_params[ModelParamsKW.NAME] == ConfigKW.MODIFIED_3D_UNET:
         logger.info("Loaded {} volumes of shape {} for the {} set.".format(len(dataset), dataset.length, dataset_type))
-    elif model_params["name"] != "HeMISUnet" and dataset.length:
+    elif model_params[ModelParamsKW.NAME] != ConfigKW.HEMIS_UNET and dataset.length:
         logger.info("Loaded {} {} patches of shape {} for the {} set.".format(len(dataset), slice_axis, dataset.length,
                                                                               dataset_type))
     else:
