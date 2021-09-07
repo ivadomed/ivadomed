@@ -16,7 +16,6 @@ import copy
 import itertools
 from functools import partial
 import json
-import logging
 import random
 import collections.abc
 import shutil
@@ -28,6 +27,7 @@ import torch.multiprocessing as mp
 from ivadomed.loader.bids_dataframe import BidsDataframe
 import ivadomed.scripts.visualize_and_compare_testing_models as violin_plots
 from pathlib import Path
+from loguru import logger
 from ivadomed import main as ivado
 from ivadomed import config_manager as imed_config_manager
 from ivadomed.loader import utils as imed_loader_utils
@@ -36,7 +36,7 @@ from ivadomed import utils as imed_utils
 from ivadomed.keywords import ConfigKW,SplitDatasetKW, LoaderParamsKW
 
 LOG_FILENAME = 'log.txt'
-logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
+logger.add(LOG_FILENAME)
 
 
 def get_parser():
@@ -97,8 +97,8 @@ def train_worker(config, thr_incr):
             ivado.run_command(config, thr_increment=thr_incr)
 
     except Exception:
-        logging.exception('Got exception on main handler')
-        logging.info("Unexpected error:", sys.exc_info()[0])
+        logger.exception('Got exception on main handler')
+        logger.info("Unexpected error:", sys.exc_info()[0])
         raise
 
     # Save config file in output path
@@ -125,8 +125,8 @@ def test_worker(config):
         df_results, test_dice = ivado.run_command(config)
 
     except Exception:
-        logging.exception('Got exception on main handler')
-        logging.info("Unexpected error:", sys.exc_info()[0])
+        logger.exception('Got exception on main handler')
+        logger.info("Unexpected error:", sys.exc_info()[0])
         raise
 
     return config[ConfigKW.PATH_OUTPUT], test_dice, df_results
@@ -157,12 +157,12 @@ def split_dataset(initial_config):
     loader_parameters = initial_config[ConfigKW.LOADER_PARAMETERS]
     path_output = Path(initial_config[ConfigKW.PATH_OUTPUT])
     if not path_output.is_dir():
-        print(f'Creating output path: {path_output}')
+        logger.info(f'Creating output path: {path_output}')
         path_output.mkdir(parents=True)
     else:
-        print(f'Output path already exists: {path_output}')
+        logger.info(f'Output path already exists: {path_output}')
 
-    bids_df = imed_loader_utils.BidsDataframe(loader_parameters, path_output, derivatives=True)
+    bids_df = BidsDataframe(loader_parameters, str(path_output), derivatives=True)
 
     train_lst, valid_lst, test_lst = imed_loader_utils.get_new_subject_file_split(
         df=bids_df.df,
@@ -683,7 +683,7 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, p
     ctx = mp.get_context("spawn")
 
     # Run all configs on a separate process, with a maximum of n_gpus  processes at a given time
-    logging.info(initial_config[ConfigKW.GPU_IDS])
+    logger.info(initial_config[ConfigKW.GPU_IDS])
 
     results_df = pd.DataFrame()
     eval_df = pd.DataFrame()
@@ -718,7 +718,7 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, p
                         try:
                             shutil.rmtree(str(path_pred))
                         except OSError as e:
-                            logging.info("Error: %s - %s." % (e.filename, e.strerror))
+                            logger.info(f"Error: {e.filename} - {e.strerror}.")
 
                     # Take the config file within the path_output because binarize_prediction may have been updated
                     json_path = Path(config[ConfigKW.PATH_OUTPUT], 'config_file.json')
@@ -769,8 +769,8 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, p
     results_df = format_results(results_df, config_list, param_list)
     results_df.to_csv(str(Path(output_dir, "detailed_results.csv")))
 
-    logging.info("Detailed results")
-    logging.info(results_df)
+    logger.info("Detailed results")
+    logger.info(results_df)
 
     # Compute avg, std, p-values
     if n_iterations > 1:
