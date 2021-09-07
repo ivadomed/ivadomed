@@ -4,8 +4,8 @@ import os
 import json
 import shutil
 
+from ivadomed.loader.bids_dataframe import BidsDataframe
 from ivadomed.loader import loader as imed_loader
-from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.object_detection import utils as imed_obj_detect
 import logging
 from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__, download_data_testing_test_files
@@ -20,7 +20,7 @@ def setup_function():
     create_tmp_dir()
 
 
-@pytest.mark.parametrize('train_lst', [['sub-unf01']])
+@pytest.mark.parametrize('train_lst', [['sub-unf01_T2w.nii.gz']])
 @pytest.mark.parametrize('target_lst', [["_lesion-manual"]])
 @pytest.mark.parametrize('config', [
     {
@@ -83,7 +83,7 @@ def test_bounding_box(download_data_testing_test_files, train_lst, target_lst, c
     if not os.path.exists(PATH_OUTPUT):
         os.mkdir(PATH_OUTPUT)
     current_dir = os.getcwd()
-    sub = train_lst[0]
+    sub = train_lst[0].split('_')[0]
     contrast = config['contrast_params']['contrast_lst'][0]
     bb_path = os.path.join(current_dir, __data_testing_dir__, sub, "anat", sub + "_" + contrast + ".nii.gz")
     bounding_box_dict[bb_path] = coord
@@ -93,7 +93,7 @@ def test_bounding_box(download_data_testing_test_files, train_lst, target_lst, c
     # Update loader_params with config
     loader_params.update(config)
 
-    bids_df = imed_loader_utils.BidsDataframe(loader_params, __tmp_dir__, derivatives=True)
+    bids_df = BidsDataframe(loader_params, __tmp_dir__, derivatives=True)
 
     ds = imed_loader.load_dataset(bids_df, **loader_params)
 

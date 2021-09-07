@@ -11,7 +11,7 @@ from scipy.ndimage.measurements import center_of_mass
 from scipy.ndimage.measurements import label
 from ivadomed import maths as imed_maths
 
-from ivadomed.loader.utils import SampleMetadata
+from ivadomed.loader.sample_meta_data import SampleMetadata
 from ivadomed.metrics import dice_score
 from ivadomed.transforms import Clahe, AdditiveGaussianNoise, RandomAffine, RandomReverse, \
     DilateGT, ElasticTransform, ROICrop, CenterCrop, NormalizeInstance, HistogramClipping, \
