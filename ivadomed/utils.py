@@ -1,9 +1,10 @@
-import os
 import sys
+import os
 import subprocess
 import hashlib
 from enum import Enum
 from loguru import logger
+from pathlib import Path
 
 from typing import List
 
@@ -159,7 +160,7 @@ def display_selected_transfoms(params, dataset_type):
         logger.info('\t{}: {}'.format(k, params[k]))
 
 
-def plot_transformed_sample(before, after, list_title=[], fname_out="", cmap="jet"):
+def plot_transformed_sample(before, after, list_title=None, fname_out="", cmap="jet"):
     """Utils tool to plot sample before and after transform, for debugging.
 
     Args:
@@ -171,6 +172,8 @@ def plot_transformed_sample(before, after, list_title=[], fname_out="", cmap="je
     """
     import matplotlib
     import matplotlib.pyplot as plt
+    if list_title is None:
+        list_title = []
     if len(list_title) == 0:
         list_title = ['Sample before transform', 'Sample after transform']
 
@@ -207,7 +210,7 @@ def _git_info(commit_env='IVADOMED_COMMIT', branch_env='IVADOMED_BRANCH'):
     """
     ivadomed_commit = os.getenv(commit_env, "unknown")
     ivadomed_branch = os.getenv(branch_env, "unknown")
-    if check_exe("git") and os.path.isdir(os.path.join(__ivadomed_dir__, ".git")):
+    if check_exe("git") and Path(__ivadomed_dir__, ".git").is_dir():
         ivadomed_commit = __get_commit() or ivadomed_commit
         ivadomed_branch = __get_branch() or ivadomed_branch
 
@@ -216,8 +219,8 @@ def _git_info(commit_env='IVADOMED_COMMIT', branch_env='IVADOMED_BRANCH'):
     else:
         install_type = 'package'
 
-    path_version = os.path.join(__ivadomed_dir__, 'ivadomed', 'version.txt')
-    with open(path_version) as f:
+    path_version = Path(__ivadomed_dir__, 'ivadomed', 'version.txt')
+    with path_version.open() as f:
         version_ivadomed = f.read().strip()
 
     return install_type, ivadomed_commit, ivadomed_branch, version_ivadomed
@@ -233,15 +236,15 @@ def check_exe(name):
     """
 
     def is_exe(fpath):
-        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+        return Path(fpath).is_file() and os.access(fpath, os.X_OK)
 
-    fpath, fname = os.path.split(name)
+    fpath = Path(name).parent
     if fpath and is_exe(name):
         return fpath
     else:
         for path in os.environ["PATH"].split(os.pathsep):
             path = path.strip('"')
-            exe_file = os.path.join(path, name)
+            exe_file = str(Path(path, name))
             if is_exe(exe_file):
                 return exe_file
 
@@ -266,8 +269,12 @@ def get_arguments(parser, args):
             args = parser.parse_args(args)
         else:
             args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
-    except SystemExit:
-        raise ArgParseException('Error parsing args')
+    except SystemExit as e:
+        if e.code != 0:  # Calling `--help` raises SystemExit with 0 exit code (i.e. not an ArgParseException)
+            raise ArgParseException('Error parsing args')
+        else:
+            sys.exit(0)
+
     return args
 
 
@@ -282,7 +289,7 @@ def __get_commit(path_to_git_folder=None):
     if path_to_git_folder is None:
         path_to_git_folder = __ivadomed_dir__
     else:
-        path_to_git_folder = os.path.abspath(os.path.expanduser(path_to_git_folder))
+        path_to_git_folder = Path(path_to_git_folder).expanduser().absolute()
 
     p = subprocess.Popen(["git", "rev-parse", "HEAD"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                          cwd=path_to_git_folder)
@@ -337,7 +344,7 @@ def _version_string():
         return "{install_type}-{ivadomed_branch}-{ivadomed_commit}".format(**locals())
 
 
-__ivadomed_dir__ = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+__ivadomed_dir__ = Path(__file__).resolve().parent.parent
 __version__ = _version_string()
 
 
