@@ -76,7 +76,7 @@ def get_preds(context: dict, fname_model: str, model_params: dict, gpu_id: int, 
             model.eval()
 
             # Films/Hemis based prediction require meta data load
-            if (ConfigKW.FILMEDUNET in context and context[ConfigKW.FILMEDUNET][ModelParamsKW.APPLIED]) or \
+            if (ConfigKW.FILMED_UNET in context and context[ConfigKW.FILMED_UNET][ModelParamsKW.APPLIED]) or \
                     (ConfigKW.HEMIS_UNET in context and context[ConfigKW.HEMIS_UNET][ModelParamsKW.APPLIED]):
                 # Load meta data before prediction
                 metadata = imed_training.get_metadata(batch["input_metadata"], model_params)
@@ -111,11 +111,11 @@ def get_onehotencoder(context: dict, folder_model: str, options: dict, ds: Datas
     metadata_dict = joblib.load(Path(folder_model, 'metadata_dict.joblib'))
     for idx in ds.indexes:
         for i in range(len(idx)):
-            idx[i]['input_metadata'][0][context[ConfigKW.FILMEDUNET][ModelParamsKW.METADATA]] = options['metadata']
+            idx[i]['input_metadata'][0][context[ConfigKW.FILMED_UNET][ModelParamsKW.METADATA]] = options['metadata']
             idx[i]['input_metadata'][0]['metadata_dict'] = metadata_dict
 
     ds = imed_film.normalize_metadata(
-        ds, None, context[ConfigKW.DEBUGGING], context[ConfigKW.FILMEDUNET][ModelParamsKW.METADATA])
+        ds, None, context[ConfigKW.DEBUGGING], context[ConfigKW.FILMED_UNET][ModelParamsKW.METADATA])
 
     return joblib.load(Path(folder_model, 'one_hot_encoder.joblib'))
 
