@@ -976,27 +976,28 @@ being used for the segmentation task).
                "description": "Default: ``Unet``"
            },
            "dropout_rate": {
-               "type": "float"
+               "type": "float",
+               "description": "Default: ``0.3``"
            },
            "bn_momentum": {
                "type": "float",
                "$$description": [
                     "Defines the importance of the running average: (1 - `bn_momentum`). A large running\n",
                     "average factor will lead to a slow and smooth learning.\n",
-                    "See `PyTorch's BatchNorm classes for more details. <https://pytorch.org/docs/stable/generated/torch.nn.BatchNorm2d.html>`__ for more details.\n"
+                    "See `PyTorch's BatchNorm classes for more details. <https://pytorch.org/docs/stable/generated/torch.nn.BatchNorm2d.html>`__ for more details. Default: ``0.1``\n"
                ]
 
            },
            "depth": {
                "type": "int",
                "range": "(0, inf)",
-               "description": "Number of down-sampling operations."
+               "description": "Number of down-sampling operations. Default: ``3``"
            },
            "final_activation": {
                "type": "string",
                "required": "false",
                "$$description": [
-                   "Final activation layer. Options: ``sigmoid`` (default), ``relu``(normalized ReLU), or ``softmax``."
+                   "Final activation layer. Options: ``sigmoid`` (default), ``relu`` (normalized ReLU), or ``softmax``."
                ]
            },
            "length_2D": {
@@ -1029,8 +1030,10 @@ being used for the segmentation task).
     {
         "default_model": {
             "name": "Unet",
-            "dropout_rate": 0.4,
-            "batch_norm_momentum": 0.1
+            "dropout_rate": 0.3,
+            "bn_momentum": 0.1,
+            "depth": 3,
+            "final_activation": "sigmoid"
         }
     }
 
