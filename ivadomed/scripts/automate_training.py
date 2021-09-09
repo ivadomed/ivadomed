@@ -25,6 +25,8 @@ import joblib
 import pandas as pd
 import numpy as np
 import torch.multiprocessing as mp
+
+from ivadomed.loader.bids_dataframe import BidsDataframe
 import ivadomed.scripts.visualize_and_compare_testing_models as violin_plots
 from pathlib import Path
 from ivadomed import main as ivado
@@ -160,7 +162,7 @@ def split_dataset(initial_config):
     else:
         print('Output path already exists: {}'.format(path_output))
 
-    bids_df = imed_loader_utils.BidsDataframe(loader_parameters, str(path_output), derivatives=True)
+    bids_df = BidsDataframe(loader_parameters, str(path_output), derivatives=True)
 
     train_lst, valid_lst, test_lst = imed_loader_utils.get_new_subject_file_split(
         df=bids_df.df,
@@ -254,7 +256,10 @@ def make_config_list(param_list, initial_config, all_combin, multi_params):
                 path_output = new_config["path_output"]
                 for hyper_option in combination:
                     new_config = update_dict(new_config, hyper_option.option, hyper_option.base_key)
-                    path_output = path_output + hyper_option.name
+                    folder_name_suffix = hyper_option.name
+                    folder_name_suffix = folder_name_suffix.translate({ord(i): None for i in '[]}{ \''})
+                    folder_name_suffix = folder_name_suffix.translate({ord(i): '-' for i in ':=,'})
+                    path_output = path_output + folder_name_suffix
                 new_config["path_output"] = path_output
                 config_list.append(new_config)
     elif multi_params:
@@ -269,14 +274,20 @@ def make_config_list(param_list, initial_config, all_combin, multi_params):
             for key in base_key_dict.keys():
                 hyper_option = base_key_dict[key][i]
                 new_config = update_dict(new_config, hyper_option.option, hyper_option.base_key)
-                path_output = path_output + hyper_option.name
+                folder_name_suffix = hyper_option.name
+                folder_name_suffix = folder_name_suffix.translate({ord(i): None for i in '[]}{ \''})
+                folder_name_suffix = folder_name_suffix.translate({ord(i): '-' for i in ':=,'})
+                path_output = path_output + folder_name_suffix
             new_config["path_output"] = path_output
             config_list.append(new_config)
     else:
         for hyper_option in param_list:
             new_config = copy.deepcopy(initial_config)
             update_dict(new_config, hyper_option.option, hyper_option.base_key)
-            new_config["path_output"] = initial_config["path_output"] + hyper_option.name
+            folder_name_suffix = hyper_option.name
+            folder_name_suffix = folder_name_suffix.translate({ord(i): None for i in '[]}{ \''})
+            folder_name_suffix = folder_name_suffix.translate({ord(i): '-' for i in ':=,'})
+            new_config["path_output"] = initial_config["path_output"] + folder_name_suffix
             config_list.append(new_config)
 
     return config_list

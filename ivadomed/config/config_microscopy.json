@@ -9,7 +9,7 @@
         "safety_factor": [1.0, 1.0, 1.0]
     },
     "loader_parameters": {
-        "path_data": ["data_example_microscopy_sem"],
+        "path_data": ["data_axondeepseg_sem"],
         "bids_config": "ivadomed/config/config_bids.json",
         "subject_selection": {"n": [], "metadata": [], "value": []},
         "target_suffix": ["_seg-axon-manual", "_seg-myelin-manual"],

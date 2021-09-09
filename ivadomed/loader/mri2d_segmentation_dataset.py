@@ -10,6 +10,7 @@ from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.loader.utils import dropout_input
 from ivadomed.loader.segmentation_pair import SegmentationPair
 from ivadomed.object_detection import utils as imed_obj_detect
+from ivadomed.keywords import ROIParamsKW
 
 
 class MRI2DSegmentationDataset(Dataset):
@@ -77,9 +78,9 @@ class MRI2DSegmentationDataset(Dataset):
         self.slice_filter_fn = slice_filter_fn
         self.n_contrasts = len(self.filename_pairs[0][0])
         if roi_params is None:
-            roi_params = {"suffix": None, "slice_filter_roi": None}
-        self.roi_thr = roi_params["slice_filter_roi"]
-        self.slice_filter_roi = roi_params["suffix"] is not None and isinstance(self.roi_thr, int)
+            roi_params = {ROIParamsKW.SUFFIX: None, ROIParamsKW.SLICE_FILTER_ROI: None}
+        self.roi_thr = roi_params[ROIParamsKW.SLICE_FILTER_ROI]
+        self.slice_filter_roi = roi_params[ROIParamsKW.SUFFIX] is not None and isinstance(self.roi_thr, int)
         self.soft_gt = soft_gt
         self.has_bounding_box = True
         self.task = task
@@ -144,7 +145,7 @@ class MRI2DSegmentationDataset(Dataset):
                 if stride > length or stride <= 0:
                     raise RuntimeError('"stride_2D" must be greater than 0 and smaller or equal to "length_2D".')
                 if length > size:
-                    raise RuntimeError('"length_2D" must be smaller or equal to image dimensions.')
+                    raise RuntimeError('"length_2D" must be smaller or equal to image dimensions after resampling.')
 
             for x in range(0, (shape[0] - self.length[0] + self.stride[0]), self.stride[0]):
                 if x + self.length[0] > shape[0]:

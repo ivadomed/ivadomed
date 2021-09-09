@@ -4,6 +4,7 @@ import nibabel as nib
 import numpy as np
 
 from ivadomed.loader import utils as imed_loader_utils
+from ivadomed.loader.sample_meta_data import SampleMetadata
 from ivadomed import postprocessing as imed_postpro
 
 
@@ -167,7 +168,7 @@ class SegmentationPair(object):
         for idx_class, gt in enumerate(self.gt_handle):
             if gt is not None:
                 if not isinstance(gt, list):  # this tissue has annotation from only one rater
-                    gt_meta_dict.append(imed_loader_utils.SampleMetadata({
+                    gt_meta_dict.append(SampleMetadata({
                         "zooms": imed_loader_utils.orient_shapes_hwd(gt.header.get_zooms(), self.slice_axis),
                         "data_shape": imed_loader_utils.orient_shapes_hwd(gt.header.get_data_shape(), self.slice_axis),
                         "gt_filenames": self.metadata[0]["gt_filenames"],
@@ -177,7 +178,7 @@ class SegmentationPair(object):
                         "crop_params": {}
                     }))
                 else:
-                    gt_meta_dict.append([imed_loader_utils.SampleMetadata({
+                    gt_meta_dict.append([SampleMetadata({
                         "zooms": imed_loader_utils.orient_shapes_hwd(gt_rater.header.get_zooms(), self.slice_axis),
                         "data_shape": imed_loader_utils.orient_shapes_hwd(gt_rater.header.get_data_shape(), self.slice_axis),
                         "gt_filenames": self.metadata[0]["gt_filenames"][idx_class][idx_rater],
@@ -198,7 +199,7 @@ class SegmentationPair(object):
 
         input_meta_dict = []
         for handle in self.input_handle:
-            input_meta_dict.append(imed_loader_utils.SampleMetadata({
+            input_meta_dict.append(SampleMetadata({
                 "zooms": imed_loader_utils.orient_shapes_hwd(handle.header.get_zooms(), self.slice_axis),
                 "data_shape": imed_loader_utils.orient_shapes_hwd(handle.header.get_data_shape(), self.slice_axis),
                 "data_type": 'im',
@@ -298,16 +299,6 @@ class SegmentationPair(object):
         This method is especially relevant for making microscopy data compatible with NifTI-only
         pipelines.
 
-        The implementation of this method is dependent on the development of the corresponding
-        microscopy BEP (github.com/ivadomed/ivadomed/issues/301, bids.neuroimaging.io/bep031):
-        * "pixdim" (zooms) for Nifti1Image object is extracted as follows:
-            * For train, test and segment commands, PixelSize is taken from the metadata in BIDS JSON sidecar file.
-            * For inference with the segment_volume function, PixelSize must be provided in the 'options' argument.
-        * PixelSize definition in example dataset is a scalar in micrometers (BIDS BEP031 v0.0.2)
-        * PixelSize definition changed for list of 2-numbers [X, Y] or 3-numbers [X, Y, Z] in micrometers
-          for 2D and 3D respectively (BIDS BEP031 v0.0.3)
-        * Both PixelSize definitions are supported in this function.
-
         TODO: (#739) implement OMETIFF behavior (if "ome" in extension)
 
         Args:
@@ -332,29 +323,12 @@ class SegmentationPair(object):
         # Convert numpy array to Nifti1Image object with 4x4 identity affine matrix
         img = nib.Nifti1Image(img, affine=np.eye(4))
 
-        # Get pixel size in um from json metadata and convert to mm
-        array_length = [2, 3]        # Accepted array length for 'PixelSize' metadata
-        conversion_factor = 0.001    # Conversion factor from um to mm
-        if 'PixelSize' in self.metadata[0]:
-            ps_in_um = self.metadata[0]['PixelSize']
-            if isinstance(ps_in_um, list) and (len(ps_in_um) in array_length):
-                ps_in_um = np.asarray(ps_in_um)
-            elif isinstance(ps_in_um, float):
-                ps_in_um = np.asarray([ps_in_um, ps_in_um])
-            else:
-                raise RuntimeError("'PixelSize' metadata type is not supported. Format must be 2D [X, Y] array,"
-                                   " 3D [X, Y, Z] array or float.")
-            # Note: pixdim[1,2,3] must be non-zero in Nifti objects even if there is only one slice.
-            # When ps_in_um[2] (pixdim[3]) is not present or 0, we assign the same PixelSize as ps_in_um[0] (pixdim[1])
-            ps_in_um = np.resize(ps_in_um, 3)
-            if ps_in_um[2] == 0:
-                ps_in_um[2] = ps_in_um[0]
-            ps_in_mm = tuple(ps_in_um * conversion_factor)
-        else:
-            raise RuntimeError("'PixelSize' is missing from metadata")
+        # Get PixelSize in millimeters in order (PixelSizeY, PixelSizeX, PixelSizeZ), where X is the width,
+        # Y the height and Z the depth of the image.
+        ps_in_mm = self.get_microscopy_pixelsize()
 
         # Set "pixdim" (zooms) in Nifti1Image object header
-        img.header.set_zooms((ps_in_mm))
+        img.header.set_zooms(ps_in_mm)
 
         # If it doesn't already exist, save NifTI file in path_data alongside PNG/TIF/JPG file
         fname_out = imed_loader_utils.update_filename_to_nifti(filename)
@@ -362,3 +336,61 @@ class SegmentationPair(object):
             nib.save(img, fname_out)
 
         return img
+
+
+    def get_microscopy_pixelsize(self):
+        """
+        Get the microscopy pixel size in millimeters from the metadata.
+
+        The implementation of this method is dependent on the development of the corresponding
+        microscopy BEP (github.com/ivadomed/ivadomed/issues/301, bids.neuroimaging.io/bep031):
+        * "pixdim" (zooms) for Nifti1Image object is extracted as follows:
+            * For train, test and segment commands, PixelSize is taken from the metadata in BIDS JSON sidecar file.
+            * For inference with the segment_volume function, PixelSize must be provided in the 'options' argument.
+        * The function supports the PixelSize definition of BIDS BEP031 v0.0.4 as a list of 2-numbers
+          [PixelSizeX, PixelSizeY] or 3-numbers [PixelSizeX, PixelSizeY, PixelSizeZ] in micrometers for 2D and 3D
+          respectively, where X is the width, Y the height and Z the depth of the image.
+        * The function also supports the previous definition of PixelSize as a float (BIDS BEP031 v0.0.2).
+        * In the future BIDS BEP031 v0.0.5 version, a separate field PixelSizeUnits will be used to describe the unit
+          of PixelSize. The only accepted value will be "um" but could be expand in the future.
+
+        Returns:
+            ndrray: Pixel size in millimeters in order (PixelSizeY, PixelSizeX, PixelSizeZ), where Y is the height,
+                    X the width and Z the depth of the image.
+        """
+
+        # Get pixel size in um from json metadata and convert to mm
+        array_length = [2, 3]        # Accepted array length for 'PixelSize' metadata
+        conversion_factor = 0.001    # Conversion factor from um to mm
+
+        if 'PixelSize' in self.metadata[0]:
+            ps_in_um = self.metadata[0]['PixelSize']
+
+            if isinstance(ps_in_um, list) and (len(ps_in_um) in array_length):
+                # PixelSize array in order [PixelSizeX, PixelSizeY] or [PixelSizeX, PixelSizeY, PixelSizeZ]
+                ps_in_um = np.asarray(ps_in_um)
+
+                # Note: pixdim[3] (PixelSizeZ) must be non-zero in Nifti objects even if there is only one slice.
+                # When PixelSizeZ is not present or 0, we assign the same PixelSize as PixelSizeX
+                ps_in_um = np.resize(ps_in_um, 3)
+                if ps_in_um[2] == 0:
+                    ps_in_um[2] = ps_in_um[0]
+
+                # Swap PixelSizeX and PixelSizeY resulting in an array in order [PixelSizeY, PixelSizeX, PixelSizeZ]
+                # to match NIfTI pixdim[1,2,3] in [Height, Width, Depth] orientation with axial slice axis.
+                ps_in_um[[1, 0]] = ps_in_um[[0, 1]]
+
+            elif isinstance(ps_in_um, float):
+                ps_in_um = np.asarray([ps_in_um, ps_in_um, ps_in_um])
+
+            else:
+                raise RuntimeError("'PixelSize' metadata type is not supported. Format must be a float,"
+                                   " 2D [PixelSizeX, PixelSizeY] array or 3D [PixelSizeX, PixelSizeY, PixelSizeZ] array"
+                                   " where X is the width, Y the height and Z the depth of the image.")
+
+            ps_in_mm = tuple(ps_in_um * conversion_factor)
+
+        else:
+            raise RuntimeError("'PixelSize' is missing from metadata")
+
+        return ps_in_mm
