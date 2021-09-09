@@ -99,6 +99,10 @@ class BidsDataframe:
                             (os.path.basename(root) == "anat" or os.path.basename(root) == "ct") and
                             (root.replace(path_data, '').startswith("sub"))):
                         force_index.append(os.path.join(root.replace(path_data, '')))
+                    # rec-files in dwi folder
+                    if (file.endswith(ext_ct) and
+                            os.path.basename(root) == "dwi" and "rec-" in file):
+                        force_index.append(os.path.join(root.replace(path_data, '')))
             indexer = pybids.BIDSLayoutIndexer(force_index=force_index)
 
             if self.derivatives:
