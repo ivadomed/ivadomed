@@ -16,7 +16,7 @@ from skimage.exposure import equalize_adapthist
 from torchvision import transforms as torchvision_transforms
 
 from ivadomed.loader import utils as imed_loader_utils
-from ivadomed.keywords import *
+from ivadomed.keywords import TransformationKW
 
 
 def multichannel_capable(wrapped):

@@ -1,6 +1,5 @@
 import copy
 import datetime
-import os
 import random
 import time
 
@@ -12,6 +11,7 @@ from torch import optim
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
+from pathlib import Path
 
 from ivadomed import losses as imed_losses
 from ivadomed import mixup as imed_mixup
@@ -20,7 +20,8 @@ from ivadomed import models as imed_models
 from ivadomed import utils as imed_utils
 from ivadomed import visualize as imed_visualize
 from ivadomed.loader import utils as imed_loader_utils
-from ivadomed.keywords import *
+from ivadomed.loader.balanced_sampler import BalancedSampler
+from ivadomed.keywords import ModelParamsKW, ConfigKW
 
 cudnn.benchmark = True
 
@@ -116,14 +117,14 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
 
     # Resume
     start_epoch = 1
-    resume_path = os.path.join(path_output, "checkpoint.pth.tar")
+    resume_path = Path(path_output, "checkpoint.pth.tar")
     if resume_training:
         model, optimizer, gif_dict, start_epoch, val_loss_total_avg, scheduler, patience_count = load_checkpoint(
             model=model,
             optimizer=optimizer,
             gif_dict=gif_dict,
             scheduler=scheduler,
-            fname=resume_path)
+            fname=str(resume_path))
         # Individually transfer the optimizer parts
         # TODO: check if following lines are needed
         for state in optimizer.state.values():
@@ -158,7 +159,7 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
         num_steps = 0
         for i, batch in enumerate(train_loader):
             # GET SAMPLES
-            if model_params[ModelParamsKW.NAME] == ConfigKW.HEMISUNET:
+            if model_params[ModelParamsKW.NAME] == ConfigKW.HEMIS_UNET:
                 input_samples = imed_utils.cuda(imed_utils.unstack_tensors(batch["input"]), cuda_available)
             else:
                 input_samples = imed_utils.cuda(batch["input"], cuda_available)
@@ -170,7 +171,7 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
                                                              debugging and epoch == 1, path_output)
 
             # RUN MODEL
-            if model_params[ModelParamsKW.NAME] == ConfigKW.HEMISUNET or \
+            if model_params[ModelParamsKW.NAME] == ConfigKW.HEMIS_UNET or \
                     (ModelParamsKW.FILM_LAYERS in model_params and any(model_params[ModelParamsKW.FILM_LAYERS])):
                 metadata = get_metadata(batch["input_metadata"], model_params)
                 preds = model(input_samples, metadata)
@@ -207,7 +208,7 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
         tqdm.write(msg)
 
         # CURRICULUM LEARNING
-        if model_params[ModelParamsKW.NAME] == ConfigKW.HEMISUNET:
+        if model_params[ModelParamsKW.NAME] == ConfigKW.HEMIS_UNET:
             # Increase the probability of a missing modality
             model_params[ModelParamsKW.MISSING_PROBABILITY] **= model_params[ModelParamsKW.MISSING_PROBABILITY_GROWTH]
             dataset_train.update(p=model_params[ModelParamsKW.MISSING_PROBABILITY])
@@ -221,14 +222,14 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
             for i, batch in enumerate(val_loader):
                 with torch.no_grad():
                     # GET SAMPLES
-                    if model_params[ModelParamsKW.NAME] == ConfigKW.HEMISUNET:
+                    if model_params[ModelParamsKW.NAME] == ConfigKW.HEMIS_UNET:
                         input_samples = imed_utils.cuda(imed_utils.unstack_tensors(batch["input"]), cuda_available)
                     else:
                         input_samples = imed_utils.cuda(batch["input"], cuda_available)
                     gt_samples = imed_utils.cuda(batch["gt"], cuda_available, non_blocking=True)
 
                     # RUN MODEL
-                    if model_params[ModelParamsKW.NAME] == ConfigKW.HEMISUNET or \
+                    if model_params[ModelParamsKW.NAME] == ConfigKW.HEMIS_UNET or \
                             (ModelParamsKW.FILM_LAYERS in model_params and any(model_params[ModelParamsKW.FILM_LAYERS])):
                         metadata = get_metadata(batch["input_metadata"], model_params)
                         preds = model(input_samples, metadata)
@@ -294,7 +295,7 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
                 torch.save(state, resume_path)
 
                 # Save best model file
-                model_path = os.path.join(path_output, "best_model.pt")
+                model_path = Path(path_output, "best_model.pt")
                 torch.save(model, model_path)
 
                 # Update best scores
@@ -311,39 +312,39 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
                     break
 
     # Save final model
-    final_model_path = os.path.join(path_output, "final_model.pt")
+    final_model_path = Path(path_output, "final_model.pt")
     torch.save(model, final_model_path)
 
     # Save best model in output path
-    if os.path.isfile(resume_path):
+    if resume_path.is_file():
         state = torch.load(resume_path)
-        model_path = os.path.join(path_output, "best_model.pt")
+        model_path = Path(path_output, "best_model.pt")
         model.load_state_dict(state['state_dict'])
         torch.save(model, model_path)
         # Save best model as ONNX in the model directory
         try:
             # Convert best model to ONNX and save it in model directory
-            best_model_path = os.path.join(path_output, model_params[ModelParamsKW.FOLDER_NAME],
+            best_model_path = Path(path_output, model_params[ModelParamsKW.FOLDER_NAME],
                                            model_params[ModelParamsKW.FOLDER_NAME] + ".onnx")
-            imed_utils.save_onnx_model(model, input_samples, best_model_path)
+            imed_utils.save_onnx_model(model, input_samples, str(best_model_path))
         except:
             # Save best model in model directory
-            best_model_path = os.path.join(path_output, model_params[ModelParamsKW.FOLDER_NAME],
+            best_model_path = Path(path_output, model_params[ModelParamsKW.FOLDER_NAME],
                                            model_params[ModelParamsKW.FOLDER_NAME] + ".pt")
             torch.save(model, best_model_path)
-            logger.warning("Failed to save the model as '.onnx', saved it as '.pt': {}".format(best_model_path))
+            logger.warning(f"Failed to save the model as '.onnx', saved it as '.pt': {best_model_path}")
 
     # Save GIFs
-    gif_folder = os.path.join(path_output, "gifs")
-    if n_gif > 0 and not os.path.isdir(gif_folder):
-        os.makedirs(gif_folder)
+    gif_folder = Path(path_output, "gifs")
+    if n_gif > 0 and not gif_folder.is_dir():
+        gif_folder.mkdir(parents=True)
     for i_gif in range(n_gif):
         fname_out = gif_dict["image_path"][i_gif].split('/')[-3] + "__"
         fname_out += gif_dict["image_path"][i_gif].split('/')[-1].split(".nii.gz")[0].split(
             gif_dict["image_path"][i_gif].split('/')[-3] + "_")[1] + "__"
         fname_out += str(gif_dict["slice_id"][i_gif]) + ".gif"
-        path_gif_out = os.path.join(gif_folder, fname_out)
-        gif_dict["gif"][i_gif].save(path_gif_out)
+        path_gif_out = Path(gif_folder, fname_out)
+        gif_dict["gif"][i_gif].save(str(path_gif_out))
 
     writer.close()
     final_time = time.time()
@@ -367,7 +368,7 @@ def get_sampler(ds, balance_bool, metadata):
         Otherwise: Returns None and True.
     """
     if balance_bool:
-        return imed_loader_utils.BalancedSampler(ds, metadata), False
+        return BalancedSampler(ds, metadata), False
     else:
         return None, True
 
@@ -438,7 +439,7 @@ def get_metadata(metadata, model_params):
         If FiLMedUnet, Returns a list of metadata, that have been transformed by the One Hot Encoder.
         If HeMISUnet, Returns a numpy array where each row represents a sample and each column represents a contrast.
     """
-    if model_params[ModelParamsKW.NAME] == ConfigKW.HEMISUNET:
+    if model_params[ModelParamsKW.NAME] == ConfigKW.HEMIS_UNET:
         return np.array([m[0]["missing_mod"] for m in metadata])
     else:
         return [model_params[ModelParamsKW.FILM_ONEHOTENCODER].transform([metadata[k][0]['film_input']]).tolist()[0]

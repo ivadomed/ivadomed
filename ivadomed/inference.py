@@ -1,4 +1,3 @@
-import os
 import nibabel as nib
 import numpy as np
 import onnxruntime
@@ -6,6 +5,7 @@ import torch
 import imageio
 import joblib
 from typing import List
+from pathlib import Path
 
 from loguru import logger
 from torch.utils.data import Dataset
@@ -20,10 +20,12 @@ from ivadomed import models as imed_models
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
 from ivadomed.loader import utils as imed_loader_utils, film as imed_film
+from ivadomed.loader.slice_filter import SliceFilter
 from ivadomed.object_detection import utils as imed_obj_detect
 from ivadomed import utils as imed_utils
 from ivadomed import training as imed_training
-from ivadomed.keywords import *
+from ivadomed.keywords import ConfigKW, ModelParamsKW, ObjectDetectionParamsKW, TransformationKW, LoaderParamsKW, \
+    ROIParamsKW, SliceFilterParamsKW, TrainingParamsKW
 
 
 def onnx_inference(model_path: str, inputs: tensor) -> tensor:
@@ -75,7 +77,7 @@ def get_preds(context: dict, fname_model: str, model_params: dict, gpu_id: int, 
 
             # Films/Hemis based prediction require meta data load
             if (ConfigKW.FILMEDUNET in context and context[ConfigKW.FILMEDUNET][ModelParamsKW.APPLIED]) or \
-                    (ConfigKW.HEMISUNET in context and context[ConfigKW.HEMISUNET][ModelParamsKW.APPLIED]):
+                    (ConfigKW.HEMIS_UNET in context and context[ConfigKW.HEMIS_UNET][ModelParamsKW.APPLIED]):
                 # Load meta data before prediction
                 metadata = imed_training.get_metadata(batch["input_metadata"], model_params)
                 preds = model(img, metadata)
@@ -106,7 +108,7 @@ def get_onehotencoder(context: dict, folder_model: str, options: dict, ds: Datas
     Returns:
         dict: onehotencoder used in the model params.
     """
-    metadata_dict = joblib.load(os.path.join(folder_model, 'metadata_dict.joblib'))
+    metadata_dict = joblib.load(Path(folder_model, 'metadata_dict.joblib'))
     for idx in ds.indexes:
         for i in range(len(idx)):
             idx[i]['input_metadata'][0][context[ConfigKW.FILMEDUNET][ModelParamsKW.METADATA]] = options['metadata']
@@ -115,7 +117,7 @@ def get_onehotencoder(context: dict, folder_model: str, options: dict, ds: Datas
     ds = imed_film.normalize_metadata(
         ds, None, context[ConfigKW.DEBUGGING], context[ConfigKW.FILMEDUNET][ModelParamsKW.METADATA])
 
-    return joblib.load(os.path.join(folder_model, 'one_hot_encoder.joblib'))
+    return joblib.load(Path(folder_model, 'one_hot_encoder.joblib'))
 
 
 def pred_to_nib(data_lst: List[np.ndarray], z_lst: List[int], fname_ref: str, fname_out: str, slice_axis: int,
@@ -336,8 +338,10 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
                               example: ["10", "20", "10vox"] (remove objects smaller than 10 voxels for class 1 and 3,
                               and smaller than 20 voxels for class 2).
             * 'pixel_size': (list of float) List of microscopy pixel size in micrometers.
-                            Length equals 2 [X, Y] for 2D or 3 [X, Y, Z] for 3D.
-            * 'overlap_2D': (list of int) List of overlaps in pixels for 2D patching. Length equals 2 [X, Y].
+                            Length equals 2 [PixelSizeX, PixelSizeY] for 2D or 3 [PixelSizeX, PixelSizeY, PixelSizeZ] for 3D,
+                            where X is the width, Y the height and Z the depth of the image.
+            * 'overlap_2D': (list of int) List of overlaps in pixels for 2D patching. Length equals 2 [OverlapX, OverlapY],
+                            where X is the width and Y the height of the image.
             * 'metadata': (str) Film metadata.
             * 'fname_prior': (str) An image filename (e.g., .nii.gz) containing processing information
                 (e.g., spinal cord segmentation, spinal location or MS lesion classification, spinal cord centerline), 
@@ -385,7 +389,7 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
         logger.warning("fname_roi has not been specified, then the entire volume is processed.")
         loader_params[LoaderParamsKW.SLICE_FILTER_PARAMS][SliceFilterParamsKW.FILTER_EMPTY_MASK] = False
 
-    kernel_3D = bool(ConfigKW.MODIFIED3DUNET in context and context[ConfigKW.MODIFIED3DUNET][ModelParamsKW.APPLIED]) or \
+    kernel_3D = bool(ConfigKW.MODIFIED_3D_UNET in context and context[ConfigKW.MODIFIED_3D_UNET][ModelParamsKW.APPLIED]) or \
                 not context[ConfigKW.DEFAULT_MODEL][ModelParamsKW.IS_2D]
 
     # Assign length_2D and stride_2D for 2D patching
@@ -395,9 +399,13 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
         ModelParamsKW.STRIDE_2D in context[ConfigKW.DEFAULT_MODEL] else []
     is_2d_patch = bool(length_2D)
 
-    # Adjust stride_2D with overlap_2D option if present
     if is_2d_patch and (options is not None) and ('overlap_2D' in options):
-        stride_2D = [x1 - x2 for (x1, x2) in zip(length_2D, options['overlap_2D'])]
+        overlap_2D = options['overlap_2D']
+        # Swap OverlapX and OverlapY resulting in an array in order [OverlapY, OverlapX]
+        # to match length_2D and stride_2D in [Height, Width] orientation.
+        overlap_2D[1], overlap_2D[0] = overlap_2D[0], overlap_2D[1]
+        # Adjust stride_2D with overlap_2D
+        stride_2D = [x1 - x2 for (x1, x2) in zip(length_2D, overlap_2D)]
 
     # Add microscopy pixel size from options to metadata for filenames_pairs
     if (options is not None) and ('pixel_size' in options):
@@ -408,10 +416,10 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
     if kernel_3D:
         ds = MRI3DSubVolumeSegmentationDataset(filename_pairs,
                                                transform=tranform_lst,
-                                               length=context[ConfigKW.MODIFIED3DUNET][ModelParamsKW.LENGTH_3D],
-                                               stride=context[ConfigKW.MODIFIED3DUNET][ModelParamsKW.STRIDE_3D])
+                                               length=context[ConfigKW.MODIFIED_3D_UNET][ModelParamsKW.LENGTH_3D],
+                                               stride=context[ConfigKW.MODIFIED_3D_UNET][ModelParamsKW.STRIDE_3D])
         logger.info(f"Loaded {len(ds)} {loader_params[LoaderParamsKW.SLICE_AXIS]} volumes of shape "
-                     f"{context[ConfigKW.MODIFIED3DUNET][ModelParamsKW.LENGTH_3D]}.")
+                    f"{context[ConfigKW.MODIFIED_3D_UNET][ModelParamsKW.LENGTH_3D]}.")
     else:
         ds = MRI2DSegmentationDataset(filename_pairs,
                                       length=length_2D,
@@ -419,7 +427,7 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
                                       slice_axis=slice_axis,
                                       cache=True,
                                       transform=tranform_lst,
-                                      slice_filter_fn=imed_loader_utils.SliceFilter(
+                                      slice_filter_fn=SliceFilter(
                                           **loader_params[LoaderParamsKW.SLICE_FILTER_PARAMS]))
         ds.load_filenames()
         if is_2d_patch:
@@ -428,9 +436,9 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
             logger.info(f"Loaded {len(ds)} {loader_params[LoaderParamsKW.SLICE_AXIS]} slices.")
 
     model_params = {}
-    if ConfigKW.FILMEDUNET in context and context[ConfigKW.FILMEDUNET][ModelParamsKW.APPLIED]:
+    if ConfigKW.FILMED_UNET in context and context[ConfigKW.FILMED_UNET][ModelParamsKW.APPLIED]:
         onehotencoder = get_onehotencoder(context, folder_model, options, ds)
-        model_params.update({ModelParamsKW.NAME: ConfigKW.FILMEDUNET,
+        model_params.update({ModelParamsKW.NAME: ConfigKW.FILMED_UNET,
                              ModelParamsKW.FILM_ONEHOTENCODER: onehotencoder,
                              ModelParamsKW.N_METADATA: len([ll for l in onehotencoder.categories_ for ll in l])})
 

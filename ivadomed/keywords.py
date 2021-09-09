@@ -8,7 +8,7 @@ class ConfigKW:
     MODEL_NAME = "model_name"
     MODIFIED_3D_UNET = "Modified3DUNet"
     DEBUGGING = "debugging"
-    FILMEDUNET = "FiLMedUnet"
+    FILMED_UNET = "FiLMedUnet"
     DEFAULT_MODEL = "default_model"
     OBJECT_DETECTION_PARAMS = "object_detection_params"
     GPU_IDS = "gpu_ids"

@@ -1,4 +1,3 @@
-import os
 import copy
 from pathlib import Path
 import nibabel as nib
@@ -8,6 +7,7 @@ import torch.backends.cudnn as cudnn
 from loguru import logger
 from torch.utils.data import DataLoader, ConcatDataset
 from tqdm import tqdm
+from pathlib import Path
 
 from ivadomed import metrics as imed_metrics
 from ivadomed import utils as imed_utils
@@ -19,7 +19,7 @@ from ivadomed.object_detection import utils as imed_obj_detect
 from ivadomed.loader.film import store_film_params, save_film_params
 from ivadomed.training import get_metadata
 from ivadomed.postprocessing import threshold_predictions
-from ivadomed.keywords import *
+from ivadomed.keywords import ConfigKW, ModelParamsKW
 
 cudnn.benchmark = True
 
@@ -48,7 +48,7 @@ def test(model_params, dataset_test, testing_params, path_output, device, cuda_a
                              num_workers=0)
 
     # LOAD TRAIN MODEL
-    fname_model = os.path.join(path_output, "best_model.pt")
+    fname_model = Path(path_output, "best_model.pt")
     logger.info('Loading model: {}'.format(fname_model))
     model = torch.load(fname_model, map_location=device)
     if cuda_available:
@@ -56,9 +56,9 @@ def test(model_params, dataset_test, testing_params, path_output, device, cuda_a
     model.eval()
 
     # CREATE OUTPUT FOLDER
-    path_3Dpred = os.path.join(path_output, 'pred_masks')
-    if not os.path.isdir(path_3Dpred):
-        os.makedirs(path_3Dpred)
+    path_3Dpred = Path(path_output, 'pred_masks')
+    if not path_3Dpred.is_dir():
+        path_3Dpred.mkdir(parents=True)
 
     # METRIC MANAGER
     metric_mgr = imed_metrics.MetricManager(metric_fns)
@@ -74,14 +74,14 @@ def test(model_params, dataset_test, testing_params, path_output, device, cuda_a
         n_monteCarlo = 1
 
     for i_monteCarlo in range(n_monteCarlo):
-        preds_npy, gt_npy = run_inference(test_loader, model, model_params, testing_params, path_3Dpred,
+        preds_npy, gt_npy = run_inference(test_loader, model, model_params, testing_params, str(path_3Dpred),
                                           cuda_available, i_monteCarlo, postprocessing)
         metric_mgr(preds_npy, gt_npy)
         # If uncertainty computation, don't apply it on last iteration for prediction
         if testing_params['uncertainty']['applied'] and (n_monteCarlo - 2 == i_monteCarlo):
             testing_params['uncertainty']['applied'] = False
             # COMPUTE UNCERTAINTY MAPS
-            imed_uncertainty.run_uncertainty(ifolder=path_3Dpred)
+            imed_uncertainty.run_uncertainty(ifolder=str(path_3Dpred))
 
     metrics_dict = metric_mgr.get_results()
     metric_mgr.reset()
@@ -126,7 +126,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
             # input_samples: list of batch_size tensors, whose size is n_channels X height X width X depth
             # gt_samples: idem with n_labels
             # batch['*_metadata']: list of batch_size lists, whose size is n_channels or n_labels
-            if model_params[ModelParamsKW.NAME] == ConfigKW.HEMISUNET:
+            if model_params[ModelParamsKW.NAME] == ConfigKW.HEMIS_UNET:
                 input_samples = imed_utils.cuda(imed_utils.unstack_tensors(batch["input"]), cuda_available)
             else:
                 input_samples = imed_utils.cuda(batch["input"], cuda_available)
@@ -139,19 +139,19 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                         m.train()
 
             # RUN MODEL
-            if model_params[ModelParamsKW.NAME] == ConfigKW.HEMISUNET or \
+            if model_params[ModelParamsKW.NAME] == ConfigKW.HEMIS_UNET or \
                     (ModelParamsKW.FILM_LAYERS in model_params and any(model_params[ModelParamsKW.FILM_LAYERS])):
                 metadata = get_metadata(batch["input_metadata"], model_params)
                 preds = model(input_samples, metadata)
             else:
                 preds = model(input_samples)
 
-        if model_params[ModelParamsKW.NAME] == ConfigKW.HEMISUNET:
+        if model_params[ModelParamsKW.NAME] == ConfigKW.HEMIS_UNET:
             # Reconstruct image with only one modality
             input_samples = batch['input'][0]
 
-        if model_params[ModelParamsKW.NAME] == ConfigKW.MODIFIED3DUNET and model_params[ModelParamsKW.ATTENTION] and ofolder:
-            imed_visualize.save_feature_map(batch, "attentionblock2", os.path.dirname(ofolder), model, input_samples,
+        if model_params[ModelParamsKW.NAME] == ConfigKW.MODIFIED_3D_UNET and model_params[ModelParamsKW.ATTENTION] and ofolder:
+            imed_visualize.save_feature_map(batch, "attentionblock2", str(Path(ofolder).parent), model, input_samples,
                                             slice_axis=test_loader.dataset.slice_axis)
 
         if ModelParamsKW.FILM_LAYERS in model_params and any(model_params[ModelParamsKW.FILM_LAYERS]):
@@ -222,7 +222,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                     and task != "classification"):
                     # save the completely processed file as a NifTI file
                     if ofolder:
-                        fname_pred = os.path.join(ofolder, Path(fname_ref).name)
+                        fname_pred = str(Path(ofolder, Path(fname_ref).name))
                         fname_pred = fname_pred.rsplit("_", 1)[0] + '_pred.nii.gz'
                         # If Uncertainty running, then we save each simulation result
                         if testing_params['uncertainty']['applied']:
@@ -278,7 +278,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                 if last_sample_bool:
                     pred_undo = np.array(pred_undo)
                     if ofolder:
-                        fname_pred = os.path.join(ofolder, fname_ref.split('/')[-1])
+                        fname_pred = str(Path(ofolder, Path(fname_ref).name))
                         fname_pred = fname_pred.split(testing_params['target_suffix'][0])[0] + '_pred.nii.gz'
                         # If uncertainty running, then we save each simulation result
                         if testing_params['uncertainty']['applied']:
