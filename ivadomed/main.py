@@ -80,10 +80,10 @@ def create_path_model(context, model_params, ds_train, path_output, train_onehot
         logger.info(f'Creating model directory: {path_model}')
         path_model.mkdir(parents=True)
         if ModelParamsKW.FILM_LAYERS in model_params and any(model_params[ModelParamsKW.FILM_LAYERS]):
-            joblib.dump(train_onehotencoder, path_model.joinpath(path_model, "one_hot_encoder.joblib"))
+            joblib.dump(train_onehotencoder, path_model.joinpath("one_hot_encoder.joblib"))
             if 'metadata_dict' in ds_train[0]['input_metadata'][0]:
                 metadata_dict = ds_train[0]['input_metadata'][0]['metadata_dict']
-                joblib.dump(metadata_dict, path_model.joinpath(path_model, "metadata_dict.joblib"))
+                joblib.dump(metadata_dict, path_model.joinpath("metadata_dict.joblib"))
 
     else:
         logger.info(f'Model directory already exists: {path_model}')
