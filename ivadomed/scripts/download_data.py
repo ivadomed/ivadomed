@@ -13,7 +13,7 @@ import argparse
 import textwrap
 
 from ivadomed import utils as imed_utils
-from ivadomed.keywords import *
+from ivadomed.keywords import IgnoredFolderKW
 
 
 DICT_URL = {
