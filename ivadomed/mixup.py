@@ -1,7 +1,7 @@
+import os
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from pathlib import Path
 
 
 def mixup(data, targets, alpha, debugging=False, ofolder=None):
@@ -48,14 +48,14 @@ def save_mixup_sample(ofolder, input_data, labeled_data, lambda_tensor):
         lambda_tensor (Tensor):
     """
     # Mixup folder
-    mixup_folder = Path(ofolder, 'mixup')
-    if not mixup_folder.is_dir():
-        mixup_folder.mkdir(parents=True)
+    mixup_folder = os.path.join(ofolder, 'mixup')
+    if not os.path.isdir(mixup_folder):
+        os.makedirs(mixup_folder)
     # Random sample
     random_idx = np.random.randint(0, input_data.size()[0])
     # Output fname
     ofname = str(lambda_tensor.data.numpy()[0]) + '_' + str(random_idx).zfill(3) + '.png'
-    ofname = Path(mixup_folder, ofname)
+    ofname = os.path.join(mixup_folder, ofname)
     # Tensor to Numpy
     x = input_data.data.numpy()[random_idx, 0, :, :]
     y = labeled_data.data.numpy()[random_idx, 0, :, :]

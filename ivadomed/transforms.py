@@ -16,6 +16,7 @@ from skimage.exposure import equalize_adapthist
 from torchvision import transforms as torchvision_transforms
 
 from ivadomed.loader import utils as imed_loader_utils
+from ivadomed.keywords import *
 
 
 def multichannel_capable(wrapped):
@@ -1048,7 +1049,7 @@ def get_preprocessing_transforms(transforms):
     original_transforms = copy.deepcopy(transforms)
     preprocessing_transforms = copy.deepcopy(transforms)
     for idx, tr in enumerate(original_transforms):
-        if tr == "Resample" or tr == "CenterCrop" or tr == "ROICrop":
+        if tr == TransformationKW.RESAMPLE or tr == TransformationKW.CENTERCROP or tr == TransformationKW.ROICROP:
             del transforms[tr]
         else:
             del preprocessing_transforms[tr]

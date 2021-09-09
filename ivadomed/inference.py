@@ -1,3 +1,4 @@
+import os
 import nibabel as nib
 import numpy as np
 import onnxruntime
@@ -5,7 +6,6 @@ import torch
 import imageio
 import joblib
 from typing import List
-from pathlib import Path
 
 from loguru import logger
 from torch.utils.data import Dataset
@@ -20,11 +20,10 @@ from ivadomed import models as imed_models
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
 from ivadomed.loader import utils as imed_loader_utils, film as imed_film
-from ivadomed.loader.slice_filter import SliceFilter
 from ivadomed.object_detection import utils as imed_obj_detect
 from ivadomed import utils as imed_utils
 from ivadomed import training as imed_training
-
+from ivadomed.keywords import *
 
 
 def onnx_inference(model_path: str, inputs: tensor) -> tensor:
@@ -75,8 +74,8 @@ def get_preds(context: dict, fname_model: str, model_params: dict, gpu_id: int, 
             model.eval()
 
             # Films/Hemis based prediction require meta data load
-            if ('FiLMedUnet' in context and context['FiLMedUnet']['applied']) or \
-                    ('HeMISUnet' in context and context['HeMISUnet']['applied']):
+            if (ConfigKW.FILMEDUNET in context and context[ConfigKW.FILMEDUNET][ModelParamsKW.APPLIED]) or \
+                    (ConfigKW.HEMISUNET in context and context[ConfigKW.HEMISUNET][ModelParamsKW.APPLIED]):
                 # Load meta data before prediction
                 metadata = imed_training.get_metadata(batch["input_metadata"], model_params)
                 preds = model(img, metadata)
@@ -107,15 +106,16 @@ def get_onehotencoder(context: dict, folder_model: str, options: dict, ds: Datas
     Returns:
         dict: onehotencoder used in the model params.
     """
-    metadata_dict = joblib.load(Path(folder_model, 'metadata_dict.joblib'))
+    metadata_dict = joblib.load(os.path.join(folder_model, 'metadata_dict.joblib'))
     for idx in ds.indexes:
         for i in range(len(idx)):
-            idx[i]['input_metadata'][0][context['FiLMedUnet']['metadata']] = options['metadata']
+            idx[i]['input_metadata'][0][context[ConfigKW.FILMEDUNET][ModelParamsKW.METADATA]] = options['metadata']
             idx[i]['input_metadata'][0]['metadata_dict'] = metadata_dict
 
-    ds = imed_film.normalize_metadata(ds, None, context["debugging"], context['FiLMedUnet']['metadata'])
+    ds = imed_film.normalize_metadata(
+        ds, None, context[ConfigKW.DEBUGGING], context[ConfigKW.FILMEDUNET][ModelParamsKW.METADATA])
 
-    return joblib.load(Path(folder_model, 'one_hot_encoder.joblib'))
+    return joblib.load(os.path.join(folder_model, 'one_hot_encoder.joblib'))
 
 
 def pred_to_nib(data_lst: List[np.ndarray], z_lst: List[int], fname_ref: str, fname_out: str, slice_axis: int,
@@ -240,19 +240,19 @@ def process_transformations(context: dict, fname_roi: str, fname_prior: str, met
     Returns:
         dict: metadata.
     """
-    if fname_roi is None and 'ROICrop' in context["transformation"].keys():
+    if fname_roi is None and TransformationKW.ROICROP in context[ConfigKW.TRANSFORMATION].keys():
         logger.warning(
             "fname_roi has not been specified, then a cropping around the center of the image is "
             "performed instead of a cropping around a Region of Interest.")
 
-        context["transformation"] = dict((key, value) if key != 'ROICrop'
-                                         else ('CenterCrop', value)
-                                         for (key, value) in context["transformation"].items())
+        context[ConfigKW.TRANSFORMATION] = dict((key, value) if key != TransformationKW.ROICROP
+                                         else (TransformationKW.CENTERCROP, value)
+                                         for (key, value) in context[ConfigKW.TRANSFORMATION].items())
 
-    if 'object_detection_params' in context and \
-            context['object_detection_params']['object_detection_path'] is not None:
+    if ConfigKW.OBJECT_DETECTION_PARAMS in context and \
+            context[ConfigKW.OBJECT_DETECTION_PARAMS][ObjectDetectionParamsKW.OBJECT_DETECTION_PATH] is not None:
         imed_obj_detect.bounding_box_prior(fname_prior, metadata, slice_axis,
-                                           context['object_detection_params']['safety_factor'])
+                                           context[ConfigKW.OBJECT_DETECTION_PARAMS][ObjectDetectionParamsKW.SAFETY_FACTOR])
         metadata = [metadata] * len(fname_images)
 
     return metadata
@@ -275,8 +275,8 @@ def set_option(options: dict, postpro: dict, context: dict, key: str):
     if options[key]:
         postpro[key] = {}
     # Remove key in context if value set to 0
-    elif key in context['postprocessing']:
-        del context['postprocessing'][key]
+    elif key in context[ConfigKW.POSTPROCESSING]:
+        del context[ConfigKW.POSTPROCESSING][key]
 
 
 def set_postprocessing_options(options: dict, context: dict):
@@ -306,7 +306,7 @@ def set_postprocessing_options(options: dict, context: dict):
         thr = [int(t.replace(unit, "")) for t in options['remove_small']]
         postpro['remove_small'] = {"unit": unit, "thr": thr}
 
-    context['postprocessing'].update(postpro)
+    context[ConfigKW.POSTPROCESSING].update(postpro)
 
 
 def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, options: dict = None):
@@ -336,10 +336,8 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
                               example: ["10", "20", "10vox"] (remove objects smaller than 10 voxels for class 1 and 3,
                               and smaller than 20 voxels for class 2).
             * 'pixel_size': (list of float) List of microscopy pixel size in micrometers.
-                            Length equals 2 [PixelSizeX, PixelSizeY] for 2D or 3 [PixelSizeX, PixelSizeY, PixelSizeZ] for 3D,
-                            where X is the width, Y the height and Z the depth of the image.
-            * 'overlap_2D': (list of int) List of overlaps in pixels for 2D patching. Length equals 2 [OverlapX, OverlapY],
-                            where X is the width and Y the height of the image.
+                            Length equals 2 [X, Y] for 2D or 3 [X, Y, Z] for 3D.
+            * 'overlap_2D': (list of int) List of overlaps in pixels for 2D patching. Length equals 2 [X, Y].
             * 'metadata': (str) Film metadata.
             * 'fname_prior': (str) An image filename (e.g., .nii.gz) containing processing information
                 (e.g., spinal cord segmentation, spinal location or MS lesion classification, spinal cord centerline), 
@@ -366,42 +364,40 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
         set_postprocessing_options(options, context)
 
     # LOADER
-    loader_params = context["loader_parameters"]
-    slice_axis = imed_utils.AXIS_DCT[loader_params['slice_axis']]
+    loader_params = context[ConfigKW.LOADER_PARAMETERS]
+    slice_axis = imed_utils.AXIS_DCT[loader_params[LoaderParamsKW.SLICE_AXIS]]
     metadata = {}
     fname_roi = None
     fname_prior = options['fname_prior'] if (options is not None) and ('fname_prior' in options) else None
     if fname_prior is not None:
-        if 'roi_params' in loader_params and loader_params['roi_params']['suffix'] is not None:
+        if LoaderParamsKW.ROI_PARAMS in loader_params and loader_params[LoaderParamsKW.ROI_PARAMS][ROIParamsKW.SUFFIX] is not None:
             fname_roi = fname_prior
         # TRANSFORMATIONS
         metadata = process_transformations(context, fname_roi, fname_prior, metadata, slice_axis, fname_images)
 
     # Compose transforms
-    _, _, transform_test_params = imed_transforms.get_subdatasets_transforms(context["transformation"])
+    _, _, transform_test_params = imed_transforms.get_subdatasets_transforms(context[ConfigKW.TRANSFORMATION])
 
     tranform_lst, undo_transforms = imed_transforms.prepare_transforms(transform_test_params)
 
     # Force filter_empty_mask to False if fname_roi = None
-    if fname_roi is None and 'filter_empty_mask' in loader_params["slice_filter_params"]:
+    if fname_roi is None and SliceFilterParamsKW.FILTER_EMPTY_MASK in loader_params[LoaderParamsKW.SLICE_FILTER_PARAMS]:
         logger.warning("fname_roi has not been specified, then the entire volume is processed.")
-        loader_params["slice_filter_params"]["filter_empty_mask"] = False
+        loader_params[LoaderParamsKW.SLICE_FILTER_PARAMS][SliceFilterParamsKW.FILTER_EMPTY_MASK] = False
 
-    kernel_3D = bool('Modified3DUNet' in context and context['Modified3DUNet']['applied']) or \
-                not context['default_model']['is_2d']
+    kernel_3D = bool(ConfigKW.MODIFIED3DUNET in context and context[ConfigKW.MODIFIED3DUNET][ModelParamsKW.APPLIED]) or \
+                not context[ConfigKW.DEFAULT_MODEL][ModelParamsKW.IS_2D]
 
     # Assign length_2D and stride_2D for 2D patching
-    length_2D = context["default_model"]["length_2D"] if "length_2D" in context["default_model"] else []
-    stride_2D = context["default_model"]["stride_2D"] if "stride_2D" in context["default_model"] else []
+    length_2D = context[ConfigKW.DEFAULT_MODEL][ModelParamsKW.LENGTH_2D] if \
+        ModelParamsKW.LENGTH_2D in context[ConfigKW.DEFAULT_MODEL] else []
+    stride_2D = context[ConfigKW.DEFAULT_MODEL][ModelParamsKW.STRIDE_2D] if \
+        ModelParamsKW.STRIDE_2D in context[ConfigKW.DEFAULT_MODEL] else []
     is_2d_patch = bool(length_2D)
 
+    # Adjust stride_2D with overlap_2D option if present
     if is_2d_patch and (options is not None) and ('overlap_2D' in options):
-        overlap_2D = options['overlap_2D']
-        # Swap OverlapX and OverlapY resulting in an array in order [OverlapY, OverlapX]
-        # to match length_2D and stride_2D in [Height, Width] orientation.
-        overlap_2D[1], overlap_2D[0] = overlap_2D[0], overlap_2D[1]
-        # Adjust stride_2D with overlap_2D
-        stride_2D = [x1 - x2 for (x1, x2) in zip(length_2D, overlap_2D)]
+        stride_2D = [x1 - x2 for (x1, x2) in zip(length_2D, options['overlap_2D'])]
 
     # Add microscopy pixel size from options to metadata for filenames_pairs
     if (options is not None) and ('pixel_size' in options):
@@ -412,10 +408,10 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
     if kernel_3D:
         ds = MRI3DSubVolumeSegmentationDataset(filename_pairs,
                                                transform=tranform_lst,
-                                               length=context["Modified3DUNet"]["length_3D"],
-                                               stride=context["Modified3DUNet"]["stride_3D"])
-        logger.info(f"Loaded {len(ds)} {loader_params['slice_axis']} volumes of shape "
-                     f"{context['Modified3DUNet']['length_3D']}.")
+                                               length=context[ConfigKW.MODIFIED3DUNET][ModelParamsKW.LENGTH_3D],
+                                               stride=context[ConfigKW.MODIFIED3DUNET][ModelParamsKW.STRIDE_3D])
+        logger.info(f"Loaded {len(ds)} {loader_params[LoaderParamsKW.SLICE_AXIS]} volumes of shape "
+                     f"{context[ConfigKW.MODIFIED3DUNET][ModelParamsKW.LENGTH_3D]}.")
     else:
         ds = MRI2DSegmentationDataset(filename_pairs,
                                       length=length_2D,
@@ -423,23 +419,23 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
                                       slice_axis=slice_axis,
                                       cache=True,
                                       transform=tranform_lst,
-                                      slice_filter_fn=SliceFilter(
-                                          **loader_params["slice_filter_params"]))
+                                      slice_filter_fn=imed_loader_utils.SliceFilter(
+                                          **loader_params[LoaderParamsKW.SLICE_FILTER_PARAMS]))
         ds.load_filenames()
         if is_2d_patch:
-            logger.info(f"Loaded {len(ds)} {loader_params['slice_axis']} patches of shape {length_2D}.")
+            logger.info(f"Loaded {len(ds)} {loader_params[LoaderParamsKW.SLICE_AXIS]} patches of shape {length_2D}.")
         else:
-            logger.info(f"Loaded {len(ds)} {loader_params['slice_axis']} slices.")
+            logger.info(f"Loaded {len(ds)} {loader_params[LoaderParamsKW.SLICE_AXIS]} slices.")
 
     model_params = {}
-    if 'FiLMedUnet' in context and context['FiLMedUnet']['applied']:
+    if ConfigKW.FILMEDUNET in context and context[ConfigKW.FILMEDUNET][ModelParamsKW.APPLIED]:
         onehotencoder = get_onehotencoder(context, folder_model, options, ds)
-        model_params.update({"name": 'FiLMedUnet',
-                             "film_onehotencoder": onehotencoder,
-                             "n_metadata": len([ll for l in onehotencoder.categories_ for ll in l])})
+        model_params.update({ModelParamsKW.NAME: ConfigKW.FILMEDUNET,
+                             ModelParamsKW.FILM_ONEHOTENCODER: onehotencoder,
+                             ModelParamsKW.N_METADATA: len([ll for l in onehotencoder.categories_ for ll in l])})
 
     # Data Loader
-    data_loader = DataLoader(ds, batch_size=context["training_parameters"]["batch_size"],
+    data_loader = DataLoader(ds, batch_size=context[ConfigKW.TRAINING_PARAMETERS][TrainingParamsKW.BATCH_SIZE],
                              shuffle=False, pin_memory=True,
                              collate_fn=imed_loader_utils.imed_collate,
                              num_workers=0)
@@ -559,10 +555,10 @@ def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompo
                                    kernel_dim='3d' if kernel_3D else '2d',
                                    debug=False,
                                    bin_thr=-1,
-                                   postprocessing=context['postprocessing'])
+                                   postprocessing=context[ConfigKW.POSTPROCESSING])
 
             pred_list = split_classes(pred_nib)
-            target_list = context['loader_parameters']['target_suffix']
+            target_list = context[ConfigKW.LOADER_PARAMETERS][LoaderParamsKW.TARGET_SUFFIX]
 
     return pred_list, target_list, last_sample_bool, weight_matrix, volume, image
 
