@@ -154,6 +154,21 @@ class ConfigurationManager(object):
     def _validate_path(self):
         """Ensure validity of configuration file path.
         """
-        if not Path(self.path_context).is_file() or not self.path_context.endswith('.json'):
+        if not Path(self.path_context).exists():
             raise ValueError(
-                "\nERROR: The provided configuration file path (.json) is invalid: {}\n".format(self.path_context))
+                f"\nERROR: The provided configuration file path (.json) does not exist: "
+                f"{Path(self.path_context).absolute()}\n")
+        elif Path(self.path_context).is_dir():
+            raise IsADirectoryError(f"ERROR: The provided configuration file path (.json) is a directory not a file: "
+                                    f"{Path(self.path_context).absolute()}\n")
+        elif not Path(self.path_context).is_file():
+            raise FileNotFoundError(f"ERROR: The provided configuration file path (.json) is not found: "
+                                    f"{Path(self.path_context).absolute()}\n")
+        elif self.path_context.endswith('.yaml') or self.path_context.endswith('.yml'):
+            raise ValueError(
+                f"\nERROR: The provided configuration file path (.json) is a yaml file not a json file, "
+                f"yaml files are not yet supported: {Path(self.path_context).absolute()}\n")
+        elif not self.path_context.endswith('.json'):
+            raise ValueError(
+                f"\nERROR: The provided configuration file path (.json) is not a json file: "
+                f"{Path(self.path_context).absolute()}\n")
