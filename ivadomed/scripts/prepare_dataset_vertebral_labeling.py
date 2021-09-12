@@ -8,6 +8,8 @@ import ivadomed.loader.utils as imed_loader_utils
 import textwrap
 from pathlib import Path
 
+from loguru import logger
+
 
 def mask2label(path_label, aim=0):
     """Retrieve points coordinates and value from a label file containing singl voxel label.
@@ -63,20 +65,29 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(path, suffix, aim=0):
     Returns:
         None. Images are saved in BIDS folder
     """
-    t = [path_object.name for path_object in Path(path).iterdir() if path_object.name != 'derivatives']
+    t = sorted([path_object.name for path_object in Path(path).iterdir()
+               if path_object.is_dir() and not path_object.name.startswith('.') and path_object.name != 'derivatives'])
 
     for i in range(len(t)):
         subject = t[i]
-        path_image = Path(path, subject, 'anat', subject + suffix + '.nii.gz')
-        if path_image.is_file():
-            path_label = Path(path, 'derivatives', 'labels', subject, 'anat', subject + suffix +
-                    '_labels-disc-manual.nii.gz')
+        path_image = Path(path, subject, 'anat', subject+suffix+'.nii.gz')
+        path_label = Path(path, 'derivatives', 'labels', subject, 'anat', subject+suffix+'_labels-disc-manual.nii.gz')
+        path_output = Path(path, subject, 'anat', subject+'_rec-mid'+suffix+'.nii.gz')
+
+        if path_output.is_file():
+            logger.info(f"[{i}/{len(t)}] Skipping {subject} because output file already exists.")
+        elif not path_label.is_file():
+            logger.warning(f"[{i}/{len(t)}] Skipping {subject} because label file ({path_label.name}) does not exist.")
+        elif not path_image.is_file():
+            logger.warning(f"[{i}/{len(t)}] Skipping {subject} because input file ({path_image.name}) does not exist.")
+        else:
+            logger.info(f"[{i}/{len(t)}] Processing {subject}")
             list_points = mask2label(str(path_label), aim=aim)
             image_ref = nib.load(path_image)
             nib_ref_can = nib.as_closest_canonical(image_ref)
             imsh = np.array(nib_ref_can.dataobj).shape
             mid_nifti = imed_preprocessing.get_midslice_average(str(path_image), list_points[0][0], slice_axis=0)
-            nib.save(mid_nifti, Path(path, subject, 'anat', subject+'_rec-mid'+suffix+'.nii.gz'))
+            nib.save(mid_nifti, path_output)
             lab = nib.load(path_label)
             nib_ref_can = nib.as_closest_canonical(lab)
             label_array = np.zeros(imsh[1:])
@@ -89,8 +100,6 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(path, suffix, aim=0):
             nib_pred = nib.Nifti1Image(arr_pred_ref_space, lab.affine)
             nib.save(nib_pred, Path(path, 'derivatives', 'labels', t[i], 'anat',
                                     subject+'_rec-mid'+suffix+'_heatmap'+str(aim)+'.nii.gz'))
-        else:
-            pass
 
 
 def get_parser():
