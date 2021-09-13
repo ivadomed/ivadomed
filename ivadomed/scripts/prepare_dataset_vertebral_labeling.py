@@ -107,8 +107,10 @@ def get_parser():
         formatter_class = argparse.RawDescriptionHelpFormatter,
         description = textwrap.dedent("""
             This function takes as input a path to a dataset and generates a set of images:
-                (i) mid-sagittal image and
-                (ii) heatmap of disc labels associated with the mid-sagittal image. Please refer to for more details. 
+                (i) mid-sagittal image
+                     - Example: 'sub-01/sub-01_rec-mid-T1w.nii.gz'
+                (ii) heatmap of disc labels associated with the mid-sagittal image. 
+                     - Example: 'derivatives/sub-01/sub-01_rec-mid-T1w_heatmap0.nii.gz'
             
             Example:
                 python3 prepare_dataset_vertebral_labeling.py --path /data/data-multi-subject/ -s _T1w
