@@ -1,6 +1,6 @@
 # Data preparation
 
-These scripts prepare the data for training. It takes as input the [Spinal Cord MRI Public Database](https://osf.io/76jkx/) and outputs BIDS-compatible datasets with segmentation labels for each subject. More specifically, for each subject, the segmentation is run in one volume (T1w), then all volumes are registered to the T1w volume so that all volumes are in the same voxel space and the unique segmentation can be used across volumes.
+These scripts prepare the data for training. It takes as input the [Spine Generic Public Database (Multi-Subject)](https://github.com/spine-generic/data-multi-subject) and outputs BIDS-compatible datasets with segmentation labels for each subject. More specifically, for each subject, the segmentation is run in one volume (T1w), then all volumes are registered to the T1w volume so that all volumes are in the same voxel space and the unique segmentation can be used across volumes.
 
 ## Dependencies
 
