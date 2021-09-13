@@ -90,16 +90,18 @@ class BidsDataframe:
             for path_object in path_data.glob('**/*'):
                 if path_object.is_file():
                     # Microscopy
+                    subject_path_index = len(path_data.parts)
+                    subject_path = path_object.parts[subject_path_index]
                     if path_object.name == "samples.tsv" or path_object.name == "samples.json":
                         force_index.append(path_object.name)
                     if (path_object.name.endswith(ext_microscopy) and path_object.parent.name == "microscopy" and
-                            (path_object.parts[len(path_data.parts)]).startswith('sub')):
-                        force_index.append(str(Path(*path_object.parent.parts[len(path_data.parts):])))
+                            subject_path.startswith('sub')):
+                        force_index.append(str(Path(*path_object.parent.parts[subject_path_index:])))
                     # CT-scan
                     if (path_object.name.endswith(ext_ct) and path_object.name.split('.')[0].endswith(suffix_ct) and
                             (path_object.parent.name == "anat" or path_object.parent.name == "ct") and
-                            (path_object.parts[len(path_data.parts)]).startswith('sub')):
-                        force_index.append(str(Path(*path_object.parent.parts[len(path_data.parts):])))
+                            subject_path.startswith('sub')):
+                        force_index.append(str(Path(*path_object.parent.parts[subject_path_index:])))
             indexer = pybids.BIDSLayoutIndexer(force_index=force_index)
 
             if self.derivatives:
