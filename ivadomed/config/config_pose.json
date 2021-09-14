@@ -40,7 +40,7 @@
             "name": "JointsMSELoss"
         },
         "training_time": {
-            "num_epochs": 10,
+            "num_epochs": 100,
             "early_stopping_patience": 100,
             "early_stopping_epsilon": 0.001
         },
