@@ -21,7 +21,7 @@ from ivadomed import utils as imed_utils
 from ivadomed import visualize as imed_visualize
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.loader.balanced_sampler import BalancedSampler
-from ivadomed.keywords import ModelParamsKW, ConfigKW
+from ivadomed.keywords import ModelParamsKW, ConfigKW, BalanceSamplesKW
 
 cudnn.benchmark = True
 
@@ -55,8 +55,8 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
     writer = SummaryWriter(log_dir=path_output)
 
     # BALANCE SAMPLES AND PYTORCH LOADER
-    conditions = all([training_params["balance_samples"]["applied"], model_params[ModelParamsKW.NAME] != "HeMIS"])
-    sampler_train, shuffle_train = get_sampler(dataset_train, conditions, training_params['balance_samples']['type'])
+    conditions = all([training_params["balance_samples"][BalanceSamplesKW.APPLIED], model_params[ModelParamsKW.NAME] != "HeMIS"])
+    sampler_train, shuffle_train = get_sampler(dataset_train, conditions, training_params['balance_samples'][BalanceSamplesKW.TYPE])
 
     train_loader = DataLoader(dataset_train, batch_size=training_params["batch_size"],
                               shuffle=shuffle_train, pin_memory=True, sampler=sampler_train,
@@ -65,7 +65,7 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
 
     gif_dict = {"image_path": [], "slice_id": [], "gif": []}
     if dataset_val:
-        sampler_val, shuffle_val = get_sampler(dataset_val, conditions, training_params['balance_samples']['type'])
+        sampler_val, shuffle_val = get_sampler(dataset_val, conditions, training_params['balance_samples'][BalanceSamplesKW.TYPE])
 
         val_loader = DataLoader(dataset_val, batch_size=training_params["batch_size"],
                                 shuffle=shuffle_val, pin_memory=True, sampler=sampler_val,
@@ -193,7 +193,7 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
 
             if i == 0 and debugging:
                 imed_visualize.save_tensorboard_img(writer, epoch, "Train", input_samples, gt_samples, preds,
-                                                    is_three_dim=not model_params["is_2d"])
+                                                    is_three_dim=not model_params[ModelParamsKW.IS_2D])
 
         if not step_scheduler_batch:
             scheduler.step()
@@ -260,7 +260,7 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
 
                 if i == 0 and debugging:
                     imed_visualize.save_tensorboard_img(writer, epoch, "Validation", input_samples, gt_samples, preds,
-                                                        is_three_dim=not model_params['is_2d'])
+                                                        is_three_dim=not model_params[ModelParamsKW.IS_2D])
 
             # METRICS COMPUTATION FOR CURRENT EPOCH
             val_loss_total_avg_old = val_loss_total_avg if epoch > 1 else None
