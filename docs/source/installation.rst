@@ -50,9 +50,19 @@ Step 1: Clone the `ivadomed <https://github.com/ivadomed/ivadomed>`_ repository.
 Step 2: Create new Conda Env called IvadoMedEnv (may take 5 to 15 minutes)
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+If you have a compatible NVIDIA GPU that supports CUDA, run the following command:
+
 ::
 
-    conda env create --file environment.yml
+   conda env create --file environment_gpu.yml
+
+
+If you do not have a compatible GPU, run the following installer to use ``ivadomed`` with CPU.
+
+
+::
+
+   conda env create --file environment.yml
 
 Step 3 : Activate environment and use
 ++++++++++++++++++++++++++++++++++++++
