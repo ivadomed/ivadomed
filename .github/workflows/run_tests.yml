@@ -39,8 +39,8 @@ jobs:
       fail-fast: false
 
       matrix:
-        os: [ "self-hosted" ]
-        python-version: [ 3.6 ]
+        os: [ "gpu" ]
+        python-version: [ 3.8 ]
         test-name:
           - integration-test
 
@@ -57,6 +57,12 @@ jobs:
 
       # Step 2: Install requirement dependencies.
       - name: Install dependencies
+        uses: py-actions/py-dependency-install@v2
+        with:
+          path: "requirements_dev.txt"
+          
+      # Step 2b: Install requirement dependencies.
+      - name: Install GPU dependencies
         uses: py-actions/py-dependency-install@v2
         with:
           path: "requirements_gpu.txt"
