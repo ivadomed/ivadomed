@@ -39,8 +39,8 @@ jobs:
       fail-fast: false
 
       matrix:
-        os: [ "gpu" ]
-        python-version: [ 3.6, 3.7, 3.8 ]
+        os: [ "self-hosted" ]
+        python-version: [ 3.6 ]
         test-name:
           - integration-test
 
