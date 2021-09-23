@@ -54,18 +54,18 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-
-      # Step 2: Install requirement dependencies.
-      - name: Install dependencies
-        uses: py-actions/py-dependency-install@v2
-        with:
-          path: "requirements_dev.txt"
           
       # Step 2b: Install requirement dependencies.
       - name: Install GPU dependencies
         uses: py-actions/py-dependency-install@v2
         with:
           path: "requirements_gpu.txt"
+          
+      # Step 2a: Install requirement dependencies.
+      - name: Install dependencies
+        uses: py-actions/py-dependency-install@v2
+        with:
+          path: "requirements_dev.txt"
 
       # Step 3: install additional pytest/dev related dependencies
       - name: Install IvadoMed Main Modules
