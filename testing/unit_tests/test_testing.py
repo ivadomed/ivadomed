@@ -3,6 +3,7 @@ import pytest
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
 
+from ivadomed.loader.bids_dataframe import BidsDataframe
 from ivadomed import metrics as imed_metrics
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
@@ -38,7 +39,7 @@ def setup_function():
             },
         "NormalizeInstance": {"applied_to": ["im"]}
     }])
-@pytest.mark.parametrize('test_lst', [['sub-unf01']])
+@pytest.mark.parametrize('test_lst', [['sub-unf01_T2w.nii.gz']])
 @pytest.mark.parametrize('target_lst', [["_lesion-manual"], ["_seg-manual"]])
 @pytest.mark.parametrize('roi_params', [{"suffix": "_seg-manual", "slice_filter_roi": 10}])
 @pytest.mark.parametrize('testing_params', [{
@@ -72,7 +73,7 @@ def test_inference(download_data_testing_test_files, transforms_dict, test_lst, 
     }
     loader_params.update({"model_params": model_params})
 
-    bids_df = imed_loader_utils.BidsDataframe(loader_params, __tmp_dir__, derivatives=True)
+    bids_df = BidsDataframe(loader_params, __tmp_dir__, derivatives=True)
 
     # Get Testing dataset
     ds_test = imed_loader.load_dataset(bids_df, **loader_params)
@@ -174,7 +175,7 @@ def test_inference_2d_microscopy(download_data_testing_test_files, transforms_di
     }
     loader_params.update({"model_params": model_params})
 
-    bids_df = imed_loader_utils.BidsDataframe(loader_params, __tmp_dir__, derivatives=True)
+    bids_df = BidsDataframe(loader_params, __tmp_dir__, derivatives=True)
 
     # Get Testing dataset
     ds_test = imed_loader.load_dataset(bids_df, **loader_params)

@@ -1,15 +1,15 @@
 {
     "command": "train",
     "gpu_ids": [0],
-    "path_output": "new_loader",
-    "model_name": "model_name",
+    "path_output": "log_microscopy_sem",
+    "model_name": "model_seg_rat_axon-myelin_sem",
     "debugging": true,
     "object_detection_params": {
         "object_detection_path": null,
         "safety_factor": [1.0, 1.0, 1.0]
     },
     "loader_parameters": {
-        "path_data": ["data_example_microscopy_sem"],
+        "path_data": ["data_axondeepseg_sem"],
         "bids_config": "ivadomed/config/config_bids.json",
         "subject_selection": {"n": [], "metadata": [], "value": []},
         "target_suffix": ["_seg-axon-manual", "_seg-myelin-manual"],
@@ -37,16 +37,16 @@
         "split_method" : "sample_id",
         "data_testing": {"data_type": null, "data_value":[]},
         "balance": null,
-        "train_fraction": 0.2,
-        "test_fraction": 0.2
+        "train_fraction": 0.7,
+        "test_fraction": 0.1
     },
     "training_parameters": {
-        "batch_size": 18,
+        "batch_size": 4,
         "loss": {
             "name": "DiceLoss"
         },
         "training_time": {
-            "num_epochs": 15,
+            "num_epochs": 200,
             "early_stopping_patience": 50,
             "early_stopping_epsilon": 0.001
         },
@@ -74,22 +74,33 @@
         "dropout_rate": 0.3,
         "bn_momentum": 0.1,
         "final_activation": "sigmoid",
-        "depth": 3,
-        "length_2D": [128, 128],
-        "stride_2D": [104, 104]
-    },
-    "FiLMedUnet": {
-        "applied": false,
-        "metadata": "contrasts",
-        "film_layers": [0, 1, 0, 0, 0, 0, 0, 0]
+        "depth": 4,
+        "length_2D": [512, 512],
+        "stride_2D": [500, 500]
     },
     "postprocessing": {
         "binarize_maxpooling": {}
     },
     "transformation": {
-      "CenterCrop": {
-            "size": [256, 256]
-      },
+        "Resample":
+        {
+            "wspace": 0.0001,
+            "hspace": 0.0001
+        },
+        "RandomAffine": {
+            "degrees": 5,
+            "scale": [0.1, 0.1],
+            "translate": [0.03, 0.03],
+            "applied_to": ["im", "gt"],
+            "dataset_type": ["training"]
+        },
+        "ElasticTransform": {
+            "alpha_range": [28.0, 30.0],
+            "sigma_range":  [3.5, 4.5],
+            "p": 0.1,
+            "applied_to": ["im", "gt"],
+            "dataset_type": ["training"]
+        },
       "NormalizeInstance": {"applied_to": ["im"]}
     }
 }

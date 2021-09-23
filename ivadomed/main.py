@@ -1,5 +1,4 @@
 import json
-import os
 import argparse
 import copy
 import joblib
@@ -10,6 +9,7 @@ import platform
 import multiprocessing
 import re
 
+from ivadomed.loader.bids_dataframe import BidsDataframe
 from ivadomed import evaluation as imed_evaluation
 from ivadomed import config_manager as imed_config_manager
 from ivadomed import testing as imed_testing
@@ -20,6 +20,7 @@ from ivadomed import metrics as imed_metrics
 from ivadomed import inference as imed_inference
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, film as imed_film
 from loguru import logger
+from pathlib import Path
 
 cudnn.benchmark = True
 
@@ -72,18 +73,18 @@ def get_parser():
 
 
 def create_path_model(context, model_params, ds_train, path_output, train_onehotencoder):
-    path_model = os.path.join(path_output, context["model_name"])
-    if not os.path.isdir(path_model):
-        logger.info('Creating model directory: {}'.format(path_model))
-        os.makedirs(path_model)
+    path_model = Path(path_output, context.get("model_name"))
+    if not path_model.is_dir():
+        logger.info(f'Creating model directory: {path_model}')
+        path_model.mkdir(parents=True)
         if 'film_layers' in model_params and any(model_params['film_layers']):
-            joblib.dump(train_onehotencoder, os.path.join(path_model, "one_hot_encoder.joblib"))
+            joblib.dump(train_onehotencoder, path_model.joinpath("one_hot_encoder.joblib"))
             if 'metadata_dict' in ds_train[0]['input_metadata'][0]:
                 metadata_dict = ds_train[0]['input_metadata'][0]['metadata_dict']
-                joblib.dump(metadata_dict, os.path.join(path_model, "metadata_dict.joblib"))
+                joblib.dump(metadata_dict, path_model.joinpath("metadata_dict.joblib"))
 
     else:
-        logger.info('Model directory already exists: {}'.format(path_model))
+        logger.info(f'Model directory already exists: {path_model}')
 
 
 def check_multiple_raters(is_train, loader_params):
@@ -107,8 +108,8 @@ def film_normalize_data(context, model_params, ds_train, ds_valid, path_output):
                                             model_params['metadata'])
     model_params.update({"film_onehotencoder": train_onehotencoder,
                          "n_metadata": len([ll for l in train_onehotencoder.categories_ for ll in l])})
-    joblib.dump(metadata_clustering_models, os.path.join(path_output, "clustering_models.joblib"))
-    joblib.dump(train_onehotencoder, os.path.join(path_output + "one_hot_encoder.joblib"))
+    joblib.dump(metadata_clustering_models, Path(path_output, "clustering_models.joblib"))
+    joblib.dump(train_onehotencoder, Path(path_output + "one_hot_encoder.joblib"))
 
     return model_params, ds_train, ds_valid, train_onehotencoder
 
@@ -124,9 +125,9 @@ def get_dataset(bids_df, loader_params, data_lst, transform_params, cuda_availab
 def save_config_file(context, path_output):
     # Save config file within path_output and path_output/model_name
     # Done after the threshold_analysis to propate this info in the config files
-    with open(os.path.join(path_output, "config_file.json"), 'w') as fp:
+    with Path(path_output, "config_file.json").open(mode='w') as fp:
         json.dump(context, fp, indent=4)
-    with open(os.path.join(path_output, context["model_name"], context["model_name"] + ".json"), 'w') as fp:
+    with Path(path_output, context.get("model_name"), context.get("model_name") + ".json").open(mode='w') as fp:
         json.dump(context, fp, indent=4)
 
 
@@ -190,9 +191,9 @@ def set_model_params(context, loader_params):
 
 def set_output_path(context):
     path_output = copy.deepcopy(context["path_output"])
-    if not os.path.isdir(path_output):
+    if not Path(path_output).is_dir():
         logger.info('Creating output path: {}'.format(path_output))
-        os.makedirs(path_output)
+        Path(path_output).mkdir(parents=True)
     else:
         logger.info('Output path already exists: {}'.format(path_output))
 
@@ -200,13 +201,13 @@ def set_output_path(context):
 
 
 def update_film_model_params(context, ds_test, model_params, path_output):
-    clustering_path = os.path.join(path_output, "clustering_models.joblib")
+    clustering_path = Path(path_output, "clustering_models.joblib")
     metadata_clustering_models = joblib.load(clustering_path)
     # Model directory
-    ohe_path = os.path.join(path_output, context["model_name"], "one_hot_encoder.joblib")
+    ohe_path = Path(path_output, context.get("model_name"), "one_hot_encoder.joblib")
     one_hot_encoder = joblib.load(ohe_path)
-    ds_test = imed_film.normalize_metadata(ds_test, metadata_clustering_models, context["debugging"],
-                                           model_params['metadata'])
+    ds_test = imed_film.normalize_metadata(ds_test, metadata_clustering_models, context.get("debugging"),
+                                           model_params.get('metadata'))
     model_params.update({"film_onehotencoder": one_hot_encoder,
                          "n_metadata": len([ll for l in one_hot_encoder.categories_ for ll in l])})
 
@@ -216,17 +217,17 @@ def update_film_model_params(context, ds_test, model_params, path_output):
 def run_segment_command(context, model_params):
     # BIDSDataframe of all image files
     # Indexing of derivatives is False for command segment
-    bids_df = imed_loader_utils.BidsDataframe(context['loader_parameters'], context['path_output'], derivatives=False)
+    bids_df = BidsDataframe(context['loader_parameters'], context['path_output'], derivatives=False)
 
     # Append subjects filenames into a list
-    bids_subjects = sorted(bids_df.df['filename'].to_list())
+    bids_subjects = sorted(bids_df.df.get('filename').to_list())
 
     # Add postprocessing to packaged model
-    path_model = os.path.join(context['path_output'], context['model_name'])
-    path_model_config = os.path.join(path_model, context['model_name'] + ".json")
-    model_config = imed_config_manager.load_json(path_model_config)
-    model_config['postprocessing'] = context['postprocessing']
-    with open(path_model_config, 'w') as fp:
+    path_model = Path(context.get('path_output'), context.get('model_name'))
+    path_model_config = Path(path_model, context.get('model_name') + ".json")
+    model_config = imed_config_manager.load_json(str(path_model_config))
+    model_config['postprocessing'] = context.get('postprocessing')
+    with path_model_config.open(mode='w') as fp:
         json.dump(model_config, fp, indent=4)
     options = {}
 
@@ -266,29 +267,29 @@ def run_segment_command(context, model_params):
             metadata = bids_df.df[bids_df.df['filename'] == subject][model_params['metadata']].values[0]
             options['metadata'] = metadata
 
-        # Add microscopy PixelSize metadata to options for segment_volume
+        # Add microscopy pixel size metadata to options for segment_volume
         if 'PixelSize' in bids_df.df.columns:
-            options['PixelSize'] = bids_df.df.loc[bids_df.df['filename'] == subject]['PixelSize'].values[0]
+            options['pixel_size'] = bids_df.df.loc[bids_df.df['filename'] == subject]['PixelSize'].values[0]
 
         if fname_img:
-            pred_list, target_list = imed_inference.segment_volume(path_model,
+            pred_list, target_list = imed_inference.segment_volume(str(path_model),
                                                                    fname_images=fname_img,
                                                                    gpu_id=context['gpu_ids'][0],
                                                                    options=options)
-            pred_path = os.path.join(context['path_output'], "pred_masks")
-            if not os.path.exists(pred_path):
-                os.makedirs(pred_path)
+            pred_path = Path(context.get('path_output'), "pred_masks")
+            if not pred_path.exists():
+                pred_path.mkdir(parents=True)
 
             for pred, target in zip(pred_list, target_list):
                 filename = subject.split('.')[0] + target + "_pred" + ".nii.gz"
-                nib.save(pred, os.path.join(pred_path, filename))
+                nib.save(pred, Path(pred_path, filename))
 
             # For Microscopy PNG/TIF files (TODO: implement OMETIFF behavior)
             extension = imed_loader_utils.get_file_extension(subject)
             if "nii" not in extension:
                 imed_inference.pred_to_png(pred_list,
                                            target_list,
-                                           os.path.join(pred_path, subject).replace(extension, ''))
+                                           str(Path(pred_path, subject)).replace(extension, ''))
 
 
 def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
@@ -317,11 +318,11 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
             * If "segment" command: No return value.
 
     """
-    command = copy.deepcopy(context["command"])
+    command = copy.deepcopy(context.get("command"))
     path_output = set_output_path(context)
-    log_file = os.path.join(context['path_output'], context['log_file'])
+    path_log = Path(context.get('path_output'), context.get('log_file'))
     logger.remove()
-    logger.add(log_file)
+    logger.add(str(path_log))
     logger.add(sys.stdout)
 
     # Create a log with the version of the Ivadomed software and the version of the Annexed dataset (if present)
@@ -348,7 +349,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
 
     # BIDSDataframe of all image files
     # Indexing of derivatives is True for command train and test
-    bids_df = imed_loader_utils.BidsDataframe(loader_params, path_output, derivatives=True)
+    bids_df = BidsDataframe(loader_params, path_output, derivatives=True)
 
     # Get subject filenames lists. "segment" command uses all participants of data path, hence no need to split
     train_lst, valid_lst, test_lst = imed_loader_utils.get_subdatasets_subject_files_list(context["split_dataset"],
@@ -431,15 +432,15 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         # Choice of optimisation metric
         metric = "recall_specificity" if model_params["name"] in imed_utils.CLASSIFIER_LIST else "dice"
         # Model path
-        model_path = os.path.join(path_output, "best_model.pt")
+        model_path = Path(path_output, "best_model.pt")
         # Run analysis
-        thr = imed_testing.threshold_analysis(model_path=model_path,
+        thr = imed_testing.threshold_analysis(model_path=str(model_path),
                                               ds_lst=[ds_train, ds_valid],
                                               model_params=model_params,
                                               testing_params=testing_params,
                                               metric=metric,
                                               increment=thr_increment,
-                                              fname_out=os.path.join(path_output, "roc.png"),
+                                              fname_out=str(Path(path_output, "roc.png")),
                                               cuda_available=cuda_available)
 
         # Update threshold in config file
@@ -484,7 +485,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
 
 
 def create_dataset_and_ivadomed_version_log(context):
-    path_data = context['loader_parameters']['path_data']
+    path_data = context.get('loader_parameters').get('path_data')
 
     ivadomed_version = imed_utils._version_string()
     datasets_version = []
@@ -495,12 +496,12 @@ def create_dataset_and_ivadomed_version_log(context):
         for Dataset in path_data:
             datasets_version.append(imed_utils.__get_commit(path_to_git_folder=Dataset))
 
-    log_file = os.path.join(context['path_output'], 'version_info.log')
+    path_log = Path(context.get('path_output'), 'version_info.log')
 
     try:
-        f = open(log_file, "w")
+        f = path_log.open(mode="w")
     except OSError as err:
-        logger.error("OS error: {0}".format(err))
+        logger.error(f"OS error: {err}")
         raise Exception("Have you selected a log folder, and do you have write permissions for that folder?")
 
     # IVADOMED

@@ -4,9 +4,11 @@ import h5py
 import torch
 from torch.utils.data import DataLoader
 
+from ivadomed.loader.bids_dataframe import BidsDataframe
 import ivadomed.transforms as imed_transforms
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative
+from ivadomed.loader.slice_filter import SliceFilter
 import logging
 from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__, download_data_testing_test_files
 from testing.common_testing_util import remove_tmp_dir
@@ -36,13 +38,13 @@ def setup_function():
 def test_hdf5(download_data_testing_test_files, loader_parameters):
     print('[INFO]: Starting test ... \n')
 
-    bids_df = imed_loader_utils.BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
+    bids_df = BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
 
     contrast_params = loader_parameters["contrast_params"]
     target_suffix = loader_parameters["target_suffix"]
     roi_params = loader_parameters["roi_params"]
 
-    train_lst = ['sub-unf01']
+    train_lst = ['sub-unf01_T1w.nii.gz', 'sub-unf01_T2w.nii.gz', 'sub-unf01_T2star.nii.gz']
 
     training_transform_dict = {
         "Resample":
@@ -68,7 +70,7 @@ def test_hdf5(download_data_testing_test_files, loader_parameters):
                                               transform=transform_lst,
                                               contrast_balance={},
                                               slice_axis=2,
-                                              slice_filter_fn=imed_loader_utils.SliceFilter(
+                                              slice_filter_fn=SliceFilter(
                                                 filter_empty_input=True,
                                                 filter_empty_mask=True))
 
@@ -125,7 +127,7 @@ def test_hdf5(download_data_testing_test_files, loader_parameters):
                                               transform=transform_lst,
                                               metadata_choice=False,
                                               dim=2,
-                                              slice_filter_fn=imed_loader_utils.SliceFilter(
+                                              slice_filter_fn=SliceFilter(
                                                 filter_empty_input=True,
                                                 filter_empty_mask=True),
                                               roi_params=roi_params)

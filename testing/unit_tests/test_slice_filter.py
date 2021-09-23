@@ -3,6 +3,7 @@ import numpy as np
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
 
+from ivadomed.loader.bids_dataframe import BidsDataframe
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 from testing.unit_tests.t_utils import create_tmp_dir,  __data_testing_dir__, __tmp_dir__, download_data_testing_test_files
@@ -38,7 +39,7 @@ def _cmpt_slice(ds_loader):
     {"Resample": {"wspace": 0.75, "hspace": 0.75, "applied_to": ["im", "gt"]},
      "CenterCrop": {"size": [100, 100], "applied_to": ["im", "gt"]},
      "NumpyToTensor": {"applied_to": ["im", "gt"]}}])
-@pytest.mark.parametrize('train_lst', [['sub-unf01']])
+@pytest.mark.parametrize('train_lst', [['sub-unf01_T2w.nii.gz']])
 @pytest.mark.parametrize('target_lst', [["_lesion-manual"]])
 @pytest.mark.parametrize('slice_filter_params', [
     {"filter_empty_mask": False, "filter_empty_input": True},
@@ -68,7 +69,7 @@ def test_slice_filter(download_data_testing_test_files, transforms_dict, train_l
         "multichannel": False
     }
     # Get Training dataset
-    bids_df = imed_loader_utils.BidsDataframe(loader_params, __tmp_dir__, derivatives=True)
+    bids_df = BidsDataframe(loader_params, __tmp_dir__, derivatives=True)
     ds_train = imed_loader.load_dataset(bids_df, **loader_params)
 
     print('\tNumber of loaded slices: {}'.format(len(ds_train)))

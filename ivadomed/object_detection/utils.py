@@ -1,15 +1,16 @@
 import json
-import os
 import statistics
 
 import nibabel as nib
 import numpy as np
 from loguru import logger
 from scipy import ndimage
+from pathlib import Path
 
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
 from ivadomed.loader import utils as imed_loader_utils
+from ivadomed.keywords import ObjectDetectionParamsKW
 
 
 def get_bounding_boxes(mask):
@@ -115,17 +116,17 @@ def generate_bounding_box_file(subject_path_list, model_path, path_output, gpu_i
         object_mask = object_mask[0]
         if keep_largest_only:
             object_mask = imed_postpro.keep_largest_object(object_mask)
-        mask_path = os.path.join(path_output, "detection_mask")
-        if not os.path.exists(mask_path):
-            os.mkdir(mask_path)
-        nib.save(object_mask, os.path.join(mask_path, subject_path.split("/")[-1]))
+        mask_path = Path(path_output, "detection_mask")
+        if not mask_path.exists():
+            mask_path.mkdir(parents=True)
+        nib.save(object_mask, Path(mask_path, subject_path.split("/")[-1]))
         ras_orientation = nib.as_closest_canonical(object_mask)
         hwd_orientation = imed_loader_utils.orient_img_hwd(ras_orientation.get_fdata(), slice_axis)
         bounding_boxes = get_bounding_boxes(hwd_orientation)
         bounding_box_dict[subject_path] = [adjust_bb_size(bb, safety_factor) for bb in bounding_boxes]
 
-    file_path = os.path.join(path_output, 'bounding_boxes.json')
-    with open(file_path, 'w') as fp:
+    file_path = Path(path_output, 'bounding_boxes.json')
+    with file_path.open(mode="w") as fp:
         json.dump(bounding_box_dict, fp, indent=4)
     return bounding_box_dict
 
@@ -237,22 +238,23 @@ def load_bounding_boxes(object_detection_params, subject_path_list, slice_axis, 
     """
     # Load or generate bounding boxes and save them in json file
     bounding_box_dict = {}
-    if object_detection_params is None or object_detection_params['object_detection_path'] is None:
+    if object_detection_params is None or object_detection_params[ObjectDetectionParamsKW.OBJECT_DETECTION_PATH] is None:
         return bounding_box_dict
-    bounding_box_path = os.path.join(object_detection_params['path_output'], 'bounding_boxes.json')
-    if os.path.exists(bounding_box_path):
-        with open(bounding_box_path, 'r') as fp:
+
+    bounding_box_path = Path(object_detection_params.get(ObjectDetectionParamsKW.PATH_OUTPUT), 'bounding_boxes.json')
+    if bounding_box_path.exists():
+        with bounding_box_path.open(mode='r') as fp:
             bounding_box_dict = json.load(fp)
-    elif object_detection_params['object_detection_path'] is not None and \
-            os.path.exists(object_detection_params['object_detection_path']):
+    elif object_detection_params[ObjectDetectionParamsKW.OBJECT_DETECTION_PATH] is not None and \
+            Path(object_detection_params.get(ObjectDetectionParamsKW.OBJECT_DETECTION_PATH)).exists():
         bounding_box_dict = generate_bounding_box_file(subject_path_list,
-                                                       object_detection_params['object_detection_path'],
-                                                       object_detection_params['path_output'],
-                                                       object_detection_params['gpu_ids'],
+                                                       object_detection_params[ObjectDetectionParamsKW.OBJECT_DETECTION_PATH],
+                                                       object_detection_params[ObjectDetectionParamsKW.PATH_OUTPUT],
+                                                       object_detection_params[ObjectDetectionParamsKW.GPU_IDS],
                                                        slice_axis,
                                                        constrast_lst,
-                                                       safety_factor=object_detection_params['safety_factor'])
-    elif object_detection_params['object_detection_path'] is not None:
+                                                       safety_factor=object_detection_params[ObjectDetectionParamsKW.SAFETY_FACTOR])
+    elif object_detection_params[ObjectDetectionParamsKW.OBJECT_DETECTION_PATH] is not None:
         raise RuntimeError("Path to object detection model doesn't exist")
 
     return bounding_box_dict
@@ -309,7 +311,7 @@ def compute_bb_statistics(bounding_box_path):
     Args:
         bounding_box_path (string): Path to json file.
     """
-    with open(bounding_box_path, 'r') as fp:
+    with Path(bounding_box_path).open(mode='r') as fp:
         bounding_box_dict = json.load(fp)
 
     h, w, d, v = [], [], [], []
