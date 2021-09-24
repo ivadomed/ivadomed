@@ -413,7 +413,8 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
         ds = MRI3DSubVolumeSegmentationDataset(filename_pairs,
                                                transform=tranform_lst,
                                                length=context["Modified3DUNet"]["length_3D"],
-                                               stride=context["Modified3DUNet"]["stride_3D"])
+                                               stride=context["Modified3DUNet"]["stride_3D"],
+                                               slice_axis=slice_axis)
         logger.info(f"Loaded {len(ds)} {loader_params['slice_axis']} volumes of shape "
                      f"{context['Modified3DUNet']['length_3D']}.")
     else:
