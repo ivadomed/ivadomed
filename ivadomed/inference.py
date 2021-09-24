@@ -528,7 +528,8 @@ def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompo
         if kernel_3D:
             preds_undo, metadata, last_sample_bool, volume, weight_matrix = \
                 volume_reconstruction(batch, preds, undo_transforms, i_slice, volume, weight_matrix)
-            preds_list = [np.array(preds_undo)]
+            if last_sample_bool:
+                preds_list = [np.array(preds_undo)]
         else:
             if is_2d_patch:
                 # undo transformations for patch and reconstruct slice
@@ -587,6 +588,7 @@ def volume_reconstruction(batch: dict, pred: tensor, undo_transforms: UndoCompos
         volume (tensor): representing the volume reconstructed
         weight_matrix (tensor): weight matrix
     """
+    pred_undo, metadata = None, None
     x_min, x_max, y_min, y_max, z_min, z_max = batch['input_metadata'][smp_idx][0]['coord']
     num_pred = pred[smp_idx].shape[0]
 
@@ -610,10 +612,9 @@ def volume_reconstruction(batch: dict, pred: tensor, undo_transforms: UndoCompos
 
     if last_sample_bool:
         volume /= weight_matrix
-
-    pred_undo, metadata = undo_transforms(volume,
-                                          batch['gt_metadata'][smp_idx],
-                                          data_type='gt')
+        pred_undo, metadata = undo_transforms(volume,
+                                              batch['gt_metadata'][smp_idx],
+                                              data_type='gt')
     return pred_undo, metadata, last_sample_bool, volume, weight_matrix
 
 
