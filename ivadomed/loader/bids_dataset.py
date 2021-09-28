@@ -142,7 +142,7 @@ class BidsDataset(MRI2DSegmentationDataset):
                 target_filename[idx] = derivative
 
 
-    def create_metadata_dict(self, metadata_choice, df_sub, bids_df):
+    def create_metadata_dict(self, metadata, metadata_choice, df_sub, bids_df):
         # add custom data to metadata
         if metadata_choice not in df_sub.columns:
             raise ValueError("The following metadata cannot be found: {}. "
@@ -205,6 +205,6 @@ class BidsDataset(MRI2DSegmentationDataset):
                 return
 
         elif metadata_choice and metadata_choice != 'contrasts' and metadata_choice is not None:
-            self.create_metadata_dict(metadata_choice, df_sub, bids_df)
+            self.create_metadata_dict(metadata, metadata_choice, df_sub, bids_df)
 
         return df_sub, roi_filename, target_filename, metadata
