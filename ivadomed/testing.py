@@ -273,10 +273,10 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                                                      preds_cpu,
                                                      testing_params['undo_transforms'],
                                                      smp_idx, volume, weight_matrix)
-                fname_ref = metadata[0]['gt_filenames'][0]
                 # Indicator of last batch
                 if last_sample_bool:
                     pred_undo = np.array(pred_undo)
+                    fname_ref = metadata[0]['gt_filenames'][0]
                     if ofolder:
                         fname_pred = str(Path(ofolder, Path(fname_ref).name))
                         fname_pred = fname_pred.split(testing_params['target_suffix'][0])[0] + '_pred.nii.gz'
