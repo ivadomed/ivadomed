@@ -7,7 +7,7 @@ stages:
 .build_template:
   before_script:
     - pwd
-    - ls
+    - ls | Format-Table LastWriteTime,Length,Name
     - python -V
     - pip -V
   script:
@@ -37,6 +37,8 @@ setup_env:
   artifacts:
     paths:
       - venv
+      # THis is needed apparently for ivadomed script to work. 
+      - ivadomed.egg-info
 
 #################
 # GPU Test Build
@@ -52,5 +54,9 @@ run_pytest:
     - shell
     - GPU
   script:
+    # Activate VENV
     - venv/Scripts/activate.ps1
+    # Check Torch CUDA availability, Torch version
+    - python -c "import torch; print(torch.cuda.is_available()); print(torch.__version__)"
+    # Run Full PyTest with GPU
     - pytest
