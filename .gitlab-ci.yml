@@ -13,6 +13,7 @@ stages:
   script:
     - echo "Base Job Script. This should be not be seen"
 
+
 ################
 # Setup Step
 ################
@@ -33,6 +34,9 @@ setup_env:
     - pip install -r requirements_dev.txt
     - pip install -r requirements_gpu.txt
     - pip list
+  artifacts:
+    paths:
+      - venv
 
 #################
 # GPU Test Build
