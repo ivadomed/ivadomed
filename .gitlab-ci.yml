@@ -8,8 +8,6 @@ stages:
   before_script:
     - pwd
     - ls
-    - get-command python
-    - get-command pip
     - python -V
     - pip -V
   script:
