@@ -37,7 +37,7 @@ setup_env:
   artifacts:
     paths:
       - venv
-      # THis is needed apparently for ivadomed script to work. 
+      # THis is needed apparently for ivadomed script to work.
       - ivadomed.egg-info
 
 #################

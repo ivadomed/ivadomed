@@ -22,8 +22,13 @@ def test_download_data():
 
 
 def test_download_data_no_dataset_specified():
-    with pytest.raises(ArgParseException, match=r"Error parsing args"):
+    with pytest.raises(Exception) as e_info:
         download_data.main()
+    if e_info.type == SystemExit:
+        assert e_info.value == 0
+    elif e_info.type == ArgParseException:
+        assert e_info.match(r"Error parsing args")
+
 
 
 def teardown_function():
