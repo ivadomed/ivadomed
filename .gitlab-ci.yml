@@ -14,9 +14,11 @@ stages:
     - echo "Base Job Script. This should be not be seen"
 
 
-################
-# Setup Step
-################
+#######################################################
+# Setup and Test Step
+# Must be single stage because multi stage artefacts are 6GB with Torch GPUs....
+# GitLab cannot handle such massive artifacts.
+#######################################################
 setup_env:
   extends:
     - .build_template
@@ -34,26 +36,6 @@ setup_env:
     - pip install -r requirements_dev.txt
     - pip install -r requirements_gpu.txt
     - pip list
-  artifacts:
-    paths:
-      - venv
-      # THis is needed apparently for ivadomed script to work.
-      - ivadomed.egg-info
-
-#################
-# GPU Test Build
-#################
-
-run_pytest:
-  extends:
-    - .build_template
-  stage: test
-  tags:
-    - python
-    - windows
-    - shell
-    - GPU
-  script:
     # Activate VENV
     - venv/Scripts/activate.ps1
     # Check Torch CUDA availability, Torch version
