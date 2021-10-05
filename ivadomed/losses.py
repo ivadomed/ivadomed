@@ -198,8 +198,8 @@ class GeneralizedDiceLoss(nn.Module):
             input_background = torch.zeros(size_background, dtype=input.dtype)
             target_background = torch.zeros(size_background, dtype=target.dtype)
             # fill with opposite
-            input_background[input.sum(1).expand_as(input_background) == 0] = 1
-            target_background[target.sum(1).expand_as(input_background) == 0] = 1
+            input_background[input.sum(1)[:, None, :, :] == 0] = 1
+            target_background[target.sum(1)[:, None, :, :] == 0] = 1
             # Concat
             input = torch.cat([input, input_background.to(input.device)], dim=1)
             target = torch.cat([target, target_background.to(target.device)], dim=1)
