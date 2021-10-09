@@ -1,6 +1,6 @@
 stages:
   - setup_test
-  - test
+  - release
 variables:
   PACKAGE_VERSION: "${CI_COMMIT_TAG}"
 
@@ -52,7 +52,7 @@ setup_then_test:
 #################################################
 make_bleeding_edge_release:
   extends:
-    - .base_release_template
+    - .build_template
   stage: release
   image: registry.gitlab.com/gitlab-org/release-cli:latest
   script:
@@ -63,4 +63,3 @@ make_bleeding_edge_release:
       release-cli create \
       --name "Release $PACKAGE_VERSION Build $ts" \
       --tag-name "CI_COMMIT_TAG_$ts"
-
