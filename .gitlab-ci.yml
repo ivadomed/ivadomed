@@ -51,8 +51,6 @@ setup_then_test:
 # Make GitLab Internal Release Archive
 #################################################
 make_bleeding_edge_release:
-  extends:
-    - .build_template
   stage: release
   tags:
     - docker
@@ -65,4 +63,4 @@ make_bleeding_edge_release:
     - |
       release-cli create \
       --name "Release $PACKAGE_VERSION Build $ts" \
-      --tag-name "CI_COMMIT_TAG_$ts"
+      --tag-name "$ts"
