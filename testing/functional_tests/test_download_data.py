@@ -23,12 +23,8 @@ def test_download_data():
 
 
 def test_download_data_no_dataset_specified():
-    if sys.argv[1:]:
-        with pytest.raises(ArgParseException, match=r"Error parsing args"):
-            download_data.main()
-    else:
-        with pytest.raises(SystemExit, match='0'):
-            download_data.main()
+    with pytest.raises(ArgParseException, match=r"Error parsing args"):
+        download_data.main()
 
 
 def teardown_function():
