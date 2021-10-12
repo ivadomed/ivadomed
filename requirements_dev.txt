@@ -16,3 +16,4 @@ sphinx_rtd_theme
 sphinx-jsonschema~=1.16
 pytest-console-scripts~=1.1
 pre-commit==2.10.1
+sphinx-tabs
