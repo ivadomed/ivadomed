@@ -3,6 +3,7 @@ from tqdm import tqdm
 from ivadomed.loader import film as imed_film
 from ivadomed.loader.mri2d_segmentation_dataset import MRI2DSegmentationDataset
 from ivadomed.object_detection import utils as imed_obj_detect
+from ivadomed.keywords import ROIParamsKW, ContrastParamsKW, ModelParamsKW
 
 
 class BidsDataset(MRI2DSegmentationDataset):
@@ -47,7 +48,8 @@ class BidsDataset(MRI2DSegmentationDataset):
                  multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False,
                  is_input_dropout=False):
 
-        self.roi_params = roi_params if roi_params is not None else {"suffix": None, "slice_filter_roi": None}
+        self.roi_params = roi_params if roi_params is not None else \
+            {ROIParamsKW.SUFFIX: None, ROIParamsKW.SLICE_FILTER_ROI: None}
         self.soft_gt = soft_gt
         self.filename_pairs = []
         if metadata_choice == 'mri_params':
@@ -60,10 +62,10 @@ class BidsDataset(MRI2DSegmentationDataset):
 
         # Create a dictionary with the number of subjects for each contrast of contrast_balance
         tot = {contrast: df_subjects['suffix'].str.fullmatch(contrast).value_counts()[True]
-               for contrast in contrast_params["balance"].keys()}
+               for contrast in contrast_params[ContrastParamsKW.BALANCE].keys()}
 
         # Create a counter that helps to balance the contrasts
-        c = {contrast: 0 for contrast in contrast_params["balance"].keys()}
+        c = {contrast: 0 for contrast in contrast_params[ContrastParamsKW.BALANCE].keys()}
 
         # Get a list of subject_ids for multichannel_subjects (prefix filename without modality suffix and extension)
         subject_ids = []
@@ -75,8 +77,8 @@ class BidsDataset(MRI2DSegmentationDataset):
         multichannel_subjects = {}
         idx_dict = {}
         if multichannel:
-            num_contrast = len(contrast_params["contrast_lst"])
-            for idx, contrast in enumerate(contrast_params["contrast_lst"]):
+            num_contrast = len(contrast_params[ContrastParamsKW.CONTRAST_LST])
+            for idx, contrast in enumerate(contrast_params[ContrastParamsKW.CONTRAST_LST]):
                 idx_dict[contrast] = idx
             multichannel_subjects = {subject: {"absolute_paths": [None] * num_contrast,
                                                "deriv_path": None,
@@ -91,7 +93,7 @@ class BidsDataset(MRI2DSegmentationDataset):
         bounding_box_dict = imed_obj_detect.load_bounding_boxes(object_detection_params,
                                                                 get_all_subj_path,
                                                                 slice_axis,
-                                                                contrast_params["contrast_lst"])
+                                                                contrast_params[ContrastParamsKW.CONTRAST_LST])
 
         # Get all derivatives filenames from bids_df
         all_deriv = bids_df.get_deriv_fnames()
@@ -122,8 +124,8 @@ class BidsDataset(MRI2DSegmentationDataset):
             raise Exception('No subjects were selected - check selection of parameters on config.json (e.g. center '
                             'selected + target_suffix)')
 
-        length = model_params["length_2D"] if "length_2D" in model_params else []
-        stride = model_params["stride_2D"] if "stride_2D" in model_params else []
+        length = model_params[ModelParamsKW.LENGTH_2D] if ModelParamsKW.LENGTH_2D in model_params else []
+        stride = model_params[ModelParamsKW.STRIDE_2D] if ModelParamsKW.STRIDE_2D in model_params else []
 
         super().__init__(self.filename_pairs, length, stride, slice_axis, cache, transform, slice_filter_fn, task, self.roi_params,
                          self.soft_gt, is_input_dropout)
@@ -140,7 +142,7 @@ class BidsDataset(MRI2DSegmentationDataset):
                 target_filename[idx] = derivative
 
 
-    def create_metadata_dict(self, metadata_choice, df_sub, bids_df):
+    def create_metadata_dict(self, metadata, metadata_choice, df_sub, bids_df):
         # add custom data to metadata
         if metadata_choice not in df_sub.columns:
             raise ValueError("The following metadata cannot be found: {}. "
@@ -170,9 +172,9 @@ class BidsDataset(MRI2DSegmentationDataset):
 
         # Training & Validation: do not consider the contrasts over the threshold contained in contrast_balance
         contrast = df_sub['suffix'].values[0]
-        if contrast in (contrast_params["balance"].keys()):
+        if contrast in (contrast_params[ContrastParamsKW.BALANCE].keys()):
             c[contrast] = c[contrast] + 1
-            if c[contrast] / tot[contrast] > contrast_params["balance"][contrast]:
+            if c[contrast] / tot[contrast] > contrast_params[ContrastParamsKW.BALANCE][contrast]:
                 return
         if isinstance(target_suffix[0], str):
             target_filename, roi_filename = [None] * len(target_suffix), None
@@ -184,10 +186,10 @@ class BidsDataset(MRI2DSegmentationDataset):
 
         for derivative in derivatives:
             self.get_target_filename(target_suffix, target_filename, derivative)
-            if not (self.roi_params["suffix"] is None) and self.roi_params["suffix"] in derivative:
+            if not (self.roi_params[ROIParamsKW.SUFFIX] is None) and self.roi_params[ROIParamsKW.SUFFIX] in derivative:
                 roi_filename = [derivative]
 
-        if (not any(target_filename)) or (not (self.roi_params["suffix"] is None) and (roi_filename is None)):
+        if (not any(target_filename)) or (not (self.roi_params[ROIParamsKW.SUFFIX] is None) and (roi_filename is None)):
             return
 
         metadata = df_sub.to_dict(orient='records')[0]
@@ -203,6 +205,6 @@ class BidsDataset(MRI2DSegmentationDataset):
                 return
 
         elif metadata_choice and metadata_choice != 'contrasts' and metadata_choice is not None:
-            self.create_metadata_dict(metadata_choice, df_sub, bids_df)
+            self.create_metadata_dict(metadata, metadata_choice, df_sub, bids_df)
 
         return df_sub, roi_filename, target_filename, metadata

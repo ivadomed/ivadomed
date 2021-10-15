@@ -13,6 +13,7 @@ from ivadomed.loader.sample_meta_data import SampleMetadata
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
 from ivadomed import maths as imed_maths
+from ivadomed.keywords import ConfigKW, TransformationKW, LoaderParamsKW
 
 
 def get_parser():
@@ -102,7 +103,7 @@ def run_visualization(input, config, number, output, roi):
         Path(output).mkdir(parents=True)
 
     # Slice extracted according to below axis
-    axis = imed_utils.AXIS_DCT[context["loader_parameters"]["slice_axis"]]
+    axis = imed_utils.AXIS_DCT[context[ConfigKW.LOADER_PARAMETERS][LoaderParamsKW.SLICE_AXIS]]
     # Get data
     input_img, input_data = get_data(input, axis)
     # Image or Mask
@@ -113,9 +114,9 @@ def run_visualization(input, config, number, output, roi):
     indexes = random.sample(range(0, input_data.shape[2]), number)
 
     # Get training transforms
-    training_transforms, _, _ = imed_transforms.get_subdatasets_transforms(context["transformation"])
+    training_transforms, _, _ = imed_transforms.get_subdatasets_transforms(context[ConfigKW.TRANSFORMATION])
 
-    if "ROICrop" in training_transforms:
+    if TransformationKW.ROICROP in training_transforms:
         if roi and Path(roi).is_file():
             roi_img, roi_data = get_data(roi, axis)
         else:
@@ -143,7 +144,8 @@ def run_visualization(input, config, number, output, roi):
             metadata = SampleMetadata({"zooms": zooms, "data_type": "gt" if is_mask else "im"})
 
             # Apply transformations to ROI
-            if "CenterCrop" in training_transforms or ("ROICrop" in training_transforms and Path(roi).is_file()):
+            if TransformationKW.CENTERCROP in training_transforms or \
+                    (TransformationKW.ROICROP in training_transforms and Path(roi).is_file()):
                 metadata.__setitem__('crop_params', {})
 
             # Apply transformations to image
@@ -152,9 +154,9 @@ def run_visualization(input, config, number, output, roi):
                                               data_type="im")
 
             # Plot before / after transformation
-            fname_out = str(Path(output, stg_transforms+"slice"+str(i)+".png"))
-            print("Fname out: {}.".format(fname_out))
-            print("\t{}".format(dict(metadata)))
+            fname_out = str(Path(output, stg_transforms + "slice" + str(i) + ".png"))
+            print(f"Fname out: {fname_out}.")
+            print(f"\t{dict(metadata)}")
             # rescale intensities
             if len(stg_transforms[:-1].split("_")) == 1:
                 before = np.rot90(imed_maths.rescale_values_array(data[0], 0.0, 1.0))
