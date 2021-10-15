@@ -14,4 +14,3 @@ seaborn~=0.11
 tensorboard~=2.4
 tqdm>=4.30
 scipy
-sphinx-tabs
