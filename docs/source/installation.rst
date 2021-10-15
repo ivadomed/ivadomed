@@ -65,7 +65,7 @@ You can setup ``IvadoMed`` using either Conda or Venv:
 
         1. Setup Python Virtual Environment.
 
-        ``ivadomed`` requires Python >= 3.6 and <3.9 (If you are using `Compute Canada <https://www.computecanada.ca/>`_, you can load modules (e.g. python 3.9) as mentioned  `here <https://intranet.neuro.polymtl.ca/computing-resources/compute-canada#modules>`_ and `also here <https://docs.computecanada.ca/wiki/Utiliser_des_modules/en#Loading_modules_automatically>`_ ). We recommend
+        ``ivadomed`` requires Python >= 3.6 and <3.9 (If you are using `Compute Canada <https://www.computecanada.ca/>`_, you can load modules (e.g. python 3.9) as `mentioned here <https://intranet.neuro.polymtl.ca/computing-resources/compute-canada#modules>`_ and `also here <https://docs.computecanada.ca/wiki/Utiliser_des_modules/en#Loading_modules_automatically>`_ ). We recommend
         working under a virtual environment, which could be set as follows:
 
         ::
@@ -87,7 +87,7 @@ You can setup ``IvadoMed`` using either Conda or Venv:
              virtualenv venv-ivadomed --python=python3.6
 
 
-Step 2: Install Ivadomed
+Step 2: Install Ivadomed with CPU Support
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
@@ -121,8 +121,8 @@ Step 2: Install Ivadomed
             pip install -e .
 
 
-Step 3: Install GPU Support Torch Install PyTorch 1.5 and TorchVision
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+(Optional) Step 3: Install IvadoeMed with GPU Support, Install PyTorch 1.5 and TorchVision
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 If you have a compatible NVIDIA GPU that supports CUDA11, run the following command:
 
@@ -131,11 +131,11 @@ If you have a compatible NVIDIA GPU that supports CUDA11, run the following comm
    pip install -r requirements_gpu.txt
 
 According to `nvidia source <https://docs.nvidia.com/deeplearning/cudnn/support-matrix/index.html>`_, CUDA 11 is compatible with GPUS as far back as `Kepler architecture (GeForce 6xx, 7xx, 8xx series introduced in 2012) <https://en.wikipedia.org/wiki/Kepler_(microarchitecture)>`_ as long as driver is v450+
-Cuda Compute Score needs to be > 3.5 as all GPUs listed `here<https://developer.nvidia.com/cuda-gpus>`_.
+Cuda Compute Score needs to be > 3.5 as all GPUs listed `here <https://developer.nvidia.com/cuda-gpus>`_.
 
 Please note that this must happens after the previous IvadoMed installation step.
 
-(Optional) Step 4 for Developers Install pre-commit hooks
+(Optional) Step 4 Install pre-commit hooks for Developers
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 We use ``pre-commit`` to enforce a limit on file size.
