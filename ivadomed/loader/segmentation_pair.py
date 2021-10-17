@@ -232,15 +232,23 @@ class SegmentationPair(object):
         metadata = self.get_pair_metadata(slice_index)
         input_dataobj, gt_dataobj = self.get_pair_data()
 
+        min_data_last_dim = min([data_obj.shape[-1] for data_obj in input_dataobj]) ###970
+
+
         if self.slice_axis not in [0, 1, 2]:
             raise RuntimeError("Invalid axis, must be between 0 and 2.")
 
         input_slices = []
         # Loop over contrasts
         for data_object in input_dataobj:
-            input_slices.append(np.asarray(data_object[..., slice_index],
-                                           dtype=np.float32))
 
+            if slice_index < min_data_last_dim: ###970
+                input_slices.append(np.asarray(data_object[..., slice_index],
+                                        dtype=np.float32))
+            else: ###970
+                input_slices.append(np.asarray(data_object[..., min_data_last_dim-1],
+                                        dtype=np.float32))
+                
         # Handle the case for unlabeled data
         if self.gt_handle is None:
             gt_slices = None
