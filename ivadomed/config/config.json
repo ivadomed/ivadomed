@@ -3,7 +3,7 @@
     "gpu_ids": [0],
     "path_output": "spineGeneric",
     "model_name": "my_model",
-    "debugging": false,
+    "debugging": true,
     "object_detection_params": {
         "object_detection_path": null,
         "safety_factor": [1.0, 1.0, 1.0]
@@ -27,8 +27,9 @@
             "filter_empty_input": true
         },
         "slice_axis": "axial",
-        "multichannel": false,
-        "soft_gt": false
+        "multichannel": true,
+        "soft_gt": false,
+        "is_input_dropout": true
     },
     "split_dataset": {
         "fname_split": null,
@@ -40,7 +41,7 @@
         "test_fraction": 0.2
     },
     "training_parameters": {
-        "batch_size": 18,
+        "batch_size": 9,
         "loss": {
             "name": "DiceLoss"
         },
