@@ -4,7 +4,7 @@ Installation
 Supported OS
 ++++++++++++
 
-Currently, we only support ``MacOS``, ``Linux`` and ``Windows`` (`Windows Subsystem for Linux <https://docs.microsoft.com/en-us/windows/wsl/>`_ is not suppoorted.)
+Currently, we only support ``MacOS``, ``Linux`` and ``Windows`` (`Windows Subsystem for Linux <https://docs.microsoft.com/en-us/windows/wsl/>`_ is currently not supported.)
 
 Step 0: MANDATORY Preparatory Step for Mac
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
