@@ -80,6 +80,8 @@ def get_preds(context: dict, fname_model: str, model_params: dict, gpu_id: int, 
                 # Load meta data before prediction
                 metadata = imed_training.get_metadata(batch["input_metadata"], model_params)
                 preds = model(img, metadata)
+            elif context["model_name"] == "pose_model":
+                preds = model(img)[-1]
             else:
                 preds = model(img)
         # Otherwise, Onnex Inference (PyTorch can't load .onnx)
