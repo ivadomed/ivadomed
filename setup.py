@@ -39,7 +39,7 @@ setup(
     extras_require={
         'docs': [  # pin sphinx to match what RTD uses:
             # https://github.com/readthedocs/readthedocs.org/blob/ecac31de54bbb2c100f933e86eb22b0f4389ba84/requirements/pip.txt#L16
-            'sphinx<2',
+            'sphinx==4.2.0',
             'sphinx-rtd-theme<0.5',
         ],
         'dev': ["pre-commit>=2.10.0"]
