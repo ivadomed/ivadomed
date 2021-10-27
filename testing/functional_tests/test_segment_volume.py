@@ -23,8 +23,8 @@ def setup_function():
 
 
 PATH_MODEL = Path(__tmp_dir__, "model_test")
-IMAGE_PATH = Path(__data_testing_dir__, "sub-unf01", "anat", "sub-unf01_T1w.nii.gz")
-ROI_PATH = Path(__data_testing_dir__, "derivatives", "labels", "sub-unf01", "anat",
+PATH_IMAGE = Path(__data_testing_dir__, "sub-unf01", "anat", "sub-unf01_T1w.nii.gz")
+PATH_ROI = Path(__data_testing_dir__, "derivatives", "labels", "sub-unf01", "anat",
                         "sub-unf01_T1w_seg-manual.nii.gz")
 
 
@@ -72,9 +72,9 @@ def test_segment_volume_2d_NumpyToTensor_retrocompatibility(download_functional_
     with open(PATH_CONFIG, 'w') as fp:
         json.dump(config, fp)
 
-    nib_lst, _ = imed_inference.segment_volume(str(PATH_MODEL), [str(IMAGE_PATH)], options={'fname_prior': str(ROI_PATH)})
+    nib_lst, _ = imed_inference.segment_volume(str(PATH_MODEL), [str(PATH_IMAGE)], options={'fname_prior': str(PATH_ROI)})
     nib_img = nib_lst[0]
-    assert np.squeeze(nib_img.get_fdata()).shape == nib.load(IMAGE_PATH).shape
+    assert np.squeeze(nib_img.get_fdata()).shape == nib.load(PATH_IMAGE).shape
     assert (nib_img.dataobj.max() <= 1.0) and (nib_img.dataobj.min() >= 0.0)
     assert nib_img.dataobj.dtype == 'float32'
 
@@ -121,12 +121,12 @@ def test_segment_volume_2d(download_functional_test_files):
     }
 
     PATH_CONFIG = Path(PATH_MODEL, 'model_test.json')
-    with open(PATH_CONFIG, 'w') as fp:
+    with PATH_CONFIG.open(mode='w') as fp:
         json.dump(config, fp)
 
-    nib_lst, _ = imed_inference.segment_volume(str(PATH_MODEL), [str(IMAGE_PATH)], options={'fname_prior': str(ROI_PATH)})
+    nib_lst, _ = imed_inference.segment_volume(str(PATH_MODEL), [str(PATH_IMAGE)], options={'fname_prior': str(PATH_ROI)})
     nib_img = nib_lst[0]
-    assert np.squeeze(nib_img.get_fdata()).shape == nib.load(IMAGE_PATH).shape
+    assert np.squeeze(nib_img.get_fdata()).shape == nib.load(PATH_IMAGE).shape
     assert (nib_img.dataobj.max() <= 1.0) and (nib_img.dataobj.min() >= 0.0)
     assert nib_img.dataobj.dtype == 'float32'
 
@@ -166,12 +166,12 @@ def test_segment_volume_2d_no_prepro_transform(download_functional_test_files):
     }
 
     PATH_CONFIG = Path(PATH_MODEL, 'model_test.json')
-    with open(PATH_CONFIG, 'w') as fp:
+    with PATH_CONFIG.open(mode='w') as fp:
         json.dump(config, fp)
 
-    nib_lst, _ = imed_inference.segment_volume(str(PATH_MODEL), [str(IMAGE_PATH)])
+    nib_lst, _ = imed_inference.segment_volume(str(PATH_MODEL), [str(PATH_IMAGE)])
     nib_img = nib_lst[0]
-    assert np.squeeze(nib_img.get_fdata()).shape == nib.load(IMAGE_PATH).shape
+    assert np.squeeze(nib_img.get_fdata()).shape == nib.load(PATH_IMAGE).shape
     assert (nib_img.dataobj.max() <= 1.0) and (nib_img.dataobj.min() >= 0.0)
     assert nib_img.dataobj.dtype == 'float32'
 
@@ -187,7 +187,7 @@ def test_segment_volume_2d_with_patches(download_functional_test_files, center_c
                              bn_momentum=BN)
 
     if not PATH_MODEL.exists():
-        PATH_MODEL.mkdir()
+        PATH_MODEL.mkdir(parents=True, exist_ok=True)
 
     torch.save(model, Path(PATH_MODEL, "model_test.pt"))
     config = {
@@ -223,12 +223,12 @@ def test_segment_volume_2d_with_patches(download_functional_test_files, center_c
     }
 
     PATH_CONFIG = Path(PATH_MODEL, 'model_test.json')
-    with open(PATH_CONFIG, 'w') as fp:
+    with PATH_CONFIG.open(mode='w') as fp:
         json.dump(config, fp)
 
-    nib_lst, _ = imed_inference.segment_volume(str(PATH_MODEL), [str(IMAGE_PATH)])
+    nib_lst, _ = imed_inference.segment_volume(str(PATH_MODEL), [str(PATH_IMAGE)])
     nib_img = nib_lst[0]
-    assert np.squeeze(nib_img.get_fdata()).shape == nib.load(IMAGE_PATH).shape
+    assert np.squeeze(nib_img.get_fdata()).shape == nib.load(PATH_IMAGE).shape
     assert (nib_img.dataobj.max() <= 1.0) and (nib_img.dataobj.min() >= 0.0)
     assert nib_img.dataobj.dtype == 'float32'
 
@@ -242,7 +242,7 @@ def test_segment_volume_3d(download_functional_test_files, center_crop):
                                        base_n_filter=1)
 
     if not PATH_MODEL.exists():
-        PATH_MODEL.mkdir()
+        PATH_MODEL.mkdir(parents=True, exist_ok=True)
 
     torch.save(model, Path(PATH_MODEL, "model_test.pt"))
     config = {
@@ -287,12 +287,12 @@ def test_segment_volume_3d(download_functional_test_files, center_crop):
     }
 
     PATH_CONFIG = Path(PATH_MODEL, 'model_test.json')
-    with open(PATH_CONFIG, 'w') as fp:
+    with PATH_CONFIG.open(mode='w') as fp:
         json.dump(config, fp)
 
-    nib_lst, _ = imed_inference.segment_volume(str(PATH_MODEL), [str(IMAGE_PATH)])
+    nib_lst, _ = imed_inference.segment_volume(str(PATH_MODEL), [str(PATH_IMAGE)])
     nib_img = nib_lst[0]
-    assert np.squeeze(nib_img.get_fdata()).shape == nib.load(IMAGE_PATH).shape
+    assert np.squeeze(nib_img.get_fdata()).shape == nib.load(PATH_IMAGE).shape
     assert (nib_img.dataobj.max() <= 1.0) and (nib_img.dataobj.min() >= 0.0)
     assert nib_img.dataobj.dtype == 'float32'
 

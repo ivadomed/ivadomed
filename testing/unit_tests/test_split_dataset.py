@@ -9,7 +9,7 @@ from testing.common_testing_util import remove_tmp_dir
 from pathlib import Path
 
 PATH_DATA = Path(__tmp_dir__, 'bids')
-LOG_PATH = Path(__tmp_dir__, 'log')
+PATH_LOG = Path(__tmp_dir__, 'log')
 N = 200
 N_CENTERS = 5
 
@@ -23,12 +23,12 @@ def load_dataset(split_params):
     create_jsonfile()
 
     # Create log path
-    if not LOG_PATH.is_dir():
-        LOG_PATH.mkdir(parents=True, exist_ok=True)
+    if not PATH_LOG.is_dir():
+        PATH_LOG.mkdir(parents=True, exist_ok=True)
 
     df = pd.read_csv(Path(PATH_DATA, "participants.tsv"), sep='\t')
     df['filename'] = df["participant_id"]
-    train, val, test = imed_loader_utils.get_subdatasets_subject_files_list(split_params, df, str(LOG_PATH))
+    train, val, test = imed_loader_utils.get_subdatasets_subject_files_list(split_params, df, str(PATH_LOG))
     return train, val, test, patient_mapping
 
 

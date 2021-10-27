@@ -27,7 +27,7 @@ def setup_function():
         "object_detection_params": {
             "object_detection_path": "object_detection",
             "safety_factor": [1.0, 1.0, 1.0],
-            "path_output": PATH_OUTPUT
+            "path_output": str(PATH_OUTPUT)
         },
         "transforms_params": {
             "NumpyToTensor": {}},
@@ -39,7 +39,7 @@ def setup_function():
         "object_detection_params": {
             "object_detection_path": "object_detection",
             "safety_factor": [1.0, 1.0, 1.0],
-            "path_output": PATH_OUTPUT
+            "path_output": str(PATH_OUTPUT)
         },
         "transforms_params": {"NumpyToTensor": {}},
         "roi_params": {"suffix": "_seg-manual", "slice_filter_roi": 10},
@@ -81,7 +81,7 @@ def test_bounding_box(download_data_testing_test_files, train_lst, target_lst, c
     bounding_box_dict = {}
     bounding_box_path = Path(PATH_OUTPUT, 'bounding_boxes.json')
     if not Path(PATH_OUTPUT).exists():
-        PATH_OUTPUT.mkdir()
+        PATH_OUTPUT.mkdir(parents=True, exist_ok=True)
     current_dir = Path.cwd()
     sub = train_lst[0].split('_')[0]
     contrast = config['contrast_params']['contrast_lst'][0]
