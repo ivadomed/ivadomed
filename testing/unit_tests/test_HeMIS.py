@@ -27,7 +27,7 @@ cudnn.benchmark = True
 
 GPU_ID = 0
 BATCH_SIZE = 4
-DROPOUT = 0.4
+DROPOUT = 0.3
 BN = 0.1
 N_EPOCHS = 10
 INIT_LR = 0.01
@@ -121,7 +121,7 @@ def test_HeMIS(download_data_testing_test_files, loader_parameters, p=0.0001):
 
     model = models.HeMISUnet(contrasts=contrast_params["contrast_lst"],
                              depth=3,
-                             drop_rate=DROPOUT,
+                             dropout_rate=DROPOUT,
                              bn_momentum=BN)
 
     print(model)

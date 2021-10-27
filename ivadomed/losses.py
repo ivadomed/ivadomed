@@ -176,11 +176,11 @@ class GeneralizedDiceLoss(nn.Module):
 
     Args:
         epsilon (float): Epsilon to avoid division by zero.
-        include_background (float): If True, then an extra channel is added, which represents the background class.
+        include_background (bool): If True, then an extra channel is added, which represents the background class.
 
     Attributes:
         epsilon (float): Epsilon to avoid division by zero.
-        include_background (float): If True, then an extra channel is added, which represents the background class.
+        include_background (bool): If True, then an extra channel is added, which represents the background class.
     """
 
     def __init__(self, epsilon=1e-5, include_background=True):
@@ -198,8 +198,8 @@ class GeneralizedDiceLoss(nn.Module):
             input_background = torch.zeros(size_background, dtype=input.dtype)
             target_background = torch.zeros(size_background, dtype=target.dtype)
             # fill with opposite
-            input_background[input.sum(1).expand_as(input_background) == 0] = 1
-            target_background[target.sum(1).expand_as(input_background) == 0] = 1
+            input_background[input.sum(1)[:, None, :, :] == 0] = 1
+            target_background[target.sum(1)[:, None, :, :] == 0] = 1
             # Concat
             input = torch.cat([input, input_background.to(input.device)], dim=1)
             target = torch.cat([target, target_background.to(target.device)], dim=1)
