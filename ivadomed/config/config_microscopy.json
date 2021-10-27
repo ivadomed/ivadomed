@@ -84,8 +84,8 @@
     "transformation": {
         "Resample":
         {
-            "wspace": 0.0001,
-            "hspace": 0.0001
+            "hspace": 0.0001,
+            "wspace": 0.0001
         },
         "RandomAffine": {
             "degrees": 5,
