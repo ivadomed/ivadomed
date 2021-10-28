@@ -135,7 +135,7 @@ function is available for it.
 .. code-block:: bash
 
     Selected transformations for the ['testing'] dataset:
-        Resample: {'whpace': 0.75, 'wspace': 0.75, 'dspace': 1}
+        Resample: {'hspace': 0.75, 'wspace': 0.75, 'dspace': 1}
         CenterCrop: {'size': [128, 128]}
         NumpyToTensor: {}
         NormalizeInstance: {'applied_to': ['im']}
