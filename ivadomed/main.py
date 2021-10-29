@@ -3,11 +3,14 @@ import argparse
 import copy
 import joblib
 import torch.backends.cudnn as cudnn
+import torch.cuda.device_count as device_count
+import torch.multiprocessing as mp
 import nibabel as nib
 import sys
 import platform
 import multiprocessing
 import re
+import os
 
 from ivadomed.loader.bids_dataframe import BidsDataframe
 from ivadomed import evaluation as imed_evaluation
@@ -564,10 +567,22 @@ def run_main():
     context["loader_parameters"]["path_data"] = imed_utils.get_path_data(args, context)
 
     # Run command
-    run_command(context=context,
-                n_gif=args.gif if args.gif is not None else 0,
-                thr_increment=args.thr_increment if args.thr_increment else None,
-                resume_training=bool(args.resume_training))
+    # if command == 'train', and n_gpus > 1, run mp.spawn
+    n_gpus = device_count()
+    if context["command"] == 'train' and n_gpus > 1:
+        logger.info(f"Using {n_gpus} GPUs")
+
+        os.environ['MASTER_ADDR'] = context["master_addr"] if context["master_addr"] else "localhost"
+        os.environ['MASTER_PORT'] = context["master_port"] if context["master_port"] else "29500"
+        
+        logger.info(f"Spawning workers")
+        mp.spawn(imed_training.train, nprocs=n_gpus, args=(n_gpus, ))
+    else:
+    # Users will provide list of gpu_ids
+        run_command(context=context,
+                    n_gif=args.gif if args.gif is not None else 0,
+                    thr_increment=args.thr_increment if args.thr_increment else None,
+                    resume_training=bool(args.resume_training))
 
 
 if __name__ == "__main__":
