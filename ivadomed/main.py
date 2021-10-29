@@ -3,7 +3,7 @@ import argparse
 import copy
 import joblib
 import torch.backends.cudnn as cudnn
-import torch.cuda.device_count as device_count
+from torch.cuda import device_count
 import torch.multiprocessing as mp
 import nibabel as nib
 import sys
