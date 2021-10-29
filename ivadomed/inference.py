@@ -227,7 +227,8 @@ def pred_to_png(pred_list: list, target_list: list, subj_path: str, suffix: str 
 def process_transformations(context: dict, fname_roi: str, fname_prior: str, metadata: dict, slice_axis: int,
                             fname_images: list) -> dict:
     """Sets the transformation based on context parameters. When ROI is not provided center-cropping is applied.
-       If there is an object_detection_path, then we modify the metadata to store transformation data.
+
+    If there is an object_detection_path, then we modify the metadata to store transformation data.
 
     Args:
         context (dict): configuration dictionary.
@@ -260,8 +261,9 @@ def process_transformations(context: dict, fname_roi: str, fname_prior: str, met
 
 def set_option(options: dict, postpro: dict, context: dict, key: str):
     """Generalized function that sets postprocessing option based on given list of options.
-       When given key already exists in options, we initialize the key value for the postprocessing dictionary
-       Otherwise, when the key is already found in the postprocessing attritute of the context, we remove it
+
+    When given key already exists in options, we initialize the key value for the postprocessing dictionary
+    Otherwise, when the key is already found in the postprocessing attritute of the context, we remove it
 
     Args:
         options (dict): Contains postprocessing steps information.
@@ -324,31 +326,32 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
             images to segment, e.i., len(fname_images) > 1.
         gpu_id (int): Number representing gpu number if available. Currently does NOT support multiple GPU segmentation.
         options (dict): This can optionally contain any of the following key-value pairs:
-            * 'binarize_prediction': (float) Binarize segmentation with specified threshold.
-                                     Predictions below the threshold become 0, and predictions above or equal to
-                                     threshold become 1. Set to -1 for no thresholding (i.e., soft segmentation).
-            * 'binarize_maxpooling': (bool) Binarize by setting to 1 the voxel having the maximum prediction across
-                                     all classes. Useful for multiclass models.
+
+            * 'binarize_prediction': (float) Binarize segmentation with specified threshold. \
+                Predictions below the threshold become 0, and predictions above or equal to \
+                threshold become 1. Set to -1 for no thresholding (i.e., soft segmentation).
+            * 'binarize_maxpooling': (bool) Binarize by setting to 1 the voxel having the maximum prediction across \
+                all classes. Useful for multiclass models.
             * 'fill_holes': (bool) Fill small holes in the segmentation.
             * 'keep_largest': (bool) Keep the largest connected-object for each class from the output segmentation.
-            * 'remove_small': (list of str) Minimal object size to keep with unit (mm3 or vox). A single value can be provided
-                              or one value per prediction class. Single value example: ["1mm3"], ["5vox"]. Multiple values
-                              example: ["10", "20", "10vox"] (remove objects smaller than 10 voxels for class 1 and 3,
+            * 'remove_small': (list of str) Minimal object size to keep with unit (mm3 or vox). A single value can be provided \
+                              or one value per prediction class. Single value example: ["1mm3"], ["5vox"]. Multiple values \
+                              example: ["10", "20", "10vox"] (remove objects smaller than 10 voxels for class 1 and 3, \
                               and smaller than 20 voxels for class 2).
-            * 'pixel_size': (list of float) List of microscopy pixel size in micrometers.
-                            Length equals 2 [PixelSizeX, PixelSizeY] for 2D or 3 [PixelSizeX, PixelSizeY, PixelSizeZ] for 3D,
+            * 'pixel_size': (list of float) List of microscopy pixel size in micrometers. \
+                            Length equals 2 [PixelSizeX, PixelSizeY] for 2D or 3 [PixelSizeX, PixelSizeY, PixelSizeZ] for 3D, \
                             where X is the width, Y the height and Z the depth of the image.
-            * 'overlap_2D': (list of int) List of overlaps in pixels for 2D patching. Length equals 2 [OverlapX, OverlapY],
+            * 'overlap_2D': (list of int) List of overlaps in pixels for 2D patching. Length equals 2 [OverlapX, OverlapY], \
                             where X is the width and Y the height of the image.
             * 'metadata': (str) Film metadata.
-            * 'fname_prior': (str) An image filename (e.g., .nii.gz) containing processing information
-                (e.g., spinal cord segmentation, spinal location or MS lesion classification, spinal cord centerline), 
-                used to crop the image prior to segment it if provided.
+            * 'fname_prior': (str) An image filename (e.g., .nii.gz) containing processing information \
+                (e.g., spinal cord segmentation, spinal location or MS lesion classification, spinal cord centerline), \
+                used to crop the image prior to segment it if provided. \
                 The segmentation is not performed on the slices that are empty in this image.
 
     Returns:
-        list: List of nibabel objects containing the soft segmentation(s), one per prediction class.
-        list: List of target suffix associated with each prediction in `pred_list`
+        list, list: List of nibabel objects containing the soft segmentation(s), one per prediction class, \
+            List of target suffix associated with each prediction in `pred_list`
 
     """
 
@@ -413,7 +416,8 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
         ds = MRI3DSubVolumeSegmentationDataset(filename_pairs,
                                                transform=tranform_lst,
                                                length=context["Modified3DUNet"]["length_3D"],
-                                               stride=context["Modified3DUNet"]["stride_3D"])
+                                               stride=context["Modified3DUNet"]["stride_3D"],
+                                               slice_axis=slice_axis)
         logger.info(f"Loaded {len(ds)} {loader_params['slice_axis']} volumes of shape "
                      f"{context['Modified3DUNet']['length_3D']}.")
     else:
@@ -485,11 +489,9 @@ def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompo
                           preds_list: list, kernel_3D: bool, is_2d_patch: bool, slice_axis: int, slice_idx_list: list,
                           data_loader: DataLoader, fname_images: list, i_batch: int, last_sample_bool: bool,
                           weight_matrix: tensor, volume: tensor, image: tensor):
-    """Reconstructs the 3D object from the current batch, and returns the list of predictions and
-       targets.
+    """Reconstructs the 3D object from the current batch, and returns the list of predictions and targets.
 
     Args:
-
         context (dict): configuration dict.
         batch (dict): Dictionary containing input, gt and metadata
         undo_transforms (UndoCompose): Undo transforms so prediction match original image resolution and shape
@@ -502,7 +504,7 @@ def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompo
         data_loader (DataLoader): DataLoader object containing batches using in object construction.
         fname_images (list): list of image filenames (e.g. .nii.gz) to segment.
         i_batch (int): index of current batch.
-        last_sample_bool: : flag to indicate whether this is the last sample in the 3D volume
+        last_sample_bool (bool) : flag to indicate whether this is the last sample in the 3D volume
         weight_matrix (tensor): the weight matrix
         volume (tensor): the volume tensor that is being partially reconstructed through the loop
         image (tensor): the image tensor that is being partially reconstructed through the loop
@@ -512,10 +514,10 @@ def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompo
         target_list (list): list of targets
         last_sample_bool (bool): flag to indicate whether this is the last sample in the 3D volume
         weight_matrix (tensor): the weight matrix. Must be returned as passing tensor by reference is NOT reliable.
-        volume (tensor): the volume tensor that is being partially reconstructed through the loop. Must be returned
-         as passing tensor by reference is NOT reliable.
-        image (tensor): the vimage tensor that is being partially reconstructed through the loop. Must be returned
-         as passing tensor by reference is NOT reliable.
+        volume (tensor): the volume tensor that is being partially reconstructed through the loop. Must be returned \
+            as passing tensor by reference is NOT reliable.
+        image (tensor): the vimage tensor that is being partially reconstructed through the loop. Must be returned \
+            as passing tensor by reference is NOT reliable.
     """
     pred_list = []
     target_list = []
@@ -527,7 +529,8 @@ def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompo
         if kernel_3D:
             preds_undo, metadata, last_sample_bool, volume, weight_matrix = \
                 volume_reconstruction(batch, preds, undo_transforms, i_slice, volume, weight_matrix)
-            preds_list = [np.array(preds_undo)]
+            if last_sample_bool:
+                preds_list = [np.array(preds_undo)]
         else:
             if is_2d_patch:
                 # undo transformations for patch and reconstruct slice
@@ -586,6 +589,7 @@ def volume_reconstruction(batch: dict, pred: tensor, undo_transforms: UndoCompos
         volume (tensor): representing the volume reconstructed
         weight_matrix (tensor): weight matrix
     """
+    pred_undo, metadata = None, None
     x_min, x_max, y_min, y_max, z_min, z_max = batch['input_metadata'][smp_idx][0]['coord']
     num_pred = pred[smp_idx].shape[0]
 
@@ -609,10 +613,9 @@ def volume_reconstruction(batch: dict, pred: tensor, undo_transforms: UndoCompos
 
     if last_sample_bool:
         volume /= weight_matrix
-
-    pred_undo, metadata = undo_transforms(volume,
-                                          batch['gt_metadata'][smp_idx],
-                                          data_type='gt')
+        pred_undo, metadata = undo_transforms(volume,
+                                              batch['gt_metadata'][smp_idx],
+                                              data_type='gt')
     return pred_undo, metadata, last_sample_bool, volume, weight_matrix
 
 
@@ -629,12 +632,13 @@ def image_reconstruction(batch: dict, pred: tensor, undo_transforms: UndoCompose
         weight_matrix (tensor): Weights containing the number of predictions for each pixel
 
     Returns:
-        pred_undo (tensor): undone patch,
-        metadata (dict): metadata,
-        last_sample_bool (bool): boolean representing if its the last patch of the image
+        pred_undo (tensor): undone image
+        metadata (dict): metadata
+        last_patch_bool (bool): boolean representing if its the last patch of the image
         image (tensor): representing the image reconstructed
         weight_matrix (tensor): weight matrix
     """
+    pred_undo, metadata = None, None
     x_min, x_max, y_min, y_max = batch['input_metadata'][smp_idx][0]['coord']
     num_pred = pred[smp_idx].shape[0]
 
@@ -657,6 +661,6 @@ def image_reconstruction(batch: dict, pred: tensor, undo_transforms: UndoCompose
     weight_matrix[:, x_min:x_max, y_min:y_max] += 1
     if last_patch_bool:
         image /= weight_matrix
+        pred_undo, metadata = undo_transforms(image, batch['gt_metadata'][smp_idx], data_type='gt')
 
-    pred_undo, metadata = undo_transforms(image, batch['gt_metadata'][smp_idx], data_type='gt')
     return pred_undo, metadata, last_patch_bool, image, weight_matrix
