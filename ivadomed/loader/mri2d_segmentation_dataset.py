@@ -150,14 +150,28 @@ class MRI2DSegmentationDataset(Dataset):
             for x in range(0, (shape[0] - self.length[0] + self.stride[0]), self.stride[0]):
                 if x + self.length[0] > shape[0]:
                     x = (shape[0] - self.length[0])
+                x_min = x
+                x_max = x + self.length[0]
                 for y in range(0, (shape[1] - self.length[1] + self.stride[1]), self.stride[1]):
                     if y + self.length[1] > shape[1]:
                         y = (shape[1] - self.length[1])
+                    y_min = y
+                    y_max = y + self.length[1]
+
+                    # TODO: generalized for different input and gt length
+                    patch = {'input': self.handlers[i][0]['input'][0][x_min:x_max, y_min:y_max],
+                             'gt': [self.handlers[i][0]['gt'][0][x_min:x_max, y_min:y_max], self.handlers[i][0]['gt'][1][x_min:x_max, y_min:y_max]],
+                             'input_metadata': self.handlers[i][0]['input_metadata'],
+                             'gt_metadata': self.handlers[i][0]['gt_metadata']}
+
+                    if self.slice_filter_fn and not self.slice_filter_fn(patch):
+                        continue
+
                     self.indexes.append({
-                        'x_min': x,
-                        'x_max': x + self.length[0],
-                        'y_min': y,
-                        'y_max': y + self.length[1],
+                        'x_min': x_min,
+                        'x_max': x_max,
+                        'y_min': y_min,
+                        'y_max': y_max,
                         'handler_index': i})
 
     def set_transform(self, transform):
