@@ -8,7 +8,9 @@ import torch
 import torch.backends.cudnn as cudnn
 from loguru import logger
 from torch import optim
+import torch.nn as nn
 from torch.utils.data import DataLoader
+from torch.utils.data.distributed import DistributedSampler
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 from pathlib import Path
@@ -26,7 +28,8 @@ cudnn.benchmark = True
 
 
 def train(model_params, dataset_train, dataset_val, training_params, path_output, device,
-          cuda_available=True, metric_fns=None, n_gif=0, resume_training=False, debugging=False):
+          cuda_available=True, metric_fns=None, n_gif=0, resume_training=False, debugging=False,
+          rank=0, world_size=0):
     """Main command to train the network.
 
     Args:
@@ -45,6 +48,10 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
                                 training. This training state is saved everytime a new best model is saved in the log
                                 directory.
         debugging (bool): If True, extended verbosity and intermediate outputs.
+        rank (int): the rank of the training function as a process. Default value is set to -1, 
+                                indicating that Distributed Parallel Processing will not be used.
+        world_size (int): the total number of processes the will be used to run train. Default is set to 1, 
+                                indicating that no other processes will be run in parallel.
 
     Returns:
         float, float, float, float: best_training_dice, best_training_loss, best_validation_dice,
@@ -55,19 +62,36 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
 
     # BALANCE SAMPLES AND PYTORCH LOADER
     conditions = all([training_params["balance_samples"]["applied"], model_params["name"] != "HeMIS"])
-    sampler_train, shuffle_train = get_sampler(dataset_train, conditions, training_params['balance_samples']['type'])
 
-    train_loader = DataLoader(dataset_train, batch_size=training_params["batch_size"],
-                              shuffle=shuffle_train, pin_memory=True, sampler=sampler_train,
-                              collate_fn=imed_loader_utils.imed_collate,
-                              num_workers=0)
+    # set the local rank to be the rank    
+    local_rank = rank
+
+    if local_rank == -1 and torch.cuda.device_count <= 1:
+        sampler_train, shuffle_train = get_sampler(dataset_train, conditions, training_params['balance_samples']['type'])
+        train_loader = DataLoader(dataset_train, batch_size=training_params["batch_size"],
+                                shuffle=shuffle_train, pin_memory=True, sampler=sampler_train,
+                                collate_fn=imed_loader_utils.imed_collate,
+                                num_workers=0)
+    else:
+        sampler_train = DistributedSampler(dataset=dataset_train, num_replicas=0, rank=rank)
+        train_loader = DataLoader(dataset_train, batch_size=training_params["batch_size"],
+                            shuffle=False, pin_memory=True, sampler=sampler_train,
+                            collate_fn=imed_loader_utils.imed_collate,
+                            num_workers=0)
+
 
     gif_dict = {"image_path": [], "slice_id": [], "gif": []}
     if dataset_val:
-        sampler_val, shuffle_val = get_sampler(dataset_val, conditions, training_params['balance_samples']['type'])
-
-        val_loader = DataLoader(dataset_val, batch_size=training_params["batch_size"],
-                                shuffle=shuffle_val, pin_memory=True, sampler=sampler_val,
+        if local_rank == -1 and torch.cuda.device_count <= 1:
+            sampler_val, shuffle_val = get_sampler(dataset_val, conditions, training_params['balance_samples']['type'])
+            val_loader = DataLoader(dataset_val, batch_size=training_params["batch_size"],
+                                    shuffle=shuffle_val, pin_memory=True, sampler=sampler_val,
+                                    collate_fn=imed_loader_utils.imed_collate,
+                                    num_workers=0)
+        else:
+            sampler_val = DistributedSampler(dataset=None, num_replicas=0, rank=rank)
+            val_loader = DataLoader(dataset_val, batch_size=training_params["batch_size"],
+                                shuffle=False, pin_memory=True, sampler=sampler_val,
                                 collate_fn=imed_loader_utils.imed_collate,
                                 num_workers=0)
 
@@ -101,6 +125,14 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
         model = model_class(**model_params)
     if cuda_available:
         model.cuda()
+
+    if local_rank == -1 and torch.cuda.device_count <= 1:
+        model.to(device)
+    else:
+        model.to(device)
+        from torch.nn.parallel import DistributedDataParallel as DDP
+        logger.info("Using PyTorch DDP")
+        model = DDP(model, device_ids=[rank])
 
     num_epochs = training_params["training_time"]["num_epochs"]
 
@@ -351,6 +383,10 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
     logger.info('begin ' + time.strftime('%H:%M:%S', time.localtime(begin_time)) + "| End " +
           time.strftime('%H:%M:%S', time.localtime(final_time)) +
           "| duration " + str(datetime.timedelta(seconds=duration_time)))
+
+    # Cleanup DDP if applicable
+    if local_rank != -1:
+        torch.distributed.destroy_process_group()
 
     return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
 
