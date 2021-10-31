@@ -572,8 +572,8 @@ def run_main():
     if context["command"] == 'train' and n_gpus > 1:
         logger.info(f"Using {n_gpus} GPUs")
 
-        os.environ['MASTER_ADDR'] = context["master_addr"] if context["master_addr"] else "localhost"
-        os.environ['MASTER_PORT'] = context["master_port"] if context["master_port"] else "29500"
+        os.environ['MASTER_ADDR'] = context["master_addr"] if "master_addr" in context else "localhost"
+        os.environ['MASTER_PORT'] = context["master_port"] if "master_port" in context else "29500"
         
         logger.info(f"Spawning workers")
         mp.spawn(imed_training.train, nprocs=n_gpus, args=(n_gpus, ))
