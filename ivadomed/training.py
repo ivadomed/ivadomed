@@ -66,6 +66,15 @@ def train(rank, model_params, dataset_train, dataset_val, training_params, path_
     # set the local rank to be the rank    
     local_rank = rank
 
+    # initialize default process group
+    if local_rank == -1:
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    else:
+        torch.cuda.set_device(rank)
+        device = torch.device('cuda', rank)
+        # Use NCCL for GPU training, process must have exclusive access to GPUs
+        torch.distributed.init_process_group(backend='nccl', init_method='env://', rank=rank, world_size=world_size)
+
     if local_rank == -1 and torch.cuda.device_count <= 1:
         sampler_train, shuffle_train = get_sampler(dataset_train, conditions, training_params['balance_samples']['type'])
         train_loader = DataLoader(dataset_train, batch_size=training_params["batch_size"],
