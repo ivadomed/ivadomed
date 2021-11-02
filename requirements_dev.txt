@@ -5,7 +5,6 @@
 # Development, documentation, testing related dependencies.
 pytest~=6.2
 pytest-cov
-pytest-console-scripts
 pytest-ordering~=0.6
 sphinx
 flake8
