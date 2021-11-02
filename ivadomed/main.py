@@ -423,6 +423,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         else:
             logger.info(f"Training without Distributed Data Processing (DDP)")
             best_training_dice, best_training_loss, best_validation_dice, best_validation_loss = imed_training.train(
+                rank=-1,
                 model_params=model_params,
                 dataset_train=ds_train,
                 dataset_val=ds_valid,

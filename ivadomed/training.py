@@ -27,9 +27,9 @@ from ivadomed.loader.balanced_sampler import BalancedSampler
 cudnn.benchmark = True
 
 
-def train(model_params, dataset_train, dataset_val, training_params, path_output, device,
+def train(rank, model_params, dataset_train, dataset_val, training_params, path_output, device,
           cuda_available=True, metric_fns=None, n_gif=0, resume_training=False, debugging=False,
-          rank=0, world_size=0):
+          world_size=1):
     """Main command to train the network.
 
     Args:
@@ -73,7 +73,7 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
                                 collate_fn=imed_loader_utils.imed_collate,
                                 num_workers=0)
     else:
-        sampler_train = DistributedSampler(dataset=dataset_train, num_replicas=0, rank=rank)
+        sampler_train = DistributedSampler(dataset=dataset_train, num_replicas=0, rank=rank, num_replicas=world_size)
         train_loader = DataLoader(dataset_train, batch_size=training_params["batch_size"],
                             shuffle=False, pin_memory=True, sampler=sampler_train,
                             collate_fn=imed_loader_utils.imed_collate,
@@ -89,7 +89,7 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
                                     collate_fn=imed_loader_utils.imed_collate,
                                     num_workers=0)
         else:
-            sampler_val = DistributedSampler(dataset=None, num_replicas=0, rank=rank)
+            sampler_val = DistributedSampler(dataset=None, num_replicas=0, rank=rank, num_replicas=world_size)
             val_loader = DataLoader(dataset_val, batch_size=training_params["batch_size"],
                                 shuffle=False, pin_memory=True, sampler=sampler_val,
                                 collate_fn=imed_loader_utils.imed_collate,
