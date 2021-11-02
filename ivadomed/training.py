@@ -73,7 +73,7 @@ def train(rank, model_params, dataset_train, dataset_val, training_params, path_
                                 collate_fn=imed_loader_utils.imed_collate,
                                 num_workers=0)
     else:
-        sampler_train = DistributedSampler(dataset=dataset_train, num_replicas=0, rank=rank, num_replicas=world_size)
+        sampler_train = DistributedSampler(dataset=dataset_train, rank=rank, num_replicas=world_size)
         train_loader = DataLoader(dataset_train, batch_size=training_params["batch_size"],
                             shuffle=False, pin_memory=True, sampler=sampler_train,
                             collate_fn=imed_loader_utils.imed_collate,
@@ -89,7 +89,7 @@ def train(rank, model_params, dataset_train, dataset_val, training_params, path_
                                     collate_fn=imed_loader_utils.imed_collate,
                                     num_workers=0)
         else:
-            sampler_val = DistributedSampler(dataset=None, num_replicas=0, rank=rank, num_replicas=world_size)
+            sampler_val = DistributedSampler(dataset=dataset_val, rank=rank, num_replicas=world_size)
             val_loader = DataLoader(dataset_val, batch_size=training_params["batch_size"],
                                 shuffle=False, pin_memory=True, sampler=sampler_val,
                                 collate_fn=imed_loader_utils.imed_collate,
