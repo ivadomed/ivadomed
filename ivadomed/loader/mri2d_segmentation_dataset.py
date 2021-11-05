@@ -156,13 +156,11 @@ class MRI2DSegmentationDataset(Dataset):
                         y_min = (shape[1] - self.length[1])
                     y_max = y_min + self.length[1]
 
-                    # TODO: generalized for different input and gt length
-                    patch = {'input': self.handlers[i][0]['input'][0][x_min:x_max, y_min:y_max],
-                             'gt': [self.handlers[i][0]['gt'][0][x_min:x_max, y_min:y_max], self.handlers[i][0]['gt'][1][x_min:x_max, y_min:y_max]],
+                    patch = {'input': list(np.asarray(self.handlers[i][0]['input'])[:, x_min:x_max, y_min:y_max]),
+                             'gt': list(np.asarray(self.handlers[i][0]['gt'])[:, x_min:x_max, y_min:y_max]),
                              'input_metadata': self.handlers[i][0]['input_metadata'],
                              'gt_metadata': self.handlers[i][0]['gt_metadata']}
-
-                    if self.slice_filter_fn and not self.slice_filter_fn(patch):
+                    if self.slice_filter_fn and not self.slice_filter_fn(patch, is_2d_patch=self.is_2d_patch):
                         continue
 
                     self.indexes.append({
