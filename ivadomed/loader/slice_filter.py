@@ -56,21 +56,22 @@ class SliceFilter(object):
     def __call__(self, sample, is_2d_patch=False):
         input_data, gt_data = sample['input'], sample['gt']
 
-        if is_2d_patch and self.is_train:
-            if self.filter_empty_mask_patch:
-                # Filter 2D patches at training time that do not have ANY ground truth (i.e. all masks are empty)
-                if not np.any(gt_data):
-                    return False
+        if is_2d_patch:
+            if self.is_train:
+                if self.filter_empty_mask_patch:
+                    # Filter 2D patches at training time that do not have ANY ground truth (i.e. all masks are empty)
+                    if not np.any(gt_data):
+                        return False
 
-            if self.filter_absent_class_patch:
-                # Filter 2D patches at training time that have absent classes (i.e. one or more masks are empty)
-                if not np.all([np.any(mask) for mask in gt_data]):
-                    return False
+                if self.filter_absent_class_patch:
+                    # Filter 2D patches at training time that have absent classes (i.e. one or more masks are empty)
+                    if not np.all([np.any(mask) for mask in gt_data]):
+                        return False
 
-            if self.filter_empty_input_patch:
-                # Filter set of 2D patches at training time if one of them is empty or filled with constant value (i.e. std == 0)
-                if np.any([img.std() == 0 for img in input_data]):
-                    return False
+                if self.filter_empty_input_patch:
+                    # Filter set of 2D patches at training time if one of them is empty or filled with constant value (i.e. std == 0)
+                    if np.any([img.std() == 0 for img in input_data]):
+                        return False
         else:
             if self.filter_empty_mask:
                 # Filter slices that do not have ANY ground truth (i.e. all masks are empty)
