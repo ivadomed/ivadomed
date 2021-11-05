@@ -16,6 +16,9 @@ class SliceFilter(object):
         filter_empty_mask_patch (bool): If True, 2D patches where all voxel labels are zeros are discarded at training time.
         filter_absent_class_patch (bool): If True, 2D patches where all voxel labels are zero for one or more classes are discarded at training time.
         filter_empty_input_patch (bool): If True, 2D patches where all voxel intensities are zeros are discarded at training time.
+        device (torch.device): Indicates the CPU or GPU ID.
+        cuda_available (bool): If True, CUDA is available.
+        is_train (bool): Indicates if at training time.
 
     Attributes:
         filter_empty_mask (bool): If True, slices where all voxel labels are zeros are discarded.
@@ -25,6 +28,9 @@ class SliceFilter(object):
         filter_empty_mask_patch (bool): If True, 2D patches where all voxel labels are zeros are discarded at training time.
         filter_absent_class_patch (bool): If True, 2D patches where all voxel labels are zero for one or more classes are discarded at training time.
         filter_empty_input_patch (bool): If True, 2D patches where all voxel intensities are zeros are discarded at training time.
+        device (torch.device): Indicates the CPU or GPU ID.
+        cuda_available (bool): If True, CUDA is available.
+        is_train (bool): Indicates if at training time.
 
     """
 
