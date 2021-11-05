@@ -405,14 +405,12 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "slice_filter_params",
-        "description": "Discard a slice from the dataset if it meets a condition, see
-            below.",
+        "description": "Discard a slice or 2D patch from the dataset if it meets a condition, see below.",
         "type": "dict",
         "options": {
             "filter_empty_input": {
                 "type": "boolean",
-                "description": "Discard slices where all voxel
-                   intensities are zeros."
+                "description": "Discard slices where all voxel intensities are zeros."
             },
             "filter_empty_mask": {
                 "type": "boolean",
@@ -422,7 +420,7 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
                 "type": "boolean",
                 "$$description": [
                     "Discard slices where all voxel labels are zero for one or more classes\n",
-                    "(this is most relevant for multi-class models that need GT for all classes at train time)."
+                    "(this is most relevant for multi-class models that need GT for all classes at training time)."
                 ]
             },
             "filter_classification": {
@@ -430,6 +428,21 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
                 "$$description": [
                     "Discard slices where all images fail a custom classifier filter. If used,\n",
                     "``classifier_path`` must also be specified, pointing to a saved PyTorch classifier."
+                ]
+            },
+            "filter_empty_input_patch": {
+                "type": "boolean",
+                "description": "Discard 2D patches where all voxel intensities are zeros at training time."
+            },
+            "filter_empty_mask_patch": {
+                "type": "boolean",
+                "description": "Discard 2D patches where all voxel labels are zeros at training time."
+            },
+            "filter_absent_class_patch": {
+                "type": "boolean",
+                "$$description": [
+                    "Discard 2D patches where all voxel labels are zero for one or more classes at training time\n",
+                    "(this is most relevant for multi-class models that need GT for all classes at training time)."
                 ]
             }
         }
