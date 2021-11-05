@@ -147,16 +147,14 @@ class MRI2DSegmentationDataset(Dataset):
                 if length > size:
                     raise RuntimeError('"length_2D" must be smaller or equal to image dimensions after resampling.')
 
-            for x in range(0, (shape[0] - self.length[0] + self.stride[0]), self.stride[0]):
-                if x + self.length[0] > shape[0]:
-                    x = (shape[0] - self.length[0])
-                x_min = x
-                x_max = x + self.length[0]
-                for y in range(0, (shape[1] - self.length[1] + self.stride[1]), self.stride[1]):
-                    if y + self.length[1] > shape[1]:
-                        y = (shape[1] - self.length[1])
-                    y_min = y
-                    y_max = y + self.length[1]
+            for x_min in range(0, (shape[0] - self.length[0] + self.stride[0]), self.stride[0]):
+                if x_min + self.length[0] > shape[0]:
+                    x_min = (shape[0] - self.length[0])
+                x_max = x_min + self.length[0]
+                for y_min in range(0, (shape[1] - self.length[1] + self.stride[1]), self.stride[1]):
+                    if y_min + self.length[1] > shape[1]:
+                        y_min = (shape[1] - self.length[1])
+                    y_max = y_min + self.length[1]
 
                     # TODO: generalized for different input and gt length
                     patch = {'input': self.handlers[i][0]['input'][0][x_min:x_max, y_min:y_max],
