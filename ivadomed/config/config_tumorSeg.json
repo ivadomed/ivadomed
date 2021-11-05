@@ -95,8 +95,8 @@
     "transformation": {
         "Resample":
         {
-            "wspace": 1,
             "hspace": 1,
+            "wspace": 1,
             "dspace": 2
         },
         "CenterCrop": {"size":  [512, 256, 16]},
