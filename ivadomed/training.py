@@ -357,7 +357,11 @@ def train(rank, model_params, dataset_train, dataset_val, training_params, path_
 
     # Save best model in output path
     if resume_path.is_file():
-        state = torch.load(resume_path)
+        # loading state changes based on CPU or DDP
+        if local_rank == -1 and torch.cuda.device_count <= 1:
+            state = torch.load(resume_path, map_location=torch.device('cpu'))
+        else:
+            state = torch.load(resume_path, map_location='cuda:0')
         model_path = Path(path_output, "best_model.pt")
         model.load_state_dict(state['state_dict'])
         torch.save(model, model_path)
