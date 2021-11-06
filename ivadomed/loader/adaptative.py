@@ -266,7 +266,7 @@ class BIDStoHDF5:
             hdf5_file.attrs.create('patients_id', list(set(list_patients)), dtype=self.dt)
             hdf5_file.attrs['slice_axis'] = slice_axis
 
-            hdf5_file.attrs['slice_filter_fn'] = [('filter_empty_input', True), ('filter_empty_mask', False)]
+            hdf5_file.attrs['slice_filter_fn'] = ['filter_empty_input','filter_empty_mask']
             hdf5_file.attrs['metadata_choice'] = metadata_choice
 
         # Save images into HDF5 file
@@ -280,7 +280,7 @@ class BIDStoHDF5:
         # Training & Validation: do not consider the contrasts over the threshold contained in contrast_balance
         contrast = df_sub['suffix'].values[0]
         is_over_thresh = self.is_contrast_over_threshold(c, tot, contrast, contrast_balance)
-        
+
         if(not is_over_thresh):
             target_filename, roi_filename = self.get_filenames(bids_df, subject, all_deriv, target_suffix, roi_params)
 
@@ -304,12 +304,12 @@ class BIDStoHDF5:
             self.filename_pairs.append((subj_id, [df_sub['path'].values[0]],
                                             target_filename, roi_filename, [metadata]))
             list_patients.append(subj_id)
-    
+
     def is_contrast_over_threshold(self, c, tot, contrast, contrast_balance):
         if contrast in (contrast_balance.keys()):
             c[contrast] = c[contrast] + 1
             return c[contrast] / tot[contrast] > contrast_balance[contrast]
-    
+
     def get_filenames(self, bids_df, subject, all_deriv, target_suffix, roi_params):
         target_filename, roi_filename = [None] * len(target_suffix), None
         derivatives = bids_df.df[bids_df.df['filename']
@@ -321,7 +321,7 @@ class BIDStoHDF5:
                     target_filename[idx] = deriv
             if not (roi_params[ROIParamsKW.SUFFIX] is None) and roi_params[ROIParamsKW.SUFFIX] in deriv:
                 roi_filename = [deriv]
-        
+
         return target_filename, roi_filename
 
     def _slice_seg_pair(self, idx_pair_slice, seg_pair, roi_pair, useful_slices, input_volumes, gt_volume, roi_volume):
@@ -368,7 +368,7 @@ class BIDStoHDF5:
         else:
             grp[grp_key].attrs.create('contrast', [contrast], dtype=self.dt)
 
-    def create_metadata(self, grp, key, metadata):        
+    def create_metadata(self, grp, key, metadata):
         grp[key].attrs['data_type'] = metadata['data_type']
 
         if 'zooms' in metadata.keys():
@@ -412,7 +412,7 @@ class BIDStoHDF5:
                 roi_volume = []
 
                 for idx_pair_slice in range(input_data_shape[-1]):
-                    slice_seg_pair, roi_pair_slice = self._slice_seg_pair(idx_pair_slice, seg_pair, roi_pair, 
+                    slice_seg_pair, roi_pair_slice = self._slice_seg_pair(idx_pair_slice, seg_pair, roi_pair,
                                                                         useful_slices, input_volumes, gt_volume, roi_volume)
 
                 # Getting metadata using the one from the last slice
@@ -427,7 +427,7 @@ class BIDStoHDF5:
 
                 # Creating datasets and metadata
                 contrast = input_metadata['contrast']
-                
+
                 # Inputs
                 logger.info(len(input_volumes))
                 logger.info("grp= ", str(subject_id))
@@ -437,7 +437,7 @@ class BIDStoHDF5:
                     logger.warning("list empty")
                     continue
                 grp.create_dataset(key, data=input_volumes)
-                
+
                 # Sub-group metadata
                 self.create_subgrp_metadata('inputs', grp, contrast)
 
