@@ -70,15 +70,15 @@ def combine_predictions(fname_lst, fname_hard, fname_prob, thr=0.5):
     """
     # collect all MC simulations
     mc_data = np.array([nib.load(fname).get_fdata() for fname in fname_lst])
-    header = nib.load(fname_lst[0]).header
+    first_file_header = nib.load(fname_lst[0]).header
 
     # average over all the MC simulations
     data_prob = np.mean(mc_data, axis=0)
     # save prob segmentation
     nib_prob = nib.Nifti1Image(
         dataobj=data_prob,
-        affine=header.get_best_affine(),
-        header=header.copy()
+        affine=first_file_header.get_best_affine(),
+        header=first_file_header.copy()
     )
     nib.save(nib_prob, fname_prob)
 
@@ -87,8 +87,8 @@ def combine_predictions(fname_lst, fname_hard, fname_prob, thr=0.5):
     # save hard segmentation
     nib_hard = nib.Nifti1Image(
         dataobj=data_hard,
-        affine=header.get_best_affine(),
-        header=header.copy()
+        affine=first_file_header.get_best_affine(),
+        header=first_file_header.copy()
     )
     nib.save(nib_hard, fname_hard)
 
@@ -228,9 +228,23 @@ def structurewise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
     fname_iou = fname_out.split('.nii.gz')[0] + '-iou.nii.gz'
     fname_cv = fname_out.split('.nii.gz')[0] + '-cv.nii.gz'
     fname_avgUnc = fname_out.split('.nii.gz')[0] + '-avgUnc.nii.gz'
-    nib_iou = nib.Nifti1Image(data_iou, nib_hard.header.get_best_affine())
-    nib_cv = nib.Nifti1Image(data_cv, nib_hard.header.get_best_affine())
-    nib_avgUnc = nib.Nifti1Image(data_avgUnc, nib_hard.header.get_best_affine())
+
+    nib_iou = nib.Nifti1Image(
+        dataobj=data_iou,
+        affine=nib_hard.header.get_best_affine(),
+        header=nib_hard.header.copy()
+    )
+    nib_cv = nib.Nifti1Image(
+        dataobj=data_cv,
+        affine=nib_hard.header.get_best_affine(),
+        header=nib_hard.header.copy()
+    )
+    nib_avgUnc = nib.Nifti1Image(
+        data_avgUnc,
+        affine=nib_hard.header.get_best_affine(),
+        header=nib_hard.header.copy()
+    )
+
     nib.save(nib_iou, fname_iou)
     nib.save(nib_cv, fname_cv)
     nib.save(nib_avgUnc, fname_avgUnc)
