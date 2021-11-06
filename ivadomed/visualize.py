@@ -224,13 +224,21 @@ def save_feature_map(batch, layer_name, path_output, model, test_input, slice_ax
         nib_ref_can = nib.as_closest_canonical(nib_ref)
         oriented_image = imed_loader_utils.reorient_image(orig_input_img[0, 0, :, :, :], slice_axis, nib_ref, nib_ref_can)
 
-        nib_pred = nib.Nifti1Image(oriented_image, nib_ref.affine)
+        nib_pred = nib.Nifti1Image(
+            dataobj=oriented_image,
+            affine=nib_ref.header.get_best_affine(),
+            header=nib_ref.header.copy()
+        )
         nib.save(nib_pred, save_directory)
 
         basename = basename.split(".")[0] + "_att.nii.gz"
         save_directory = Path(path_output, layer_name, basename)
         attention_map = imed_loader_utils.reorient_image(upsampled_attention[0, 0, :, :, :], slice_axis, nib_ref, nib_ref_can)
-        nib_pred = nib.Nifti1Image(attention_map, nib_ref.affine)
+        nib_pred = nib.Nifti1Image(
+            dataobj=attention_map,
+            affine=nib_ref.header.get_best_affine(),
+            header=nib_ref.header.copy()
+        )
 
         nib.save(nib_pred, save_directory)
 
