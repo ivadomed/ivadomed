@@ -1,10 +1,10 @@
 import pytest
 import torch
 import torch.backends.cudnn as cudnn
-import os
 from ivadomed import models as imed_models
 from testing.unit_tests.t_utils import create_tmp_dir,  __data_testing_dir__, download_data_testing_test_files
 from testing.common_testing_util import remove_tmp_dir
+from pathlib import Path
 
 cudnn.benchmark = True
 
@@ -18,7 +18,7 @@ def setup_function():
 
 
 @pytest.mark.parametrize('fraction', [0.1, 0.2, 0.3])
-@pytest.mark.parametrize('path_model', [os.path.join(__data_testing_dir__, 'model_unet_test.pt')])
+@pytest.mark.parametrize('path_model', [str(Path(__data_testing_dir__, 'model_unet_test.pt'))])
 def test_transfer_learning(download_data_testing_test_files, path_model, fraction, tolerance=0.15):
     device = torch.device("cpu")
     print("Working on {}.".format('cpu'))
