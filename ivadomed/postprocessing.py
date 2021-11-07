@@ -24,7 +24,11 @@ def nifti_capable(wrapped):
     @functools.wraps(wrapped)
     def wrapper(data, *args, **kwargs):
         if isinstance(data, nib.Nifti1Image):
-            return nib.Nifti1Image(wrapper(np.copy(np.asanyarray(data.dataobj)), *args, **kwargs), data.affine)
+            return nib.Nifti1Image(
+                dataobj=wrapper(np.copy(np.asanyarray(data.dataobj)), *args, **kwargs),
+                affine=data.header.get_best_affine(),
+                header=data.header.copy()
+            )
         return wrapped(data, *args, **kwargs)
 
     return wrapper
@@ -210,7 +214,10 @@ def label_file_from_coordinates(nifti_image, coord_list):
     for j in range(len(coord_list)):
         label_array[coord_list[j][0], coord_list[j][1], coord_list[j][2]] = 1
 
-    nib_pred = nib.Nifti1Image(label_array, nifti_image.affine)
+    nib_pred = nib.Nifti1Image(
+        dataobj=label_array,
+        affine=nifti_image.header.get_best_affine(),
+    )
 
     return nib_pred
 

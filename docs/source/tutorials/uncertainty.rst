@@ -2,8 +2,7 @@ Estimate uncertainty
 ====================
 
 This tutorial shows how to estimate uncertainty measures on the model predictions. The uncertainty measures implemented
-in ``ivadomed`` are detailed in implemented in ``ivadomed`` are detailed
-:ref:`Technical features <Uncertainty-measures>`.
+in ``ivadomed`` are detailed in :ref:`Technical features <Uncertainty-measures>`.
 
 Download dataset
 ----------------
@@ -123,7 +122,7 @@ function is available for it.
 .. code-block:: bash
 
     Selected transformations for the ['testing'] dataset:
-        Resample: {'wspace': 0.75, 'hspace': 0.75, 'dspace': 1}
+        Resample: {'hspace': 0.75, 'wspace': 0.75, 'dspace': 1}
         CenterCrop: {'size': [128, 128]}
         RandomAffine: {'degrees': 5, 'scale': [0.1, 0.1], 'translate': [0.03, 0.03], 'applied_to': ['im', 'gt']}
         ElasticTransform: {'alpha_range': [28.0, 30.0], 'sigma_range': [3.5, 4.5], 'p': 0.1, 'applied_to': ['im', 'gt']}
@@ -136,7 +135,7 @@ function is available for it.
 .. code-block:: bash
 
     Selected transformations for the ['testing'] dataset:
-        Resample: {'wspace': 0.75, 'hspace': 0.75, 'dspace': 1}
+        Resample: {'hspace': 0.75, 'wspace': 0.75, 'dspace': 1}
         CenterCrop: {'size': [128, 128]}
         NumpyToTensor: {}
         NormalizeInstance: {'applied_to': ['im']}

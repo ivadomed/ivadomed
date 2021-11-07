@@ -339,9 +339,9 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
     if n_gif > 0 and not gif_folder.is_dir():
         gif_folder.mkdir(parents=True)
     for i_gif in range(n_gif):
-        fname_out = gif_dict["image_path"][i_gif].split('/')[-3] + "__"
-        fname_out += gif_dict["image_path"][i_gif].split('/')[-1].split(".nii.gz")[0].split(
-            gif_dict["image_path"][i_gif].split('/')[-3] + "_")[1] + "__"
+        fname_out = gif_dict["image_path"][i_gif].split(os.sep)[-3] + "__"
+        fname_out += gif_dict["image_path"][i_gif].split(os.sep)[-1].split(".nii.gz")[0].split(
+            gif_dict["image_path"][i_gif].split(os.sep)[-3] + "_")[1] + "__"
         fname_out += str(gif_dict["slice_id"][i_gif]) + ".gif"
         path_gif_out = Path(gif_folder, fname_out)
         gif_dict["gif"][i_gif].save(str(path_gif_out))
