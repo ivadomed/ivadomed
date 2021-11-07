@@ -198,7 +198,7 @@ def pred_to_nib(data_lst: List[np.ndarray], z_lst: List[int], fname_ref: str, fn
     # See: https://github.com/ivadomed/ivadomed/issues/711
     nib_pred = nib.Nifti1Image(
         dataobj=arr_pred_ref_space,
-        affine=None,
+        affine=nib_ref.header.get_best_affine(),
         header=nib_ref.header.copy()
     )
     # save as NifTI file
@@ -480,7 +480,8 @@ def split_classes(nib_prediction):
     pred = nib_prediction.get_fdata()
     pred_list = []
     for c in range(pred.shape[-1]):
-        class_pred = nib.Nifti1Image(pred[..., c].astype('float32'), None, nib_prediction.header.copy())
+        class_pred = nib.Nifti1Image(pred[..., c].astype('float32'), nib_prediction.header.get_best_affine(),
+                                     nib_prediction.header.copy())
         pred_list.append(class_pred)
     return pred_list
 

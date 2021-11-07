@@ -1466,12 +1466,12 @@ Available Transformations:
         "title": "Resample",
         "type": "dict",
         "options": {
-            "wspace": {
+            "hspace": {
                 "type": "float",
                 "range": "[0, 1]",
                 "description": "Resolution along the first axis, in mm."
             },
-            "hspace": {
+            "wspace": {
                 "type": "float",
                 "range": "[0, 1]",
                 "description": "Resolution along the second axis, in mm."
@@ -1489,8 +1489,8 @@ Available Transformations:
     {
         "transformation": {
             "Resample": {
-                "wspace": 0.75,
                 "hspace": 0.75,
+                "wspace": 0.75,
                 "dspace": 1
             }
         }

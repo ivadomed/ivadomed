@@ -50,7 +50,7 @@ some of the key parameters to use cascaded models.
 
   .. code-block:: xml
 
-     "object_detection_path": "<PATH_TO_DATASET>/data_example_spinegeneric/trained_model/seg_sc_t1-t2-t2s-mt"
+     "object_detection_path": "<PATH_TO_DATASET>/trained_model/seg_sc_t1-t2-t2s-mt"
 
 - ``object_detection_params:safety_factor``: Multiplicative factor to apply to each dimension of the bounding box. To
   ensure all the CSF is included, a safety factor should be applied to the bounding box generated from the spinal cord.

@@ -1,7 +1,6 @@
 from pathlib import Path
 import pytest
 from ivadomed.scripts import download_data as ivadomed_download_data
-import os
 import shutil
 import sys
 
@@ -56,7 +55,7 @@ def remove_dataset(dataset: str = 'data_testing', verbose=True):
         verbose (bool): whether or not to print
     """
 
-    path_dataset = os.path.join(path_temp, dataset)
+    path_dataset = Path(path_temp, dataset)
 
     printv("rm -rf %s" % (path_dataset), verbose=verbose, type="code")
 
