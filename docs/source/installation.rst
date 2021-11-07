@@ -33,8 +33,7 @@ You can setup ``ivadomed`` using either Conda or Venv:
 
         1. Setup Python Venv Virtual Environment.
 
-        ``ivadomed`` requires Python >= 3.6 and <3.9 (If you are using `Compute Canada <https://www.computecanada.ca/>`_, you can load modules (e.g. python 3.9) as `mentioned here <https://intranet.neuro.polymtl.ca/computing-resources/compute-canada#modules>`_ and `also here <https://docs.computecanada.ca/wiki/Utiliser_des_modules/en#Loading_modules_automatically>`_ ). We recommend
-        working under a virtual environment, which could be set as follows:
+        ``ivadomed`` requires Python >= 3.6 and <3.10. We recommend working under a virtual environment, which could be set as follows:
 
         ::
 
@@ -47,18 +46,13 @@ You can setup ``ivadomed`` using either Conda or Venv:
             source ivadomed_env/bin/activate
 
 
-        .. warning::
-           If the default Python version installed in your system does not fit the version requirements, you might need to specify a version of Python associated with your virtual environment:
-
-           ::
-
-             python -m venv ivadomed_env --python=python3.7
-
     .. tab:: Compute Canada HPC
 
         There are numerous constraints and limited package availabilities with ComputeCanada cluster environment.
 
         It is best to attempt ``venv`` based installations and follow up with ComputeCanada technicall support as MANY specially compiled packages (e.g. numpy) are exclusively available for Compute Canada HPC environment.
+
+        If you are using `Compute Canada <https://www.computecanada.ca/>`_, you can load modules as `mentioned here <https://intranet.neuro.polymtl.ca/computing-resources/compute-canada#modules>`_ and `also here <https://docs.computecanada.ca/wiki/Utiliser_des_modules/en#Loading_modules_automatically>`_ .
 
 
 Step 2: Install ``ivadomed``
