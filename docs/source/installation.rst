@@ -21,7 +21,7 @@ You can setup ``ivadomed`` using either Conda or Venv:
 
         ::
 
-            conda env create --file environment.yml
+            conda env create --name ivadomed_env
 
         2. Activate the new conda environment (default named ``ivadomed_env``)
 
@@ -70,7 +70,7 @@ Step 2: Install ``ivadomed``
     .. tab:: Pypi Installation
 
         Install ``ivadomed`` and its requirements from
-        `Pypi <https://pypi.org/project/ivadomed/>`__:
+        `PyPI <https://pypi.org/project/ivadomed/>`__:
 
         ::
 
@@ -115,10 +115,13 @@ Step 3: Install ``ivadomed`` with CPU or GPU Support, Install ``torch`` and ``to
 
            pip install -r requirements_gpu.txt
 
-        Please note that this must happens after the previous ``ivadomed`` installation step.
+Developer-only Installation Steps
++++++++++++++++++++++++++++++++++
 
-Additional Steps Required For ``ivadomed`` Developers: Additional Dependencies and ``pre-commit``
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+The additional steps below are only necessary for contributors to the ``ivadomed`` project.
+
+Additional Dependencies and ``pre-commit``
+-------------------------------------------
 
 We use ``pre-commit`` to enforce a limit on file size.
 After you've installed ``ivadomed``, install the hooks:
@@ -127,33 +130,3 @@ After you've installed ``ivadomed``, install the hooks:
 
     pip install -r requirements_dev.txt
     pre-commit install
-
-Additional Steps Required For ``ivadomed`` Developers on ``macOS``:
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-The steps below (about updating bashrc) are strongly recommended for MacOS users in the installation process but are optional for Linux/Windows  users.
-
-Open your ``bash``/``zsh`` script file with editor on your Mac.
-
-.. tabs::
-
-    .. tab:: ``zsh`` (most recent macs)
-
-        ::
-
-            vim ~/.zshrc
-
-    .. tab:: ``bash`` (older macs or if manually changed)
-
-        ::
-
-            vim ~/.bashrc
-
-
-Write in your ``.bashrc``/``.zshrc`` file with following line. This is needed as OS will lock HDF5 generated during training and produce a rather obscure error.
-
-::
-
-    export HDF5_USE_FILE_LOCKING='FALSE'
-
-Save this change and restart your terminal to apply the change.
