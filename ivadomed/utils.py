@@ -271,6 +271,7 @@ def get_arguments(parser, args):
             raise ArgParseException('Error parsing args')
         else:
             sys.exit(0)
+
     return args
 
 
