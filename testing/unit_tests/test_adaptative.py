@@ -1,8 +1,8 @@
-import os
 import pytest
 import h5py
 import torch
 from torch.utils.data import DataLoader
+from pathlib import Path
 
 from ivadomed.loader.bids_dataframe import BidsDataframe
 import ivadomed.transforms as imed_transforms
@@ -62,7 +62,7 @@ def test_hdf5(download_data_testing_test_files, loader_parameters):
 
     bids_to_hdf5 = imed_adaptative.BIDStoHDF5(bids_df=bids_df,
                                               subject_file_lst=train_lst,
-                                              path_hdf5=os.path.join(__data_testing_dir__, 'mytestfile.hdf5'),
+                                              path_hdf5=str(Path(__data_testing_dir__, 'mytestfile.hdf5')),
                                               target_suffix=target_suffix,
                                               roi_params=roi_params,
                                               contrast_lst=contrast_params["contrast_lst"],
@@ -90,7 +90,7 @@ def test_hdf5(download_data_testing_test_files, loader_parameters):
 
         df = imed_adaptative.Dataframe(hdf5_file=hdf5_file,
                                        contrasts=['T1w', 'T2w', 'T2star'],
-                                       path=os.path.join(__data_testing_dir__, 'hdf5.csv'),
+                                       path=str(Path(__data_testing_dir__, 'hdf5.csv')),
                                        target_suffix=['T1w', 'T2w', 'T2star'],
                                        roi_suffix=['T1w', 'T2w', 'T2star'],
                                        dim=2,
@@ -112,8 +112,8 @@ def test_hdf5(download_data_testing_test_files, loader_parameters):
                 "missing_probability_growth": 0.9,
                 "contrasts": ["T1w", "T2w"],
                 "ram": False,
-                "path_hdf5": os.path.join(__data_testing_dir__, 'mytestfile.hdf5'),
-                "csv_path": os.path.join(__data_testing_dir__, 'hdf5.csv'),
+                "path_hdf5": str(Path(__data_testing_dir__, 'mytestfile.hdf5')),
+                "csv_path": str(Path(__data_testing_dir__, 'hdf5.csv')),
                 "target_lst": ["T2w"],
                 "roi_lst": ["T2w"]
             }
