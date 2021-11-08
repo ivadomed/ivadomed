@@ -20,7 +20,7 @@ from ivadomed import metrics as imed_metrics
 from ivadomed import inference as imed_inference
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, film as imed_film
 from ivadomed.keywords import ConfigKW, ModelParamsKW, LoaderParamsKW, ContrastParamsKW, BalanceSamplesKW, \
-    TrainingParamsKW, ObjectDetectionParamsKW, UncertaintyKW, PostprocessingKW, BinarizeProdictionKW
+    TrainingParamsKW, ObjectDetectionParamsKW, UncertaintyKW, PostprocessingKW, BinarizeProdictionKW, MetricsKW
 from loguru import logger
 from pathlib import Path
 
@@ -226,7 +226,10 @@ def run_segment_command(context, model_params):
     # BIDSDataframe of all image files
     # Indexing of derivatives is False for command segment
     bids_df = BidsDataframe(
-        context[ConfigKW.LOADER_PARAMETERS], context[ConfigKW.PATH_OUTPUT], derivatives=False)
+        context.get(ConfigKW.LOADER_PARAMETERS),
+        context.get(ConfigKW.PATH_OUTPUT),
+        derivatives=False
+    )
 
     # Append subjects filenames into a list
     bids_subjects = sorted(bids_df.df.get('filename').to_list())
@@ -244,7 +247,7 @@ def run_segment_command(context, model_params):
     seen_subj_ids = []
 
     for subject in bids_subjects:
-        if context[ConfigKW.LOADER_PARAMETERS][LoaderParamsKW.MULTICHANNEL]:
+        if context.get(ConfigKW.LOADER_PARAMETERS).get(LoaderParamsKW.MULTICHANNEL):
             # Get subject_id for multichannel
             df_sub = bids_df.df.loc[bids_df.df['filename'] == subject]
             subj_id = re.sub(r'_' + df_sub['suffix'].values[0] + '.*', '', subject)
@@ -366,8 +369,8 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     train_lst, valid_lst, test_lst = imed_loader_utils.get_subdatasets_subject_files_list(context[ConfigKW.SPLIT_DATASET],
                                                                                           bids_df.df,
                                                                                           path_output,
-                                                                                          context[ConfigKW.LOADER_PARAMETERS]
-                                                                                          ['subject_selection'])
+                                                                                          context.get(ConfigKW.LOADER_PARAMETERS).get(
+                                                                                              LoaderParamsKW.SUBJECT_SELECTION))
 
     # Generating sha256 for the training files
     imed_utils.generate_sha_256(context, bids_df.df, train_lst)
@@ -443,9 +446,14 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                                'training')
 
         # Choice of optimisation metric
-        metric = "recall_specificity" if model_params[ModelParamsKW.NAME] in imed_utils.CLASSIFIER_LIST else "dice"
+        if model_params[ModelParamsKW.NAME] in imed_utils.CLASSIFIER_LIST:
+            metric = MetricsKW.RECALL_SPECIFICITY
+        else:
+            metric = MetricsKW.DICE
+
         # Model path
         model_path = Path(path_output, "best_model.pt")
+
         # Run analysis
         thr = imed_testing.threshold_analysis(model_path=str(model_path),
                                               ds_lst=[ds_train, ds_valid],
@@ -498,7 +506,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
 
 
 def create_dataset_and_ivadomed_version_log(context):
-    path_data = context[ConfigKW.LOADER_PARAMETERS][LoaderParamsKW.PATH_DATA]
+    path_data = context.get(ConfigKW.LOADER_PARAMETERS).get(LoaderParamsKW.PATH_DATA)
 
     ivadomed_version = imed_utils._version_string()
     datasets_version = []
@@ -509,7 +517,7 @@ def create_dataset_and_ivadomed_version_log(context):
         for Dataset in path_data:
             datasets_version.append(imed_utils.__get_commit(path_to_git_folder=Dataset))
 
-    path_log = Path(context[ConfigKW.PATH_OUTPUT], 'version_info.log')
+    path_log = Path(context.get(ConfigKW.PATH_OUTPUT), 'version_info.log')
 
     try:
         f = path_log.open(mode="w")

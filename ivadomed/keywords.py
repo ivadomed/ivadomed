@@ -42,6 +42,7 @@ class LoaderParamsKW:
     SLICE_AXIS = "slice_axis"
     IS_INPUT_DROPOUT = "is_input_dropout"
     SLICE_FILTER_PARAMS = "slice_filter_params"
+    SUBJECT_SELECTION = "subject_selection"
 
 
 @dataclass
@@ -192,3 +193,8 @@ class SliceFilterParamsKW:
 @dataclass
 class IgnoredFolderKW:
     MACOSX = "__MACOSX"
+
+@dataclass
+class MetricsKW:
+    RECALL_SPECIFICITY = "recall_specificity"
+    DICE = "dice"

@@ -248,9 +248,12 @@ def process_transformations(context: dict, fname_roi: str, fname_prior: str, met
             "fname_roi has not been specified, then a cropping around the center of the image is "
             "performed instead of a cropping around a Region of Interest.")
 
-        context[ConfigKW.TRANSFORMATION] = dict((key, value) if key != TransformationKW.ROICROP
-                                         else (TransformationKW.CENTERCROP, value)
-                                         for (key, value) in context[ConfigKW.TRANSFORMATION].items())
+        # Convert transformation configuration into dict.
+        for (key, value) in context[ConfigKW.TRANSFORMATION].items():
+            if key != TransformationKW.ROICROP:
+                context[ConfigKW.TRANSFORMATION] = dict(key, value)
+            else:
+                context[ConfigKW.TRANSFORMATION] = dict(TransformationKW.CENTERCROP, value)
 
     if ConfigKW.OBJECT_DETECTION_PARAMS in context and \
             context[ConfigKW.OBJECT_DETECTION_PARAMS][ObjectDetectionParamsKW.OBJECT_DETECTION_PATH] is not None:
