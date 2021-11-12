@@ -199,7 +199,6 @@ class MRI2DSegmentationDataset(Dataset):
         if self.is_2d_patch:
             stack_roi, metadata_roi = None, None
         else:
-
             # Set coordinates to the slices full size
             coord = {}
             coord['x_min'], coord['x_max'] = 0, seg_pair_slice["input"][0].shape[0]
