@@ -4,7 +4,7 @@ Installation
 Supported OS
 ++++++++++++
 
-Currently, ``ivadomed`` only supports GPU/CPU on ``Linux`` and ``Windows`` and CPU only on ``macOS`` and `Windows Subsystem for Linux <https://docs.microsoft.com/en-us/windows/wsl/>`_.
+Currently, ``ivadomed`` supports GPU/CPU on ``Linux`` and ``Windows``, and CPU only on ``macOS`` and `Windows Subsystem for Linux <https://docs.microsoft.com/en-us/windows/wsl/>`_.
 
 Step 1: Setup dedicated python environment
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -13,9 +13,33 @@ You can setup ``ivadomed`` using either Conda or Venv:
 
 .. tabs::
 
-    .. tab:: Install via ``conda``
+    .. tab:: Install via ``venv``
 
-        This is the easiest way for personal computers.
+        1. Setup Python Venv Virtual Environment.
+
+        ``ivadomed`` requires Python >= 3.6 and <3.10.
+
+        First, make sure that a compatible version of Python 3 is installed on your system by running:
+
+        .. code::
+
+           python3 --version
+
+        If your system's Python is not 3.7, 3.8, or 3.9 (or if you don't have Python 3 installed at all), please `install Python <https://realpython.com/installing-python/>`_ before continuing.
+
+        Once you have a supported version of Python installed, run the following command (replacing ``3.X`` with the Python version number that you installed):
+
+        .. code::
+
+           python3.X -m venv ivadomed_env
+
+        2. Activate the new virtual environment (default named ``ivadomed_env``)
+
+        ::
+
+            source ivadomed_env/bin/activate
+
+    .. tab:: Install via ``conda``
 
         1. Create new conda environment using ``environment.yml`` file
 
@@ -29,30 +53,14 @@ You can setup ``ivadomed`` using either Conda or Venv:
 
             conda activate ivadomed_env
 
-    .. tab:: Install via ``venv``
-
-        1. Setup Python Venv Virtual Environment.
-
-        ``ivadomed`` requires Python >= 3.6 and <3.10. We recommend working under a virtual environment, which could be set as follows:
-
-        ::
-
-            python -m venv ivadomed_env
-
-        2. Activate the new virtual environment (default named `ivadomed_env`)
-
-        ::
-
-            source ivadomed_env/bin/activate
-
 
     .. tab:: Compute Canada HPC
 
         There are numerous constraints and limited package availabilities with ComputeCanada cluster environment.
 
-        It is best to attempt ``venv`` based installations and follow up with ComputeCanada technicall support as MANY specially compiled packages (e.g. numpy) are exclusively available for Compute Canada HPC environment.
+        It is best to attempt ``venv`` based installations and follow up with ComputeCanada technical support as MANY specially compiled packages (e.g. numpy) are exclusively available for Compute Canada HPC environment.
 
-        If you are using `Compute Canada <https://www.computecanada.ca/>`_, you can load modules as `mentioned here <https://intranet.neuro.polymtl.ca/computing-resources/compute-canada#modules>`_ and `also here <https://docs.computecanada.ca/wiki/Utiliser_des_modules/en#Loading_modules_automatically>`_ .
+        If you are using `Compute Canada <https://www.computecanada.ca/>`_, you can load modules as `mentioned here <https://intranet.neuro.polymtl.ca/computing-resources/compute-canada#modules>`_ and `also here <https://docs.computecanada.ca/wiki/Utiliser_des_modules/en#Loading_modules_automatically>`_.
 
 
 Step 2: Install ``ivadomed``
@@ -61,7 +69,7 @@ Step 2: Install ``ivadomed``
 
 .. tabs::
 
-    .. tab:: Pypi Installation
+    .. tab:: PyPI Installation
 
         Install ``ivadomed`` and its requirements from
         `PyPI <https://pypi.org/project/ivadomed/>`__:
@@ -75,7 +83,7 @@ Step 2: Install ``ivadomed``
     .. tab:: Repo Installation (Advanced or Developer)
 
         Bleeding-edge developments are available on the project's master branch
-        on Github. Installation ``ivadomed`` from source:
+        on Github. Install ``ivadomed`` from source:
 
         ::
 
@@ -86,14 +94,14 @@ Step 2: Install ``ivadomed``
             pip install -e .
 
 
-Step 3: Install ``ivadomed`` with CPU or GPU Support, Install ``torch`` and ``torchvision``
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Step 3: Install ``torch`` and ``torchvision`` with CPU or GPU Support
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 .. tabs::
 
     .. tab:: CPU Support
 
-        If you plan to run ``ivadomed`` on CPU only, run the following command:
+        If you plan to run ``ivadomed`` on CPU only, run the following command after cloning the repo:
         ::
 
             pip install -r requirements.txt
@@ -114,11 +122,9 @@ Developer-only Installation Steps
 
 The additional steps below are only necessary for contributors to the ``ivadomed`` project.
 
-Additional Dependencies and ``pre-commit``
--------------------------------------------
+For contributors to the ``ivadomed`` project, the ``pre-commit`` package is used to enforce a size limit on committed files. ``requirements_dev.txt`` also contain additional dependneices related to documentation building etc.
 
-We use ``pre-commit`` to enforce a limit on file size.
-After you've installed ``ivadomed``, install the hooks:
+After you've installed ``ivadomed``, install the ``pre-commit`` hooks by running:
 
 ::
 
