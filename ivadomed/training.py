@@ -21,7 +21,7 @@ from ivadomed import utils as imed_utils
 from ivadomed import visualize as imed_visualize
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.loader.balanced_sampler import BalancedSampler
-from ivadomed.keywords import ModelParamsKW, ConfigKW, BalanceSamplesKW
+from ivadomed.keywords import ModelParamsKW, ConfigKW, BalanceSamplesKW, TrainingParamsKW
 
 cudnn.benchmark = True
 
@@ -55,8 +55,10 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
     writer = SummaryWriter(log_dir=path_output)
 
     # BALANCE SAMPLES AND PYTORCH LOADER
-    conditions = all([training_params["balance_samples"][BalanceSamplesKW.APPLIED], model_params[ModelParamsKW.NAME] != "HeMIS"])
-    sampler_train, shuffle_train = get_sampler(dataset_train, conditions, training_params['balance_samples'][BalanceSamplesKW.TYPE])
+    conditions = all([training_params[TrainingParamsKW.BALANCE_SAMPLES][BalanceSamplesKW.APPLIED],
+                      model_params[ModelParamsKW.NAME] != "HeMIS"])
+    sampler_train, shuffle_train = get_sampler(dataset_train, conditions,
+                                               training_params[TrainingParamsKW.BALANCE_SAMPLES][BalanceSamplesKW.TYPE])
 
     train_loader = DataLoader(dataset_train, batch_size=training_params["batch_size"],
                               shuffle=shuffle_train, pin_memory=True, sampler=sampler_train,
@@ -65,7 +67,8 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
 
     gif_dict = {"image_path": [], "slice_id": [], "gif": []}
     if dataset_val:
-        sampler_val, shuffle_val = get_sampler(dataset_val, conditions, training_params['balance_samples'][BalanceSamplesKW.TYPE])
+        sampler_val, shuffle_val = get_sampler(dataset_val, conditions,
+                                               training_params[TrainingParamsKW.BALANCE_SAMPLES][BalanceSamplesKW.TYPE])
 
         val_loader = DataLoader(dataset_val, batch_size=training_params["batch_size"],
                                 shuffle=shuffle_val, pin_memory=True, sampler=sampler_val,
