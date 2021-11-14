@@ -33,3 +33,7 @@ data_functional_testing/
 
 # venv
 venv/
+
+# Ignore tutorial data
+data_example_spinegeneric/
+tutorial_*.json
