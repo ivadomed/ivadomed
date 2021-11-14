@@ -3,11 +3,14 @@ import argparse
 import copy
 import joblib
 import torch.backends.cudnn as cudnn
+from torch.cuda import device_count
+import torch.multiprocessing as mp
 import nibabel as nib
 import sys
 import platform
 import multiprocessing
 import re
+import os
 
 from ivadomed.loader.bids_dataframe import BidsDataframe
 from ivadomed import evaluation as imed_evaluation
@@ -405,18 +408,33 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         save_config_file(context, path_output)
 
         # RUN TRAINING
-        best_training_dice, best_training_loss, best_validation_dice, best_validation_loss = imed_training.train(
-            model_params=model_params,
-            dataset_train=ds_train,
-            dataset_val=ds_valid,
-            training_params=context["training_parameters"],
-            path_output=path_output,
-            device=device,
-            cuda_available=cuda_available,
-            metric_fns=metric_fns,
-            n_gif=n_gif,
-            resume_training=resume_training,
-            debugging=context["debugging"])
+        n_gpus = device_count()
+        if n_gpus > 1:
+            logger.info(f"Using {n_gpus} GPUs")
+
+            os.environ['MASTER_ADDR'] = context["master_addr"] if "master_addr" in context else "localhost"
+            os.environ['MASTER_PORT'] = context["master_port"] if "master_port" in context else "29500"
+            
+            logger.info(f"Spawning workers")
+            mp.spawn(imed_training.train, nprocs=n_gpus, args=(model_params, ds_train, ds_valid, 
+                                                                context["training_parameters"], path_output,
+                                                                device, cuda_available, metric_fns, n_gif,
+                                                                resume_training, context["debugging"],n_gpus, ))
+        else:
+            logger.info(f"Training without Distributed Data Processing (DDP)")
+            best_training_dice, best_training_loss, best_validation_dice, best_validation_loss = imed_training.train(
+                rank=-1,
+                model_params=model_params,
+                dataset_train=ds_train,
+                dataset_val=ds_valid,
+                training_params=context["training_parameters"],
+                path_output=path_output,
+                device=device,
+                cuda_available=cuda_available,
+                metric_fns=metric_fns,
+                n_gif=n_gif,
+                resume_training=resume_training,
+                debugging=context["debugging"])
 
     if thr_increment:
         # LOAD DATASET
