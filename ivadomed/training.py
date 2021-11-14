@@ -333,7 +333,8 @@ def train(rank, model_params, dataset_train, dataset_val, training_params, path_
                          'scheduler': scheduler,
                          'patience_count': patience_count,
                          'validation_loss': val_loss_total_avg}
-                torch.save(state, resume_path)
+                if local_rank < 1:  # save state to cuda:0 if DDP, or the usual way if 1 GPU/CPU
+                    torch.save(state, resume_path)
 
                 # Save best model file
                 model_path = Path(path_output, "best_model.pt")
