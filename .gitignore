@@ -36,5 +36,4 @@ venv/
 
 # Ignore tutorial data
 data_example_spinegeneric/
-tutorial_*.json
 spineGeneric/
