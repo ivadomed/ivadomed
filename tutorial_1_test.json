@@ -1,7 +1,7 @@
 {
-    "command": "train",
+    "command": "test",
     "gpu_ids": [0],
-    "path_output": "spineGeneric",
+    "path_output": "tutorial_1",
     "model_name": "my_model",
     "debugging": false,
     "object_detection_params": {
