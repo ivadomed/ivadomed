@@ -138,6 +138,7 @@ def train(rank, model_params, dataset_train, dataset_val, training_params, path_
     if local_rank == -1 and torch.cuda.device_count <= 1:
         model.to(device)
     else:
+        logger.info("Using Distributed Data Parallel (DDP).")
         model.to(device)
         from torch.nn.parallel import DistributedDataParallel as DDP
         logger.info("Using PyTorch DDP")
@@ -364,7 +365,10 @@ def train(rank, model_params, dataset_train, dataset_val, training_params, path_
             state = torch.load(resume_path, map_location='cuda:0')
         model_path = Path(path_output, "best_model.pt")
         model.load_state_dict(state['state_dict'])
-        torch.save(model, model_path)
+        if local_rank == -1 and torch.cuda.device_count <= 1:  # save state dict if DDP is used
+            torch.save(model, model_path)
+        else:
+            torch.save(model.state_dict(), model_path)
         # Save best model as ONNX in the model directory
         try:
             # Convert best model to ONNX and save it in model directory
