@@ -3,7 +3,7 @@ from tqdm import tqdm
 from ivadomed.loader import film as imed_film
 from ivadomed.loader.mri2d_segmentation_dataset import MRI2DSegmentationDataset
 from ivadomed.object_detection import utils as imed_obj_detect
-from ivadomed.keywords import ROIParamsKW, ContrastParamsKW, ModelParamsKW
+from ivadomed.keywords import ROIParamsKW, ContrastParamsKW, ModelParamsKW, MetadataKW, SubjectDictKW
 
 
 class BidsDataset(MRI2DSegmentationDataset):
@@ -52,7 +52,7 @@ class BidsDataset(MRI2DSegmentationDataset):
             {ROIParamsKW.SUFFIX: None, ROIParamsKW.SLICE_FILTER_ROI: None}
         self.soft_gt = soft_gt
         self.filename_pairs = []
-        if metadata_choice == 'mri_params':
+        if metadata_choice == MetadataKW.MRI_PARAMS:
             self.metadata = {"FlipAngle": [], "RepetitionTime": [],
                              "EchoTime": [], "Manufacturer": []}
 
@@ -83,7 +83,7 @@ class BidsDataset(MRI2DSegmentationDataset):
             multichannel_subjects = {subject: {"absolute_paths": [None] * num_contrast,
                                                "deriv_path": None,
                                                "roi_filename": None,
-                                               "metadata": [None] * num_contrast} for subject in subject_ids}
+                                               SubjectDictKW.METADATA: [None] * num_contrast} for subject in subject_ids}
 
         # Get all subjects path from bids_df for bounding box
         get_all_subj_path = bids_df.df[bids_df.df['filename']
@@ -118,7 +118,7 @@ class BidsDataset(MRI2DSegmentationDataset):
             for subject in multichannel_subjects.values():
                 if None not in subject["absolute_paths"]:
                     self.filename_pairs.append((subject["absolute_paths"], subject["deriv_path"],
-                                                subject["roi_filename"], subject["metadata"]))
+                                                subject["roi_filename"], subject[SubjectDictKW.METADATA]))
 
         if not self.filename_pairs:
             raise Exception('No subjects were selected - check selection of parameters on config.json (e.g. center '
@@ -153,14 +153,14 @@ class BidsDataset(MRI2DSegmentationDataset):
         metadata_dict = {}
         for idx, data in enumerate(data_lst):
             metadata_dict[data] = idx
-        metadata['metadata_dict'] = metadata_dict
+        metadata[MetadataKW.METADATA_DICT] = metadata_dict
 
     def fill_multichannel_dict(self, multichannel_subjects, subject, idx_dict, df_sub, roi_filename, target_filename, metadata):
         idx = idx_dict[df_sub['suffix'].values[0]]
         subj_id = subject.split('.')[0].split('_')[0]
         multichannel_subjects[subj_id]["absolute_paths"][idx] = df_sub['path'].values[0]
         multichannel_subjects[subj_id]["deriv_path"] = target_filename
-        multichannel_subjects[subj_id]["metadata"][idx] = metadata
+        multichannel_subjects[subj_id][SubjectDictKW.METADATA][idx] = metadata
         if roi_filename:
             multichannel_subjects[subj_id]["roi_filename"] = roi_filename
         return multichannel_subjects
@@ -193,18 +193,18 @@ class BidsDataset(MRI2DSegmentationDataset):
             return
 
         metadata = df_sub.to_dict(orient='records')[0]
-        metadata['contrast'] = contrast
+        metadata[MetadataKW.CONTRAST] = contrast
 
         if len(bounding_box_dict):
             # Take only one bounding box for cropping
-            metadata['bounding_box'] = bounding_box_dict[str(df_sub['path'].values[0])][0]
+            metadata[MetadataKW.BOUNDING_BOX] = bounding_box_dict[str(df_sub['path'].values[0])][0]
 
-        if metadata_choice == 'mri_params':
+        if metadata_choice == MetadataKW.MRI_PARAMS:
             if not all([imed_film.check_isMRIparam(m, metadata, subject, self.metadata) for m in
                         self.metadata.keys()]):
                 return
 
-        elif metadata_choice and metadata_choice != 'contrasts' and metadata_choice is not None:
+        elif metadata_choice and metadata_choice != MetadataKW.CONTRASTS and metadata_choice is not None:
             self.create_metadata_dict(metadata, metadata_choice, df_sub, bids_df)
 
         return df_sub, roi_filename, target_filename, metadata

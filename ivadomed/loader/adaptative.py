@@ -12,7 +12,7 @@ from ivadomed.loader.segmentation_pair import SegmentationPair
 from ivadomed import transforms as imed_transforms
 from ivadomed.loader import utils as imed_loader_utils, film as imed_film
 from ivadomed.object_detection import utils as imed_obj_detect
-from ivadomed.keywords import ROIParamsKW, ModelParamsKW, ContrastParamsKW
+from ivadomed.keywords import ROIParamsKW, ModelParamsKW, ContrastParamsKW, MetadataKW
 from ivadomed import utils as imed_utils
 from ivadomed.loader.sample_meta_data import SampleMetadata
 
@@ -226,7 +226,7 @@ class BIDStoHDF5:
         self.filename_pairs = []
         self.metadata = {}
 
-        if metadata_choice == 'mri_params':
+        if metadata_choice == MetadataKW.MRI_PARAMS:
             self.metadata = {"FlipAngle": [], "RepetitionTime": [],
                              "EchoTime": [], "Manufacturer": []}
 
@@ -288,14 +288,14 @@ class BIDStoHDF5:
                 return
 
             metadata = df_sub.to_dict(orient='records')[0]
-            metadata['contrast'] = contrast
+            metadata[MetadataKW.CONTRAST] = contrast
 
             if len(bounding_box_dict):
                 # Take only one bounding box for cropping
-                metadata['bounding_box'] = bounding_box_dict[str(df_sub['path'].values[0])][0]
+                metadata[MetadataKW.BOUNDING_BOX] = bounding_box_dict[str(df_sub['path'].values[0])][0]
 
             are_mri_params = all([imed_film.check_isMRIparam(m, metadata, subject, self.metadata) for m in self.metadata.keys()])
-            if metadata_choice == 'mri_params' and not are_mri_params:
+            if metadata_choice == MetadataKW.MRI_PARAMS and not are_mri_params:
                 return
 
             # Get subj_id (prefix filename without modality suffix and extension)
@@ -369,14 +369,14 @@ class BIDStoHDF5:
             grp[grp_key].attrs.create('contrast', [contrast], dtype=self.dt)
 
     def create_metadata(self, grp, key, metadata):
-        grp[key].attrs['data_type'] = metadata['data_type']
+        grp[key].attrs['data_type'] = metadata.get(MetadataKW.DATA_TYPE)
 
-        if 'zooms' in metadata.keys():
-            grp[key].attrs['zooms'] = metadata['zooms']
-        if 'data_shape' in metadata.keys():
-            grp[key].attrs['data_shape'] = metadata['data_shape']
-        if  'bounding_box' in metadata.keys() and metadata['bounding_box'] is not None:
-            grp[key].attrs['bounding_box'] = metadata['bounding_box']
+        if MetadataKW.ZOOMS in metadata.keys():
+            grp[key].attrs['zooms'] = metadata[MetadataKW.ZOOMS]
+        if MetadataKW.DATA_SHAPE in metadata.keys():
+            grp[key].attrs['data_shape'] = metadata[MetadataKW.DATA_SHAPE]
+        if MetadataKW.BOUNDING_BOX in metadata.keys() and metadata[MetadataKW.BOUNDING_BOX] is not None:
+            grp[key].attrs['bounding_box'] = metadata[MetadataKW.BOUNDING_BOX]
 
     def add_grp_contrast(self, grp, contrast):
         if grp.attrs.__contains__('contrast'):
@@ -426,7 +426,7 @@ class BIDStoHDF5:
                     grp.attrs['slices'] = useful_slices
 
                 # Creating datasets and metadata
-                contrast = input_metadata['contrast']
+                contrast = input_metadata.get(MetadataKW.CONTRAST)
 
                 # Inputs
                 logger.info(len(input_volumes))
@@ -442,7 +442,7 @@ class BIDStoHDF5:
                 self.create_subgrp_metadata('inputs', grp, contrast)
 
                 # dataset metadata
-                grp[key].attrs['input_filenames'] = input_metadata['input_filenames']
+                grp[key].attrs['input_filenames'] = input_metadata.get(MetadataKW.INPUT_FILENAMES)
                 self.create_metadata(grp, key, input_metadata)
 
                 # GT
@@ -452,7 +452,7 @@ class BIDStoHDF5:
                 self.create_subgrp_metadata('gt', grp, contrast)
 
                 # dataset metadata
-                grp[key].attrs['gt_filenames'] = input_metadata['gt_filenames']
+                grp[key].attrs['gt_filenames'] = input_metadata.get(MetadataKW.GT_FILENAMES)
                 self.create_metadata(grp, key, gt_metadata)
 
                 # ROI
@@ -462,7 +462,7 @@ class BIDStoHDF5:
                 self.create_subgrp_metadata('roi', grp, contrast)
 
                 # dataset metadata
-                grp[key].attrs['roi_filename'] = roi_metadata['gt_filenames']
+                grp[key].attrs['roi_filename'] = roi_metadata.get(MetadataKW.GT_FILENAMES)
                 self.create_metadata(grp, key, roi_metadata)
 
                 # Adding contrast to group metadata
@@ -619,9 +619,9 @@ class HDF5Dataset:
                 # input Metadata
                 metadata = SampleMetadata({key: value for key, value in f['{}/inputs/{}'
                                                             .format(line['Subjects'], ct)].attrs.items()})
-                metadata['slice_index'] = line["Slices"]
-                metadata['missing_mod'] = missing_modalities
-                metadata['crop_params'] = {}
+                metadata[MetadataKW.SLICE_INDEX] = line["Slices"]
+                metadata[MetadataKW.MISSING_MOD] = missing_modalities
+                metadata[MetadataKW.CROP_PARAMS] = {}
                 input_metadata.append(metadata)
 
             # GT
@@ -637,7 +637,7 @@ class HDF5Dataset:
                 gt_img.append(gt_data)
                 gt_metadata.append(SampleMetadata({key: value for key, value in
                                                                      f[line['gt/' + gt]].attrs.items()}))
-                gt_metadata[idx]['crop_params'] = {}
+                gt_metadata[idx][MetadataKW.CROP_PARAMS] = {}
 
             # ROI
             roi_img = []
@@ -654,7 +654,7 @@ class HDF5Dataset:
                 roi_metadata.append(SampleMetadata({key: value for key, value in
                                                                       f[
                                                                           line['roi/' + self.roi_lst[0]]].attrs.items()}))
-                roi_metadata[0]['crop_params'] = {}
+                roi_metadata[0][MetadataKW.CROP_PARAMS] = {}
 
             # Run transforms on ROI
             # ROI goes first because params of ROICrop are needed for the followings
@@ -679,9 +679,9 @@ class HDF5Dataset:
                 'input': stack_input,
                 'gt': stack_gt,
                 'roi': stack_roi,
-                'input_metadata': metadata_input,
-                'gt_metadata': metadata_gt,
-                'roi_metadata': metadata_roi
+                MetadataKW.INPUT_METADATA: metadata_input,
+                MetadataKW.GT_METADATA: metadata_gt,
+                MetadataKW.ROI_METADATA: metadata_roi
             }
 
             return data_dict
@@ -696,7 +696,7 @@ class HDF5Dataset:
                 strategies that could be implemented are Active Learning, Curriculum Learning, ...
         """
         if strategy == 'Missing':
-            logger.info("Probalility of missing contrast = {}".format(p))
+            logger.info("Probability of missing contrast = {}".format(p))
             for idx in range(len(self.dataframe)):
                 missing_mod = np.random.choice(2, len(self.cst_lst), p=[p, 1 - p])
                 # if all contrasts are removed from a subject randomly choose 1

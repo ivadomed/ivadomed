@@ -19,7 +19,7 @@ from ivadomed.object_detection import utils as imed_obj_detect
 from ivadomed.loader.film import store_film_params, save_film_params
 from ivadomed.training import get_metadata
 from ivadomed.postprocessing import threshold_predictions
-from ivadomed.keywords import ConfigKW, ModelParamsKW
+from ivadomed.keywords import ConfigKW, ModelParamsKW, MetadataKW
 
 cudnn.benchmark = True
 
@@ -207,7 +207,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                     preds_idx_arr = np.array(preds_idx_undo)
 
                     # TODO: gt_filenames should not be a list
-                    fname_ref = list(filter(None, metadata_idx[0]['gt_filenames']))[0]
+                    fname_ref = list(filter(None, metadata_idx[0][MetadataKW.GT_FILENAMES]))[0]
 
                 if preds_idx_arr is not None:
                     # add new sample to pred_tmp_lst, of size n_label X h X w ...
@@ -215,7 +215,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
 
                     # TODO: slice_index should be stored in gt_metadata as well
                     z_tmp_lst.append(int(idx_slice))
-                    filenames = metadata_idx[0]['gt_filenames']
+                    filenames = metadata_idx[0][MetadataKW.GT_FILENAMES]
 
                 # NEW COMPLETE VOLUME
                 if (pred_tmp_lst and ((last_patch_bool and last_slice_bool) or last_sample_bool)
@@ -276,7 +276,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                 # Indicator of last batch
                 if last_sample_bool:
                     pred_undo = np.array(pred_undo)
-                    fname_ref = metadata[0]['gt_filenames'][0]
+                    fname_ref = metadata[0][MetadataKW.GT_FILENAMES][0]
                     if ofolder:
                         fname_pred = str(Path(ofolder, Path(fname_ref).name))
                         fname_pred = fname_pred.split(testing_params['target_suffix'][0])[0] + '_pred.nii.gz'
@@ -298,7 +298,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                     output_data = output_nii.get_fdata().transpose(3, 0, 1, 2)
                     preds_npy_list.append(output_data)
 
-                    gt = get_gt(metadata[0]['gt_filenames'])
+                    gt = get_gt(metadata[0][MetadataKW.GT_FILENAMES])
                     gt_npy_list.append(gt)
                     # Save merged labels with color
 

@@ -25,7 +25,7 @@ from ivadomed.object_detection import utils as imed_obj_detect
 from ivadomed import utils as imed_utils
 from ivadomed import training as imed_training
 from ivadomed.keywords import ConfigKW, ModelParamsKW, ObjectDetectionParamsKW, TransformationKW, LoaderParamsKW, \
-    ROIParamsKW, SliceFilterParamsKW, TrainingParamsKW
+    ROIParamsKW, SliceFilterParamsKW, TrainingParamsKW, MetadataKW
 
 
 def onnx_inference(model_path: str, inputs: tensor) -> tensor:
@@ -415,7 +415,7 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
 
     # Add microscopy pixel size from options to metadata for filenames_pairs
     if (options is not None) and ('pixel_size' in options):
-        metadata['PixelSize'] = options['pixel_size']
+        metadata[MetadataKW.PIXEL_SIZE] = options['pixel_size']
 
     filename_pairs = [(fname_images, None, fname_roi, metadata if isinstance(metadata, list) else [metadata])]
 

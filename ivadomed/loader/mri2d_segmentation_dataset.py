@@ -10,7 +10,7 @@ from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.loader.utils import dropout_input
 from ivadomed.loader.segmentation_pair import SegmentationPair
 from ivadomed.object_detection import utils as imed_obj_detect
-from ivadomed.keywords import ROIParamsKW
+from ivadomed.keywords import ROIParamsKW, MetadataKW
 
 
 class MRI2DSegmentationDataset(Dataset):
@@ -121,8 +121,8 @@ class MRI2DSegmentationDataset(Dataset):
 
                 # If is_2d_patch, create handlers list for indexing patch
                 if self.is_2d_patch:
-                    for metadata in item[0]['input_metadata']:
-                        metadata['index_shape'] = item[0]['input'][0].shape
+                    for metadata in item[0][MetadataKW.INPUT_METADATA]:
+                        metadata[MetadataKW.INDEX_SHAPE] = item[0]['input'][0].shape
                     self.handlers.append((item))
                 # else, append the whole slice to self.indexes
                 else:
@@ -234,15 +234,15 @@ class MRI2DSegmentationDataset(Dataset):
             shape_y = coord["y_max"] - coord["y_min"]
 
             for metadata in metadata_input:
-                metadata['coord'] = [coord["x_min"], coord["x_max"], coord["y_min"], coord["y_max"]]
+                metadata[MetadataKW.COORD] = [coord["x_min"], coord["x_max"], coord["y_min"], coord["y_max"]]
 
             data_dict = {
                 'input': torch.zeros(stack_input.shape[0], shape_x, shape_y),
                 'gt': torch.zeros(stack_gt.shape[0], shape_x, shape_y) if stack_gt is not None else None,
                 'roi': torch.zeros(stack_roi.shape[0], shape_x, shape_y) if stack_roi is not None else None,
-                'input_metadata': metadata_input,
-                'gt_metadata': metadata_gt,
-                'roi_metadata': metadata_roi
+                MetadataKW.INPUT_METADATA: metadata_input,
+                MetadataKW.GT_METADATA: metadata_gt,
+                MetadataKW.ROI_METADATA: metadata_roi
             }
 
             for _ in range(len(stack_input)):
@@ -267,9 +267,9 @@ class MRI2DSegmentationDataset(Dataset):
                 'input': stack_input,
                 'gt': stack_gt,
                 'roi': stack_roi,
-                'input_metadata': metadata_input,
-                'gt_metadata': metadata_gt,
-                'roi_metadata': metadata_roi
+                MetadataKW.INPUT_METADATA: metadata_input,
+                MetadataKW.GT_METADATA: metadata_gt,
+                MetadataKW.ROI_METADATA: metadata_roi
             }
 
         # Input-level dropout to train with missing modalities

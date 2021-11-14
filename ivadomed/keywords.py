@@ -150,15 +150,35 @@ class ROIParamsKW:
 
 
 @dataclass
-class MetadataParamsKW:
+class MetadataKW:
     CONTRAST = "contrast"
-    BOUNDING_BOX = "bounding_box"
-
-
-@dataclass
-class MetadataChoiceKW:
-    MRI_PARAMS = "mri_params"
     CONTRASTS = "contrasts"
+    BOUNDING_BOX = "bounding_box"
+    DATA_TYPE = "data_type"
+    PRE_RESAMPLE_SHAPE = "preresample_shape"
+    CROP_PARAMS = "crop_params"
+    MRI_PARAMS = "mri_params"
+    ROTATION = "rotation"
+    TRANSLATION = "translation"
+    SCALE = "scale"
+    COORD = "coord"
+    ZOOMS = "zooms"
+    UNDO = "undo"
+    REVERSE = "reverse"
+    OFFSET = "offset"
+    ELASTIC = "elastic"
+    GAUSSIAN_NOISE = "gaussian_noise"
+    DATA_SHAPE = "data_shape"
+    SLICE_INDEX = "slice_index"
+    MISSING_MOD = "missing_mod"
+    METADATA_DICT = "metadata_dict"
+    INDEX_SHAPE = "index_shape"
+    GT_METADATA = "gt_metadata"
+    GT_FILENAMES = "gt_filenames"
+    INPUT_METADATA = "input_metadata"
+    INPUT_FILENAMES = "input_filenames"
+    ROI_METADATA = "roi_metadata"
+    PIXEL_SIZE = "PixelSize"
 
 
 @dataclass
@@ -193,6 +213,7 @@ class SliceFilterParamsKW:
 @dataclass
 class IgnoredFolderKW:
     MACOSX = "__MACOSX"
+
 
 @dataclass
 class MetricsKW:
