@@ -1,3 +1,61 @@
+## v2.9.0 (2021-11-14)
+[View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.8.0...release)
+
+**ENHANCEMENT**
+
+- Make ivadomed be compatible with python 3.9 and PyTorch 1.8.  [View pull request](https://github.com/ivadomed/ivadomed/pull/819)
+
+**DEPENDENCIES**
+
+- Pin to CUDA-11.  [View pull request](https://github.com/ivadomed/ivadomed/pull/951)
+
+**BUG FIXES**
+
+- Pin PyParsing version to be compatible with pip 20.  [View pull request](https://github.com/ivadomed/ivadomed/pull/987)
+- Fix pytest test_download_data_no_dataset_specified fail bug.  [View pull request](https://github.com/ivadomed/ivadomed/pull/968)
+- Fix GeneralizedDiceLoss with `include_background=true` and `batch_size>1` .  [View pull request](https://github.com/ivadomed/ivadomed/pull/962)
+- Fix undo_transforms in volume reconstruction.  [View pull request](https://github.com/ivadomed/ivadomed/pull/957)
+- Fix undo_transforms in image reconstruction.  [View pull request](https://github.com/ivadomed/ivadomed/pull/956)
+- add metadata to create_metadata_dict.  [View pull request](https://github.com/ivadomed/ivadomed/pull/954)
+- Update scripts in `dev/prepare_data` to use new SCT config syntax (`.yml`).  [View pull request](https://github.com/ivadomed/ivadomed/pull/949)
+- Fix config loading errors.  [View pull request](https://github.com/ivadomed/ivadomed/pull/944)
+- Fix dropout_rate key in models.py.  [View pull request](https://github.com/ivadomed/ivadomed/pull/937)
+- Add additional check for incorrect final_activation value.  [View pull request](https://github.com/ivadomed/ivadomed/pull/933)
+- Make ivadomed be compatible with python3.9 and PyTorch 1.8.  [View pull request](https://github.com/ivadomed/ivadomed/pull/819)
+
+**DOCUMENTATION**
+
+- Minor modifications to the documentation for tutorial 3.  [View pull request](https://github.com/ivadomed/ivadomed/pull/988)
+- Fix resample axis order in documentation.  [View pull request](https://github.com/ivadomed/ivadomed/pull/978)
+- Update help.rst.  [View pull request](https://github.com/ivadomed/ivadomed/pull/967)
+- Fixing issues in estimate uncertainty tutorial.  [View pull request](https://github.com/ivadomed/ivadomed/pull/936)
+- Fix link to data file in ivadomed instructions.  [View pull request](https://github.com/ivadomed/ivadomed/pull/929)
+- Fixes object detection path in cascaded architecture tutorial.  [View pull request](https://github.com/ivadomed/ivadomed/pull/922)
+- Make ivadomed be compatible with python3.9 and PyTorch 1.8.  [View pull request](https://github.com/ivadomed/ivadomed/pull/819)
+
+**REFACTORING**
+
+- Fully Remove HeMIS model, Adaptive and h5py/HDF5.  [View pull request](https://github.com/ivadomed/ivadomed/pull/984)
+- Fix path_output in automated training.  [View pull request](https://github.com/ivadomed/ivadomed/pull/914)
+- Using keywords for ivadomed/scripts folder.  [View pull request](https://github.com/ivadomed/ivadomed/pull/934)
+- Keywords refactoring Phase II: loader focus.  [View pull request](https://github.com/ivadomed/ivadomed/pull/909)
+- Adopting pathllib for loader/bids_dataframe.  [View pull request](https://github.com/ivadomed/ivadomed/pull/947)
+- Adopting pathlib for tests.  [View pull request](https://github.com/ivadomed/ivadomed/pull/901)
+- Adopting pathlib training.py.  [View pull request](https://github.com/ivadomed/ivadomed/pull/897)
+- Adopting pathlib for main.py.  [View pull request](https://github.com/ivadomed/ivadomed/pull/892)
+- Adopting pathlib for loader/utils.py.  [View pull request](https://github.com/ivadomed/ivadomed/pull/879)
+
+**TESTING**
+
+- Fix pytest test_download_data_no_dataset_specified fail bug.  [View pull request](https://github.com/ivadomed/ivadomed/pull/968)
+
+**CI**
+
+- Update Sphinx dependency version and check RTD.org performance.  [View pull request](https://github.com/ivadomed/ivadomed/pull/974)
+- Fix pytest problem.  [View pull request](https://github.com/ivadomed/ivadomed/pull/968)
+- Update to GitHub Action to use `setup-python@v2`.  [View pull request](https://github.com/ivadomed/ivadomed/pull/959)
+- Make ivadomed be compatible with python3.9 and PyTorch 1.8.  [View pull request](https://github.com/ivadomed/ivadomed/pull/819)
+
 ## v2.8.0 (2021-08-31)
 [View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.7.4...v.2.8.0)
 
