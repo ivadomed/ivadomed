@@ -32,7 +32,7 @@ The configuration file will be modified to be the same as the one used for
 The parameters that are specific to this tutorial are:
 
 - ``path_output``: Location of the directory containing the trained model. To avoid having to train a model from
-  scratch, in the downloaded dataset, there is a trained model for spinal cord segmentation in the folder `trained_model`.
+  scratch, there is a already trained model for spinal cord segmentation in the folder named `trained_model`, in the downloaded dataset.
   Modify the path so it points to the location of the trained model.
 
   .. code-block:: xml
@@ -86,7 +86,7 @@ Once the configuration file has been modified, run the inference with the follow
 
 .. code-block:: bash
 
-   ivadomed --test -c config.json --path-data <PATH_TO_DATASET>/data_example_spinegeneric/trained_model --path-output path/to/output/directory
+   ivadomed --test -c config.json --path-data <PATH_TO_DATASET>/data_example_spinegeneric --path-output <PATH_TO_DATASET>/data_example_spinegeneric/trained_model
 
 - Here, we want to do some inference using the previously trained model, so we set the
   command flag as follows:
@@ -95,19 +95,17 @@ Once the configuration file has been modified, run the inference with the follow
 
      --test
 
-- ``--path-data``: Location of the directory containing the trained model. To avoid having to train a model from
-  scratch, in the downloaded dataset, there is a trained model for spinal cord segmentation in the folder `trained_model`.
-  Modify the path so it points to the location of the trained model.
+- ``--path-data``: Location of the directory containing the dataset. 
 
   .. code-block:: bash
 
-     --path-data <PATH_TO_DATASET>/data_example_spinegeneric/trained_model
+     --path-data <PATH_TO_DATASET>/data_example_spinegeneric
 
-- ``--path-output``: Folder name that will contain the output files (e.g., trained model, predictions, results).
+- ``--path-output``: Folder name that will contain the output files (e.g., trained model, predictions, results). For the purpose of this particular tutorial, since we do not train the model from scratch, we set the output path to point to a folder containing the pre-trained model for spinal cord segmentation that comes with the dataset. Hence, after running this tutorial, the corresponding output files can be found inside the `trained_model` folder.
 
   .. code-block:: bash
 
-     --path-output path/to/output/directory
+     --path-output <PATH_TO_DATASET>/data_example_spinegeneric/trained_model
 
 If you set the "command", "path_output", and "path_data" arguments in your config file, you do not need to pass the CLI flags:
 
