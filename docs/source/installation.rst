@@ -21,23 +21,61 @@ Step 1: Setup dedicated python environment
 
                 First, make sure that a compatible version of Python 3 is installed on your system by running:
 
-                .. code::
+                .. tabs::
 
-                   python3 --version
+                    .. tab:: Mac/Linux
 
-                If your system's Python is not 3.7, 3.8, or 3.9 (or if you don't have Python 3 installed at all), please `install Python <https://realpython.com/installing-python/>`_ before continuing.
+                        .. code::
 
-                Once you have a supported version of Python installed, run the following command (replacing ``3.X`` with the Python version number that you installed):
+                            python3 --version
 
-                .. code::
+                    .. tab:: Windows
 
-                   python3.X -m venv ivadomed_env
+                        .. code::
+
+                            python --version
+
+                If your system's Python is not 3.6, 3.7, 3.8, or 3.9 (or if you don't have Python 3 installed at all), please `install Python <https://wiki.python.org/moin/BeginnersGuide/Download/>`_ before continuing.
+
+                Once you have a supported version of Python installed, run the following command:
+
+
+                .. tabs::
+
+                    .. tab:: Mac/Linux
+
+                        .. warning::
+
+                           If you use ``Debian`` or ``Ubuntu``, you may be prompted to install the ``python3-venv`` module when creating the virtual environment. This is expected, so please follow the instructions provided by Python. For other operating systems, ``venv`` will be installed by default.
+
+                        Replacing ``3.X`` with the Python version number that you installed):
+
+                        .. code::
+
+                            python3.X -m venv ivadomed_env
+
+                    .. tab:: Windows
+
+                        .. code::
+
+                            python -m venv ivadomed_env
 
             2. Activate the new virtual environment (default named ``ivadomed_env``)
 
-                ::
+                .. tabs::
 
-                    source ivadomed_env/bin/activate
+                    .. tab:: Mac/Linux
+
+                        .. code::
+
+                            source ivadomed_env/bin/activate
+
+                    .. tab:: Windows
+
+                        .. code::
+
+                            cd venv/Scripts/
+                            activate
 
         .. tab:: Install via ``conda``
 
@@ -47,7 +85,7 @@ Step 1: Setup dedicated python environment
 
                     conda env create --name ivadomed_env
 
-            2. Activate the new conda environment (default named ``ivadomed_env``)
+            2. Activate the new conda environment
 
                 ::
 
@@ -101,34 +139,62 @@ Step 3: Install ``torch`` and ``torchvision`` with CPU or GPU Support
 
         .. tab:: CPU Support
 
-            If you plan to run ``ivadomed`` on CPU only, install pytorch per instructions `provided here for 1.8 <https://pytorch.org/get-started/previous-versions/#wheel>`_.
+            If you plan to run ``ivadomed`` on CPU only, install pytorch per instructions provided below for your specific operating system:
 
-            Alternatively, if you have already downloaded/cloned the repo with access to the ``requirement.txt`` file, run the following command:
-            ::
+            .. tabs::
 
-                pip install -r requirements.txt
+                .. tab:: Windows/Linux
 
+                    .. code::
+
+                       pip install torch==1.8.0+cpu torchvision==0.9.0+cpu --find-links https://download.pytorch.org/whl/torch_stable.html
+
+                .. tab:: Mac
+
+                    .. code::
+
+                       pip install torch==1.8.0 torchvision==0.9.0 --find-links https://download.pytorch.org/whl/torch_stable.html
+
+                .. tab:: Repo Installation (Advanced or Developer)
+
+                    Run this only if you have already downloaded/cloned the repo with access to the ``requirement.txt`` file, then run the following command while at the repository root level:
+
+                    .. code::
+
+                        pip install -r requirements.txt
 
         .. tab:: Nvidia GPU Support
 
             ``ivadomed`` requires CUDA11 to execute properly. If you have a nvidia GPU, try to look up its Cuda Compute Score `here <https://developer.nvidia.com/cuda-gpus>`_, which needs to be > 3.5 to support CUDA11. Then, make sure to upgrade to nvidia driver to be at least v450+ or newer.
 
-            If you have a compatible NVIDIA GPU that supports CUDA11 and with the right driver installed, try run the following command:
+            If you have a compatible NVIDIA GPU that supports CUDA11 and with the right driver installed try run the following command relevant to your situation:
 
-            ::
+            .. tabs::
 
-               pip install -r requirements_gpu.txt
+                .. tab:: All OS
+
+                    .. code::
+
+                       pip install torch==1.8.1+cu111 torchvision==0.9.1+cu111 --find-links https://download.pytorch.org/whl/torch_stable.html
+
+                .. tab:: Repo Installation (Advanced or Developer)
+
+                    Run this only if you have already downloaded/cloned the repo with access to the ``requirement_gpu.txt`` file, then run the following command while at the repository root level:
+                    .. code::
+
+                       pip install -r requirements_gpu.txt
+
 
 Developer-only Installation Steps
 +++++++++++++++++++++++++++++++++
 
     The additional steps below are only necessary for contributors to the ``ivadomed`` project.
 
-    For contributors to the ``ivadomed`` project, the ``pre-commit`` package is used to enforce a size limit on committed files. ``requirements_dev.txt`` also contain additional dependneices related to documentation building etc.
+    The ``pre-commit`` package is used to enforce a size limit on committed files. The ``requirements_dev.txt`` also contain additional dependencies related to documentation building and testing.
 
     After you've installed ``ivadomed``, install the ``pre-commit`` hooks by running:
 
-    ::
+    .. code::
 
         pip install -r requirements_dev.txt
         pre-commit install
