@@ -44,15 +44,14 @@ Step 1: Setup dedicated python environment
 
                     .. tab:: Mac/Linux
 
-                        .. warning::
-
-                           If you use ``Debian`` or ``Ubuntu``, you may be prompted to install the ``python3-venv`` module when creating the virtual environment. This is expected, so please follow the instructions provided by Python. For other operating systems, ``venv`` will be installed by default.
-
-                        Replacing ``3.X`` with the Python version number that you installed):
-
                         .. code::
 
+                            # Replacing ``3.X`` with the Python version number that you installed):
                             python3.X -m venv ivadomed_env
+
+                        .. note::
+
+                           If you use ``Debian`` or ``Ubuntu``, you may be prompted to install the ``python3-venv`` module when creating the virtual environment. This is expected, so please follow the instructions provided by Python. For other operating systems, ``venv`` will be installed by default.
 
                     .. tab:: Windows
 
@@ -74,7 +73,7 @@ Step 1: Setup dedicated python environment
 
                         .. code::
 
-                            cd venv/Scripts/
+                            cd ivadomed_env/Scripts/
                             activate
 
         .. tab:: Install via ``conda``
@@ -139,7 +138,7 @@ Step 3: Install ``torch`` and ``torchvision`` with CPU or GPU Support
 
         .. tab:: CPU Support
 
-            If you plan to run ``ivadomed`` on CPU only, install pytorch per instructions provided below for your specific operating system:
+            If you plan to run ``ivadomed`` on CPU only, install PyTorch per instructions provided below for your specific operating system:
 
             .. tabs::
 
