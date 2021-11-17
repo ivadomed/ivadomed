@@ -38,7 +38,7 @@ Configuration file
     - ``debugging``: Boolean, create extended verbosity and intermediate outputs. Here we will look at the intermediate predictions
       with tensorboard, we therefore need to activate those intermediate outputs.
 
-      .. code-block:: xml
+      .. code-block:: json
 
          "debugging": true
 
@@ -48,7 +48,7 @@ Configuration file
       This spinal cord segmentation model will be applied to the images and a bounding box will be created around this mask
       to crop the image.
 
-      .. code-block:: xml
+      .. code-block:: json
 
          "object_detection_path": "<PATH_TO_DATASET>/trained_model/seg_sc_t1-t2-t2s-mt"
 
@@ -57,21 +57,21 @@ Configuration file
       A safety factor of 200% on each dimension is applied on the height and width of the image. The original depth of the
       bounding box is kept since the CSF should not be present past this border.
 
-      .. code-block:: xml
+      .. code-block:: json
 
          "safety_factor": [2, 2, 1]
 
     - ``loader_parameters:target_suffix``: Suffix of the ground truth segmentation. The ground truth are located under the
       ``DATASET/derivatives/labels`` folder. The suffix for CSF labels in this dataset is ``_csfseg-manual``:
 
-      .. code-block:: xml
+      .. code-block:: json
 
          "target_suffix": ["_csfseg-manual"]
 
     - ``loader_parameters:contrast_params``: Contrast(s) of interest. The CSF labels are only available in T2w contrast in
       the example dataset.
 
-      .. code-block:: xml
+      .. code-block:: json
 
          "contrast_params": {
              "training_validation": ["T2w"],
@@ -83,7 +83,7 @@ Configuration file
       allows all the images to have the same size during training. Since the images will be cropped around the spinal cord,
       the image size can be reduced to avoid large zero padding.
 
-      .. code-block:: xml
+      .. code-block:: json
 
          "CenterCrop": {
              "size": [64, 64]
@@ -108,7 +108,7 @@ Train model
 
     If you prefer to use config files over CLI flags, set ``command`` to the following in you config file:
 
-    .. code-block:: bash
+    .. code-block:: json
 
        "command": "train"
 
@@ -173,7 +173,7 @@ Evaluate model
     - ``postprocessing:binarize_prediction``: Threshold at which predictions are binarized. Before testing the model,
       modify the binarization threshold to have a threshold adapted to the data:
 
-    .. code-block:: xml
+    .. code-block:: json
 
         "binarize_prediction": 0.01
 
