@@ -19,7 +19,7 @@ The technical documentation is available [here](https://ivadomed.org).  The more
 
 ```bash
 python -m venv ivadomed_env
-source venv-ivadomed/bin/activate
+source ivadomed_env/bin/activate
 ```
 
 ### Install from release (recommended)
