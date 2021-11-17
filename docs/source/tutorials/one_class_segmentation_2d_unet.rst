@@ -224,7 +224,7 @@ Evaluate model
 
        ivadomed --test -c config.json --path-data path/to/bids/data --path-output path/to/output/directory
 
-    If you prefer to use config files over CLI flags, set "command" to the following in you config file:
+    If you prefer to use config files over CLI flags, set ``command`` to the following in you config file:
 
     .. code-block:: json
 
