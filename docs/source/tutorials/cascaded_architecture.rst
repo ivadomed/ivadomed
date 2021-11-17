@@ -31,8 +31,8 @@ Configuration file
 
        cp <PATH_TO_IVADOMED>/ivadomed/config/config.json .
 
-    Then, open it with a text editor. As described in the tutorial :doc:`../tutorials/one_class_segmentation_2d_unet`, make
-    sure the ``command`` is set to "train" and ``path_data`` point to the location of the dataset. Below, we will discuss
+    Then, open it with a text editor. As described in the tutorial :doc: `../tutorials/one_class_segmentation_2d_unet`, make
+    sure the ``command`` is set to ``train`` and ``path_data`` point to the location of the dataset. Below, we will discuss
     some of the key parameters to use cascaded models.
 
     - ``debugging``: Boolean, create extended verbosity and intermediate outputs. Here we will look at the intermediate predictions
@@ -92,7 +92,7 @@ Configuration file
 Train model
 -----------
 
-    Once the configuration file is ready, run the training. `ivadomed` has an option to find a threshold value which optimized the dice score on the validation dataset. This threshold will be further used to binarize the predictions on testing data. Add the flag `-t` with an increment
+    Once the configuration file is ready, run the training. ``ivadomed`` has an option to find a threshold value which optimized the dice score on the validation dataset. This threshold will be further used to binarize the predictions on testing data. Add the flag `-t` with an increment
     between 0 and 1 to perform this threshold optimization (i.e. ``-t 0.1`` will return the best threshold between 0.1,
     0.2, ..., 0.9)
 

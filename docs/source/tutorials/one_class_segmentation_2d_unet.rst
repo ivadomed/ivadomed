@@ -210,7 +210,7 @@ Train model
        Epoch 1 validation loss: -0.0382.
 
 
-    After 100 epochs (see ``"num_epochs"`` in the configuration file), the Dice score on the validation set should
+    After 100 epochs (see ``num_epochs`` in the configuration file), the Dice score on the validation set should
     be ~90%.
 
 .. _Evaluate model:
@@ -226,7 +226,7 @@ Evaluate model
 
     If you prefer to use config files over CLI flags, set "command" to the following in you config file:
 
-    .. code-block:: bash
+    .. code-block:: json
 
        "command": "test"
 
