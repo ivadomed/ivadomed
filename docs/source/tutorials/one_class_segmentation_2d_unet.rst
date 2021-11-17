@@ -45,7 +45,7 @@ Configuration file
 
     - ``command``: Action to perform. Here, we want to train a model, so we set the fields as follows:
 
-      .. code-block:: xml
+      .. code-block:: json
 
          "command": "train"
 
@@ -57,7 +57,7 @@ Configuration file
 
     - ``path_output``: Folder name that will contain the output files (e.g., trained model, predictions, results).
 
-      .. code-block:: xml
+      .. code-block:: json
 
          "path_output": "spineGeneric"
 
@@ -70,7 +70,7 @@ Configuration file
     - ``loader_parameters:path_data``: Location of the dataset. As discussed in `Data <../data.html>`__, the dataset
       should conform to the BIDS standard. Modify the path so it points to the location of the downloaded dataset.
 
-      .. code-block:: xml
+      .. code-block:: json
 
          "path_data": "data_example_spinegeneric"
 
@@ -83,13 +83,13 @@ Configuration file
     - ``loader_parameters:target_suffix``: Suffix of the ground truth segmentation. The ground truth is located
       under the ``DATASET/derivatives/labels`` folder. In our case, the suffix is ``_seg-manual``:
 
-      .. code-block:: xml
+      .. code-block:: json
 
          "target_suffix": ["_seg-manual"]
 
     - ``loader_parameters:contrast_params``: Contrast(s) of interest
 
-      .. code-block:: xml
+      .. code-block:: json
 
          "contrast_params": {
              "training_validation": ["T1w", "T2w", "T2star"],
@@ -99,14 +99,14 @@ Configuration file
 
     - ``loader_parameters:slice_axis``: Orientation of the 2D slice to use with the model.
 
-      .. code-block:: xml
+      .. code-block:: json
 
          "slice_axis": "axial"
 
     - ``loader_parameters:multichannel``: Turn on/off multi-channel training. If ``true``, each sample has several
       channels, where each channel is an image contrast. If ``false``, only one image contrast is used per sample.
 
-      .. code-block:: xml
+      .. code-block:: json
 
          "multichannel": false
 
@@ -119,7 +119,7 @@ Configuration file
     - ``training_time:num_epochs``: the maximum number of epochs that will be run during training. Each epoch is composed
       of a training part and an evaluation part. It should be a strictly positive integer.
 
-      .. code-block:: xml
+      .. code-block:: json
 
          "num_epochs": 100
 
