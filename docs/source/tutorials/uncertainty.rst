@@ -35,7 +35,7 @@ Configuration file
       scratch, there is a already trained model for spinal cord segmentation in the folder named `trained_model`, in the downloaded dataset.
       Modify the path so it points to the location of the trained model.
 
-      .. code-block:: xml
+      .. code-block:: json
 
          "path_output": "<PATH_TO_DATASET>/data_example_spinegeneric/trained_model"
 
@@ -48,7 +48,7 @@ Configuration file
     - ``command``: Action to perform. Here, we want to do some inference using the previously trained model, so we set the
       field as follows:
 
-      .. code-block:: xml
+      .. code-block:: json
 
          "command": "test"
 
@@ -63,7 +63,7 @@ Configuration file
       ``n_it`` controls the number of Monte Carlo iterations that are performed to estimate the uncertainty. Set it to a
       non-zero positive integer for this tutorial (e.g. ``20``).
 
-      .. code-block:: xml
+      .. code-block:: json
 
           "uncertainty": {
                "epistemic": true,
@@ -113,7 +113,7 @@ Run uncertainty estimation
        ivadomed -c config.json
 
     If aleatoric uncertainty was selected, then data augmentation operations will be performed at testing time, as indicated
-    in the terminal output (see below). Note that ``ElasticTransform`` has been desactivated because no ``undo_transform``
+    in the terminal output (see below). Note that ``ElasticTransform`` has been deactivated because no ``undo_transform``
     function is available for it.
 
     .. code-block:: bash
