@@ -2,7 +2,6 @@ import copy
 from loguru import logger
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
-from ivadomed.loader import adaptative as imed_adaptative
 from ivadomed.loader.bids3d_dataset import Bids3DDataset
 from ivadomed.loader.bids_dataset import BidsDataset
 from ivadomed.keywords import ROIParamsKW, TransformationKW, ModelParamsKW, ConfigKW
@@ -68,22 +67,21 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
                                 object_detection_params=object_detection_params,
                                 soft_gt=soft_gt,
                                 is_input_dropout=is_input_dropout)
-
-    elif model_params[ModelParamsKW.NAME] == ConfigKW.HEMIS_UNET:
-        dataset = imed_adaptative.HDF5Dataset(bids_df=bids_df,
-                                              subject_file_lst=data_list,
-                                              model_params=model_params,
-                                              contrast_params=contrast_params,
-                                              target_suffix=target_suffix,
-                                              slice_axis=imed_utils.AXIS_DCT[slice_axis],
-                                              transform=tranform_lst,
-                                              metadata_choice=metadata_type,
-                                              slice_filter_fn=SliceFilter(**slice_filter_params,
-                                                                          device=device,
-                                                                          cuda_available=cuda_available),
-                                              roi_params=roi_params,
-                                              object_detection_params=object_detection_params,
-                                              soft_gt=soft_gt)
+    # elif model_params[ModelParamsKW.NAME] == ConfigKW.HEMIS_UNET:
+    #     dataset = imed_adaptative.HDF5Dataset(bids_df=bids_df,
+    #                                           subject_file_lst=data_list,
+    #                                           model_params=model_params,
+    #                                           contrast_params=contrast_params,
+    #                                           target_suffix=target_suffix,
+    #                                           slice_axis=imed_utils.AXIS_DCT[slice_axis],
+    #                                           transform=tranform_lst,
+    #                                           metadata_choice=metadata_type,
+    #                                           slice_filter_fn=SliceFilter(**slice_filter_params,
+    #                                                                                         device=device,
+    #                                                                                         cuda_available=cuda_available),
+    #                                           roi_params=roi_params,
+    #                                           object_detection_params=object_detection_params,
+    #                                           soft_gt=soft_gt)
     else:
         # Task selection
         task = imed_utils.get_task(model_params[ModelParamsKW.NAME])
