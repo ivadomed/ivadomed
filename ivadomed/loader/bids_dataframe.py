@@ -54,7 +54,7 @@ class BidsDataframe:
 
         # contrast_lst from loader parameters
         self.contrast_lst = [] if 'contrast_lst' not in loader_params['contrast_params'] \
-                            else loader_params['contrast_params']['contrast_lst']
+            else loader_params['contrast_params']['contrast_lst']
 
         # derivatives
         self.derivatives = derivatives
@@ -124,8 +124,8 @@ class BidsDataframe:
             # and with derivative files of chosen target_suffix
             df_next = df_next[(~df_next['path'].str.contains('derivatives')
                                & df_next['suffix'].str.contains('|'.join(self.contrast_lst)))
-                               | (df_next['path'].str.contains('derivatives')
-                               & df_next['filename'].str.contains('|'.join(self.target_suffix)))]
+                              | (df_next['path'].str.contains('derivatives')
+                                 & df_next['filename'].str.contains('|'.join(self.target_suffix)))]
 
             # Update dataframe with files of chosen extensions
             df_next = df_next[df_next['filename'].str.endswith(tuple(self.extensions))]
@@ -164,7 +164,7 @@ class BidsDataframe:
                 self.df = self.df[self.df['filename'].str.contains('|'.join(has_deriv))
                                   | self.df['filename'].str.contains('|'.join(deriv))]
             else:
-                 # Raise error and exit if no derivatives are found for any subject files
+                # Raise error and exit if no derivatives are found for any subject files
                 raise RuntimeError("Derivatives not found.")
 
         # Reset index
@@ -195,7 +195,7 @@ class BidsDataframe:
         if fname_samples.exists():
             df_samples = pd.read_csv(str(fname_samples), sep='\t')
             df = pd.merge(df, df_samples, on=['participant_id', 'sample_id'], suffixes=("_x", None),
-                               how='left')
+                          how='left')
 
         # Add metadata from all _sessions.tsv files, if present
         # Uses pybids function
@@ -293,11 +293,20 @@ class BidsDataframe:
     def write_derivatives_dataset_description(self, path_data):
         """Writes default dataset_description.json file if not found in path_data/derivatives folder
         """
+        path_data = Path(path_data).absolute()
+
         filename = 'dataset_description'
-        deriv_desc_file = f'{path_data}/derivatives/{filename}.json'
-        label_desc_file = f'{path_data}/derivatives/labels/{filename}.json'
+        path_deriv_desc_file = Path(f'{path_data}/derivatives/{filename}.json')
+        path_label_desc_file = Path(f'{path_data}/derivatives/labels/{filename}.json')
         # need to write default dataset_description.json file if not found
-        if not Path(deriv_desc_file).is_file() and not Path(label_desc_file).is_file():
-            f = open(deriv_desc_file, 'w')
-            f.write('{"Name": "Example dataset", "BIDSVersion": "1.0.2", "PipelineDescription": {"Name": "Example pipeline"}}')
-            f.close()
+        if not path_deriv_desc_file.is_file() and not path_label_desc_file.is_file():
+
+            logger.warning(f"{path_deriv_desc_file} not found. Please ensure a full path is specified in the "
+                           f"configuration file. Will attempt to create a place holder description file for now at"
+                           f"{path_deriv_desc_file}.")
+            with path_deriv_desc_file.open(mode='w') as f:
+                f.write(
+                    '{"Name": "Example dataset", '
+                    '"BIDSVersion": "1.0.2", '
+                    '"PipelineDescription": {"Name": "Example pipeline"}}'
+                )
