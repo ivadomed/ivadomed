@@ -5,7 +5,6 @@
 # Development, documentation, testing related dependencies.
 pytest~=6.2
 pytest-cov
-pytest-console-scripts
 pytest-ordering~=0.6
 sphinx
 flake8
@@ -16,3 +15,4 @@ sphinx_rtd_theme
 sphinx-jsonschema~=1.16
 pytest-console-scripts~=1.1
 pre-commit==2.10.1
+sphinx-tabs==3.2.0
