@@ -69,11 +69,6 @@ class BidsDataframe:
     def create_bids_dataframe(self):
         """Generate the dataframe."""
 
-        # Suppress a Future Warning from pybids about leading dot included in 'extension' from version 0.14.0
-        # The config_bids.json file used matches the future behavior
-        # TODO: when reaching version 0.14.0, remove the following line
-        pybids.config.set_option('extension_initial_dot', True)
-
         for path_data in self.paths_data:
             path_data = Path(path_data, '')
 
