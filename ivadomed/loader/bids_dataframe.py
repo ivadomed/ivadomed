@@ -296,12 +296,12 @@ class BidsDataframe:
         # need to write default dataset_description.json file if not found
         if not path_deriv_desc_file.is_file() and not path_label_desc_file.is_file():
 
-            logger.warning(f"{path_deriv_desc_file} not found. Please ensure a full path is specified in the "
-                           f"configuration file. Will attempt to create a place holder description file for now at"
-                           f"{path_deriv_desc_file}.")
+            logger.warning(f"{path_deriv_desc_file} not found. Will attempt to create a place holder "
+                           f"description file for now at {path_deriv_desc_file}.")
             with path_deriv_desc_file.open(mode='w') as f:
                 f.write(
                     '{"Name": "Example dataset", '
                     '"BIDSVersion": "1.0.2", '
-                    '"PipelineDescription": {"Name": "Example pipeline"}}'
+                    '"PipelineDescription": {"Name": "Example pipeline"}, '
+                    '"GeneratedBy": [{"Name": "Example pipeline"}]}'
                 )
