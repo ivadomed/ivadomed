@@ -94,8 +94,8 @@ class BidsDataframe:
                     subject_path = path_object.parts[subject_path_index]
                     if path_object.name == "samples.tsv" or path_object.name == "samples.json":
                         force_index.append(path_object.name)
-                    if (path_object.name.endswith(ext_microscopy) and path_object.parent.name == "microscopy" and
-                            subject_path.startswith('sub')):
+                    if (path_object.name.endswith(ext_microscopy) and (path_object.parent.name == "microscopy" or
+                            path_object.parent.name == "micr") and subject_path.startswith('sub')):
                         force_index.append(str(Path(*path_object.parent.parts[subject_path_index:])))
                     # CT-scan
                     if (path_object.name.endswith(ext_ct) and path_object.name.split('.')[0].endswith(suffix_ct) and
