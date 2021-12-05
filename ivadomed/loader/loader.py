@@ -12,7 +12,7 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
                  contrast_params, slice_filter_params, slice_axis, multichannel,
                  dataset_type="training", requires_undo=False, metadata_type=None,
                  object_detection_params=None, soft_gt=False, device=None,
-                 cuda_available=None, is_input_dropout=False, **kwargs):
+                 cuda_available=None, is_input_dropout=False, input_dropout_params=[0.5, 0.5, 0.5], **kwargs):
     """Get loader appropriate loader according to model type. Available loaders are Bids3DDataset for 3D data,
     BidsDataset for 2D data and HDF5Dataset for HeMIS.
 
@@ -37,6 +37,7 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
         soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
         truths are thresholded (0.5) after the data augmentation operations.
         is_input_dropout (bool): Return input with missing modalities.
+        input_dropout_params (list): Dropout parameters.
 
     Returns:
         BidsDataset
@@ -66,7 +67,8 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
                                 model_params=model_params,
                                 object_detection_params=object_detection_params,
                                 soft_gt=soft_gt,
-                                is_input_dropout=is_input_dropout)
+                                is_input_dropout=is_input_dropout,
+                                input_dropout_params=input_dropout_params)
 
     # elif model_params[ModelParamsKW.NAME] == ConfigKW.HEMIS_UNET:
     #     dataset = imed_adaptative.HDF5Dataset(bids_df=bids_df,
@@ -102,7 +104,8 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
                               soft_gt=soft_gt,
                               object_detection_params=object_detection_params,
                               task=task,
-                              is_input_dropout=is_input_dropout)
+                              is_input_dropout=is_input_dropout,
+                              input_dropout_params=input_dropout_params)
         dataset.load_filenames()
 
     if model_params[ModelParamsKW.NAME] == ConfigKW.MODIFIED_3D_UNET:
