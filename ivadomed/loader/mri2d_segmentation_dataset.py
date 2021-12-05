@@ -32,6 +32,7 @@ class MRI2DSegmentationDataset(Dataset):
         soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
         truths are thresholded (0.5) after the data augmentation operations.
         is_input_dropout (bool): Return input with missing modalities.
+        input_dropout_params (list): Dropout parameters.
 
     Attributes:
         indexes (list): List of indices corresponding to each slice or patch in the dataset.
@@ -57,11 +58,12 @@ class MRI2DSegmentationDataset(Dataset):
         roi_thr (int): If the ROI mask contains less than this number of non-zero voxels, the slice will be discarded
             from the dataset.
         is_input_dropout (bool): Return input with missing modalities.
+        input_dropout_params (list): Dropout parameters.
 
     """
 
     def __init__(self, filename_pairs, length=None, stride=None, slice_axis=2, cache=True, transform=None,
-                 slice_filter_fn=None, task="segmentation", roi_params=None, soft_gt=False, is_input_dropout=False):
+                 slice_filter_fn=None, task="segmentation", roi_params=None, soft_gt=False, is_input_dropout=False, input_dropout_params=[0.5, 0.5, 0.5]):
         if length is None:
             length = []
         if stride is None:
@@ -85,6 +87,7 @@ class MRI2DSegmentationDataset(Dataset):
         self.has_bounding_box = True
         self.task = task
         self.is_input_dropout = is_input_dropout
+        self.input_dropout_params = input_dropout_params
 
 
     def load_filenames(self):
@@ -259,6 +262,6 @@ class MRI2DSegmentationDataset(Dataset):
 
         # Input-level dropout to train with missing modalities
         if self.is_input_dropout:
-            data_dict = dropout_input(data_dict)
+            data_dict = dropout_input(data_dict, self.input_dropout_params)
 
         return data_dict
