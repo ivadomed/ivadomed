@@ -41,6 +41,7 @@ class LoaderParamsKW:
     MODEL_PARAMS = "model_params"
     SLICE_AXIS = "slice_axis"
     IS_INPUT_DROPOUT = "is_input_dropout"
+    INPUT_DROPOUT_PARAMS = "input_dropout_params"
     SLICE_FILTER_PARAMS = "slice_filter_params"
 
 
