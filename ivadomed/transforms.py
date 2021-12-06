@@ -242,7 +242,7 @@ class Resample(ImedTransform):
         is_2d = sample.shape[-1] == 1
 
         # Get params
-        original_shape = metadata.get(MetadataKW.PRE_RESAMPLE_SHAPE)
+        original_shape = metadata[MetadataKW.PRE_RESAMPLE_SHAPE]
         current_shape = sample.shape
         params_undo = [x / y for x, y in zip(original_shape, current_shape)]
         if is_2d:
@@ -251,7 +251,7 @@ class Resample(ImedTransform):
         # Undo resampling
         data_out = zoom(sample,
                         zoom=params_undo,
-                        order=1 if metadata.get(MetadataKW.DATA_TYPE) == 'gt' else 2)
+                        order=1 if metadata[MetadataKW.DATA_TYPE] == 'gt' else 2)
 
         # Data type
         data_out = data_out.astype(sample.dtype)
@@ -281,7 +281,7 @@ class Resample(ImedTransform):
         # Run resampling
         data_out = zoom(sample,
                         zoom=params_resample,
-                        order=1 if metadata.geT(MetadataKW.DATA_TYPE) == 'gt' else 2)
+                        order=1 if metadata[MetadataKW.DATA_TYPE] == 'gt' else 2)
 
         # Data type
         data_out = data_out.astype(sample.dtype)
@@ -413,7 +413,7 @@ class Crop(ImedTransform):
         # Get params
         is_2d = sample.shape[-1] == 1
         th, tw, td = self.size
-        fh, fw, fd, h, w, d = metadata.get(MetadataKW.CROP_PARAMS).get(self.__class__.__name__)
+        fh, fw, fd, h, w, d = metadata[MetadataKW.CROP_PARAMS].get(self.__class__.__name__)
 
         # Crop data
         # Note we use here CroppableArray in order to deal with "out of boundaries" crop
@@ -431,7 +431,7 @@ class Crop(ImedTransform):
         # Get crop params
         is_2d = sample.shape[-1] == 1
         th, tw, td = self.size
-        fh, fw, fd, h, w, d = metadata.get(MetadataKW.CROP_PARAMS).geT(self.__class__.__name__)
+        fh, fw, fd, h, w, d = metadata[MetadataKW.CROP_PARAMS].get(self.__class__.__name__)
 
         # Compute params to undo transform
         pad_left = fw
@@ -483,7 +483,7 @@ class ROICrop(Crop):
     def __call__(self, sample, metadata=None):
         # If crop_params are not in metadata,
         # then we are here dealing with ROI data to determine crop params
-        if self.__class__.__name__ not in metadata.get(MetadataKW.CROP_PARAMS):
+        if self.__class__.__name__ not in metadata[MetadataKW.CROP_PARAMS]:
             # Compute center of mass of the ROI
             h_roi, w_roi, d_roi = center_of_mass(sample.astype(np.int))
             h_roi, w_roi, d_roi = int(round(h_roi)), int(round(w_roi)), int(round(d_roi))
