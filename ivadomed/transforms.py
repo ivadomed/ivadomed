@@ -267,7 +267,8 @@ class Resample(ImedTransform):
         # Voxel dimension in mm
         is_2d = sample.shape[-1] == 1
         metadata[MetadataKW.PRE_RESAMPLE_SHAPE] = sample.shape
-        zooms = list(metadata.get(MetadataKW.ZOOMS))
+        # metadata is not a dictionary!
+        zooms = list(metadata[MetadataKW.ZOOMS])
 
         if len(zooms) == 2:
             zooms += [1.0]
