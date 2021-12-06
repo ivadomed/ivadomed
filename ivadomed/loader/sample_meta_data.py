@@ -17,6 +17,9 @@ class SampleMetadata(object):
     def __getitem__(self, key):
         return self.metadata[key]
 
+    def __get__(self, key):
+        self.__getitem__(key)
+
     def __contains__(self, key):
         return key in self.metadata
 
