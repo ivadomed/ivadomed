@@ -129,6 +129,18 @@ class SubjectDictKW:
 class SubjectDataFrameKW:
     FILENAME = "filename"
 
+@dataclass
+class OptionKW:
+    METADATA = "metadata"
+    FNAME_PRIOR = 'fname_prior'
+    BINARIZE_PREDICTION = "binarize_prediction"
+    BINARIZE_MAXPOOLING = "binarize_maxpooling"
+    KEEP_LARGEST = "keep_largest"
+    FILL_HOLES = "fill_holes"
+    REMOVE_SMALL = "remove_small"
+    OVERLAP_2D = "overlap_2D"
+    PIXEL_SIZE = "pixel_size"
+
 
 @dataclass
 class BidsDataFrameKW:

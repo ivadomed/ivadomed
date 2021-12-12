@@ -25,7 +25,7 @@ from ivadomed.object_detection import utils as imed_obj_detect
 from ivadomed import utils as imed_utils
 from ivadomed import training as imed_training
 from ivadomed.keywords import ConfigKW, ModelParamsKW, ObjectDetectionParamsKW, TransformationKW, LoaderParamsKW, \
-    ROIParamsKW, SliceFilterParamsKW, TrainingParamsKW, MetadataKW
+    ROIParamsKW, SliceFilterParamsKW, TrainingParamsKW, MetadataKW, OptionKW
 
 
 def onnx_inference(model_path: str, inputs: tensor) -> tensor:
@@ -79,7 +79,7 @@ def get_preds(context: dict, fname_model: str, model_params: dict, gpu_id: int, 
             if (ConfigKW.FILMED_UNET in context and context[ConfigKW.FILMED_UNET].get(ModelParamsKW.APPLIED)) or \
                     (ConfigKW.HEMIS_UNET in context and context[ConfigKW.HEMIS_UNET].get(ModelParamsKW.APPLIED)):
                 # Load meta data before prediction
-                metadata = imed_training.get_metadata(batch["input_metadata"], model_params)
+                metadata = imed_training.get_metadata(batch[MetadataKW.INPUT_METADATA], model_params)
                 preds = model(img, metadata)
             else:
                 preds = model(img)
@@ -111,8 +111,8 @@ def get_onehotencoder(context: dict, folder_model: str, options: dict, ds: Datas
     metadata_dict = joblib.load(Path(folder_model, 'metadata_dict.joblib'))
     for idx in ds.indexes:
         for i in range(len(idx)):
-            idx[i]['input_metadata'][0][context[ConfigKW.FILMED_UNET][ModelParamsKW.METADATA]] = options['metadata']
-            idx[i]['input_metadata'][0]['metadata_dict'] = metadata_dict
+            idx[i][MetadataKW.INPUT_METADATA][0][context[ConfigKW.FILMED_UNET][ModelParamsKW.METADATA]] = options.get(OptionKW.METADATA)
+            idx[i][MetadataKW.INPUT_METADATA][0][MetadataKW.METADATA_DICT] = metadata_dict
 
     if ConfigKW.DEBUGGING in context and ConfigKW.FILMED_UNET in context and \
             context[ConfigKW.FILMED_UNET].get(ModelParamsKW.METADATA):
@@ -297,23 +297,23 @@ def set_postprocessing_options(options: dict, context: dict):
     """
     postpro = {}
 
-    if 'binarize_prediction' in options and options['binarize_prediction']:
-        postpro['binarize_prediction'] = {"thr": options['binarize_prediction']}
+    if OptionKW.BINARIZE_PREDICTION in options and options[OptionKW.BINARIZE_PREDICTION] is not None:
+        postpro[OptionKW.BINARIZE_PREDICTION] = {"thr": options[OptionKW.BINARIZE_PREDICTION]}
 
-    if 'binarize_maxpooling' in options and options['binarize_maxpooling'] is not None:
-        set_option(options, postpro, context, 'binarize_maxpooling')
+    if OptionKW.BINARIZE_MAXPOOLING in options and options.get(OptionKW.BINARIZE_MAXPOOLING) is not None:
+        set_option(options, postpro, context, OptionKW.BINARIZE_MAXPOOLING)
 
-    if 'keep_largest' in options and options['keep_largest'] is not None:
-        set_option(options, postpro, context, 'keep_largest')
+    if OptionKW.KEEP_LARGEST in options and options.get(OptionKW.KEEP_LARGEST) is not None:
+        set_option(options, postpro, context, OptionKW.KEEP_LARGEST)
 
-    if 'fill_holes' in options and options['fill_holes'] is not None:
-        set_option(options, postpro, context, 'fill_holes')
+    if OptionKW.FILL_HOLES in options and options.get(OptionKW.FILL_HOLES) is not None:
+        set_option(options, postpro, context, OptionKW.FILL_HOLES)
 
-    if 'remove_small' in options and options['remove_small'] and \
-            ('mm' in options['remove_small'][-1] or 'vox' in options['remove_small'][-1]):
-        unit = 'mm3' if 'mm3' in options['remove_small'][-1] else 'vox'
-        thr = [int(t.replace(unit, "")) for t in options['remove_small']]
-        postpro['remove_small'] = {"unit": unit, "thr": thr}
+    if OptionKW.REMOVE_SMALL in options and options.get(OptionKW.REMOVE_SMALL) and \
+            ('mm' in options[OptionKW.REMOVE_SMALL][-1] or 'vox' in options[OptionKW.REMOVE_SMALL][-1]):
+        unit = 'mm3' if 'mm3' in options[OptionKW.REMOVE_SMALL][-1] else 'vox'
+        thr = [int(t.replace(unit, "")) for t in options[OptionKW.REMOVE_SMALL]]
+        postpro[OptionKW.REMOVE_SMALL] = {"unit": unit, "thr": thr}
 
     context[ConfigKW.POSTPROCESSING].update(postpro)
 
@@ -380,7 +380,12 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
     slice_axis = imed_utils.AXIS_DCT[loader_params[LoaderParamsKW.SLICE_AXIS]]
     metadata = {}
     fname_roi = None
-    fname_prior = options['fname_prior'] if (options is not None) and ('fname_prior' in options) else None
+
+    if (options is not None) and (OptionKW.FNAME_PRIOR in options):
+        fname_prior = options.get(OptionKW.FNAME_PRIOR)
+    else:
+        fname_prior = None
+
     if fname_prior is not None:
         if LoaderParamsKW.ROI_PARAMS in loader_params and loader_params[LoaderParamsKW.ROI_PARAMS][ROIParamsKW.SUFFIX] is not None:
             fname_roi = fname_prior
@@ -407,8 +412,8 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
         ModelParamsKW.STRIDE_2D in context[ConfigKW.DEFAULT_MODEL] else []
     is_2d_patch = bool(length_2D)
 
-    if is_2d_patch and (options is not None) and ('overlap_2D' in options):
-        overlap_2D = options['overlap_2D']
+    if is_2d_patch and (options is not None) and (OptionKW.OVERLAP_2D in options):
+        overlap_2D = options.get(OptionKW.OVERLAP_2D)
         # Swap OverlapX and OverlapY resulting in an array in order [OverlapY, OverlapX]
         # to match length_2D and stride_2D in [Height, Width] orientation.
         overlap_2D[1], overlap_2D[0] = overlap_2D[0], overlap_2D[1]
@@ -416,8 +421,8 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
         stride_2D = [x1 - x2 for (x1, x2) in zip(length_2D, overlap_2D)]
 
     # Add microscopy pixel size from options to metadata for filenames_pairs
-    if (options is not None) and ('pixel_size' in options):
-        metadata[MetadataKW.PIXEL_SIZE] = options['pixel_size']
+    if (options is not None) and (OptionKW.PIXEL_SIZE in options):
+        metadata[MetadataKW.PIXEL_SIZE] = options.get(OptionKW.PIXEL_SIZE)
 
     filename_pairs = [(fname_images, None, fname_roi, metadata if isinstance(metadata, list) else [metadata])]
 
@@ -464,7 +469,7 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
         preds = get_preds(context, fname_model, model_params, gpu_id, batch)
 
         # Set datatype to gt since prediction should be processed the same way as gt
-        for b in batch['input_metadata']:
+        for b in batch[MetadataKW.INPUT_METADATA]:
             for modality in b:
                 modality['data_type'] = 'gt'
 
@@ -532,10 +537,10 @@ def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompo
     pred_list = []
     target_list = []
     for i_slice in range(len(preds)):
-        if "bounding_box" in batch['input_metadata'][i_slice][0]:
+        if "bounding_box" in batch[MetadataKW.INPUT_METADATA][i_slice][0]:
             imed_obj_detect.adjust_undo_transforms(undo_transforms.transforms, batch, i_slice)
 
-        batch['gt_metadata'] = [[metadata[0]] * preds.shape[1] for metadata in batch['input_metadata']]
+        batch[MetadataKW.GT_METADATA] = [[metadata[0]] * preds.shape[1] for metadata in batch[MetadataKW.INPUT_METADATA]]
         if kernel_3D:
             preds_undo, metadata, last_sample_bool, volume, weight_matrix = \
                 volume_reconstruction(batch, preds, undo_transforms, i_slice, volume, weight_matrix)
@@ -551,16 +556,16 @@ def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompo
                     # Add new segmented slice to preds_list
                     preds_list.append(np.array(preds_i_undo))
                     # Store the slice index of preds_i_undo in the original 3D image
-                    slice_idx_list.append(int(batch['input_metadata'][i_slice][0]['slice_index']))
+                    slice_idx_list.append(int(batch[MetadataKW.INPUT_METADATA][i_slice][0]['slice_index']))
             else:
                 # undo transformations for slice
                 preds_i_undo, metadata_idx = undo_transforms(preds[i_slice],
-                                                             batch["gt_metadata"][i_slice],
+                                                             batch[MetadataKW.GT_METADATA][i_slice],
                                                              data_type='gt')
                 # Add new segmented slice to preds_list
                 preds_list.append(np.array(preds_i_undo))
                 # Store the slice index of preds_i_undo in the original 3D image
-                slice_idx_list.append(int(batch['input_metadata'][i_slice][0]['slice_index']))
+                slice_idx_list.append(int(batch[MetadataKW.INPUT_METADATA][i_slice][0]['slice_index']))
 
         # If last batch and last sample of this batch, then reconstruct 3D object
         if (i_batch == len(data_loader) - 1 and i_slice == len(batch['gt']) - 1) or last_sample_bool:
@@ -600,7 +605,7 @@ def volume_reconstruction(batch: dict, pred: tensor, undo_transforms: UndoCompos
         weight_matrix (tensor): weight matrix
     """
     pred_undo, metadata = None, None
-    x_min, x_max, y_min, y_max, z_min, z_max = batch['input_metadata'][smp_idx][0]['coord']
+    x_min, x_max, y_min, y_max, z_min, z_max = batch[MetadataKW.INPUT_METADATA][smp_idx][0]['coord']
     num_pred = pred[smp_idx].shape[0]
 
     # A boolean flag indicate whether the current volume is the VERY first subvolume of the entire 3D volume/space.
@@ -608,7 +613,7 @@ def volume_reconstruction(batch: dict, pred: tensor, undo_transforms: UndoCompos
     first_sample: bool = (x_min == 0 and y_min == 0 and z_min == 0)
 
     # Get the Dimension
-    x, y, z = batch['input_metadata'][smp_idx][0]['index_shape']
+    x, y, z = batch[MetadataKW.INPUT_METADATA][smp_idx][0]['index_shape']
 
     # If this is the first sample, instantiate a ZERO tensor based on the dimension
     if first_sample:
@@ -624,7 +629,7 @@ def volume_reconstruction(batch: dict, pred: tensor, undo_transforms: UndoCompos
     if last_sample_bool:
         volume /= weight_matrix
         pred_undo, metadata = undo_transforms(volume,
-                                              batch['gt_metadata'][smp_idx],
+                                              batch[MetadataKW.GT_METADATA][smp_idx],
                                               data_type='gt')
     return pred_undo, metadata, last_sample_bool, volume, weight_matrix
 
@@ -649,7 +654,7 @@ def image_reconstruction(batch: dict, pred: tensor, undo_transforms: UndoCompose
         weight_matrix (tensor): weight matrix
     """
     pred_undo, metadata = None, None
-    x_min, x_max, y_min, y_max = batch['input_metadata'][smp_idx][0]['coord']
+    x_min, x_max, y_min, y_max = batch[MetadataKW.INPUT_METADATA][smp_idx][0]['coord']
     num_pred = pred[smp_idx].shape[0]
 
     # A boolean flag indicate whether the current patch is the VERY first patch of the entire 2D image.
@@ -657,7 +662,7 @@ def image_reconstruction(batch: dict, pred: tensor, undo_transforms: UndoCompose
     first_patch: bool = (x_min == 0 and y_min == 0)
 
     # Get the Dimension
-    x, y = batch['input_metadata'][smp_idx][0]['index_shape']
+    x, y = batch[MetadataKW.INPUT_METADATA][smp_idx][0]['index_shape']
 
     # If this is the first sample, instantiate a ZERO tensor based on the dimension
     if first_patch:
@@ -671,6 +676,6 @@ def image_reconstruction(batch: dict, pred: tensor, undo_transforms: UndoCompose
     weight_matrix[:, x_min:x_max, y_min:y_max] += 1
     if last_patch_bool:
         image /= weight_matrix
-        pred_undo, metadata = undo_transforms(image, batch['gt_metadata'][smp_idx], data_type='gt')
+        pred_undo, metadata = undo_transforms(image, batch[MetadataKW.GT_METADATA][smp_idx], data_type='gt')
 
     return pred_undo, metadata, last_patch_bool, image, weight_matrix
