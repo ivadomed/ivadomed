@@ -1,5 +1,6 @@
 import logging
 import pytest
+import os
 from pytest_console_scripts import script_runner
 from pathlib import Path
 from testing.functional_tests.t_utils import __tmp_dir__, create_tmp_dir, __data_testing_dir__, \

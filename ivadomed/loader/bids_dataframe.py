@@ -85,10 +85,10 @@ class BidsDataframe:
             self.extensions = [".nii", ".nii.gz"]
 
         # contrast_lst from loader parameters
-        if ContrastParamsKW.CONTRAST_LST not in loader_params[LoaderParamsKW.CONTRAST_PARAMS]:
+        if ContrastParamsKW.CONTRAST_LIST not in loader_params[LoaderParamsKW.CONTRAST_PARAMS]:
             self.contrast_lst: List[str] = []
         else:
-            self.contrast_lst: List[str] = loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.CONTRAST_LST]
+            self.contrast_lst: List[str] = loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.CONTRAST_LIST]
 
 
         # derivatives
@@ -162,38 +162,6 @@ class BidsDataframe:
 
         # Drop columns with all null values
         self.df.dropna(axis=1, inplace=True, how='all')
-
-    def second_exclusive_pass_dataframe_creation_removing_subjects_without_derivatives(self, first_df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Further filtering the dataframes based on those that has the appropriate target ground truth derivatives.
-        Args:
-            first_df (pd.DataFrame): DataFrame generated from FIRST pass inclusive search
-
-        Returns:
-            second_pass_dataframe (pd.DataFrame): DataFrame filtered for:
-            1) subjects with at least one of each self.suffix
-
-        """
-        # Get:
-        # list of subjects that has derivatives
-        # list of ALL the available derivatives (all subjects, flat list)
-        has_deriv, deriv = self.get_subjects_with_derivatives()
-
-        second_pass_dataframe: pd.DataFrame = pd.DataFrame()
-
-        # Filter dataframe to keep
-        if has_deriv:
-            second_pass_dataframe = first_df[
-                # 1) subjects files and
-                first_df[BidsDataFrameKW.FILENAME].str.contains('|'.join(has_deriv))
-                # 2) all known derivatives only
-                | first_df[BidsDataFrameKW.FILENAME].str.contains('|'.join(deriv))
-            ]
-        else:
-            # Raise error and exit if no derivatives are found for any subject files
-            raise RuntimeError("Not a single derivative was found. Training MUST at least have some ground truth labels.")
-
-        return second_pass_dataframe
 
     def first_inclusive_pass_data_frame_creation(self) -> pd.DataFrame:
         """
@@ -293,7 +261,7 @@ class BidsDataframe:
 
             else:
                 # Add tsv files metadata to dataframe
-                df_next = self.add_tsv_metadata(df_next, path_data, layout)
+                df_next = self.add_tsv_metadata(df_next, str(path_data), layout)
 
                 # TODO: check if other files are needed for EEG and DWI
 
@@ -301,6 +269,38 @@ class BidsDataframe:
                 first_pass_data_frame = pd.concat([first_pass_data_frame, df_next], join='outer', ignore_index=True)
 
         return first_pass_data_frame
+
+    def second_exclusive_pass_dataframe_creation_removing_subjects_without_derivatives(self, first_df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Further filtering the dataframes based on those that has the appropriate target ground truth derivatives.
+        Args:
+            first_df (pd.DataFrame): DataFrame generated from FIRST pass inclusive search
+
+        Returns:
+            second_pass_dataframe (pd.DataFrame): DataFrame filtered for:
+            1) subjects with at least one of each self.suffix
+
+        """
+        # Get:
+        # list of subjects that has derivatives
+        # list of ALL the available derivatives (all subjects, flat list)
+        has_deriv, deriv = self.get_subjects_with_derivatives()
+
+        second_pass_dataframe: pd.DataFrame = pd.DataFrame()
+
+        # Filter dataframe to keep
+        if has_deriv:
+            second_pass_dataframe = first_df[
+                # 1) subjects files and
+                first_df[BidsDataFrameKW.FILENAME].str.contains('|'.join(has_deriv))
+                # 2) all known derivatives only
+                | first_df[BidsDataFrameKW.FILENAME].str.contains('|'.join(deriv))
+                ]
+        else:
+            # Raise error and exit if no derivatives are found for any subject files
+            raise RuntimeError("Not a single derivative was found. Training MUST at least have some ground truth labels.")
+
+        return second_pass_dataframe
 
     def third_exclusive_pass_df_creation_check_modalities_sessions_combinations(self, df_next):
         """
@@ -361,6 +361,7 @@ class BidsDataframe:
 
         """
 
+        # When given an empty list of invalid list of subjects for exclusion, early return.
         if not list_exclude_subject:
             return df_next
 

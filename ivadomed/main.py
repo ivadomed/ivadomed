@@ -138,10 +138,10 @@ def save_config_file(context, path_output):
 def set_loader_params(context, is_train):
     loader_params = copy.deepcopy(context[ConfigKW.LOADER_PARAMETERS])
     if is_train:
-        loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.CONTRAST_LST] = \
+        loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.CONTRAST_LIST] = \
             loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.TRAINING_VALIDATION]
     else:
-        loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.CONTRAST_LST] =\
+        loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.CONTRAST_LIST] =\
             loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.TESTING]
     if ConfigKW.FILMED_UNET in context and context[ConfigKW.FILMED_UNET][ModelParamsKW.APPLIED]:
         loader_params.update({LoaderParamsKW.METADATA_TYPE: context[ConfigKW.FILMED_UNET][ModelParamsKW.METADATA]})

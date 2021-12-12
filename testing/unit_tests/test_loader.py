@@ -7,9 +7,11 @@ from ivadomed.loader.bids_dataframe import BidsDataframe
 from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__, download_data_testing_test_files, path_repo_root
 from testing.common_testing_util import remove_tmp_dir
 from ivadomed.loader import loader as imed_loader
+import ivadomed.loader.utils as imed_loader_utils
 from ivadomed.keywords import MetadataKW
 from pathlib import Path
-logger = logging.getLogger(__name__)
+from loguru import logger
+
 
 from testing.unit_tests.test_loader_multi_sessions_cases import case_data_target_specific_session_contrast
 

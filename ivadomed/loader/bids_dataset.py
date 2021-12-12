@@ -78,10 +78,10 @@ class BidsDataset(MRI2DSegmentationDataset):
         idx_dict = {}
         sess_dict = {}
         if multichannel:
-            num_contrast = len(contrast_params[ContrastParamsKW.CONTRAST_LST])
+            num_contrast = len(contrast_params[ContrastParamsKW.CONTRAST_LIST])
             session_list = np.unique([d.split("_")[1] for d in df_subjects['filename'] if "ses-" in d])
 
-            for idx, contrast in enumerate(contrast_params[ContrastParamsKW.CONTRAST_LST]):
+            for idx, contrast in enumerate(contrast_params[ContrastParamsKW.CONTRAST_LIST]):
                 idx_dict[contrast] = idx
 
             for idx, session in enumerate(session_list):
@@ -107,7 +107,7 @@ class BidsDataset(MRI2DSegmentationDataset):
         bounding_box_dict = imed_obj_detect.load_bounding_boxes(object_detection_params,
                                                                 get_all_subj_path,
                                                                 slice_axis,
-                                                                contrast_params[ContrastParamsKW.CONTRAST_LST])
+                                                                contrast_params[ContrastParamsKW.CONTRAST_LIST])
 
         # Get all derivatives filenames from bids_df
         all_deriv = bids_df.get_deriv_fnames()
