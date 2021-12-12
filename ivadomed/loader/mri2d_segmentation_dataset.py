@@ -10,7 +10,7 @@ from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.loader.utils import dropout_input
 from ivadomed.loader.segmentation_pair import SegmentationPair
 from ivadomed.object_detection import utils as imed_obj_detect
-from ivadomed.keywords import ROIParamsKW
+from ivadomed.keywords import ROIParamsKW, MetadataKW
 
 
 class MRI2DSegmentationDataset(Dataset):
@@ -121,8 +121,8 @@ class MRI2DSegmentationDataset(Dataset):
 
                 # If is_2d_patch, create handlers list for indexing patch
                 if self.is_2d_patch:
-                    for metadata in item[0]['input_metadata']:
-                        metadata['index_shape'] = item[0]['input'][0].shape
+                    for metadata in item[0][MetadataKW.INPUT_METADATA]:
+                        metadata[MetadataKW.INDEX_SHAPE] = item[0]['input'][0].shape
                     self.handlers.append((item))
                 # else, append the whole slice to self.indexes
                 else:
