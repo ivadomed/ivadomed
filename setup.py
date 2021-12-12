@@ -32,14 +32,14 @@ setup(
         'Intended Audience :: Developers',
         'Programming Language :: Python :: 3',
     ],
-    python_requires='>=3.6, <3.9',
+    python_requires='>=3.6,<3.10',
     packages=find_packages(exclude=['docs', 'tests']),
     include_package_data=True,
     install_requires=requirements,
     extras_require={
         'docs': [  # pin sphinx to match what RTD uses:
             # https://github.com/readthedocs/readthedocs.org/blob/ecac31de54bbb2c100f933e86eb22b0f4389ba84/requirements/pip.txt#L16
-            'sphinx<2',
+            'sphinx==4.2.0',
             'sphinx-rtd-theme<0.5',
         ],
         'dev': ["pre-commit>=2.10.0"]

@@ -1,8 +1,9 @@
-import os
 import pytest
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
+from pathlib import Path
 
+from ivadomed.loader.bids_dataframe import BidsDataframe
 from ivadomed import metrics as imed_metrics
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
@@ -21,7 +22,7 @@ BATCH_SIZE = 8
 DROPOUT = 0.4
 BN = 0.1
 SLICE_AXIS = "axial"
-__output_dir__ = os.path.join(__tmp_dir__, "output_inference")
+__output_dir__ = Path(__tmp_dir__, "output_inference")
 
 
 def setup_function():
@@ -72,7 +73,7 @@ def test_inference(download_data_testing_test_files, transforms_dict, test_lst, 
     }
     loader_params.update({"model_params": model_params})
 
-    bids_df = imed_loader_utils.BidsDataframe(loader_params, __tmp_dir__, derivatives=True)
+    bids_df = BidsDataframe(loader_params, __tmp_dir__, derivatives=True)
 
     # Get Testing dataset
     ds_test = imed_loader.load_dataset(bids_df, **loader_params)
@@ -108,14 +109,14 @@ def test_inference(download_data_testing_test_files, transforms_dict, test_lst, 
 
     metric_mgr = imed_metrics.MetricManager(metric_fns)
 
-    if not os.path.isdir(__output_dir__):
-        os.makedirs(__output_dir__)
+    if not __output_dir__.is_dir():
+        __output_dir__.mkdir(parents=True, exist_ok=True)
 
     preds_npy, gt_npy = imed_testing.run_inference(test_loader=test_loader,
                                                    model=model,
                                                    model_params=model_params,
                                                    testing_params=testing_params,
-                                                   ofolder=__output_dir__,
+                                                   ofolder=str(__output_dir__),
                                                    cuda_available=cuda_available)
 
     metric_mgr(preds_npy, gt_npy)
@@ -160,7 +161,7 @@ def test_inference_2d_microscopy(download_data_testing_test_files, transforms_di
         "dataset_type": "testing",
         "requires_undo": True,
         "contrast_params": {"contrast_lst": ['SEM'], "balance": {}},
-        "path_data": [os.path.join(__data_testing_dir__, "microscopy_png")],
+        "path_data": [str(Path(__data_testing_dir__, "microscopy_png"))],
         "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
         "target_suffix": target_lst,
         "extensions": [".png"],
@@ -174,7 +175,7 @@ def test_inference_2d_microscopy(download_data_testing_test_files, transforms_di
     }
     loader_params.update({"model_params": model_params})
 
-    bids_df = imed_loader_utils.BidsDataframe(loader_params, __tmp_dir__, derivatives=True)
+    bids_df = BidsDataframe(loader_params, __tmp_dir__, derivatives=True)
 
     # Get Testing dataset
     ds_test = imed_loader.load_dataset(bids_df, **loader_params)
@@ -200,18 +201,18 @@ def test_inference_2d_microscopy(download_data_testing_test_files, transforms_di
         model.cuda()
     model.eval()
 
-    if not os.path.isdir(__output_dir__):
-        os.makedirs(__output_dir__)
+    if not __output_dir__.is_dir():
+        __output_dir__.mkdir(parents=True, exist_ok=True)
 
     preds_npy, gt_npy = imed_testing.run_inference(test_loader=test_loader,
                                                    model=model,
                                                    model_params=model_params,
                                                    testing_params=testing_params,
-                                                   ofolder=__output_dir__,
+                                                   ofolder=str(__output_dir__),
                                                    cuda_available=cuda_available)
 
-    assert len([x for x in os.listdir(__output_dir__) if x.endswith(".nii.gz")]) == len(test_lst)
-    assert len([x for x in os.listdir(__output_dir__) if x.endswith(".png")]) == 2*len(test_lst)
+    assert len([x for x in __output_dir__.iterdir() if x.name.endswith(".nii.gz")]) == len(test_lst)
+    assert len([x for x in __output_dir__.iterdir() if x.name.endswith(".png")]) == 2*len(test_lst)
 
 
 def teardown_function():

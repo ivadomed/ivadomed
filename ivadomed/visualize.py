@@ -1,4 +1,3 @@
-import os
 import matplotlib.animation as anim
 import matplotlib.pyplot as plt
 import numpy as np
@@ -6,6 +5,7 @@ import nibabel as nib
 import torchvision.utils as vutils
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import inference as imed_inference
+from pathlib import Path
 import torch
 import torch.nn.functional as F
 import torch.nn as nn
@@ -199,8 +199,8 @@ def save_feature_map(batch, layer_name, path_output, model, test_input, slice_ax
         test_input (Tensor):
         slice_axis (int): Indicates the axis used for the 2D slice extraction: Sagittal: 0, Coronal: 1, Axial: 2.
     """
-    if not os.path.exists(os.path.join(path_output, layer_name)):
-        os.mkdir(os.path.join(path_output, layer_name))
+    if not Path(path_output, layer_name).exists():
+        Path(path_output, layer_name).mkdir()
 
     # Save for subject in batch
     for i in range(batch['input'].size(0)):
@@ -217,20 +217,28 @@ def save_feature_map(batch, layer_name, path_output, model, test_input, slice_ax
         path = batch["input_metadata"][0][i]["input_filenames"]
 
         basename = path.split('/')[-1]
-        save_directory = os.path.join(path_output, layer_name, basename)
+        save_directory = Path(path_output, layer_name, basename)
 
         # Write the attentions to a nifti image
         nib_ref = nib.load(path)
         nib_ref_can = nib.as_closest_canonical(nib_ref)
         oriented_image = imed_loader_utils.reorient_image(orig_input_img[0, 0, :, :, :], slice_axis, nib_ref, nib_ref_can)
 
-        nib_pred = nib.Nifti1Image(oriented_image, nib_ref.affine)
+        nib_pred = nib.Nifti1Image(
+            dataobj=oriented_image,
+            affine=nib_ref.header.get_best_affine(),
+            header=nib_ref.header.copy()
+        )
         nib.save(nib_pred, save_directory)
 
         basename = basename.split(".")[0] + "_att.nii.gz"
-        save_directory = os.path.join(path_output, layer_name, basename)
+        save_directory = Path(path_output, layer_name, basename)
         attention_map = imed_loader_utils.reorient_image(upsampled_attention[0, 0, :, :, :], slice_axis, nib_ref, nib_ref_can)
-        nib_pred = nib.Nifti1Image(attention_map, nib_ref.affine)
+        nib_pred = nib.Nifti1Image(
+            dataobj=attention_map,
+            affine=nib_ref.header.get_best_affine(),
+            header=nib_ref.header.copy()
+        )
 
         nib.save(nib_pred, save_directory)
 

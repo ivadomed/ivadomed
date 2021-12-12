@@ -13,7 +13,7 @@ import argparse
 import textwrap
 
 from ivadomed import utils as imed_utils
-from ivadomed.keywords import *
+from ivadomed.keywords import IgnoredFolderKW
 
 
 DICT_URL = {
@@ -23,7 +23,7 @@ DICT_URL = {
             `Spine Generic <https://github.com/spine-generic/data-multi-subject>`_.
             Used for Tutorial and example in Ivadomed."""},
     "data_testing": {
-        "url": ["https://github.com/ivadomed/data-testing/archive/r20210628.zip"],
+        "url": ["https://github.com/ivadomed/data-testing/archive/r20210823.zip"],
         "description": "Data Used for integration/unit test in Ivadomed."},
     "t2_tumor": {
         "url": ["https://github.com/ivadomed/t2_tumor/archive/r20200621.zip"],
@@ -48,7 +48,7 @@ DICT_URL = {
         "url": ["https://github.com/ivadomed/model_find_disc_t2/archive/r20200928.zip"],
         "description": "Intervertebral disc detection model trained on T2-weighted images."},
     "data_functional_testing": {
-        "url": ["https://github.com/ivadomed/data_functional_testing/archive/r20210617.zip"],
+        "url": ["https://github.com/ivadomed/data_functional_testing/archive/r20211002.zip"],
         "description": "Data used for functional testing in Ivadomed."
     }
 
