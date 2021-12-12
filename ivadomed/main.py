@@ -20,7 +20,8 @@ from ivadomed import metrics as imed_metrics
 from ivadomed import inference as imed_inference
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, film as imed_film
 from ivadomed.keywords import ConfigKW, ModelParamsKW, LoaderParamsKW, ContrastParamsKW, BalanceSamplesKW, \
-    TrainingParamsKW, ObjectDetectionParamsKW, UncertaintyKW, PostprocessingKW, BinarizeProdictionKW, MetricsKW
+    TrainingParamsKW, ObjectDetectionParamsKW, UncertaintyKW, PostprocessingKW, BinarizeProdictionKW, MetricsKW, \
+    MetadataKW, OptionKW
 from loguru import logger
 from pathlib import Path
 
@@ -81,8 +82,8 @@ def create_path_model(context, model_params, ds_train, path_output, train_onehot
         path_model.mkdir(parents=True)
         if ModelParamsKW.FILM_LAYERS in model_params and any(model_params[ModelParamsKW.FILM_LAYERS]):
             joblib.dump(train_onehotencoder, path_model.joinpath("one_hot_encoder.joblib"))
-            if 'metadata_dict' in ds_train[0]['input_metadata'][0]:
-                metadata_dict = ds_train[0]['input_metadata'][0]['metadata_dict']
+            if MetadataKW.METADATA_DICT in ds_train[0][MetadataKW.INPUT_METADATA][0]:
+                metadata_dict = ds_train[0][MetadataKW.INPUT_METADATA][0][MetadataKW.METADATA_DICT]
                 joblib.dump(metadata_dict, path_model.joinpath("metadata_dict.joblib"))
 
     else:
@@ -166,8 +167,8 @@ def set_model_params(context, loader_params):
         for i in range(len(model_context_list)):
             model_params.update(context[model_context_list[i]])
     elif len(model_context_list) > 1:
-        logger.error('ERROR: Several models are selected in the configuration file: {}.'
-              'Please select only one (i.e. only one where: "applied": true).'.format(model_context_list))
+        logger.error(f'ERROR: Several models are selected in the configuration file: {model_context_list}.'
+              'Please select only one (i.e. only one where: "applied": true).')
         exit()
 
     model_params[ModelParamsKW.IS_2D] = False if ConfigKW.MODIFIED_3D_UNET in model_params[ModelParamsKW.NAME] \
@@ -265,8 +266,8 @@ def run_segment_command(context, model_params):
                         fname_img.append(df_tmp['path'].values[0])
                 seen_subj_ids.append(subj_id)
                 if len(fname_img) != len(contrasts):
-                    logger.warning("Missing contrast for subject {}. {} were provided but {} are required. Skipping "
-                                   "subject.".format(subj_id, provided_contrasts, contrasts))
+                    logger.warning(f"Missing contrast for subject {subj_id}. {provided_contrasts} were provided but "
+                                   f"{contrasts} are required. Skipping subject.")
                     continue
             else:
                 # Returns an empty list for subj_id already seen
@@ -278,11 +279,11 @@ def run_segment_command(context, model_params):
         if ModelParamsKW.FILM_LAYERS in model_params and any(model_params[ModelParamsKW.FILM_LAYERS]) \
                 and model_params[ModelParamsKW.METADATA]:
             metadata = bids_df.df[bids_df.df['filename'] == subject][model_params[ModelParamsKW.METADATA]].values[0]
-            options['metadata'] = metadata
+            options[OptionKW.METADATA] = metadata
 
         # Add microscopy pixel size metadata to options for segment_volume
         if 'PixelSize' in bids_df.df.columns:
-            options['pixel_size'] = bids_df.df.loc[bids_df.df['filename'] == subject]['PixelSize'].values[0]
+            options[OptionKW.PIXEL_SIZE] = bids_df.df.loc[bids_df.df['filename'] == subject][OptionKW.PIXEL_SIZE].values[0]
 
         if fname_img:
             pred_list, target_list = imed_inference.segment_volume(str(path_model),
