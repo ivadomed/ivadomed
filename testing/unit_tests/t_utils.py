@@ -20,6 +20,11 @@ def download_data_testing_test_files():
     download_dataset("data_testing")
 
 
+@pytest.fixture(scope='session')
+def download_data_multi_sessions_contrasts_test_files():
+    # dummy function to download multi sessions contrasts data
+    pass
+
 def create_tmp_dir(copy_data_testing_dir=True):
     """Create a temporary directory for unit_test data and copy test data files.
 

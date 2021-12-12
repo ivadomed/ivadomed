@@ -69,6 +69,7 @@ def test_bounding_box(download_data_testing_test_files, train_lst, target_lst, c
         "requires_undo": False,
         "path_data": [__data_testing_dir__],
         "target_suffix": target_lst,
+        "target_ground_truth": target_lst[0],
         "extensions": [".nii.gz"],
         "slice_filter_params": {"filter_empty_mask": False, "filter_empty_input": True},
         "slice_axis": "axial"

@@ -1,17 +1,17 @@
 import pytest
 import csv_diff
-import logging
 import torch
 import numpy as np
 
 from ivadomed.loader.bids_dataframe import BidsDataframe
 from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__, download_data_testing_test_files, path_repo_root
 from testing.common_testing_util import remove_tmp_dir
-from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.loader import loader as imed_loader
 from ivadomed.keywords import MetadataKW
 from pathlib import Path
 logger = logging.getLogger(__name__)
+
+from testing.unit_tests.test_loader_multi_sessions_cases import case_data_target_specific_session_contrast
 
 
 def setup_function():
@@ -22,6 +22,7 @@ def setup_function():
     "path_data": [str(Path(__data_testing_dir__, "microscopy_png"))],
     "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
     "target_suffix": [["_seg-myelin-manual", "_seg-axon-manual"]],
+    "target_ground_truth": "_seg-myelin-manual",
     "extensions": [".png"],
     "roi_params": {"suffix": None, "slice_filter_roi": None},
     "contrast_params": {"contrast_lst": []}
@@ -47,6 +48,7 @@ def test_bids_df_microscopy_png(download_data_testing_test_files, loader_paramet
 @pytest.mark.parametrize('loader_parameters', [{
     "path_data": [__data_testing_dir__],
     "target_suffix": ["_lesion-manual"],
+    "target_ground_truth": "_lesion-manual",
     "extensions": [],
     "roi_params": {"suffix": "_seg-manual", "slice_filter_roi": None},
     "contrast_params": {"contrast_lst": ["T1w", "T2w"]}
@@ -74,6 +76,7 @@ def test_bids_df_anat(download_data_testing_test_files, loader_parameters):
     "path_data": [__data_testing_dir__, str(Path(__data_testing_dir__, "microscopy_png"))],
     "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
     "target_suffix": ["_seg-manual", "seg-axon-manual"],
+    "target_ground_truth": "_seg-manual",
     "extensions": [".nii.gz", ".png"],
     "roi_params": {"suffix": None, "slice_filter_roi": None},
     "contrast_params": {"contrast_lst": ["T1w", "T2w", "SEM"]}
@@ -98,6 +101,7 @@ def test_bids_df_multi(download_data_testing_test_files, loader_parameters):
     "path_data": [str(Path(__data_testing_dir__, "ct_scan"))],
     "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
     "target_suffix": ["_seg-manual"],
+    "target_ground_truth": "_seg-manual",
     "extensions": [".nii.gz"],
     "roi_params": {"suffix": None, "slice_filter_roi": None},
     "contrast_params": {"contrast_lst": ["ct"]}
@@ -142,6 +146,7 @@ def test_dropout_input(seg_pair):
     "path_data": [str(Path(__data_testing_dir__, "microscopy_png"))],
     "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
     "target_suffix": ["_seg-myelin-manual"],
+    "target_ground_truth": "_seg-myelin-manual",
     "extensions": [".png"],
     "roi_params": {"suffix": None, "slice_filter_roi": None},
     "contrast_params": {"contrast_lst": [], "balance": {}},
@@ -184,6 +189,7 @@ def test_load_dataset_2d_png(download_data_testing_test_files,
     "path_data": [str(Path(__data_testing_dir__, "microscopy_png"))],
     "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
     "target_suffix": ["_seg-myelin-manual"],
+    "target_ground_truth": "_seg-myelin-manual",
     "extensions": [".png"],
     "roi_params": {"suffix": None, "slice_filter_roi": None},
     "contrast_params": {"contrast_lst": [], "balance": {}},
@@ -230,6 +236,7 @@ def test_2d_patches_and_resampling(download_data_testing_test_files,
     "path_data": [str(Path(__data_testing_dir__, "microscopy_png"))],
     "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
     "target_suffix": ["_seg-myelin-manual", "_seg-axon-manual"],
+    "target_ground_truth": "_seg-myelin-manual",
     "extensions": [".png"],
     "roi_params": {"suffix": None, "slice_filter_roi": None},
     "contrast_params": {"contrast_lst": [], "balance": {}},
@@ -266,6 +273,7 @@ def test_get_target_filename_list(loader_parameters, model_parameters, transform
     "path_data": [str(Path(__data_testing_dir__, "microscopy_png"))],
     "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
     "target_suffix": [["_seg-myelin-manual", "_seg-axon-manual"], ["_seg-myelin-manual", "_seg-axon-manual"]],
+    "target_ground_truth": "_seg-myelin-manual",
     "extensions": [".png"],
     "roi_params": {"suffix": None, "slice_filter_roi": None},
     "contrast_params": {"contrast_lst": [], "balance": {}},

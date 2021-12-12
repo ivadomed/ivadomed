@@ -8,7 +8,6 @@ import sys
 import platform
 import multiprocessing
 import re
-
 import numpy as np
 
 from ivadomed.loader.bids_dataframe import BidsDataframe
@@ -176,11 +175,18 @@ def set_model_params(context, loader_params):
     model_params[ModelParamsKW.IS_2D] = False if ConfigKW.MODIFIED_3D_UNET in model_params[ModelParamsKW.NAME] \
         else model_params[ModelParamsKW.IS_2D]
     # Get in_channel from contrast_lst
-    if loader_params[LoaderParamsKW.MULTICHANNEL]:
-        model_params[ModelParamsKW.IN_CHANNEL] = \
-            len(loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.CONTRAST_LST])
+
+    # Multi Channels + Multi Sessions
+    if loader_params["multichannel"] and loader_params.get(LoaderParamsKW.TARGET_SESSIONS):
+        model_params["in_channel"] = len(loader_params.get(LoaderParamsKW.TARGET_SESSIONS)) * \
+        len(loader_params.get(LoaderParamsKW.CONTRAST_PARAMS).get(ContrastParamsKW.CONTRAST_LIST))
+    # Multi Channels Only + Single Session
+    elif loader_params["multichannel"] and not loader_params.get(LoaderParamsKW.TARGET_SESSIONS):
+        model_params["in_channel"] = len(loader_params.get(LoaderParamsKW.CONTRAST_PARAMS).get(ContrastParamsKW.CONTRAST_LIST))
+    # Single Channel + Single Session
     else:
-        model_params[ModelParamsKW.IN_CHANNEL] = 1
+        model_params["in_channel"] = 1
+
     # Get out_channel from target_suffix
     model_params[ModelParamsKW.OUT_CHANNEL] = len(loader_params[LoaderParamsKW.TARGET_SUFFIX])
     # If multi-class output, then add background class

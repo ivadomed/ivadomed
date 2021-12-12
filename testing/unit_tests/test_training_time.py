@@ -10,7 +10,8 @@ from ivadomed.loader.bids_dataframe import BidsDataframe
 from ivadomed import losses as imed_losses
 from ivadomed import models as imed_models
 from ivadomed import utils as imed_utils
-from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
+from ivadomed.loader import loader as imed_loader
+from ivadomed.loader import utils as imed_loader_utils
 from testing.unit_tests.t_utils import create_tmp_dir,  __data_testing_dir__, __tmp_dir__, download_data_testing_test_files
 from testing.common_testing_util import remove_tmp_dir
 
@@ -98,6 +99,7 @@ def test_unet_time(download_data_testing_test_files, train_lst, target_lst, conf
         "requires_undo": False,
         "path_data": [__data_testing_dir__],
         "target_suffix": target_lst,
+        "target_ground_truth": target_lst[0],
         "extensions": [".nii.gz"],
         "slice_filter_params": {"filter_empty_mask": False, "filter_empty_input": True},
         "slice_axis": "axial"

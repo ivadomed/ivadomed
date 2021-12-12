@@ -5,7 +5,8 @@ from torch.utils.data import DataLoader
 
 from ivadomed.loader.bids_dataframe import BidsDataframe
 from ivadomed import utils as imed_utils
-from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
+from ivadomed.loader import loader as imed_loader
+from ivadomed.loader import utils as imed_loader_utils
 from testing.unit_tests.t_utils import create_tmp_dir,  __data_testing_dir__, __tmp_dir__, download_data_testing_test_files
 from testing.common_testing_util import remove_tmp_dir
 
@@ -61,6 +62,7 @@ def test_slice_filter(download_data_testing_test_files, transforms_dict, train_l
         "contrast_params": {"contrast_lst": ['T2w'], "balance": {}},
         "path_data": [__data_testing_dir__],
         "target_suffix": target_lst,
+        "target_ground_truth": target_lst[0],
         "extensions": [".nii.gz"],
         "roi_params": roi_params,
         "model_params": {"name": "Unet"},
