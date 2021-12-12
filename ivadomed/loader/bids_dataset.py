@@ -1,5 +1,5 @@
 from tqdm import tqdm
-
+import numpy as np
 from ivadomed.loader import film as imed_film
 from ivadomed.loader.mri2d_segmentation_dataset import MRI2DSegmentationDataset
 from ivadomed.object_detection import utils as imed_obj_detect
@@ -76,14 +76,28 @@ class BidsDataset(MRI2DSegmentationDataset):
         # Create multichannel_subjects dictionary for each subject_id
         multichannel_subjects = {}
         idx_dict = {}
+        sess_dict = {}
         if multichannel:
             num_contrast = len(contrast_params[ContrastParamsKW.CONTRAST_LST])
+            session_list = np.unique([d.split("_")[1] for d in df_subjects['filename'] if "ses-" in d])
+
             for idx, contrast in enumerate(contrast_params[ContrastParamsKW.CONTRAST_LST]):
                 idx_dict[contrast] = idx
-            multichannel_subjects = {subject: {"absolute_paths": [None] * num_contrast,
-                                               "deriv_path": None,
-                                               "roi_filename": None,
-                                               SubjectDictKW.METADATA: [None] * num_contrast} for subject in subject_ids}
+
+            for idx, session in enumerate(session_list):
+                sess_dict[session] = idx
+            if session_list.size != 0:
+                multichannel_subjects = {subject: {"absolute_paths": [None] * num_contrast * len(session_list),
+                                                   "deriv_path": None,
+                                                   "roi_filename": None,
+                                                   "metadata": [None] * num_contrast * len(session_list)}
+                                         for subject in subject_ids}
+            else:
+                multichannel_subjects = {subject: {"absolute_paths": [None] * num_contrast,
+                                                   "deriv_path": None,
+                                                   "roi_filename": None,
+                                                   "metadata": [None] * num_contrast}
+                                         for subject in subject_ids}
 
         # Get all subjects path from bids_df for bounding box
         get_all_subj_path = bids_df.df[bids_df.df['filename']
@@ -108,8 +122,8 @@ class BidsDataset(MRI2DSegmentationDataset):
             # Fill multichannel dictionary
             # subj_id is the filename without modality suffix and extension
             if multichannel:
-                multichannel_subjects = self.fill_multichannel_dict(multichannel_subjects, subject, idx_dict, df_sub,
-                                                                    roi_filename, target_filename, metadata)
+                multichannel_subjects = self.fill_multichannel_dict(multichannel_subjects, subject, idx_dict, sess_dict,
+                                                                    df_sub, roi_filename, target_filename, metadata)
             else:
                 self.filename_pairs.append(([df_sub['path'].values[0]],
                                             target_filename, roi_filename, [metadata]))
@@ -155,8 +169,16 @@ class BidsDataset(MRI2DSegmentationDataset):
             metadata_dict[data] = idx
         metadata[MetadataKW.METADATA_DICT] = metadata_dict
 
-    def fill_multichannel_dict(self, multichannel_subjects, subject, idx_dict, df_sub, roi_filename, target_filename, metadata):
-        idx = idx_dict[df_sub['suffix'].values[0]]
+    def fill_multichannel_dict(self, multichannel_subjects, subject, idx_dict, sess_dict, df_sub,
+                               roi_filename, target_filename, metadata):
+
+        if "ses-" not in subject:
+            idx = idx_dict[df_sub['suffix'].values[0]]
+            file_session = []
+        else:
+            file_session = subject.split("_")[1]
+            idx = (len(sess_dict)-1)*sess_dict[file_session] + idx_dict[df_sub['suffix'].values[0]]
+
         subj_id = subject.split('.')[0].split('_')[0]
         multichannel_subjects[subj_id]["absolute_paths"][idx] = df_sub['path'].values[0]
         multichannel_subjects[subj_id]["deriv_path"] = target_filename

@@ -9,6 +9,8 @@ import platform
 import multiprocessing
 import re
 
+import numpy as np
+
 from ivadomed.loader.bids_dataframe import BidsDataframe
 from ivadomed import evaluation as imed_evaluation
 from ivadomed import config_manager as imed_config_manager
@@ -252,23 +254,48 @@ def run_segment_command(context, model_params):
             # Get subject_id for multichannel
             df_sub = bids_df.df.loc[bids_df.df['filename'] == subject]
             subj_id = re.sub(r'_' + df_sub['suffix'].values[0] + '.*', '', subject)
+
+            if "ses-" in subj_id:
+                has_sessions = True
+                subj_id = subj_id.split("_")[0]
+            else:
+                has_sessions = False
+
             if subj_id not in seen_subj_ids:
                 # if subj_id has not been seen yet
                 fname_img = []
                 provided_contrasts = []
                 contrasts = context[ConfigKW.LOADER_PARAMETERS][LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.TESTING]
-                # Keep contrast order
-                for c in contrasts:
-                    df_tmp = bids_df.df[
-                        bids_df.df['filename'].str.contains(subj_id) & bids_df.df['suffix'].str.contains(c)]
-                    if ~df_tmp.empty:
-                        provided_contrasts.append(c)
-                        fname_img.append(df_tmp['path'].values[0])
-                seen_subj_ids.append(subj_id)
-                if len(fname_img) != len(contrasts):
-                    logger.warning(f"Missing contrast for subject {subj_id}. {provided_contrasts} were provided but "
-                                   f"{contrasts} are required. Skipping subject.")
-                    continue
+
+                if has_sessions:
+                    all_subject_images = [d for d in bids_df.df['filename'] if subj_id in d]
+                    session_list = np.unique([d.split("_")[1] for d in all_subject_images])
+                    for session in session_list:
+                        # Keep contrast order
+                        for c in contrasts:
+                            df_tmp = bids_df.df[
+                                bids_df.df['filename'].str.contains(subj_id) &
+                                bids_df.df['suffix'].str.contains(c) &
+                                bids_df.df['filename'].str.contains(session)]
+                            if ~df_tmp.empty:
+                                provided_contrasts.append(c)
+                                fname_img.append(df_tmp['path'].values[0])
+                    seen_subj_ids.append(subj_id)
+
+                else:
+                    # Keep contrast order
+                    for c in contrasts:
+                        df_tmp = bids_df.df[
+                            bids_df.df['filename'].str.contains(subj_id) & bids_df.df['suffix'].str.contains(c)]
+                        if ~df_tmp.empty:
+                            provided_contrasts.append(c)
+                            fname_img.append(df_tmp['path'].values[0])
+                    seen_subj_ids.append(subj_id)
+                    if len(fname_img) != len(contrasts):
+                        logger.warning(f"Missing contrast for subject {subj_id}. {provided_contrasts} were provided but {contrasts} are required. "
+                                       f"Skipping subject.")
+                        continue
+
             else:
                 # Returns an empty list for subj_id already seen
                 fname_img = []
