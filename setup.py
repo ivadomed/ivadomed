@@ -1,8 +1,7 @@
 from codecs import open
-# TODO: use pathlib
 from os import path
 from setuptools import setup, find_packages
-from distutils.core import Command
+from setuptools.command.install import install
 import subprocess
 from sys import platform
 import shlex
@@ -22,19 +21,25 @@ with open(path.join(here, 'ivadomed', 'version.txt')) as f:
 with open(path.join(here, 'requirements.txt'), encoding='utf-8') as f:
     requirements = [line.strip() for line in f if line]
 
-class InstallTorch(Command):
-    description = "Installs the PyTorch utilities"
-    user_options = [
-        ('backend=', '0', '1'),
+class InstallTorch(install):
+    """ A custom command to install PyTorch Utilities """    
+    description = "Installs PyTorch utilities"
+    user_options = install.user_options + [
+        ('backend=', None, '0: CPU or 1:GPU'),
     ]
     
     def initialize_options(self):
-        self.backend = '0'
+        """ Set default values for custom options """
+        super().initialize_options()
+        self.backend = None
     
     def finalize_options(self):
-        assert self.backend in ('0', '1'), 'Invalid backend!'
+        """ Sanity check for custom options """
+        assert self.backend in ('0', '1'), 'Choose a backend 0:CPU or 1:GPU to install ivadomed!'
+        super().finalize_options()
         
     def run(self):
+        """ Run install command """
         if self.backend == '0' and platform == 'darwin':
             command = f'pip install torch==1.8.0 torchvision==0.9.0 -f https://download.pytorch.org/whl/torch_stable.html'
         elif self.backend == '0' and platform != 'darwin':
@@ -42,33 +47,32 @@ class InstallTorch(Command):
         elif self.backend == '1':
             command = f'pip install torch==1.8.1+cu111 torchvision==0.9.1+cu111 -f https://download.pytorch.org/whl/torch_stable.html'
         
-        # TODO: inside try except
         subprocess.run(shlex.split(command))
 
 extra_requirements = {}
 
-extra_requirements['dev'] = sorted(
-        'pytest~=6.2',
-        'pytest-cov',
-        'pytest-ordering~=0.6',
-        'sphinx',
-        'flake8',
-        'coverage',
-        'coveralls',
-        'pypandoc',
-        'sphinx_rtd_theme',
-        'sphinx-jsonschema~=1.16',
-        'pytest-console-scripts~=1.1',
-        'pre-commit>=2.10.1',
-        'sphinx-tabs==3.2.0'
-)
+# extra_requirements['dev'] = sorted(
+#         'pytest~=6.2',
+#         'pytest-cov',
+#         'pytest-ordering~=0.6',
+#         'sphinx',
+#         'flake8',
+#         'coverage',
+#         'coveralls',
+#         'pypandoc',
+#         'sphinx_rtd_theme',
+#         'sphinx-jsonschema~=1.16',
+#         'pytest-console-scripts~=1.1',
+#         'pre-commit>=2.10.1',
+#         'sphinx-tabs==3.2.0'
+# )
 # {
 #         'docs': [  # pin sphinx to match what RTD uses:
 #             # https://github.com/readthedocs/readthedocs.org/blob/ecac31de54bbb2c100f933e86eb22b0f4389ba84/requirements/pip.txt#L16
 #             'sphinx==4.2.0',
 #             'sphinx-rtd-theme<0.5',
 
-
+ 
 setup(
     name='ivadomed',
     version=version,
