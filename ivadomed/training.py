@@ -21,7 +21,7 @@ from ivadomed import utils as imed_utils
 from ivadomed import visualize as imed_visualize
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.loader.balanced_sampler import BalancedSampler
-from ivadomed.keywords import ModelParamsKW, ConfigKW, BalanceSamplesKW, TrainingParamsKW
+from ivadomed.keywords import ModelParamsKW, ConfigKW, BalanceSamplesKW, TrainingParamsKW, MetadataKW
 
 cudnn.benchmark = True
 
@@ -60,7 +60,7 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
     sampler_train, shuffle_train = get_sampler(dataset_train, conditions,
                                                training_params[TrainingParamsKW.BALANCE_SAMPLES][BalanceSamplesKW.TYPE])
 
-    train_loader = DataLoader(dataset_train, batch_size=training_params["batch_size"],
+    train_loader = DataLoader(dataset_train, batch_size=training_params[TrainingParamsKW.BATCH_SIZE],
                               shuffle=shuffle_train, pin_memory=True, sampler=sampler_train,
                               collate_fn=imed_loader_utils.imed_collate,
                               num_workers=0)
@@ -70,7 +70,7 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
         sampler_val, shuffle_val = get_sampler(dataset_val, conditions,
                                                training_params[TrainingParamsKW.BALANCE_SAMPLES][BalanceSamplesKW.TYPE])
 
-        val_loader = DataLoader(dataset_val, batch_size=training_params["batch_size"],
+        val_loader = DataLoader(dataset_val, batch_size=training_params[TrainingParamsKW.BATCH_SIZE],
                                 shuffle=shuffle_val, pin_memory=True, sampler=sampler_val,
                                 collate_fn=imed_loader_utils.imed_collate,
                                 num_workers=0)
@@ -79,9 +79,9 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
         if n_gif > 0:
             indexes_gif = random.sample(range(len(dataset_val)), n_gif)
         for i_gif in range(n_gif):
-            random_metadata = dict(dataset_val[indexes_gif[i_gif]]["input_metadata"][0])
-            gif_dict["image_path"].append(random_metadata['input_filenames'])
-            gif_dict["slice_id"].append(random_metadata['slice_index'])
+            random_metadata = dict(dataset_val[indexes_gif[i_gif]][MetadataKW.INPUT_METADATA][0])
+            gif_dict["image_path"].append(random_metadata[MetadataKW.INPUT_FILENAMES])
+            gif_dict["slice_id"].append(random_metadata[MetadataKW.SLICE_INDEX])
             gif_obj = imed_visualize.AnimatedGif(size=dataset_val[indexes_gif[i_gif]]["input"].numpy()[0].shape)
             gif_dict["gif"].append(copy.copy(gif_obj))
 
@@ -176,7 +176,7 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
             # RUN MODEL
             if model_params[ModelParamsKW.NAME] == ConfigKW.HEMIS_UNET or \
                     (ModelParamsKW.FILM_LAYERS in model_params and any(model_params[ModelParamsKW.FILM_LAYERS])):
-                metadata = get_metadata(batch["input_metadata"], model_params)
+                metadata = get_metadata(batch[MetadataKW.INPUT_METADATA], model_params)
                 preds = model(input_samples, metadata)
             else:
                 preds = model(input_samples)
@@ -234,7 +234,7 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
                     # RUN MODEL
                     if model_params[ModelParamsKW.NAME] == ConfigKW.HEMIS_UNET or \
                             (ModelParamsKW.FILM_LAYERS in model_params and any(model_params[ModelParamsKW.FILM_LAYERS])):
-                        metadata = get_metadata(batch["input_metadata"], model_params)
+                        metadata = get_metadata(batch[MetadataKW.INPUT_METADATA], model_params)
                         preds = model(input_samples, metadata)
                     else:
                         preds = model(input_samples)
@@ -247,7 +247,7 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
                     # Add frame to GIF
                     for i_ in range(len(input_samples)):
                         im, pr, met = input_samples[i_].cpu().numpy()[0], preds[i_].cpu().numpy()[0], \
-                                      batch["input_metadata"][i_][0]
+                                      batch[MetadataKW.INPUT_METADATA][i_][0]
                         for i_gif in range(n_gif):
                             if gif_dict["image_path"][i_gif] == met.__getitem__('input_filenames') and \
                                     gif_dict["slice_id"][i_gif] == met.__getitem__('slice_index'):

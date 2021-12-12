@@ -158,7 +158,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
             # Store the values of gammas and betas after the last epoch for each batch
             gammas_dict, betas_dict, metadata_values_lst = store_film_params(gammas_dict, betas_dict,
                                                                              metadata_values_lst,
-                                                                             batch['input_metadata'], model,
+                                                                             batch[MetadataKW.INPUT_METADATA], model,
                                                                              model_params[ModelParamsKW.FILM_LAYERS],
                                                                              model_params[ModelParamsKW.DEPTH],
                                                                              model_params[ModelParamsKW.METADATA])
@@ -178,13 +178,13 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
 
         # LOOP ACROSS SAMPLES
         for smp_idx in range(len(preds_cpu)):
-            if "bounding_box" in batch['input_metadata'][smp_idx][0]:
+            if "bounding_box" in batch[MetadataKW.INPUT_METADATA][smp_idx][0]:
                 imed_obj_detect.adjust_undo_transforms(testing_params["undo_transforms"].transforms, batch, smp_idx)
 
             if model_params[ModelParamsKW.IS_2D]:
                 preds_idx_arr = None
-                idx_slice = batch['input_metadata'][smp_idx][0]['slice_index']
-                n_slices = batch['input_metadata'][smp_idx][0]['data_shape'][-1]
+                idx_slice = batch[MetadataKW.INPUT_METADATA][smp_idx][0]['slice_index']
+                n_slices = batch[MetadataKW.INPUT_METADATA][smp_idx][0]['data_shape'][-1]
                 last_slice_bool = (idx_slice + 1 == n_slices)
                 last_sample_bool = (last_batch_bool and smp_idx == len(preds_cpu) - 1)
 
@@ -308,7 +308,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                         # TODO: put back the code below. See #720
                         # imed_visualize.save_color_labels(pred_undo,
                         #                              False,
-                        #                              batch['input_metadata'][smp_idx][0]['input_filenames'],
+                        #                              batch[MetadataKW.INPUT_METADATA][smp_idx][0]['input_filenames'],
                         #                              fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
                         #                              slice_axis)
 
