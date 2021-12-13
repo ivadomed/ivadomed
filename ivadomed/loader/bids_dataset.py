@@ -144,9 +144,9 @@ class BidsDataset(MRI2DSegmentationDataset):
         super().__init__(self.filename_pairs, length, stride, slice_axis, cache, transform, slice_filter_fn, task, self.roi_params,
                          self.soft_gt, is_input_dropout)
 
-    def get_target_filename(self, target_suffix, target_filename, derivative):
+    def update_target_filename(self, target_suffix, target_filename, derivative):
         """
-        Update Target_File Name.
+        Update target_filename array IF there is a match.
         Args:
             target_suffix:
             target_filename:
@@ -164,10 +164,6 @@ class BidsDataset(MRI2DSegmentationDataset):
                         target_filename[index].append(derivative)
             elif suffixes in derivative:
                 target_filename[index] = derivative
-
-        # Return updated target_file name
-        return target_filename
-
 
     def create_metadata_dict(self, metadata, metadata_choice, df_sub, bids_df):
         # add custom data to metadata
@@ -218,11 +214,19 @@ class BidsDataset(MRI2DSegmentationDataset):
         else:
             target_filename, roi_filename = [[] for _ in range(len(target_suffix))], None
 
-        derivatives: list = bids_df.df[bids_df.df['filename']
-                        .str.contains('|'.join(bids_df.get_derivatives(subject, all_deriv)))]['path'].to_list()
+        # Filter the dataframe, for file name which matches ONE of the subject specific derivatives, among ALL derivatives
+        # Then gather their path output to a list.
+        derivatives: list = bids_df.df[
+            bids_df.df['filename'].str.contains(
+                '|'.join(bids_df.get_derivatives(subject, all_deriv))
+            )
+        ]['path'].to_list()
 
         for derivative in derivatives:
-            target_filename = self.get_target_filename(target_suffix, target_filename, derivative)
+
+            # Update the target_filename list
+            self.update_target_filename(target_suffix, target_filename, derivative)
+
             if not (self.roi_params[ROIParamsKW.SUFFIX] is None) and self.roi_params[ROIParamsKW.SUFFIX] in derivative:
                 roi_filename = [derivative]
 

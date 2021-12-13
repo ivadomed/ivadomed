@@ -72,6 +72,9 @@ class BidsDataframe:
         if any(isinstance(t, list) for t in self.target_suffix):
             self.target_suffix = list(itertools.chain.from_iterable(self.target_suffix))
 
+        # This is different from target_suffix because suffix will eventually include ROI_suffix
+        self.target_ground_truth: List[str] = copy.deepcopy(self.target_suffix)
+
         self.roi_suffix: str = loader_params[LoaderParamsKW.ROI_PARAMS][ROIParamsKW.SUFFIX]
 
         # If `roi_suffix` is not None, add to target_suffix
@@ -616,12 +619,6 @@ class BidsDataframe:
             logger.warning(f"Missing roi_suffix {self.roi_suffix} for {subject_filename}. Skipping.")
             return
 
-        # This additional layer of filtering for only ROI suffix.
-        list_roi_derivatives = list(filter(
-            lambda a_derivative_filename: self.roi_suffix in a_derivative_filename,
-            list_subject_available_derivatives
-        ))
-
         # Go through each suffix (aka ground truth label): e.g. "_lesion-manual"
         target_suffix: str
 
@@ -633,7 +630,7 @@ class BidsDataframe:
                 # Map the check function to the file list
                 filter(
                     lambda a_derivative: target_suffix in a_derivative,
-                    list_roi_derivatives
+                    list_subject_available_derivatives
                 )
             )
 
