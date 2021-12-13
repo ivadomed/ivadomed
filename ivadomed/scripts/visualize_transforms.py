@@ -13,7 +13,7 @@ from ivadomed.loader.sample_meta_data import SampleMetadata
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
 from ivadomed import maths as imed_maths
-from ivadomed.keywords import ConfigKW, TransformationKW, LoaderParamsKW
+from ivadomed.keywords import ConfigKW, TransformationKW, LoaderParamsKW, MetadataKW
 
 
 def get_parser():
@@ -141,12 +141,12 @@ def run_visualization(input, config, number, output, roi):
         for i in indexes:
             data = [input_data[:, :, i]]
             # Init metadata
-            metadata = SampleMetadata({"zooms": zooms, "data_type": "gt" if is_mask else "im"})
+            metadata = SampleMetadata({MetadataKW.ZOOMS: zooms, MetadataKW.DATA_TYPE: "gt" if is_mask else "im"})
 
             # Apply transformations to ROI
             if TransformationKW.CENTERCROP in training_transforms or \
                     (TransformationKW.ROICROP in training_transforms and Path(roi).is_file()):
-                metadata.__setitem__('crop_params', {})
+                metadata.__setitem__(MetadataKW.CROP_PARAMS, {})
 
             # Apply transformations to image
             stack_im, _ = composed_transforms(sample=data,
