@@ -1,5 +1,7 @@
 import pytest
 import numpy as np
+import pprint
+
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
 
@@ -7,8 +9,10 @@ from ivadomed.loader.bids_dataframe import BidsDataframe
 from ivadomed import utils as imed_utils
 from ivadomed.loader import loader as imed_loader
 from ivadomed.loader import utils as imed_loader_utils
-from testing.unit_tests.t_utils import create_tmp_dir,  __data_testing_dir__, __tmp_dir__, download_data_testing_test_files
+from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__, \
+    download_data_testing_test_files
 from testing.common_testing_util import remove_tmp_dir
+from loguru import logger
 
 cudnn.benchmark = True
 
@@ -29,7 +33,7 @@ def _cmpt_slice(ds_loader):
                 cmpt_label[1] += 1
             else:
                 cmpt_label[0] += 1
-    print(cmpt_label)
+    logger.info(cmpt_label)
     return cmpt_label[0], cmpt_label[1]
 
 
@@ -48,7 +52,8 @@ def _cmpt_slice(ds_loader):
 @pytest.mark.parametrize('roi_params', [
     {"suffix": "_seg-manual", "slice_filter_roi": 10},
     {"suffix": None, "slice_filter_roi": 0}])
-def test_slice_filter(download_data_testing_test_files, transforms_dict, train_lst, target_lst, roi_params, slice_filter_params):
+def test_slice_filter(download_data_testing_test_files, transforms_dict, train_lst, target_lst, roi_params,
+                      slice_filter_params):
     if "ROICrop" in transforms_dict and roi_params["suffix"] is None:
         return
 
@@ -62,7 +67,6 @@ def test_slice_filter(download_data_testing_test_files, transforms_dict, train_l
         "contrast_params": {"contrast_lst": ['T2w'], "balance": {}},
         "path_data": [__data_testing_dir__],
         "target_suffix": target_lst,
-        "target_ground_truth": target_lst[0],
         "extensions": [".nii.gz"],
         "roi_params": roi_params,
         "model_params": {"name": "Unet"},
@@ -71,16 +75,20 @@ def test_slice_filter(download_data_testing_test_files, transforms_dict, train_l
         "multichannel": False
     }
     # Get Training dataset
+    import json
+    logger.debug(f"Loader Params are:")
+    logger.debug("\n"+json.dumps(loader_params, indent=4,))
+
     bids_df = BidsDataframe(loader_params, __tmp_dir__, derivatives=True)
     ds_train = imed_loader.load_dataset(bids_df, **loader_params)
 
-    print('\tNumber of loaded slices: {}'.format(len(ds_train)))
+    logger.info('\tNumber of loaded slices: {}'.format(len(ds_train)))
 
     train_loader = DataLoader(ds_train, batch_size=BATCH_SIZE,
                               shuffle=True, pin_memory=True,
                               collate_fn=imed_loader_utils.imed_collate,
                               num_workers=0)
-    print('\tNumber of Neg/Pos slices in GT.')
+    logger.info('\tNumber of Neg/Pos slices in GT.')
     cmpt_neg, cmpt_pos = _cmpt_slice(train_loader)
     if slice_filter_params["filter_empty_mask"]:
         assert cmpt_neg == 0

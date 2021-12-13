@@ -711,7 +711,6 @@ def test_config_sha256(download_data_testing_test_files, initial_config):
         "contrast_params": {"contrast_lst": ['T2w'], "balance": {}},
         "path_data": [__data_testing_dir__],
         "target_suffix": ["_lesion-manual"],
-        "target_ground_truth": "_lesion-manual",
         "extensions": [".nii.gz"],
         "roi_params": {"suffix": None, "slice_filter_roi": 10},
         "slice_filter_params": {

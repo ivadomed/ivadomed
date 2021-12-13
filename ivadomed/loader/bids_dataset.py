@@ -145,15 +145,28 @@ class BidsDataset(MRI2DSegmentationDataset):
                          self.soft_gt, is_input_dropout)
 
     def get_target_filename(self, target_suffix, target_filename, derivative):
-        for idx, suffix_list in enumerate(target_suffix):
-            # If suffix_list is a string, then only one rater annotation per class is available.
+        """
+        Update Target_File Name.
+        Args:
+            target_suffix:
+            target_filename:
+            derivative:
+
+        Returns:
+
+        """
+        for index, suffixes in enumerate(target_suffix):
+            # If suffixes is a string, then only one rater annotation per class is available.
             # Otherwise, multiple raters segmented the same class.
-            if isinstance(suffix_list, list):
-                for suffix in suffix_list:
+            if isinstance(suffixes, list):
+                for suffix in suffixes:
                     if suffix in derivative:
-                        target_filename[idx].append(derivative)
-            elif suffix_list in derivative:
-                target_filename[idx] = derivative
+                        target_filename[index].append(derivative)
+            elif suffixes in derivative:
+                target_filename[index] = derivative
+
+        # Return updated target_file name
+        return target_filename
 
 
     def create_metadata_dict(self, metadata, metadata_choice, df_sub, bids_df):
@@ -198,21 +211,31 @@ class BidsDataset(MRI2DSegmentationDataset):
             c[contrast] = c[contrast] + 1
             if c[contrast] / tot[contrast] > contrast_params[ContrastParamsKW.BALANCE][contrast]:
                 return
+
+        # Appropriately instantiate target_filename and roi_filename to their respective type, simple or nested lists.
         if isinstance(target_suffix[0], str):
             target_filename, roi_filename = [None] * len(target_suffix), None
         else:
             target_filename, roi_filename = [[] for _ in range(len(target_suffix))], None
 
-        derivatives = bids_df.df[bids_df.df['filename']
+        derivatives: list = bids_df.df[bids_df.df['filename']
                         .str.contains('|'.join(bids_df.get_derivatives(subject, all_deriv)))]['path'].to_list()
 
         for derivative in derivatives:
-            self.get_target_filename(target_suffix, target_filename, derivative)
+            target_filename = self.get_target_filename(target_suffix, target_filename, derivative)
             if not (self.roi_params[ROIParamsKW.SUFFIX] is None) and self.roi_params[ROIParamsKW.SUFFIX] in derivative:
                 roi_filename = [derivative]
 
-        if (not any(target_filename)) or (not (self.roi_params[ROIParamsKW.SUFFIX] is None) and (roi_filename is None)):
+        # Multiline check for valid target_filename and valid roi_filename before proceeding
+        missing_target_filename: bool = not any(target_filename)
+
+        require_roi_suffix: bool = not self.roi_params[ROIParamsKW.SUFFIX] is None
+        roi_file_is_empty: bool = roi_filename is None
+        missing_roi_filename: bool = require_roi_suffix and roi_file_is_empty
+
+        if missing_target_filename or missing_roi_filename:
             return
+
 
         metadata = df_sub.to_dict(orient='records')[0]
         metadata[MetadataKW.CONTRAST] = contrast
