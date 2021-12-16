@@ -812,7 +812,7 @@ class RandomReverse(ImedTransform):
 
         # Run flip
         for idx_axis, flip_bool in enumerate(flip_axes):
-            if flip_axes:
+            if flip_bool:
                 sample = np.flip(sample, axis=idx_axis).copy()
 
         return sample, metadata
