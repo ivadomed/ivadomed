@@ -1625,6 +1625,38 @@ Available Transformations:
         }
     }
 
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "RandomGamma",
+        "type": "dict",
+        "$$description": [
+            "Randomly changes the contrast of an image by gamma exponential."
+        ],
+        "options": {
+            "log_gamma_range": {
+                "type": "(float, float)",
+                "description": "Log gamma range for changing contrast."
+            },
+            "p": {
+                "type": "float"
+            }
+        }
+    }
+
+.. code-block:: JSON
+
+    {
+        "transformation": {
+            "RandomGamma": {
+                "log_gamma_range": [-3.0, 3.0],
+                "p": 0.5,
+                "applied_to": ["im"],
+                "dataset_type": ["training"]
+            }
+        }
+    }
 
 .. _Uncertainty:
 
