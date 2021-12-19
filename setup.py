@@ -1,10 +1,7 @@
 from codecs import open
 from os import path
 from setuptools import setup, find_packages
-from setuptools.command.install import install
-import subprocess
-from sys import platform
-import shlex
+from platform import python_version, uname, mac_ver
 
 here = path.abspath(path.dirname(__file__))
 
@@ -19,60 +16,117 @@ with open(path.join(here, 'ivadomed', 'version.txt')) as f:
 # Manually specified, more generic version of the software.
 # See: https://stackoverflow.com/a/49684835
 with open(path.join(here, 'requirements.txt'), encoding='utf-8') as f:
-    requirements = [line.strip() for line in f if line]
+    requirements = f.readlines()
 
-class InstallTorch(install):
-    """ A custom command to install PyTorch Utilities """    
-    description = "Installs PyTorch utilities"
-    user_options = install.user_options + [
-        ('backend=', None, '0: CPU or 1:GPU'),
+
+def get_whl_info():
+    """Returns the whl info to handpick torch whls.
+
+    whl format: {dist}-{version}(-{build})?-{python_tag}-{abi_tag}-{platform}.whl
+
+    Returns:
+        str, str, str: python_tag, abi_tag, platform.
+    """
+    py_version = python_version()[0:3].replace('.','')
+    python_tag = f'cp{py_version}'
+
+    if py_version == '36' or py_version == '37':
+        abi_tag = f'{python_tag}m'
+    elif py_version == '38' or py_version == '39':
+        abi_tag = python_tag
+
+    sysinfo = uname()
+    if sysinfo.system == 'Linux':
+        if sysinfo.machine == 'x86_64':
+            platform = 'linux_x86_64'
+            return python_tag, abi_tag, platform
+        elif sysinfo.machine == 'aarch64':
+            raise ValueError(f"ivadomed doesn't handpick torch whls for {sysinfo.machine}, \
+            install torch==1.8.0+cpu, torchvision==0.9.0+cpu or torch==1.8.1+cu111, torchvision==0.9.1+cu111 \
+            from https://pytorch.org/get-started/previous-versions/")
+    elif sysinfo.system == 'Windows' and sysinfo.machine == 'AMD64':
+        platform = 'win_amd64'
+        return python_tag, abi_tag, platform
+    elif sysinfo.system == 'Darwin':
+        macinfo = mac_ver()
+        if macinfo[0].startswith('10') and macinfo[2] == 'x86_64':
+            platform = 'macosx_10_9_x86_64'
+            return python_tag, abi_tag, platform
+
+
+def get_torch_whls(backend):
+    """Handpicks whls for torch and torchvision based on the backend.
+
+    Args:
+        backend (str): cpu or gpu
+
+    Returns:
+        list[str]: List of handpicked torch et al. whls
+    """
+    python_tag, abi_tag, platform = get_whl_info()
+    if backend == 'cpu':
+        if platform.startswith('macosx'):
+            _torch_whl = f'-{python_tag}-none-{platform}.whl'
+            torch_whl = f'torch@https://download.pytorch.org/whl/cpu/torch-1.8.0{_torch_whl}'
+            _torchvision_whl = f'-{python_tag}-{abi_tag}-{platform}.whl'
+            torchvision_whl = f'torchvision@https://download.pytorch.org/whl/torchvision-0.9.0{_torchvision_whl}'
+            return torch_whl, torchvision_whl
+        else:
+            whl = f'%2B{backend}-{python_tag}-{abi_tag}-{platform}.whl'
+            torch_whl = f'torch@https://download.pytorch.org/whl/cpu/torch-1.8.0{whl}'
+            torchvision_whl = f'torchvision@https://download.pytorch.org/whl/cpu/torchvision-0.9.0{whl}'
+            return torch_whl, torchvision_whl
+    elif backend == 'gpu':
+        if platform.startswith('macosx'):
+            raise ValueError("MacOS Binaries don't support CUDA, install from source if CUDA is needed")
+        else:
+            backend = 'cu111'
+            whl = f'%2B{backend}-{python_tag}-{abi_tag}-{platform}.whl'
+            torch_whl = f'torch@https://download.pytorch.org/whl/cu111/torch-1.8.1{whl}'
+            torchvision_whl = f'torchvision@https://download.pytorch.org/whl/cu111/torchvision-0.9.1{whl}'
+            return torch_whl, torchvision_whl
+
+extra_requirements = {
+    'cpu': [
+        requirements,
+        get_torch_whls(backend='cpu')
+    ],
+    'gpu': [
+        requirements,
+        get_torch_whls(backend='gpu'),
+    ],
+    'docs':[
+        # pin sphinx to match what RTD uses:
+        # https://github.com/readthedocs/readthedocs.org/blob/ecac31de54bbb2c100f933e86eb22b0f4389ba84/requirements/pip.txt#L16
+        'sphinx==4.2.0',
+        'sphinx-rtd-theme<0.5',
     ]
-    
-    def initialize_options(self):
-        """ Set default values for custom options """
-        super().initialize_options()
-        self.backend = None
-    
-    def finalize_options(self):
-        """ Sanity check for custom options """
-        assert self.backend in ('0', '1'), 'Choose a backend 0:CPU or 1:GPU to install ivadomed!'
-        super().finalize_options()
-        
-    def run(self):
-        """ Run install command """
-        if self.backend == '0' and platform == 'darwin':
-            command = f'pip install torch==1.8.0 torchvision==0.9.0 -f https://download.pytorch.org/whl/torch_stable.html'
-        elif self.backend == '0' and platform != 'darwin':
-            command = f'pip install torch==1.8.0+cpu torchvision==0.9.0+cpu -f https://download.pytorch.org/whl/torch_stable.html'
-        elif self.backend == '1':
-            command = f'pip install torch==1.8.1+cu111 torchvision==0.9.1+cu111 -f https://download.pytorch.org/whl/torch_stable.html'
-        
-        subprocess.run(shlex.split(command))
+}
 
-extra_requirements = {}
+extra_requirements['dev'] = [
+    extra_requirements['gpu'],
+    'pytest~=6.2',
+    'pytest-cov',
+    'pytest-ordering~=0.6',
+    'sphinx',
+    'flake8',
+    'coverage',
+    'coveralls',
+    'pypandoc',
+    'sphinx_rtd_theme',
+    'sphinx-jsonschema~=1.16',
+    'pytest-console-scripts~=1.1',
+    'pre-commit>=2.10.1',
+    'sphinx-tabs==3.2.0'
+    ]
 
-# extra_requirements['dev'] = sorted(
-#         'pytest~=6.2',
-#         'pytest-cov',
-#         'pytest-ordering~=0.6',
-#         'sphinx',
-#         'flake8',
-#         'coverage',
-#         'coveralls',
-#         'pypandoc',
-#         'sphinx_rtd_theme',
-#         'sphinx-jsonschema~=1.16',
-#         'pytest-console-scripts~=1.1',
-#         'pre-commit>=2.10.1',
-#         'sphinx-tabs==3.2.0'
-# )
-# {
-#         'docs': [  # pin sphinx to match what RTD uses:
-#             # https://github.com/readthedocs/readthedocs.org/blob/ecac31de54bbb2c100f933e86eb22b0f4389ba84/requirements/pip.txt#L16
-#             'sphinx==4.2.0',
-#             'sphinx-rtd-theme<0.5',
+extra_requirements['inference'] = [
+    requirements,
+    extra_requirements['cpu'],
+    'onnxruntime==1.7.0'
+]
 
- 
+
 setup(
     name='ivadomed',
     version=version,
@@ -90,11 +144,7 @@ setup(
     python_requires='>=3.6,<3.10',
     packages=find_packages(exclude=['docs', 'tests']),
     include_package_data=True,
-    install_requires=requirements,
     extras_require=extra_requirements,
-    cmdclass={
-        'install': InstallTorch,
-    },
     entry_points={
         'console_scripts': [
             'ivadomed=ivadomed.main:run_main',
