@@ -1,10 +1,13 @@
+from typing import List
+
+import pandas as pd
 from tqdm import tqdm
 import numpy as np
 from ivadomed.loader import film as imed_film
 from ivadomed.loader.mri2d_segmentation_dataset import MRI2DSegmentationDataset
 from ivadomed.object_detection import utils as imed_obj_detect
-from ivadomed.keywords import ROIParamsKW, ContrastParamsKW, ModelParamsKW, MetadataKW, SubjectDictKW
-
+from ivadomed.keywords import ROIParamsKW, ContrastParamsKW, ModelParamsKW, MetadataKW, SubjectDictKW, BidsDataFrameKW
+from loguru import logger
 
 class BidsDataset(MRI2DSegmentationDataset):
     """ BIDS specific dataset loader.
@@ -65,7 +68,7 @@ class BidsDataset(MRI2DSegmentationDataset):
                for contrast in contrast_params[ContrastParamsKW.BALANCE].keys()}
 
         # Create a counter that helps to balance the contrasts
-        c = {contrast: 0 for contrast in contrast_params[ContrastParamsKW.BALANCE].keys()}
+        contrast_counter = {contrast: 0 for contrast in contrast_params[ContrastParamsKW.BALANCE].keys()}
 
         # Get a list of subject_ids for multichannel_subjects (prefix filename without modality suffix and extension)
         subject_ids = []
@@ -115,10 +118,14 @@ class BidsDataset(MRI2DSegmentationDataset):
         # Create filename_pairs
         for subject in tqdm(subject_file_lst, desc="Loading dataset"):
             df_sub, roi_filename, target_filename, metadata = self.create_filename_pair(multichannel_subjects, subject,
-                                                                                        c, tot, multichannel, df_subjects,
+                                                                                        contrast_counter, tot, multichannel, df_subjects,
                                                                                         contrast_params, target_suffix,
                                                                                         all_deriv, bids_df, bounding_box_dict,
                                                                                         idx_dict, metadata_choice)
+            # Reject check to skip current subject.
+            if df_sub is None or target_filename is None or metadata is None:
+                continue
+
             # Fill multichannel dictionary
             # subj_id is the filename without modality suffix and extension
             if multichannel:
@@ -144,26 +151,95 @@ class BidsDataset(MRI2DSegmentationDataset):
         super().__init__(self.filename_pairs, length, stride, slice_axis, cache, transform, slice_filter_fn, task, self.roi_params,
                          self.soft_gt, is_input_dropout)
 
-    def update_target_filename(self, target_suffix, target_filename, derivative):
+    def validate_derivative_path_to_update_target_filename(self,
+                                                           derivative_path: str,
+                                                           target_suffix: list or List[list],
+                                                           target_filename: list,
+                                                           ):
         """
-        Update target_filename array IF there is a match.
+        FOR the given derivative path, update target_filename array IF there is a match between the TARGET SUFFIX
         Args:
-            target_suffix:
+            target_suffix: list of target suffix to check.
             target_filename:
-            derivative:
+            derivative_path: string indicative of the path of a single derivative file
 
         Returns:
 
         """
+        # Go through each suffix.
         for index, suffixes in enumerate(target_suffix):
             # If suffixes is a string, then only one rater annotation per class is available.
-            # Otherwise, multiple raters segmented the same class.
-            if isinstance(suffixes, list):
+            if isinstance(suffixes, str):
+                if suffixes in derivative_path:
+                    target_filename[index] = derivative_path
+            # Otherwise, multiple raters segmented the same class and we need to check EACH of them.
+            elif isinstance(suffixes, list):
                 for suffix in suffixes:
-                    if suffix in derivative:
-                        target_filename[index].append(derivative)
-            elif suffixes in derivative:
-                target_filename[index] = derivative
+                    # Check if the suffix string is a part of the derivative_path string.
+                    if suffix in derivative_path:
+                        target_filename[index].append(derivative_path)
+
+
+    def get_most_relevant_target_filename(self, subject_file_name: str, target_suffix: str or list, bids_df_derivatives: pd.DataFrame):
+        """
+        Among all potential ground truth out there across sessions, choose the most appropriate one based on either
+        session match OR first sorted session.
+        Args:
+            subject_file_name: str, name of the subject modality file
+            target_suffix: list of target suffix to check.
+            bids_df_derivatives: dataframe of derivatives which are ground truth across SESSIONS and MODALITY.
+
+        Returns:
+
+        """
+        # Empty instantiate target_filename and roi_filename to their respective type, simple or nested lists.
+        if isinstance(target_suffix[0], str):
+            target_filename = [None] * len(target_suffix)
+        else:
+            target_filename = [
+                [] for _ in range(len(target_suffix))
+            ]
+
+        # If there is session in the original file data:
+        if "_ses-" in subject_file_name:
+
+            # String process to get the session information from subject.
+            subject_session: str = ""
+            name_parts = subject_file_name.split("_")
+            for part in name_parts:
+                if "ses-" in part:
+                    subject_session = part
+                    break
+
+            # Further filter the bids_df_derivatives for matching sessions:
+            list_session_matched_derivative_path: list = bids_df_derivatives[
+                bids_df_derivatives[BidsDataFrameKW.FILENAME].str.contains(subject_session)
+            ][BidsDataFrameKW.PATH].to_list()
+
+            # Early empty return.
+            if not list_session_matched_derivative_path:
+                return target_filename
+
+            list_derivative_path = list_session_matched_derivative_path
+
+        # if not sort path (as session is already ascending) and use the EARLIEST session data.
+        else:
+
+            # Further filter the bids_df_derivatives for matching sessions:
+            list_session_non_matched_derivative_path: list = bids_df_derivatives[BidsDataFrameKW.PATH].to_list()
+
+            # Early empty return.
+            if not list_session_non_matched_derivative_path:
+                return target_filename
+
+            list_derivative_path = list_session_non_matched_derivative_path
+
+        # In the end, go through the respective derivative path, identify best target_file name
+        for derivative_path in list_derivative_path:
+            self.validate_derivative_path_to_update_target_filename(derivative_path, target_suffix, target_filename)
+
+
+        return target_filename, list_derivative_path
 
     def create_metadata_dict(self, metadata, metadata_choice, df_sub, bids_df):
         # add custom data to metadata
@@ -197,38 +273,68 @@ class BidsDataset(MRI2DSegmentationDataset):
         return multichannel_subjects
 
 
-    def create_filename_pair(self, multichannel_subjects, subject, c, tot, multichannel, df_subjects, contrast_params,
-                            target_suffix, all_deriv, bids_df, bounding_box_dict, idx_dict, metadata_choice):
-        df_sub = df_subjects.loc[df_subjects['filename'] == subject]
+    def create_filename_pair(self, multichannel_subjects, subject: str, contrast_counter, tot, multichannel, df_subjects, contrast_params,
+                             target_suffix, all_deriv, bids_df, bounding_box_dict, idx_dict, metadata_choice):
+        """
 
+        Args:
+            multichannel_subjects:
+            subject: str, a file name, representing the subject data, has extension
+            contrast_counter:
+            tot:
+            multichannel:
+            df_subjects:
+            contrast_params:
+            target_suffix:
+            all_deriv: all the derivatives for all subjects.
+            bids_df:
+            bounding_box_dict:
+            idx_dict:
+            metadata_choice:
+
+        Returns:
+
+        """
+
+        # Filter to Get Subject specific dataframes
+        df_sub = df_subjects.loc[df_subjects[BidsDataFrameKW.FILENAME] == subject]
+
+        # ???
         # Training & Validation: do not consider the contrasts over the threshold contained in contrast_balance
-        contrast = df_sub['suffix'].values[0]
+        contrast = df_sub[BidsDataFrameKW.SUFFIX].values[0]
         if contrast in (contrast_params[ContrastParamsKW.BALANCE].keys()):
-            c[contrast] = c[contrast] + 1
-            if c[contrast] / tot[contrast] > contrast_params[ContrastParamsKW.BALANCE][contrast]:
+            contrast_counter[contrast] = contrast_counter[contrast] + 1
+            if contrast_counter[contrast] / tot[contrast] > contrast_params[ContrastParamsKW.BALANCE][contrast]:
                 return
 
-        # Appropriately instantiate target_filename and roi_filename to their respective type, simple or nested lists.
+        # Empty instantiate target_filename and roi_filename to their respective type, simple or nested lists.
         if isinstance(target_suffix[0], str):
-            target_filename, roi_filename = [None] * len(target_suffix), None
+            target_filename = [None] * len(target_suffix)
         else:
-            target_filename, roi_filename = [[] for _ in range(len(target_suffix))], None
+            target_filename = [
+                [] for _ in range(len(target_suffix))
+            ]
+        roi_filename = None
 
-        # Filter the dataframe, for file name which matches ONE of the subject specific derivatives, among ALL derivatives
-        # Then gather their path output to a list.
-        derivatives: list = bids_df.df[
-            bids_df.df['filename'].str.contains(
+        # Filter the dataframe, for specific derivative file names which matches ONE of the subject, among ALL derivatives
+        # Note that this dataframe has NO OTHER INFORMATION, as they are FORCE INDEXED.
+        bids_df_derivatives = bids_df.df[
+            bids_df.df[BidsDataFrameKW.FILENAME].str.contains(
                 '|'.join(bids_df.get_derivatives(subject, all_deriv))
             )
-        ]['path'].to_list()
+        ]
 
-        for derivative in derivatives:
+        # Update the target_filename list by checking if that derivative contain respective target suffix
+        target_filename, list_derivative_path = self.get_most_relevant_target_filename(subject, target_suffix, bids_df_derivatives)
 
-            # Update the target_filename list
-            self.update_target_filename(target_suffix, target_filename, derivative)
+        # Filter BIDS_DF for sessions not nan.
+        # If found same session, use that.
+        # if not sort path (as session is already ascending) and use the EARLIEST session data.
 
-            if not (self.roi_params[ROIParamsKW.SUFFIX] is None) and self.roi_params[ROIParamsKW.SUFFIX] in derivative:
-                roi_filename = [derivative]
+        # Go through each derivative
+        for derivative_path in list_derivative_path:
+            if not (self.roi_params[ROIParamsKW.SUFFIX] is None) and self.roi_params[ROIParamsKW.SUFFIX] in derivative_path:
+                roi_filename = [derivative_path]
 
         # Multiline check for valid target_filename and valid roi_filename before proceeding
         missing_target_filename: bool = not any(target_filename)
@@ -237,22 +343,31 @@ class BidsDataset(MRI2DSegmentationDataset):
         roi_file_is_empty: bool = roi_filename is None
         missing_roi_filename: bool = require_roi_suffix and roi_file_is_empty
 
-        if missing_target_filename or missing_roi_filename:
+        # Early return when missing data.
+        if missing_target_filename:
+            logger.warning(f"Unable to locate either target file name for {subject}.")
+            return
+        elif missing_roi_filename:
+            logger.warning(f"Unable to locate ROI file name for {subject}.")
             return
 
+        # Obtain subject data frame first record as metadata.
+        metadata: dict = df_sub.to_dict(orient='records')[0]
 
-        metadata = df_sub.to_dict(orient='records')[0]
+        # Manually update its contrast
         metadata[MetadataKW.CONTRAST] = contrast
 
         if len(bounding_box_dict):
             # Take only one bounding box for cropping
-            metadata[MetadataKW.BOUNDING_BOX] = bounding_box_dict[str(df_sub['path'].values[0])][0]
+            metadata[MetadataKW.BOUNDING_BOX] = bounding_box_dict[str(df_sub[BidsDataFrameKW.PATH].values[0])][0]
 
+        # Early return if not all meta data are present in MRI parameters.
         if metadata_choice == MetadataKW.MRI_PARAMS:
-            if not all([imed_film.check_isMRIparam(m, metadata, subject, self.metadata) for m in
-                        self.metadata.keys()]):
+            if not all(
+                    [imed_film.check_isMRIparam(m, metadata, subject, self.metadata) for m in self.metadata.keys()]
+            ):
+                logger.warning(f"Not all meta data are present for {subject}")
                 return
-
         elif metadata_choice and metadata_choice != MetadataKW.CONTRASTS and metadata_choice is not None:
             self.create_metadata_dict(metadata, metadata_choice, df_sub, bids_df)
 
