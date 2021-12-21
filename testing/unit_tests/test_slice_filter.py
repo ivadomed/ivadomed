@@ -66,6 +66,7 @@ def test_slice_filter(download_data_testing_test_files, transforms_dict, train_l
         "roi_params": roi_params,
         "model_params": {"name": "Unet"},
         "slice_filter_params": slice_filter_params,
+        "patch_filter_params": {"filter_empty_mask": False, "filter_empty_input": False},
         "slice_axis": "axial",
         "multichannel": False
     }
@@ -86,59 +87,6 @@ def test_slice_filter(download_data_testing_test_files, transforms_dict, train_l
         assert cmpt_pos != 0
     else:
         # We verify if there are still some negative slices (they are removed with our filter)
-        assert cmpt_neg != 0 and cmpt_pos != 0
-
-
-@pytest.mark.parametrize('transforms_dict', [{"CenterCrop": {"size": [128, 128], "applied_to": ["im", "gt"]}}])
-@pytest.mark.parametrize('train_lst', [['sub-rat3_ses-01_sample-data9_SEM.png']])
-@pytest.mark.parametrize('target_lst', [["_seg-axon-manual", "_seg-myelin-manual"]])
-@pytest.mark.parametrize('slice_filter_params', [
-    {"filter_empty_mask_patch": False, "filter_empty_input_patch":  True},
-    {"filter_empty_mask_patch": True, "filter_empty_input_patch": True}])
-@pytest.mark.parametrize('dataset_type', ["training", "testing"])
-def test_patch_filter(download_data_testing_test_files, transforms_dict, train_lst, target_lst, slice_filter_params,
-    dataset_type):
-
-    cuda_available, device = imed_utils.define_device(GPU_ID)
-
-    loader_params = {
-        "transforms_params": transforms_dict,
-        "data_list": train_lst,
-        "dataset_type": dataset_type,
-        "requires_undo": False,
-        "contrast_params": {"contrast_lst": ['SEM'], "balance": {}},
-        "path_data": [os.path.join(__data_testing_dir__, "microscopy_png")],
-        "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
-        "target_suffix": target_lst,
-        "extensions": [".png"],
-        "roi_params": {"suffix": None, "slice_filter_roi": None},
-        "model_params": {"name": "Unet", "length_2D": [32, 32], "stride_2D": [32, 32]},
-        "slice_filter_params": slice_filter_params,
-        "slice_axis": "axial",
-        "multichannel": False
-    }
-    # Get Training dataset
-    bids_df = BidsDataframe(loader_params, __tmp_dir__, derivatives=True)
-    ds = imed_loader.load_dataset(bids_df, **loader_params)
-
-    print('\tNumber of loaded patches: {}'.format(len(ds)))
-
-    loader = DataLoader(ds, batch_size=BATCH_SIZE,
-                        shuffle=True, pin_memory=True,
-                        collate_fn=imed_loader_utils.imed_collate,
-                        num_workers=0)
-    print('\tNumber of Neg/Pos patches in GT.')
-    cmpt_neg, cmpt_pos = _cmpt_slice(loader)
-    if slice_filter_params["filter_empty_mask_patch"]:
-        if dataset_type == "testing":
-            # Filters on patches are not applied at testing time
-            assert cmpt_neg + cmpt_pos == len(ds)
-        else:
-            # Filters on patches are applied at training time
-            assert cmpt_neg == 0
-            assert cmpt_pos != 0
-    else:
-        # We verify if there are still some negative patches (they are removed with our filter)
         assert cmpt_neg != 0 and cmpt_pos != 0
 
 
