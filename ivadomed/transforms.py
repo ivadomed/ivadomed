@@ -1038,8 +1038,15 @@ class RandomGamma(ImedTransform):
             metadata[MetadataKW.GAMMA] = [None]
 
         if any(metadata[MetadataKW.GAMMA]):
-            # Apply gamma contrast
-            data_out = np.sign(sample) * (np.abs(sample) ** gamma)
+            # Suppress the overflow case (due to exponentiation)
+            with np.errstate(over='ignore'):
+                # Apply gamma contrast
+                data_out = np.sign(sample) * (np.abs(sample) ** gamma)
+
+                # Return original sample and empty metadata if overflow occurs
+                if np.any(np.isinf(data_out)):
+                    metadata[MetadataKW.GAMMA] = [None]
+                    return sample, metadata
 
             # Keep data type
             data_out = data_out.astype(sample.dtype)
