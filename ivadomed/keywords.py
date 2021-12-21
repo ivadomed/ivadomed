@@ -191,6 +191,7 @@ class MetadataKW:
     INPUT_FILENAMES = "input_filenames"
     ROI_METADATA = "roi_metadata"
     PIXEL_SIZE = "PixelSize"
+    PIXEL_SIZE_UNITS = "PixelSizeUnits"
 
 
 @dataclass

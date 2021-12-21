@@ -357,8 +357,8 @@ class SegmentationPair(object):
         """
 
         # Get pixel size units from json metadata and set conversion factor from pixel size units to mm
-        if "PixelSizeUnits" in self.metadata[0]:
-            pixel_size_units = self.metadata[0]["PixelSizeUnits"]
+        if MetadataKW.PIXEL_SIZE_UNITS in self.metadata[0]:
+            pixel_size_units = self.metadata[0][MetadataKW.PIXEL_SIZE_UNITS]
             if pixel_size_units == "mm":
                 conversion_factor = 1          # Conversion factor from mm to mm
             elif pixel_size_units == "um":
