@@ -6,6 +6,7 @@ import numpy as np
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.loader.sample_meta_data import SampleMetadata
 from ivadomed import postprocessing as imed_postpro
+from ivadomed.keywords import MetadataKW
 
 
 class SegmentationPair(object):
@@ -95,8 +96,8 @@ class SegmentationPair(object):
         if self.metadata:
             self.metadata = []
             for data, input_filename in zip(metadata, input_filenames):
-                data["input_filenames"] = input_filename
-                data["gt_filenames"] = gt_filenames
+                data[MetadataKW.INPUT_FILENAMES] = input_filename
+                data[MetadataKW.GT_FILENAMES] = gt_filenames
                 self.metadata.append(data)
 
     def get_pair_shapes(self):
@@ -169,23 +170,21 @@ class SegmentationPair(object):
             if gt is not None:
                 if not isinstance(gt, list):  # this tissue has annotation from only one rater
                     gt_meta_dict.append(SampleMetadata({
-                        "zooms": imed_loader_utils.orient_shapes_hwd(gt.header.get_zooms(), self.slice_axis),
-                        "data_shape": imed_loader_utils.orient_shapes_hwd(gt.header.get_data_shape(), self.slice_axis),
-                        "gt_filenames": self.metadata[0]["gt_filenames"],
-                        "bounding_box": self.metadata[0]["bounding_box"] if 'bounding_box' in self.metadata[
-                            0] else None,
-                        "data_type": 'gt',
-                        "crop_params": {}
+                        MetadataKW.ZOOMS: imed_loader_utils.orient_shapes_hwd(gt.header.get_zooms(), self.slice_axis),
+                        MetadataKW.DATA_SHAPE: imed_loader_utils.orient_shapes_hwd(gt.header.get_data_shape(), self.slice_axis),
+                        MetadataKW.GT_FILENAMES: self.metadata[0].get(MetadataKW.GT_FILENAMES),
+                        MetadataKW.BOUNDING_BOX: self.metadata[0].get(MetadataKW.BOUNDING_BOX),
+                        MetadataKW.DATA_TYPE: 'gt',
+                        MetadataKW.CROP_PARAMS: {}
                     }))
                 else:
                     gt_meta_dict.append([SampleMetadata({
-                        "zooms": imed_loader_utils.orient_shapes_hwd(gt_rater.header.get_zooms(), self.slice_axis),
-                        "data_shape": imed_loader_utils.orient_shapes_hwd(gt_rater.header.get_data_shape(), self.slice_axis),
-                        "gt_filenames": self.metadata[0]["gt_filenames"][idx_class][idx_rater],
-                        "bounding_box": self.metadata[0]["bounding_box"] if 'bounding_box' in self.metadata[
-                            0] else None,
-                        "data_type": 'gt',
-                        "crop_params": {}
+                        MetadataKW.ZOOMS: imed_loader_utils.orient_shapes_hwd(gt_rater.header.get_zooms(), self.slice_axis),
+                        MetadataKW.DATA_SHAPE: imed_loader_utils.orient_shapes_hwd(gt_rater.header.get_data_shape(), self.slice_axis),
+                        MetadataKW.GT_FILENAMES: self.metadata[0].get(MetadataKW.GT_FILENAMES)[idx_class][idx_rater],
+                        MetadataKW.BOUNDING_BOX: self.metadata[0].get(MetadataKW.BOUNDING_BOX),
+                        MetadataKW.DATA_TYPE: 'gt',
+                        MetadataKW.CROP_PARAMS: {}
                     }) for idx_rater, gt_rater in enumerate(gt)])
 
             else:
@@ -200,23 +199,23 @@ class SegmentationPair(object):
         input_meta_dict = []
         for handle in self.input_handle:
             input_meta_dict.append(SampleMetadata({
-                "zooms": imed_loader_utils.orient_shapes_hwd(handle.header.get_zooms(), self.slice_axis),
-                "data_shape": imed_loader_utils.orient_shapes_hwd(handle.header.get_data_shape(), self.slice_axis),
-                "data_type": 'im',
-                "crop_params": {}
+                MetadataKW.ZOOMS: imed_loader_utils.orient_shapes_hwd(handle.header.get_zooms(), self.slice_axis),
+                MetadataKW.DATA_SHAPE: imed_loader_utils.orient_shapes_hwd(handle.header.get_data_shape(), self.slice_axis),
+                MetadataKW.DATA_TYPE: 'im',
+                MetadataKW.CROP_PARAMS: {}
             }))
 
         dreturn = {
-            "input_metadata": input_meta_dict,
-            "gt_metadata": gt_meta_dict,
+            MetadataKW.INPUT_METADATA: input_meta_dict,
+            MetadataKW.GT_METADATA: gt_meta_dict,
         }
 
         for idx, metadata in enumerate(self.metadata):  # loop across channels
-            metadata["slice_index"] = slice_index
-            metadata["coord"] = coord
+            metadata[MetadataKW.SLICE_INDEX] = slice_index
+            metadata[MetadataKW.COORD] = coord
             self.metadata[idx] = metadata
             for metadata_key in metadata.keys():  # loop across input metadata
-                dreturn["input_metadata"][idx][metadata_key] = metadata[metadata_key]
+                dreturn[MetadataKW.INPUT_METADATA][idx][metadata_key] = metadata[metadata_key]
 
         return dreturn
 
@@ -263,8 +262,8 @@ class SegmentationPair(object):
         dreturn = {
             "input": input_slices,
             "gt": gt_slices,
-            "input_metadata": metadata["input_metadata"],
-            "gt_metadata": metadata["gt_metadata"],
+            MetadataKW.INPUT_METADATA: metadata.get(MetadataKW.INPUT_METADATA),
+            MetadataKW.GT_METADATA: metadata.get(MetadataKW.GT_METADATA),
         }
 
         return dreturn
@@ -363,8 +362,8 @@ class SegmentationPair(object):
         array_length = [2, 3]        # Accepted array length for 'PixelSize' metadata
         conversion_factor = 0.001    # Conversion factor from um to mm
 
-        if 'PixelSize' in self.metadata[0]:
-            ps_in_um = self.metadata[0]['PixelSize']
+        if MetadataKW.PIXEL_SIZE in self.metadata[0]:
+            ps_in_um = self.metadata[0][MetadataKW.PIXEL_SIZE]
 
             if isinstance(ps_in_um, list) and (len(ps_in_um) in array_length):
                 # PixelSize array in order [PixelSizeX, PixelSizeY] or [PixelSizeX, PixelSizeY, PixelSizeZ]

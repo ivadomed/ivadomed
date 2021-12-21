@@ -1,3 +1,22 @@
+## v2.9.1 (2021-12-13)
+[View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.9.0...release)
+
+**ENHANCEMENT**
+
+- Add forced indexation of "micr" datatype.  [View pull request](https://github.com/ivadomed/ivadomed/pull/995)
+- Apply transforms on 2D patches.  [View pull request](https://github.com/ivadomed/ivadomed/pull/982)
+
+**DOCUMENTATION**
+
+- Update Tutorial 1/2/3 and readme.md to fix minor display issues.  [View pull request](https://github.com/ivadomed/ivadomed/pull/992)
+- Update installation instruction to fit recent CUDA11 and torch 1.8+ push.  [View pull request](https://github.com/ivadomed/ivadomed/pull/969)
+
+**REFACTORING**
+
+- Fully Remove HeMIS model, Adaptive and h5py/HDF5.  [View pull request](https://github.com/ivadomed/ivadomed/pull/984)
+- Use keywords for the rest of the files.  [View pull request](https://github.com/ivadomed/ivadomed/pull/946)
+
+
 ## v2.9.0 (2021-11-14)
 [View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.8.0...release)
 

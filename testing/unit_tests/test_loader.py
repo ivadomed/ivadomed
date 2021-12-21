@@ -9,6 +9,7 @@ from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __t
 from testing.common_testing_util import remove_tmp_dir
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.loader import loader as imed_loader
+from ivadomed.keywords import MetadataKW
 from pathlib import Path
 logger = logging.getLogger(__name__)
 
@@ -221,7 +222,7 @@ def test_2d_patches_and_resampling(download_data_testing_test_files,
                                                              'dataset_type': 'training'}})
     assert ds.is_2d_patch == True
     assert ds[0]['input'].shape == (1, 256, 128)
-    assert ds[0]['input_metadata'][0].metadata['index_shape'] == (1512, 382)
+    assert ds[0]['input_metadata'][0].metadata[MetadataKW.INDEX_SHAPE] == (1512, 382)
     assert len(ds) == 28
 
 
