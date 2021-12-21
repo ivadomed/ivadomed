@@ -6,10 +6,11 @@ from ivadomed.loader.bids3d_dataset import Bids3DDataset
 from ivadomed.loader.bids_dataset import BidsDataset
 from ivadomed.keywords import ROIParamsKW, TransformationKW, ModelParamsKW, ConfigKW
 from ivadomed.loader.slice_filter import SliceFilter
+from ivadomed.loader.patch_filter import PatchFilter
 
 
 def load_dataset(bids_df, data_list, transforms_params, model_params, target_suffix, roi_params,
-                 contrast_params, slice_filter_params, slice_axis, multichannel,
+                 contrast_params, slice_filter_params, patch_filter_params, slice_axis, multichannel,
                  dataset_type="training", requires_undo=False, metadata_type=None,
                  object_detection_params=None, soft_gt=False, device=None,
                  cuda_available=None, is_input_dropout=False, **kwargs):
@@ -26,6 +27,7 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
         roi_params (dict): Contains ROI related parameters.
         contrast_params (dict): Contains image contrasts related parameters.
         slice_filter_params (dict): Contains slice_filter parameters, see :doc:`configuration_file` for more details.
+        patch_filter_params (dict): Contains patch_filter parameters, see :doc:`configuration_file` for more details.
         slice_axis (string): Choice between "axial", "sagittal", "coronal" ; controls the axis used to extract the 2D
             data from 3D NifTI files. 2D PNG/TIF/JPG files use default "axial.
         multichannel (bool): If True, the input contrasts are combined as input channels for the model. Otherwise, each
@@ -98,7 +100,8 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
                               multichannel=multichannel,
                               slice_filter_fn=SliceFilter(**slice_filter_params,
                                                           device=device,
-                                                          cuda_available=cuda_available,
+                                                          cuda_available=cuda_available),
+                              patch_filter_fn=PatchFilter(**patch_filter_params,
                                                           is_train=False if dataset_type == "testing" else True),
                               soft_gt=soft_gt,
                               object_detection_params=object_detection_params,
