@@ -339,23 +339,21 @@ class SegmentationPair(object):
 
     def get_microscopy_pixelsize(self, filename):
         """
-        Get the microscopy pixel size in millimeters from the metadata.
+        Get the microscopy pixel size from the metadata and convert to millimeters.
 
-        The implementation of this method is dependent on the development of the corresponding
-        microscopy BEP (github.com/ivadomed/ivadomed/issues/301, bids.neuroimaging.io/bep031):
+        The implementation of this method is compliant with BIDS version 1.7.0:
         * "pixdim" (zooms) for Nifti1Image object is extracted as follows:
             * For train, test and segment commands, PixelSize is taken from the metadata in BIDS JSON sidecar file.
-            * For inference with the segment_volume function, PixelSize must be provided in the 'options' argument.
-        * The function supports the PixelSize definition of BIDS BEP031 v0.0.4 as a list of 2-numbers
-          [PixelSizeX, PixelSizeY] or 3-numbers [PixelSizeX, PixelSizeY, PixelSizeZ] in micrometers for 2D and 3D
+            * For inference with the segment_volume function, PixelSize and PixelSizeUnits must be provided in the
+              'options' argument.
+        * The function supports the PixelSize definition of BIDS 1.7.0 as a list of 2-numbers
+          [PixelSizeX, PixelSizeY] or 3-numbers [PixelSizeX, PixelSizeY, PixelSizeZ] for 2D and 3D
           respectively, where X is the width, Y the height and Z the depth of the image.
-        * The function also supports the previous definition of PixelSize as a float (BIDS BEP031 v0.0.2).
-        * In the future BIDS BEP031 v0.0.5 version, a separate field PixelSizeUnits will be used to describe the unit
-          of PixelSize. The only accepted value will be "um" but could be expand in the future.
+        * The function supports the PixelSizeUnits definition of BIDS 1.7.0 as "mm", "um" or "nm".
 
         Returns:
-            ndrray: Pixel size in millimeters in order (PixelSizeY, PixelSizeX, PixelSizeZ), where Y is the height,
-                    X the width and Z the depth of the image.
+            ndrray: Pixel size in millimeters (ps_in_mm) in order (PixelSizeY, PixelSizeX, PixelSizeZ),
+            where Y is the height, X the width and Z the depth of the image.
         """
 
         # Get pixel size units from json metadata and set conversion factor from pixel size units to mm
