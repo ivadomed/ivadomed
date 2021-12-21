@@ -166,7 +166,7 @@ class MRI2DSegmentationDataset(Dataset):
                                    if self.handlers[i][0]['gt'] else [],
                              'input_metadata': self.handlers[i][0]['input_metadata'],
                              'gt_metadata': self.handlers[i][0]['gt_metadata']}
-                    if self.slice_filter_fn and not self.patch_filter_fn(patch):
+                    if self.patch_filter_fn and not self.patch_filter_fn(patch):
                         continue
 
                     self.indexes.append({
