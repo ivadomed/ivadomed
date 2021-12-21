@@ -365,7 +365,7 @@ class SegmentationPair(object):
         if MetadataKW.PIXEL_SIZE in self.metadata[0]:
             ps_in_um = self.metadata[0][MetadataKW.PIXEL_SIZE]
 
-            if isinstance(ps_in_um, list) and (len(ps_in_um) in array_length):
+            if len(ps_in_um) in array_length:
                 # PixelSize array in order [PixelSizeX, PixelSizeY] or [PixelSizeX, PixelSizeY, PixelSizeZ]
                 ps_in_um = np.asarray(ps_in_um)
 
@@ -379,12 +379,9 @@ class SegmentationPair(object):
                 # to match NIfTI pixdim[1,2,3] in [Height, Width, Depth] orientation with axial slice axis.
                 ps_in_um[[1, 0]] = ps_in_um[[0, 1]]
 
-            elif isinstance(ps_in_um, float):
-                ps_in_um = np.asarray([ps_in_um, ps_in_um, ps_in_um])
-
             else:
-                raise RuntimeError("'PixelSize' metadata type is not supported. Format must be a float,"
-                                   " 2D [PixelSizeX, PixelSizeY] array or 3D [PixelSizeX, PixelSizeY, PixelSizeZ] array"
+                raise RuntimeError("'PixelSize' metadata type is not supported. Format must be a 2D"
+                                   " [PixelSizeX, PixelSizeY] array or 3D [PixelSizeX, PixelSizeY, PixelSizeZ] array"
                                    " where X is the width, Y the height and Z the depth of the image.")
 
             ps_in_mm = tuple(ps_in_um * conversion_factor)
