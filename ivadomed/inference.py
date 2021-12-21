@@ -348,6 +348,7 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
             * 'pixel_size': (list of float) List of microscopy pixel size in micrometers. \
                             Length equals 2 [PixelSizeX, PixelSizeY] for 2D or 3 [PixelSizeX, PixelSizeY, PixelSizeZ] for 3D, \
                             where X is the width, Y the height and Z the depth of the image.
+            * 'pixel_size_units': (str) Units of pixel size (Must be either "mm", "um" or "nm")
             * 'overlap_2D': (list of int) List of overlaps in pixels for 2D patching. Length equals 2 [OverlapX, OverlapY], \
                             where X is the width and Y the height of the image.
             * 'metadata': (str) Film metadata.
@@ -420,9 +421,11 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
         # Adjust stride_2D with overlap_2D
         stride_2D = [x1 - x2 for (x1, x2) in zip(length_2D, overlap_2D)]
 
-    # Add microscopy pixel size from options to metadata for filenames_pairs
+    # Add microscopy pixel size and pixel size units from options to metadata for filenames_pairs
     if (options is not None) and (OptionKW.PIXEL_SIZE in options):
         metadata[MetadataKW.PIXEL_SIZE] = options.get(OptionKW.PIXEL_SIZE)
+    if (options is not None) and (OptionKW.PIXEL_SIZE_UNITS in options):
+        metadata[MetadataKW.PIXEL_SIZE_UNITS] = options.get(OptionKW.PIXEL_SIZE_UNITS)
 
     filename_pairs = [(fname_images, None, fname_roi, metadata if isinstance(metadata, list) else [metadata])]
 
