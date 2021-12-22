@@ -295,6 +295,10 @@ def run_segment_command(context, model_params):
                 pred_path.mkdir(parents=True)
 
             for pred, target in zip(pred_list, target_list):
+                # Set the target to first element if the target is a list (e.g. multi-rater setting)
+                if isinstance(target, list):
+                    target = target[0]
+
                 filename = subject.split('.')[0] + target + "_pred" + ".nii.gz"
                 nib.save(pred, Path(pred_path, filename))
 
