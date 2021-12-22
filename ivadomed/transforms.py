@@ -1043,13 +1043,11 @@ class RandomGamma(ImedTransform):
                 # Apply gamma contrast
                 data_out = np.sign(sample) * (np.abs(sample) ** gamma)
 
-                # Return original sample and empty metadata if overflow occurs
-                if np.any(np.isinf(data_out)):
-                    metadata[MetadataKW.GAMMA] = [None]
-                    return sample, metadata
+                # Keep data type
+                data_out = data_out.astype(sample.dtype)
 
-            # Keep data type
-            data_out = data_out.astype(sample.dtype)
+                # Clip +/- inf values to the max/min quantization of the native dtype
+                data_out = np.nan_to_num(data_out)
 
             return data_out, metadata
 
