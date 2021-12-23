@@ -180,6 +180,7 @@ class MetadataKW:
     OFFSET = "offset"
     ELASTIC = "elastic"
     GAUSSIAN_NOISE = "gaussian_noise"
+    GAMMA = "gamma"
     DATA_SHAPE = "data_shape"
     SLICE_INDEX = "slice_index"
     MISSING_MOD = "missing_mod"
