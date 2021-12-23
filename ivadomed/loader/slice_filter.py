@@ -10,17 +10,20 @@ class SliceFilter(object):
 
     Args:
         filter_empty_mask (bool): If True, slices where all voxel labels are zeros are discarded.
-        filter_absent_class (bool): If True, slices where all voxel labels are zero for one or more classes are discarded.
+        filter_absent_class (bool): If True, slices where all voxel labels are zero for one or more classes are
+            discarded.
         filter_empty_input (bool): If True, slices where all voxel intensities are zeros are discarded.
         filter_classification (bool): If True, slices where all images fail a custom classifier filter are discarded.
         device (torch.device): Indicates the CPU or GPU ID.
         cuda_available (bool): If True, CUDA is available.
 
     Attributes:
-        filter_empty_mask (bool): If True, slices where all voxel labels are zeros are discarded.
-        filter_absent_class (bool): If True, slices where all voxel labels are zero for one or more classes are discarded.
-        filter_empty_input (bool): If True, slices where all voxel intensities are zeros are discarded.
+        filter_empty_mask (bool): If True, slices where all voxel labels are zeros are discarded. Default: False.
+        filter_absent_class (bool): If True, slices where all voxel labels are zero for one or more classes are
+            discarded. Default: False.
+        filter_empty_input (bool): If True, slices where all voxel intensities are zeros are discarded. Default: True.
         filter_classification (bool): If True, slices where all images fail a custom classifier filter are discarded.
+            Default: False.
         device (torch.device): Indicates the CPU or GPU ID.
         cuda_available (bool): If True, CUDA is available.
 

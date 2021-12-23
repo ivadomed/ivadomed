@@ -8,14 +8,19 @@ class PatchFilter(object):
 
     Args:
         filter_empty_mask (bool): If True, 2D patches where all voxel labels are zeros are discarded at training time.
-        filter_absent_class (bool): If True, 2D patches where all voxel labels are zero for one or more classes are discarded at training time.
-        filter_empty_input (bool): If True, 2D patches where all voxel intensities are zeros are discarded at training time.
+        filter_absent_class (bool): If True, 2D patches where all voxel labels are zero for one or more classes are
+            discarded at training time.
+        filter_empty_input (bool): If True, 2D patches where all voxel intensities are zeros are discarded
+            at training time.
         is_train (bool): Indicates if at training time.
 
     Attributes:
         filter_empty_mask (bool): If True, 2D patches where all voxel labels are zeros are discarded at training time.
-        filter_absent_class (bool): If True, 2D patches where all voxel labels are zero for one or more classes are discarded at training time.
-        filter_empty_input (bool): If True, 2D patches where all voxel intensities are zeros are discarded at training time.
+            Default: False.
+        filter_absent_class (bool): If True, 2D patches where all voxel labels are zero for one or more classes are
+            discarded at training time. Default: False.
+        filter_empty_input (bool): If True, 2D patches where all voxel intensities are zeros are discarded
+            at training time. Default: False.
         is_train (bool): Indicates if at training time.
 
     """
