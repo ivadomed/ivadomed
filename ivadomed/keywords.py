@@ -182,6 +182,7 @@ class MetadataKW:
     GAUSSIAN_NOISE = "gaussian_noise"
     GAMMA = "gamma"
     BIAS_FIELD = "bias_field"
+    BLUR = "blur"
     DATA_SHAPE = "data_shape"
     SLICE_INDEX = "slice_index"
     MISSING_MOD = "missing_mod"
