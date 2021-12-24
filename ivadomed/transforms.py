@@ -1062,7 +1062,7 @@ class RandomBiasField(ImedTransform):
         Args:
             coefficients (float): Maximum magnitude of polynomial coefficients
             order: Order of the basis polynomial functions
-            p (float): Probability of performing the gamma contrast
+            p (float): Probability of applying the bias field
         """
 
     def __init__(self, coefficients, order, p=0.5):
