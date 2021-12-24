@@ -432,7 +432,7 @@ def dropout_input(seg_pair, drop_param):
 
     Args:
         seg_pair (dict): Batch containing torch tensors (input and gt) and metadata.
-        drop_param (list): [p1, p2, p3], T1w, T2w and T2star have respectively p1, p2 and p3 chances to be dropped.
+        drop_param (list): [p1, ..., pn], channel_1, ... and channel_n have respectively p1, ... and p3 chances to be dropped.
 
     Return:
         seg_pair (dict): Batch containing torch tensors (input and gt) and metadata with channel(s) dropped.
