@@ -14,6 +14,7 @@ from scipy.ndimage.measurements import label, center_of_mass
 from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_closing
 from skimage.exposure import equalize_adapthist
 from torchvision import transforms as torchvision_transforms
+import torchio as tio
 
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.keywords import TransformationKW, MetadataKW
@@ -1173,3 +1174,19 @@ def prepare_transforms(transform_dict, requires_undo=True):
     transforms = Compose(transform_dict, requires_undo=requires_undo)
     tranform_lst = [prepro_transforms if len(preprocessing_transforms) else None, transforms]
     return tranform_lst, training_undo_transform
+
+
+def tio_transform(x, transform):
+    """
+    Applies TorchIO transformations to a given image and returns the transformed image and history.
+
+    Args:
+        x (np.ndarray): input image
+        transform (tio.transforms.Transform): TorchIO transform
+
+    Returns:
+        np.ndarray, list: transformed image, history of parameters used for the applied transformation
+    """
+    tio_subject = tio.Subject(input=tio.ScalarImage(tensor=x[np.newaxis, ...]))
+    transformed = transform(tio_subject)
+    return transformed.input.numpy()[0], transformed.get_composed_history()
