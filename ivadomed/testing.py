@@ -19,6 +19,7 @@ from ivadomed.object_detection import utils as imed_obj_detect
 from ivadomed.loader.film import store_film_params, save_film_params
 from ivadomed.training import get_metadata
 from ivadomed.postprocessing import threshold_predictions
+from ivadomed.keywords import ConfigKW, ModelParamsKW, MetadataKW
 
 cudnn.benchmark = True
 
@@ -113,7 +114,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
     weight_matrix = None
 
     # Create dict containing gammas and betas after each FiLM layer.
-    if 'film_layers' in model_params and any(model_params['film_layers']):
+    if ModelParamsKW.FILM_LAYERS in model_params and any(model_params[ModelParamsKW.FILM_LAYERS]):
         # 2 * model_params["depth"] + 2 is the number of FiLM layers. 1 is added since the range starts at one.
         gammas_dict = {i: [] for i in range(1, 2 * model_params["depth"] + 3)}
         betas_dict = {i: [] for i in range(1, 2 * model_params["depth"] + 3)}
@@ -125,7 +126,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
             # input_samples: list of batch_size tensors, whose size is n_channels X height X width X depth
             # gt_samples: idem with n_labels
             # batch['*_metadata']: list of batch_size lists, whose size is n_channels or n_labels
-            if model_params["name"] == "HeMISUnet":
+            if model_params[ModelParamsKW.NAME] == ConfigKW.HEMIS_UNET:
                 input_samples = imed_utils.cuda(imed_utils.unstack_tensors(batch["input"]), cuda_available)
             else:
                 input_samples = imed_utils.cuda(batch["input"], cuda_available)
@@ -138,34 +139,34 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                         m.train()
 
             # RUN MODEL
-            if model_params["name"] == "HeMISUnet" or \
-                    ('film_layers' in model_params and any(model_params['film_layers'])):
+            if model_params[ModelParamsKW.NAME] == ConfigKW.HEMIS_UNET or \
+                    (ModelParamsKW.FILM_LAYERS in model_params and any(model_params[ModelParamsKW.FILM_LAYERS])):
                 metadata = get_metadata(batch["input_metadata"], model_params)
                 preds = model(input_samples, metadata)
             else:
                 preds = model(input_samples)
 
-        if model_params["name"] == "HeMISUnet":
+        if model_params[ModelParamsKW.NAME] == ConfigKW.HEMIS_UNET:
             # Reconstruct image with only one modality
             input_samples = batch['input'][0]
 
-        if model_params["name"] == "Modified3DUNet" and model_params["attention"] and ofolder:
+        if model_params[ModelParamsKW.NAME] == ConfigKW.MODIFIED_3D_UNET and model_params[ModelParamsKW.ATTENTION] and ofolder:
             imed_visualize.save_feature_map(batch, "attentionblock2", str(Path(ofolder).parent), model, input_samples,
                                             slice_axis=test_loader.dataset.slice_axis)
 
-        if 'film_layers' in model_params and any(model_params['film_layers']):
+        if ModelParamsKW.FILM_LAYERS in model_params and any(model_params[ModelParamsKW.FILM_LAYERS]):
             # Store the values of gammas and betas after the last epoch for each batch
             gammas_dict, betas_dict, metadata_values_lst = store_film_params(gammas_dict, betas_dict,
                                                                              metadata_values_lst,
-                                                                             batch['input_metadata'], model,
-                                                                             model_params["film_layers"],
-                                                                             model_params["depth"],
-                                                                             model_params['metadata'])
+                                                                             batch[MetadataKW.INPUT_METADATA], model,
+                                                                             model_params[ModelParamsKW.FILM_LAYERS],
+                                                                             model_params[ModelParamsKW.DEPTH],
+                                                                             model_params[ModelParamsKW.METADATA])
 
         # PREDS TO CPU
         preds_cpu = preds.cpu()
 
-        task = imed_utils.get_task(model_params["name"])
+        task = imed_utils.get_task(model_params[ModelParamsKW.NAME])
         if task == "classification":
             gt_npy_list.append(gt_samples.cpu().numpy())
             preds_npy_list.append(preds_cpu.data.numpy())
@@ -177,18 +178,18 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
 
         # LOOP ACROSS SAMPLES
         for smp_idx in range(len(preds_cpu)):
-            if "bounding_box" in batch['input_metadata'][smp_idx][0]:
+            if "bounding_box" in batch[MetadataKW.INPUT_METADATA][smp_idx][0]:
                 imed_obj_detect.adjust_undo_transforms(testing_params["undo_transforms"].transforms, batch, smp_idx)
 
-            if model_params["is_2d"]:
+            if model_params[ModelParamsKW.IS_2D]:
                 preds_idx_arr = None
-                idx_slice = batch['input_metadata'][smp_idx][0]['slice_index']
-                n_slices = batch['input_metadata'][smp_idx][0]['data_shape'][-1]
+                idx_slice = batch[MetadataKW.INPUT_METADATA][smp_idx][0]['slice_index']
+                n_slices = batch[MetadataKW.INPUT_METADATA][smp_idx][0]['data_shape'][-1]
                 last_slice_bool = (idx_slice + 1 == n_slices)
                 last_sample_bool = (last_batch_bool and smp_idx == len(preds_cpu) - 1)
 
-                length_2D = model_params["length_2D"] if "length_2D" in model_params else []
-                stride_2D = model_params["stride_2D"] if "stride_2D" in model_params else []
+                length_2D = model_params[ModelParamsKW.LENGTH_2D] if ModelParamsKW.LENGTH_2D in model_params else []
+                stride_2D = model_params[ModelParamsKW.STRIDE_2D] if ModelParamsKW.STRIDE_2D in model_params else []
                 if length_2D:
                     # undo transformations for patch and reconstruct slice
                     preds_idx_undo, metadata_idx, last_patch_bool, image, weight_matrix = \
@@ -206,7 +207,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                     preds_idx_arr = np.array(preds_idx_undo)
 
                     # TODO: gt_filenames should not be a list
-                    fname_ref = list(filter(None, metadata_idx[0]['gt_filenames']))[0]
+                    fname_ref = list(filter(None, metadata_idx[0][MetadataKW.GT_FILENAMES]))[0]
 
                 if preds_idx_arr is not None:
                     # add new sample to pred_tmp_lst, of size n_label X h X w ...
@@ -214,7 +215,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
 
                     # TODO: slice_index should be stored in gt_metadata as well
                     z_tmp_lst.append(int(idx_slice))
-                    filenames = metadata_idx[0]['gt_filenames']
+                    filenames = metadata_idx[0][MetadataKW.GT_FILENAMES]
 
                 # NEW COMPLETE VOLUME
                 if (pred_tmp_lst and ((last_patch_bool and last_slice_bool) or last_sample_bool)
@@ -275,7 +276,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                 # Indicator of last batch
                 if last_sample_bool:
                     pred_undo = np.array(pred_undo)
-                    fname_ref = metadata[0]['gt_filenames'][0]
+                    fname_ref = metadata[0][MetadataKW.GT_FILENAMES][0]
                     if ofolder:
                         fname_pred = str(Path(ofolder, Path(fname_ref).name))
                         fname_pred = fname_pred.split(testing_params['target_suffix'][0])[0] + '_pred.nii.gz'
@@ -297,7 +298,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                     output_data = output_nii.get_fdata().transpose(3, 0, 1, 2)
                     preds_npy_list.append(output_data)
 
-                    gt = get_gt(metadata[0]['gt_filenames'])
+                    gt = get_gt(metadata[0][MetadataKW.GT_FILENAMES])
                     gt_npy_list.append(gt)
                     # Save merged labels with color
 
@@ -307,12 +308,12 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                         # TODO: put back the code below. See #720
                         # imed_visualize.save_color_labels(pred_undo,
                         #                              False,
-                        #                              batch['input_metadata'][smp_idx][0]['input_filenames'],
+                        #                              batch[MetadataKW.INPUT_METADATA][smp_idx][0]['input_filenames'],
                         #                              fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
                         #                              slice_axis)
 
-    if 'film_layers' in model_params and any(model_params['film_layers']):
-        save_film_params(gammas_dict, betas_dict, metadata_values_lst, model_params["depth"],
+    if ModelParamsKW.FILM_LAYERS in model_params and any(model_params[ModelParamsKW.FILM_LAYERS]):
+        save_film_params(gammas_dict, betas_dict, metadata_values_lst, model_params[ModelParamsKW.DEPTH],
                          ofolder.replace("pred_masks", ""))
     return preds_npy_list, gt_npy_list
 

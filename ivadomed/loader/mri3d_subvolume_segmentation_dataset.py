@@ -10,6 +10,7 @@ from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.loader.utils import dropout_input
 from ivadomed.loader.segmentation_pair import SegmentationPair
 from ivadomed.object_detection import utils as imed_obj_detect
+from ivadomed.keywords import MetadataKW
 
 
 class MRI3DSubVolumeSegmentationDataset(Dataset):
@@ -62,8 +63,8 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
             seg_pair = {
                 'input': input_data,
                 'gt': gt_data,
-                'input_metadata': metadata['input_metadata'],
-                'gt_metadata': metadata['gt_metadata']
+                MetadataKW.INPUT_METADATA: metadata[MetadataKW.INPUT_METADATA],
+                MetadataKW.GT_METADATA: metadata[MetadataKW.GT_METADATA]
             }
 
             self.has_bounding_box = imed_obj_detect.verify_metadata(seg_pair, self.has_bounding_box)
@@ -74,8 +75,8 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
             seg_pair, roi_pair = imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
                                                                                 seg_pair=seg_pair)
 
-            for metadata in seg_pair['input_metadata']:
-                metadata['index_shape'] = seg_pair['input'][0].shape
+            for metadata in seg_pair[MetadataKW.INPUT_METADATA]:
+                metadata[MetadataKW.INDEX_SHAPE] = seg_pair['input'][0].shape
             self.handlers.append((seg_pair, roi_pair))
 
     def _prepare_indices(self):
@@ -157,14 +158,14 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
 
         # add coordinates to metadata to reconstruct volume
         for metadata in metadata_input:
-            metadata['coord'] = [coord["x_min"], coord["x_max"], coord["y_min"], coord["y_max"], coord["z_min"],
+            metadata[MetadataKW.COORD] = [coord["x_min"], coord["x_max"], coord["y_min"], coord["y_max"], coord["z_min"],
                                  coord["z_max"]]
 
         subvolumes = {
             'input': torch.zeros(stack_input.shape[0], shape_x, shape_y, shape_z),
             'gt': torch.zeros(stack_gt.shape[0], shape_x, shape_y, shape_z) if stack_gt is not None else None,
-            'input_metadata': metadata_input,
-            'gt_metadata': metadata_gt
+            MetadataKW.INPUT_METADATA: metadata_input,
+            MetadataKW.GT_METADATA: metadata_gt
         }
 
         for _ in range(len(stack_input)):

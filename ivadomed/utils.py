@@ -1,11 +1,11 @@
-import sys
 import os
+import sys
 import subprocess
 import hashlib
 from enum import Enum
 from loguru import logger
 from pathlib import Path
-
+from ivadomed.keywords import ConfigKW, LoaderParamsKW
 from typing import List
 
 AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
@@ -79,7 +79,7 @@ def generate_sha_256(context: dict, df, file_lst: List[str]) -> None:
     assert isinstance(df, DataFrame)
 
     # generating sha256 for list of data
-    context['training_sha256'] = {}
+    context[ConfigKW.TRAINING_SHA256] = {}
     # file_list is a list of filename strings
     for file in file_lst:
         # bids_df is a dataframe with column values path...filename...
@@ -90,7 +90,7 @@ def generate_sha_256(context: dict, df, file_lst: List[str]) -> None:
         with open(file_path, "rb") as f:
             for byte_block in iter(lambda: f.read(4096), b""):
                 sha256_hash.update(byte_block)
-            context['training_sha256'][file] = sha256_hash.hexdigest()
+            context[ConfigKW.TRAINING_SHA256][file] = sha256_hash.hexdigest()
 
 
 def save_onnx_model(model, inputs, model_path):
@@ -356,8 +356,8 @@ def get_command(args, context):
         logger.info("No CLI argument given for command: ( --train | --test | --segment ). Will check config file for command...")
 
         try:
-            if context["command"] == "train" or context["command"] == "test" or context["command"] == "segment":
-                return context["command"]
+            if context[ConfigKW.COMMAND] == "train" or context[ConfigKW.COMMAND] == "test" or context[ConfigKW.COMMAND] == "segment":
+                return context[ConfigKW.COMMAND]
             else:
                 logger.error("Specified invalid command argument in config file.")
         except AttributeError:
@@ -370,8 +370,8 @@ def get_path_output(args, context):
     else:
         logger.info("CLI flag --path-output not used to specify output directory. Will check config file for directory...")
         try:
-            if context["path_output"]:
-                return context["path_output"]
+            if context[ConfigKW.PATH_OUTPUT]:
+                return context[ConfigKW.PATH_OUTPUT]
         except AttributeError:
             logger.error("Have not specified a path-output argument via CLI nor config file.")
 
@@ -382,8 +382,8 @@ def get_path_data(args, context):
     else:
         logger.info("CLI flag --path-data not used to specify BIDS data directory. Will check config file for directory...")
         try:
-            if context["loader_parameters"]["path_data"]:
-                return context["loader_parameters"]["path_data"]
+            if context[ConfigKW.LOADER_PARAMETERS][LoaderParamsKW.PATH_DATA]:
+                return context[ConfigKW.LOADER_PARAMETERS][LoaderParamsKW.PATH_DATA]
         except AttributeError:
             logger.error("Have not specified a path-data argument via CLI nor config file.")
 
