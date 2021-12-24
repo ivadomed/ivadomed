@@ -1696,6 +1696,39 @@ Available Transformations:
         }
     }
 
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "RandomBlur",
+        "type": "dict",
+        "$$description": [
+            "Applies a random blur to the image."
+        ],
+        "options": {
+            "sigma_range": {
+                "type": "(float, float)",
+                "description": "Standard deviation range for the gaussian filter."
+            },
+            "p": {
+                "type": "float"
+            }
+        }
+    }
+
+.. code-block:: JSON
+
+    {
+        "transformation": {
+            "RandomBlur": {
+                "sigma_range": [0.0, 2.0],
+                "p": 0.5,
+                "applied_to": ["im"],
+                "dataset_type": ["training"]
+            }
+        }
+    }
+
 .. _Uncertainty:
 
 Uncertainty
