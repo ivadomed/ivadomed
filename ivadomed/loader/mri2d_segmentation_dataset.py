@@ -58,7 +58,7 @@ class MRI2DSegmentationDataset(Dataset):
         roi_thr (int): If the ROI mask contains less than this number of non-zero voxels, the slice will be discarded
             from the dataset.
         is_input_dropout (bool): Return input with missing modalities.
-        input_dropout_params (list): Dropout parameters.
+        input_dropout_params (list): Dropout parameters: a list [p1, ..., pn] where p_i is the probability of the channel i to be dropped
 
     """
 
