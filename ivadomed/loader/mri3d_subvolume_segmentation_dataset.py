@@ -31,7 +31,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
         truths are thresholded (0.5) after the data augmentation operations.
         is_input_dropout (bool): Return input with missing modalities.
-        input_dropout_params (list): Dropout parameters.
+        input_dropout_params (list): Dropout parameters: a list [p1, ..., pn] where p_i is the probability of the channel i to be dropped
     """
 
     def __init__(self, filename_pairs, transform=None, length=(64, 64, 64), stride=(0, 0, 0), slice_axis=0,
