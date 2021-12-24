@@ -1658,6 +1658,44 @@ Available Transformations:
         }
     }
 
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "RandomBiasField",
+        "type": "dict",
+        "$$description": [
+            "Applies a random MRI bias field artifact to the image via `torchio.RandomBiasField()`"
+        ],
+        "options": {
+            "coefficients": {
+                "type": "float",
+                "description": "Maximum magnitude of polynomial coefficients."
+            },
+            "order": {
+                "type": "int",
+                "description": "Order of the basis polynomial functions."
+            },
+            "p": {
+                "type": "float"
+            }
+        }
+    }
+
+.. code-block:: JSON
+
+    {
+        "transformation": {
+            "RandomBiasField": {
+                "coefficients": 0.5,
+                "order": 3,
+                "p": 0.5,
+                "applied_to": ["im"],
+                "dataset_type": ["training"]
+            }
+        }
+    }
+
 .. _Uncertainty:
 
 Uncertainty
