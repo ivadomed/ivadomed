@@ -22,7 +22,7 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
             contrast is processed individually (ie different sample / tensor).
         object_detection_params (dict): Object dection parameters.
         is_input_dropout (bool): Return input with missing modalities.
-        input_dropout_params (list): Dropout parameters.
+        input_dropout_params (list): Dropout parameters: a list [p1, ..., pn] where p_i is the probability of the channel i to be dropped
     """
 
     def __init__(self, bids_df, subject_file_lst, target_suffix, model_params, contrast_params, slice_axis=2,
