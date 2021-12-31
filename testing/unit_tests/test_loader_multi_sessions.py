@@ -8,9 +8,25 @@ from testing.common_testing_util import remove_tmp_dir, path_data_multi_sessions
     path_data_multi_sessions_contrasts_tmp
 from pytest_cases import parametrize_with_cases
 
-from testing.unit_tests.test_loader_multi_sessions_cases import *
+from testing.unit_tests.test_loader_multi_sessions_session_cases import *
+from testing.unit_tests.test_loader_multi_sessions_contrasts_cases import *
+from testing.unit_tests.test_loader_multi_sessions_ground_truth_cases import *
 from loguru import logger
 from ivadomed.keywords import BidsDataFrameKW, LoaderParamsKW
+
+# A default dict which subsequent tests attempt to deviate from
+default_loader_parameters: dict = {
+    LoaderParamsKW.MULTICHANNEL: "true",
+    LoaderParamsKW.TARGET_SESSIONS: ["01", "02", "03", "04"],
+    LoaderParamsKW.PATH_DATA: [path_data_multi_sessions_contrasts_tmp],
+    LoaderParamsKW.TARGET_SUFFIX: ["_lesion-manual-rater1", "_lesion-manual-rater2"],
+    LoaderParamsKW.EXTENSIONS: [".nii", ".nii.gz"],
+    "roi_params": {"suffix": None, "slice_filter_roi": None},
+    LoaderParamsKW.CONTRAST_PARAMS: {
+        ContrastParamsKW.CONTRAST_LIST: ["T1w", "T2w", "FLAIR", "PD"]
+    }
+}
+
 
 def setup_function():
     # Dedicated setup function for multi-session data.
@@ -55,13 +71,16 @@ def bids_dataframe_comparison_framework(loader_parameters: dict, target_csv: str
 
 
 @parametrize_with_cases("loader_parameters, target_csv", cases=[
-    case_data_target_specific_session_contrast,
-    case_data_multi_session_contrast,
-    case_data_target_single_subject_with_session
+    case_more_sessions_than_available,
+    case_less_sessions_than_available,
+    case_partially_available_sessions,
+    case_single_session,
+    case_unavailable_session,
+    case_not_specified_session,
 ])
-def test_bids_multi_sessions_contrasts_dataframe_anat(download_data_multi_sessions_contrasts_test_files,
-                                                      loader_parameters,
-                                                      target_csv):
+def test_multi_sessions_dataframe(download_data_multi_sessions_contrasts_test_files,
+                                  loader_parameters,
+                                  target_csv):
     """
     Test for when multi-sessions and multi-contrasts, how the filtering and ground truth identification process works.
     """
@@ -69,59 +88,35 @@ def test_bids_multi_sessions_contrasts_dataframe_anat(download_data_multi_sessio
 
 
 @parametrize_with_cases("loader_parameters, target_csv", cases=[
-    case_data_multi_session_contrast_missing_modality,
+    case_more_contrasts_than_available,
+    case_less_contrasts_than_available,
+    case_partially_available_contrasts,
+    case_single_contrast,
+    case_unavailable_contrast,
+    case_not_specified_contrast,
 ])
-def test_bids_multi_sessions_contrasts_dataframe_anat_missing_modality(
+def test_multi_contrasts_dataframe(
         download_data_multi_sessions_contrasts_test_files,
         loader_parameters,
         target_csv):
     """
-    Test for when multi-sessions and multi-contrasts, how the filtering and ground truth identification process works.
+    Test for multi-contrasts, how the filtering and ground truth identification process works.
     """
-    file_1 = os.path.join(path_data_multi_sessions_contrasts_tmp, "sub-ms01", "ses-01", "anat",
-                          "sub-ms01_ses-01_T1w.nii")
-    file_2 = os.path.join(path_data_multi_sessions_contrasts_tmp, "sub-ms02", "ses-01", "anat",
-                          "sub-ms02_ses-01_T2w.nii")
-
-    os.remove(file_1)
-    os.remove(file_2)
-
     bids_dataframe_comparison_framework(loader_parameters, target_csv)
 
 
 @parametrize_with_cases("loader_parameters, target_csv", cases=[
-    case_data_multi_session_contrast_mismatching_target_suffix,
+    case_more_ground_truth_than_available,
+    case_less_ground_truth_than_available,
+    case_missing_ground_truth,
 ])
-def test_bids_multi_sessions_contrasts_dataframe_anat_mismatching_target_suffix(
+def test_multi_target_suffix(
         download_data_multi_sessions_contrasts_test_files,
         loader_parameters,
         target_csv):
     """
     Test for when derivative target suffix mismatches
     """
-    try:
-        bids_dataframe_comparison_framework(loader_parameters, target_csv)
-        assert False
-    except RuntimeError:
-        pass
-    except:
-        assert False
-
-
-@parametrize_with_cases("loader_parameters, target_csv", cases=[
-    case_data_multi_session_contrast_missing_session,
-])
-def test_bids_multi_sessions_contrasts_dataframe_anat_missing_session(download_data_multi_sessions_contrasts_test_files,
-                                                                      loader_parameters,
-                                                                      target_csv):
-    """
-    Test for when multi-sessions and multi-contrasts, how the filtering and ground truth identification process works
-    when we have a subject's entire session missing
-    """
-    dir = os.path.join(path_data_multi_sessions_contrasts_tmp, "sub-ms01", "ses-01")
-
-    shutil.rmtree(dir)
-
     bids_dataframe_comparison_framework(loader_parameters, target_csv)
 
 
