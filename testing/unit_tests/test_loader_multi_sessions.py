@@ -1,16 +1,16 @@
 import os
 import csv_diff
-import numpy as np
-import pandas as pd
+import shutil
 
 from ivadomed.loader.bids_dataframe import BidsDataframe
 from testing.unit_tests.t_utils import path_temp, download_data_multi_sessions_contrasts_test_files
-from testing.common_testing_util import remove_tmp_dir, path_data_multi_sessions_contrasts_source, path_data_multi_sessions_contrasts_tmp
+from testing.common_testing_util import remove_tmp_dir, path_data_multi_sessions_contrasts_source, \
+    path_data_multi_sessions_contrasts_tmp
 from pytest_cases import parametrize_with_cases
-import shutil
+
 from testing.unit_tests.test_loader_multi_sessions_cases import *
 from loguru import logger
-
+from ivadomed.keywords import BidsDataFrameKW, LoaderParamsKW
 
 def setup_function():
     # Dedicated setup function for multi-session data.
@@ -24,7 +24,7 @@ def setup_function():
 
 def bids_dataframe_comparison_framework(loader_parameters: dict, target_csv: str):
     """
-    Main test function used to unit tests generated files with expected files.
+    Main test function used to setup a CSV comparison framework between expected vs the output from the test
     Args:
         loader_parameters: dict
         target_csv:
@@ -34,18 +34,18 @@ def bids_dataframe_comparison_framework(loader_parameters: dict, target_csv: str
     """
     # Create the bids frame.
     bids_df = BidsDataframe(loader_parameters,
-                                                                 str(path_data_multi_sessions_contrasts_tmp),
-                                                                 derivatives=True)
+                            str(path_data_multi_sessions_contrasts_tmp),
+                            derivatives=True)
     # Drop path as that can varies across runs.
-    df_test = bids_df.df.drop(columns=['path'])
+    df_test = bids_df.df.drop(columns=[BidsDataFrameKW.PATH])
 
     # Sorting to ensure consistencies.
-    df_test = df_test.sort_values(by=['filename']).reset_index(drop=True)
+    df_test = df_test.sort_values(by=[BidsDataFrameKW.FILENAME]).reset_index(drop=True)
 
     # Compare the output with the target reference CSV from the data repo.
-    csv_ref = os.path.join(loader_parameters["path_data"][0], target_csv)
+    csv_ref = os.path.join(loader_parameters[LoaderParamsKW.PATH_DATA][0], target_csv)
 
-    csv_test = os.path.join(loader_parameters["path_data"][0], "df_test.csv")
+    csv_test = os.path.join(loader_parameters[LoaderParamsKW.PATH_DATA][0], "df_test.csv")
     df_test.to_csv(csv_test, index=False)
 
     # Calculate differences and ensure they are the same.
@@ -71,14 +71,17 @@ def test_bids_multi_sessions_contrasts_dataframe_anat(download_data_multi_sessio
 @parametrize_with_cases("loader_parameters, target_csv", cases=[
     case_data_multi_session_contrast_missing_modality,
 ])
-def test_bids_multi_sessions_contrasts_dataframe_anat_missing_modality(download_data_multi_sessions_contrasts_test_files,
-                                                                       loader_parameters,
-                                                                       target_csv):
+def test_bids_multi_sessions_contrasts_dataframe_anat_missing_modality(
+        download_data_multi_sessions_contrasts_test_files,
+        loader_parameters,
+        target_csv):
     """
     Test for when multi-sessions and multi-contrasts, how the filtering and ground truth identification process works.
     """
-    file_1 = os.path.join(path_data_multi_sessions_contrasts_tmp, "sub-ms01", "ses-01", "anat", "sub-ms01_ses-01_T1w.nii")
-    file_2 = os.path.join(path_data_multi_sessions_contrasts_tmp, "sub-ms02", "ses-01", "anat", "sub-ms02_ses-01_T2w.nii")
+    file_1 = os.path.join(path_data_multi_sessions_contrasts_tmp, "sub-ms01", "ses-01", "anat",
+                          "sub-ms01_ses-01_T1w.nii")
+    file_2 = os.path.join(path_data_multi_sessions_contrasts_tmp, "sub-ms02", "ses-01", "anat",
+                          "sub-ms02_ses-01_T2w.nii")
 
     os.remove(file_1)
     os.remove(file_2)
@@ -89,9 +92,10 @@ def test_bids_multi_sessions_contrasts_dataframe_anat_missing_modality(download_
 @parametrize_with_cases("loader_parameters, target_csv", cases=[
     case_data_multi_session_contrast_mismatching_target_suffix,
 ])
-def test_bids_multi_sessions_contrasts_dataframe_anat_mismatching_target_suffix(download_data_multi_sessions_contrasts_test_files,
-                                                                                loader_parameters,
-                                                                                target_csv):
+def test_bids_multi_sessions_contrasts_dataframe_anat_mismatching_target_suffix(
+        download_data_multi_sessions_contrasts_test_files,
+        loader_parameters,
+        target_csv):
     """
     Test for when derivative target suffix mismatches
     """
@@ -119,6 +123,7 @@ def test_bids_multi_sessions_contrasts_dataframe_anat_missing_session(download_d
     shutil.rmtree(dir)
 
     bids_dataframe_comparison_framework(loader_parameters, target_csv)
+
 
 def teardown_function():
     remove_tmp_dir()

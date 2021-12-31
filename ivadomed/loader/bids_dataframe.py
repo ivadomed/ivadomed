@@ -111,8 +111,8 @@ class BidsDataframe:
         if not self.target_sessions:
             self.target_sessions = []
             logger.warning(f"Loader parameters {LoaderParamsKW.TARGET_SESSIONS} is missing. Presuming  single session "
-                           f"study without session parameters. Multisession analyses needs to be specified: e.g. "
-                           f"{LoaderParamsKW.TARGET_SESSIONS}: [1, 2]")
+                           f"study without session parameters. Multisession analyses needs to EXPLICITLY be specified: "
+                           f"e.g. {LoaderParamsKW.TARGET_SESSIONS}: [1, 2]")
         else:
             # Convert them all to string
             self.target_sessions = list(map(str, self.target_sessions))
@@ -383,7 +383,6 @@ class BidsDataframe:
             for session in self.target_sessions:
                 # Retrieve all subject's information with matching session
                 df_session = df_subject[df_subject[BidsDataFrameKW.SESSION] == session]
-
                 # Validate modality information.
                 if self.validate_modality(df_session):
                     pass
