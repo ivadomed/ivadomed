@@ -136,6 +136,28 @@ Step 3: Install ``torch`` and ``torchvision`` with CPU or GPU Support
 
     .. tabs::
 
+
+        .. tab:: Nvidia GPU Support
+
+            ``ivadomed`` requires CUDA11 to execute properly. If you have a nvidia GPU, try to look up its Cuda Compute Score `here <https://developer.nvidia.com/cuda-gpus>`_, which needs to be > 3.5 to support CUDA11. Then, make sure to upgrade to nvidia driver to be at least v450+ or newer.
+
+            If you have a compatible NVIDIA GPU that supports CUDA11 and with the right driver installed try run the following command relevant to your situation:
+
+            .. tabs::
+
+                .. tab:: All OS
+
+                    .. code::
+
+                       pip install torch==1.8.1+cu111 torchvision==0.9.1+cu111 --find-links https://download.pytorch.org/whl/torch_stable.html
+
+                .. tab:: Repo Installation (Advanced or Developer)
+
+                    Run this only if you have already downloaded/cloned the repo with access to the ``requirement_gpu.txt`` file, then run the following command while at the repository root level:
+                    .. code::
+
+                       pip install -r requirements_gpu.txt
+
         .. tab:: CPU Support
 
             If you plan to run ``ivadomed`` on CPU only, install PyTorch per instructions provided below for your specific operating system:
@@ -161,27 +183,6 @@ Step 3: Install ``torch`` and ``torchvision`` with CPU or GPU Support
                     .. code::
 
                         pip install -r requirements.txt
-
-        .. tab:: Nvidia GPU Support
-
-            ``ivadomed`` requires CUDA11 to execute properly. If you have a nvidia GPU, try to look up its Cuda Compute Score `here <https://developer.nvidia.com/cuda-gpus>`_, which needs to be > 3.5 to support CUDA11. Then, make sure to upgrade to nvidia driver to be at least v450+ or newer.
-
-            If you have a compatible NVIDIA GPU that supports CUDA11 and with the right driver installed try run the following command relevant to your situation:
-
-            .. tabs::
-
-                .. tab:: All OS
-
-                    .. code::
-
-                       pip install torch==1.8.1+cu111 torchvision==0.9.1+cu111 --find-links https://download.pytorch.org/whl/torch_stable.html
-
-                .. tab:: Repo Installation (Advanced or Developer)
-
-                    Run this only if you have already downloaded/cloned the repo with access to the ``requirement_gpu.txt`` file, then run the following command while at the repository root level:
-                    .. code::
-
-                       pip install -r requirements_gpu.txt
 
 
 Developer-only Installation Steps
