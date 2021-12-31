@@ -136,53 +136,47 @@ Step 3: Install ``torch`` and ``torchvision`` with CPU or GPU Support
 
     .. tabs::
 
-
-        .. tab:: Nvidia GPU Support
-
-            ``ivadomed`` requires CUDA11 to execute properly. If you have a nvidia GPU, try to look up its Cuda Compute Score `here <https://developer.nvidia.com/cuda-gpus>`_, which needs to be > 3.5 to support CUDA11. Then, make sure to upgrade to nvidia driver to be at least v450+ or newer.
-
-            If you have a compatible NVIDIA GPU that supports CUDA11 and with the right driver installed try run the following command relevant to your situation:
+        .. tab:: PyPI Installation
 
             .. tabs::
 
-                .. tab:: All OS
+                .. tab:: Nvidia GPU Support
+
+                    ``ivadomed`` requires CUDA11 to execute properly. If you have a nvidia GPU, try to look up its Cuda Compute Score `here <https://developer.nvidia.com/cuda-gpus>`_, which needs to be > 3.5 to support CUDA11. Then, make sure to upgrade to nvidia driver to be at least v450+ or newer.
+
+                    If you have a compatible NVIDIA GPU that supports CUDA11 and with the right driver installed try run the following command relevant to your situation:
 
                     .. code::
 
                        pip install torch==1.8.1+cu111 torchvision==0.9.1+cu111 --find-links https://download.pytorch.org/whl/torch_stable.html
 
-                .. tab:: Repo Installation (Advanced or Developer)
+                .. tab:: CPU Support
 
-                    Run this only if you have already downloaded/cloned the repo with access to the ``requirement_gpu.txt`` file, then run the following command while at the repository root level:
-                    .. code::
+                    If you plan to run ``ivadomed`` on CPU only, install PyTorch per instructions provided below for your specific operating system:
 
-                       pip install -r requirements_gpu.txt
+                    .. tabs::
 
-        .. tab:: CPU Support
+                        .. tab:: Windows/Linux
 
-            If you plan to run ``ivadomed`` on CPU only, install PyTorch per instructions provided below for your specific operating system:
+                            .. code::
 
-            .. tabs::
+                               pip install torch==1.8.0+cpu torchvision==0.9.0+cpu --find-links https://download.pytorch.org/whl/torch_stable.html
 
-                .. tab:: Windows/Linux
+                        .. tab:: Mac
 
-                    .. code::
+                            .. code::
 
-                       pip install torch==1.8.0+cpu torchvision==0.9.0+cpu --find-links https://download.pytorch.org/whl/torch_stable.html
+                               pip install torch==1.8.0 torchvision==0.9.0 --find-links https://download.pytorch.org/whl/torch_stable.html
 
-                .. tab:: Mac
 
-                    .. code::
+        .. tab:: Repo Installation (Advanced or Developer)
 
-                       pip install torch==1.8.0 torchvision==0.9.0 --find-links https://download.pytorch.org/whl/torch_stable.html
+            Run this only if you have already downloaded/cloned the repo with access to the ``requirement_gpu.txt`` file, then run the following command while at the repository root level:
+            .. code::
 
-                .. tab:: Repo Installation (Advanced or Developer)
+               pip install -r requirements_gpu.txt
 
-                    Run this only if you have already downloaded/cloned the repo with access to the ``requirement.txt`` file, then run the following command while at the repository root level:
 
-                    .. code::
-
-                        pip install -r requirements.txt
 
 
 Developer-only Installation Steps
