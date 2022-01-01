@@ -315,8 +315,8 @@ def run_segment_command(context, model_params):
             options[OptionKW.METADATA] = metadata
 
         # Add microscopy pixel size metadata to options for segment_volume
-        if 'PixelSize' in bids_df.df.columns:
-            options[OptionKW.PIXEL_SIZE] = bids_df.df.loc[bids_df.df['filename'] == subject][OptionKW.PIXEL_SIZE].values[0]
+        if MetadataKW.PIXEL_SIZE in bids_df.df.columns:
+            options[OptionKW.PIXEL_SIZE] = bids_df.df.loc[bids_df.df['filename'] == subject][MetadataKW.PIXEL_SIZE].values[0]
 
         if fname_img:
             pred_list, target_list = imed_inference.segment_volume(str(path_model),
