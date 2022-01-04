@@ -5,16 +5,14 @@ In this tutorial we will learn the following features:
 
 - Training of a segmentation model (U-Net 2D) with a two classes labels on a single contrast on microscopy PNG images,
 
-- Testing of a trained model and computation of 3D evaluation metrics,
+- Testing of a trained model and computation of evaluation metrics,
 
 - Visualization of the outputs of a trained model.
-
-.. _Download dataset:
 
 Download dataset
 ----------------
 
-We will use a publicly-available dataset consisting of 10 microscopy sampel of rat spinal cord.
+We will use a publicly-available dataset consisting of 10 microscopy sample of rat spinal cord.
 
 To download the dataset (~11MB), run the following commands in your terminal:
 
@@ -58,14 +56,16 @@ microscopy segmentation training.
 
      "path_data": "data_axondeepseg_sem"
 
-- ``loader_parameters:bids_config``: Location of the custom bids configuration file required for microscopy file indexing.
+- ``loader_parameters:bids_config``: Location of the custom bids configuration file required for microscopy
+  file indexing.
 
   .. code-block:: xml
 
      "bids_config": "ivadomed/config/config_bids.json",
 
 - ``loader_parameters:target_suffix``: Suffix of the ground truths segmentation. The ground truths are located
-  under the ``data_axondeepseg_sem/derivatives/labels`` folder. In our case, the suffix are ``_seg-axon-manual`` and ``_seg-myelin-manual``:
+  under the ``data_axondeepseg_sem/derivatives/labels`` folder. In our case, the suffix are ``_seg-axon-manual``
+  and ``_seg-myelin-manual``:
 
   .. code-block:: xml
 
@@ -77,7 +77,8 @@ microscopy segmentation training.
 
      "extensions": [".png"]
 
-- ``loader_parameters:contrast_params``: Contrast of interest
+- ``loader_parameters:contrast_params``: Contrasts of interest. In our case, we are training a single contrast model
+  with contrast ``SEM``.
 
   .. code-block:: xml
 
@@ -95,9 +96,10 @@ microscopy segmentation training.
      "slice_axis": "axial"
 
 - ``split_dataset:split_method``: Describe the metadata used to split the train/validation/test sets.
-  Here, ``sample_id`` from the ``samples.tsv`` file will shuffle all sampless, then split between train/validation/test sets.
-- ``split_dataset:train_fraction``: Fraction of the dataset's ``sample_id`` in the train set.
-- ``split_dataset:test_fraction``: Fraction of the dataset's ``sample_id`` in the test set.
+  Here, ``sample_id`` from the ``samples.tsv`` file will shuffle all samples, then split them between
+  train/validation/test sets.
+- ``split_dataset:train_fraction``: Fraction of the dataset's ``sample_id`` in the train set. In our case ``0.6``.
+- ``split_dataset:test_fraction``: Fraction of the dataset's ``sample_id`` in the test set. In our case ``0.1``.
 
   .. code-block:: xml
 
@@ -106,30 +108,32 @@ microscopy segmentation training.
       "test_fraction": 0.1
 
 - ``training_time:num_epochs``: the maximum number of epochs that will be run during training. Each epoch is composed
-  of a training part and an evaluation part. It should be a strictly positive integer. For this tutorial, we will use
+  of a training part and an evaluation part. It should be a strictly positive integer. In our case, we will use
   50 epochs.
 
   .. code-block:: xml
 
      "num_epochs": 50
 
-- ``default_model:depth``: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-- ``default_model:length_2D``: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-- ``default_model:stride_2D``: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+- ``default_model:length_2D``: Size of the 2D patches used as model’s input tensors. We recommend using patches
+  between 256x256 and 512x512. In our case, we use patches of 256x256.
+- ``default_model:stride_2D``: Pixels’ shift over the input matrix to create 2D patches. In our case, we use
+  a stride of 244 pixels in both dimensions, resulting in an overlap of 12 pixels between patches.
 
   .. code-block:: xml
 
-     "depth": 3
      "length_2D": [256, 256]
      "stride_2D": [244, 244]
 
-- ``postprocessing:binarize_maxpooling``: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+- ``postprocessing:binarize_maxpooling``: Use to binarize predictions across all classes in multiclass models.
 
   .. code-block:: xml
 
       "binarize_maxpooling": {}
 
-- ``transformation:Resample``: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+- ``transformation:Resample``: Use to resample images to a common resolution (in mm) before splitting into patches,
+  according to each image real pixel size. In our case, we resample the images to a common resolution of 0.0001 mm
+  (0.1 um) in both dimensions.
 
   .. code-block:: xml
 
@@ -173,7 +177,7 @@ on training and validation sets at every epoch. To know more about the meaning o
    Selected architecture: Unet, with the following parameters:
    dropout_rate: 0.2
    bn_momentum: 0.1
-   depth: 3
+   depth: 4
    is_2d: True
    final_activation: sigmoid
    length_2D: [256, 256]
@@ -212,9 +216,8 @@ After 50 epochs (see ``"num_epochs"`` in the configuration file), the Dice score
 
 .. note::
 
-   TEMP NIFTI FILE XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-.. _Evaluate model:
+   When loading the images for training or evaluation, a temporary NIfTI file will be created for each images in the
+   dataset directory (``path_data``) alongside the original PNG files.
 
 Evaluate model
 --------------
@@ -223,25 +226,24 @@ To test the trained model on the testing sub-dataset and compute evaluation metr
 
 .. code-block:: bash
 
-   ivadomed --test -c config.json --path-data path/to/bids/data --path-output path/to/output/directory
+   ivadomed -c config_microscopy.json --test
 
 If you prefer to use config files over CLI flags, set "command" to the following in you config file:
-. code-block:: bash
+
+.. code-block:: xml
 
    "command": "test"
-
-You can also set "path_output", and "path_data" arguments in your config file.
 
 Then run:
 
 .. code-block:: bash
 
-   ivadomed -c config.json
+   ivadomed -c config_microscopy.json
 
 The model's parameters will be displayed in the terminal, followed by a preview of the results for each image.
 The resulting segmentations are saved for each image in the ``<PATH_TO_OUT_DIR>/pred_masks`` while a csv file,
-saved in ``<PATH_TO_OUT_DIR>/results_eval/evaluation_3Dmetrics.csv``, contains all the evaluation metrics. For more details
-on the evaluation metrics, see :mod:`ivadomed.metrics`.
+saved in ``<PATH_TO_OUT_DIR>/results_eval/evaluation_3Dmetrics.csv``, contains all the evaluation metrics.
+For more details on the evaluation metrics, see :mod:`ivadomed.metrics`.
 
 .. code-block:: console
 
@@ -251,7 +253,7 @@ on the evaluation metrics, see :mod:`ivadomed.metrics`.
    Selected architecture: Unet, with the following parameters:
    dropout_rate: 0.2
    bn_momentum: 0.1
-   depth: 3
+   depth: 4
    is_2d: True
    final_activation: sigmoid
    length_2D: [256, 256]
@@ -259,7 +261,7 @@ on the evaluation metrics, see :mod:`ivadomed.metrics`.
    folder_name: model_seg_rat_axon-myelin_sem
    in_channel: 1
    out_channel: 3
-   Dataframe has been saved in /home/GRAMES.POLYMTL.CA/maboudb/data_extrassd_maboudb/20211228_tuto/log_microscopy_sem_depth3/bids_dataframe.csv.
+   Dataframe has been saved in log_microscopy_sem/bids_dataframe.csv.
    After splitting: train, validation and test fractions are respectively 0.6, 0.3 and 0.1 of sample_id.
 
    Selected transformations for the ['testing'] dataset:
@@ -273,28 +275,31 @@ on the evaluation metrics, see :mod:`ivadomed.metrics`.
    Inference - Iteration 0: 100%|████████████████████████████████████████████████████████████████ 4/4 [00:01<00:00,  2.89it/s]
    Lossy conversion from float64 to uint8. Range [0, 1]. Convert image to uint8 prior to saving to suppress this warning.
    Lossy conversion from float64 to uint8. Range [0, 1]. Convert image to uint8 prior to saving to suppress this warning.
-   {'dice_score': 0.845923333420395, 'multi_class_dice_score': 0.8504714482500202, 'precision_score': 0.8343947513053036,
-   'recall_score': 0.8577749527693911, 'specificity_score': 0.9447110780829443, 'intersection_over_union': 0.7329871211481128,
-   'accuracy_score': 0.9233990207484972, 'hausdorff_score': 0.0}
+   {'dice_score': 0.8381376827003003, 'multi_class_dice_score': 0.8422281034034607, 'precision_score': 0.8342335786851753,
+   'recall_score': 0.8420784999205466, 'specificity_score': 0.9456594910680598, 'intersection_over_union': 0.7213743575471384,
+   'accuracy_score': 0.9202670087814067, 'hausdorff_score': 0.0}
 
    Run Evaluation on log_microscopy_sem/pred_masks
 
    Evaluation: 100%████████████████████████████████████████████████████████████████ 1/1 [00:13<00:00, 13.56s/it]
    Lossy conversion from float64 to uint8. Range [0.0, 3.0]. Convert image to uint8 prior to saving to suppress this warning.
    Lossy conversion from float64 to uint8. Range [0.0, 3.0]. Convert image to uint8 prior to saving to suppress this warning.
-                                avd_class0  avd_class1  dice_class0  dice_class1  lfdr_class0  lfdr_class1  ...  specificity_class0  specificity_class1  vol_gt_class0  vol_gt_class1  vol_pred_class0  vol_pred_class1
-   image_id                                                                                               ...
-   sub-rat3_sample-data9_SEM    0.070742    0.106846      0.87972     0.821223     0.558304     0.319328  ...            0.977565             0.90937   1.256960e-07   1.574890e-07     1.168040e-07     1.743160e-07
+                                avd_class0  avd_class1  dice_class0  dice_class1  ...  vol_gt_class0  vol_gt_class1  vol_pred_class0  vol_pred_class1
+   image_id
+   sub-rat3_sample-data9_SEM    0.082771    0.082971    0.868964     0.815492     ...  1.256960e-07   1.574890e-07   1.152920e-07     1.705560e-07
 
    [1 rows x 26 columns]
 
-The test image segmentations are stored in ``<PATH_TO_OUT_DIR>/pred_masks/`` in PNG format and have the same name as the input image
-with the suffix ``<target_suffix>_pred``.
-A temporary NIfTI files containing the predictions for both classes with the suffix ``_pred`` will also be present.
+The test image segmentations are stored in ``<PATH_TO_OUT_DIR>/pred_masks/`` in PNG format and have the same name as
+the input image with the suffix ``<target_suffix>_pred.png``.
+A temporary NIfTI files containing the predictions for both classes with the suffix ``_pred.nii.gz`` will also be
+present.
 
 After the training for 50 epochs, the segmentations should be similar to the one presented in the following image.
-The output and ground truth segmentations of the axons and myelin are presented in blue and red respectively
-for ``sub-rat3_sample-data9_SEM``):
+The ground truth segmentations and predictions of the axons and myelin are presented in blue and red respectively for
+``sub-rat3_sample-data9_SEM``):
 
-.. image:: https://raw.githubusercontent.com/ivadomed/doc-figures/main/tutorials/one_class_segmentation_2d_unet/sc_prediction.png
+..
+   TODO: Update link to figure after merge of PR5 in doc-figures
+.. image:: https://raw.githubusercontent.com/ivadomed/doc-figures/mhb/micr-tuto-figure/tutorials/two_classes_microscopy_seg_2d_unet/axon_myelin_predictions.png
    :align: center
