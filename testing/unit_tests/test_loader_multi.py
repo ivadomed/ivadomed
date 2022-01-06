@@ -2,7 +2,7 @@ import os
 import shutil
 
 from ivadomed.loader.bids_dataframe import BidsDataframe
-from testing.unit_tests.t_utils import path_temp, download_data_multi_sessions_contrasts_test_files
+from testing.unit_tests.t_utils import path_temp, download_multi_data
 from testing.common_testing_util import remove_tmp_dir, path_data_multi_sessions_contrasts_source, \
     assert_empty_bids_dataframe, bids_dataframe_comparison_framework
 from pytest_cases import parametrize_with_cases
@@ -28,9 +28,9 @@ def setup_function():
     case_single_session,
     case_not_specified_session,  # default to accept ALL possible sessions
 ])
-def test_valid_multi_sessions(download_data_multi_sessions_contrasts_test_files,
-                                  loader_parameters,
-                                  target_csv):
+def test_valid_multi_sessions(download_multi_data,
+                              loader_parameters,
+                              target_csv):
     """
     Test for when multi-sessions and multi-contrasts, how the filtering and ground truth identification process works.
     """
@@ -43,15 +43,15 @@ def test_valid_multi_sessions(download_data_multi_sessions_contrasts_test_files,
     case_more_contrasts_than_available,
     case_partially_available_contrasts,
 ])
-def test_invalid_empty_dataframes(download_data_multi_sessions_contrasts_test_files,
-                          loader_parameters):
+def test_invalid_empty_dataframes(download_multi_data,
+                                  loader_parameters):
     assert_empty_bids_dataframe(loader_parameters)
 
 
 @parametrize_with_cases("loader_parameters", cases=[
     case_not_specified_contrast,  # Contrast specification is required.
 ])
-def test_raise_value_errors(download_data_multi_sessions_contrasts_test_files,
+def test_raise_value_errors(download_multi_data,
                             loader_parameters):
     with pytest.raises(ValueError):
         BidsDataframe(loader_parameters,
@@ -64,8 +64,11 @@ def test_raise_value_errors(download_data_multi_sessions_contrasts_test_files,
     case_unavailable_contrast,
     case_unavailable_ground_truth,
 ])
-def test_raise_runtime_errors(download_data_multi_sessions_contrasts_test_files,
+def test_raise_runtime_errors(download_multi_data,
                               loader_parameters):
+    """
+    Test run time error which are raised when Step 2 filter in BIDS loader failed to have any files remaining.
+    """
     with pytest.raises(RuntimeError):
         BidsDataframe(loader_parameters,
                       str(path_data_multi_sessions_contrasts_tmp),
@@ -77,7 +80,7 @@ def test_raise_runtime_errors(download_data_multi_sessions_contrasts_test_files,
     case_single_contrast,
 ])
 def test_valid_multi_contrasts(
-        download_data_multi_sessions_contrasts_test_files,
+        download_multi_data,
         loader_parameters,
         target_csv):
     """
@@ -85,13 +88,14 @@ def test_valid_multi_contrasts(
     """
     bids_dataframe_comparison_framework(loader_parameters, target_csv)
 
+
 @parametrize_with_cases("loader_parameters, target_csv", cases=[
-    #case_more_ground_truth_than_available,
+    case_more_ground_truth_than_available,
     case_less_ground_truth_than_available,
     case_partially_available_ground_truth
 ])
 def test_valid_multi_target_suffixes(
-        download_data_multi_sessions_contrasts_test_files,
+        download_multi_data,
         loader_parameters,
         target_csv):
     """

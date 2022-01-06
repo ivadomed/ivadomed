@@ -28,6 +28,7 @@ log.txt
 data_testing/
 data_functional_testing/
 data_multi_sessions_contrasts_testing/
+data_multi_testing/
 
 # OS Specific hidden file
 .DS_Store
