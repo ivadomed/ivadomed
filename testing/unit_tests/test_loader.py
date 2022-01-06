@@ -13,9 +13,6 @@ from pathlib import Path
 from loguru import logger
 
 
-from testing.unit_tests.test_loader_multi_sessions_cases import case_data_target_specific_session_contrast
-
-
 def setup_function():
     create_tmp_dir()
 

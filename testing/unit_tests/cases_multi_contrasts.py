@@ -1,12 +1,11 @@
 from ivadomed.keywords import LoaderParamsKW, ContrastParamsKW
-from copy import deepcopy
-from testing.unit_tests.test_loader_multi_sessions_cases import default_loader_parameters
+from testing.common_testing_util import get_default_case
 
 
 # Modality Related Testing
 
 def case_more_contrasts_than_available():
-    loader_parameters = deepcopy(default_loader_parameters)
+    loader_parameters = get_default_case()
 
     # Reduce MRI contrast list
     loader_parameters.update({
@@ -15,11 +14,11 @@ def case_more_contrasts_than_available():
         }
     })
 
-    return loader_parameters, "df_ref_missing_modality.csv"
+    return loader_parameters
 
 
 def case_partially_available_contrasts():
-    loader_parameters = deepcopy(default_loader_parameters)
+    loader_parameters = get_default_case()
 
     # Reduce MRI contrast list
     loader_parameters.update({
@@ -28,29 +27,29 @@ def case_partially_available_contrasts():
         }
     })
 
-    return loader_parameters, "df_ref_missing_modality.csv"
+    return loader_parameters
 
 
 def case_less_contrasts_than_available():
-    loader_parameters = deepcopy(default_loader_parameters)
+    loader_parameters = get_default_case()
 
     # Reduce MRI contrast list
     loader_parameters.update({
         LoaderParamsKW.CONTRAST_PARAMS: {
-            ContrastParamsKW.CONTRAST_LIST: ["T1w", "T2w"]
+            ContrastParamsKW.CONTRAST_LIST: ["PD", "FLAIR"]
         }
     })
 
-    return loader_parameters, "df_ref_missing_modality.csv"
+    return loader_parameters, "df_ref_flair_pd.csv"
 
 
 def case_single_contrast():
-    loader_parameters = deepcopy(default_loader_parameters)
+    loader_parameters = get_default_case()
 
     # Reduce MRI contrast list
     loader_parameters.update({
         LoaderParamsKW.CONTRAST_PARAMS: {
-            ContrastParamsKW.CONTRAST_LIST: ["T1w"]
+            ContrastParamsKW.CONTRAST_LIST: ["T2w"]
         }
     })
 
@@ -58,7 +57,7 @@ def case_single_contrast():
 
 
 def case_unavailable_contrast():
-    loader_parameters = deepcopy(default_loader_parameters)
+    loader_parameters = get_default_case()
 
     # Reduce MRI contrast list
     loader_parameters.update({
@@ -67,13 +66,13 @@ def case_unavailable_contrast():
         }
     })
 
-    return loader_parameters, "df_ref_missing_modality.csv"
+    return loader_parameters
 
 
 def case_not_specified_contrast():
-    loader_parameters = deepcopy(default_loader_parameters)
+    loader_parameters = get_default_case()
 
     # Reduce MRI contrast list
     loader_parameters.pop(LoaderParamsKW.CONTRAST_PARAMS)
 
-    return loader_parameters, "df_ref_missing_modality.csv"
+    return loader_parameters

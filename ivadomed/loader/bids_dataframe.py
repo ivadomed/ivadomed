@@ -45,7 +45,7 @@ class BidsDataframe:
     Attributes:
         path_data (list): Paths to the BIDS datasets.
         bids_config (str): Path to the custom BIDS configuration file.
-        target_suffix (list of str): List of suffix of targetted structures.
+        target_suffix (list of str): List of suffix of targeted structures.
         roi_suffix (str): List of suffix of ROI masks.
         extensions (list of str): List of file extensions of interest.
         contrast_lst (list of str): List of the contrasts of interest.
@@ -82,13 +82,18 @@ class BidsDataframe:
             self.target_suffix.append(self.roi_suffix)
 
         # extensions from loader parameters
-        if loader_params[LoaderParamsKW.EXTENSIONS]:
+        if loader_params.get(LoaderParamsKW.EXTENSIONS):
             self.extensions: List[str] = loader_params[LoaderParamsKW.EXTENSIONS]
         else:
             self.extensions = [".nii", ".nii.gz"]
 
         # contrast_lst from loader parameters
-        if ContrastParamsKW.CONTRAST_LIST not in loader_params[LoaderParamsKW.CONTRAST_PARAMS]:
+        if not loader_params.get(LoaderParamsKW.CONTRAST_PARAMS):
+            error_message = "Required target contrast parameters not found. Please CAREFULLY review JSON configuration"
+            "file to ensure that at least one medical imaging modality/contrast is specified!"
+            logger.error(error_message)
+            raise ValueError(error_message)
+        elif ContrastParamsKW.CONTRAST_LIST not in loader_params[LoaderParamsKW.CONTRAST_PARAMS]:
             self.contrast_lst: List[str] = []
         else:
             self.contrast_lst: List[str] = loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.CONTRAST_LIST]
@@ -142,8 +147,8 @@ class BidsDataframe:
 
         if self.df.empty:
             # Raise error and exit if no subject files are found in any path data
-            raise RuntimeError("No subject files found. Check selection of parameters in config.json"
-                               " and datasets compliance with BIDS specification.")
+            raise RuntimeError("No subject files found. Check selection of parameters in configuration JSON"
+                               " and datasets compliance with BIDS specification. ")
 
         # Drop duplicated rows based on all columns except 'path'
         # Keep first occurrence
@@ -249,7 +254,7 @@ class BidsDataframe:
             # WARNING if there are nothing other than derivative data (i.e. no subject files are found in path_data)
             if df_stage2[~df_stage2[BidsDataFrameKW.PATH].str.contains(BidsDataFrameKW.DERIVATIVES)].empty:
                 logger.critical(f"No subject files were found in '{path_data}' dataset during FIRST PASS. "
-                               f"Skipping dataset.")
+                                f"Skipping dataset.")
                 # first_pass_data_frame as an empty dataframe gets returned!
 
             else:

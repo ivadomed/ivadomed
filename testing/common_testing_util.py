@@ -1,5 +1,13 @@
+import os
 from pathlib import Path
+
+import csv_diff
+import pandas as pd
 import pytest
+from loguru import logger
+
+from ivadomed.keywords import BidsDataFrameKW, LoaderParamsKW, ContrastParamsKW
+from ivadomed.loader.bids_dataframe import BidsDataframe
 from ivadomed.scripts import download_data as ivadomed_download_data
 import shutil
 import sys
@@ -109,3 +117,77 @@ def printv(string, verbose=1, type='normal'):
                 print(string)
         except Exception:
             print(string)
+
+
+def assert_empty_bids_dataframe(loader_parameters: dict):
+    import json
+
+    logger.debug(f"Consolidated Testing Loader Parameters:\n {json.dumps(loader_parameters, indent=4)}")
+
+    # Create the bids frame.
+    bids_df = BidsDataframe(loader_parameters,
+                            str(path_data_multi_sessions_contrasts_tmp),
+                            derivatives=True)
+
+    # Assert new dataframes are EQUAL
+    assert bids_df.df.equals(pd.DataFrame())
+
+
+def bids_dataframe_comparison_framework(loader_parameters: dict, target_csv: str):
+    """
+    Main test function used to setup a CSV comparison framework between expected vs the output from the test
+    Args:
+        loader_parameters: dict
+        target_csv:
+
+    Returns:
+
+    """
+    import json
+
+    logger.debug(f"Consolidated Testing Loader Parameters:\n {json.dumps(loader_parameters, indent=4)}")
+
+    # Create the bids frame.
+    bids_df = BidsDataframe(loader_parameters,
+                            str(path_data_multi_sessions_contrasts_tmp),
+                            derivatives=True)
+    # Drop path as that can varies across runs.
+    df_test = bids_df.df.drop(columns=[BidsDataFrameKW.PATH])
+
+    # Sorting to ensure consistencies.
+    df_test = df_test.sort_values(by=[BidsDataFrameKW.FILENAME]).reset_index(drop=True)
+
+    # Compare the output with the target reference CSV from the data repo.
+    csv_ref = os.path.join(loader_parameters[LoaderParamsKW.PATH_DATA][0], target_csv)
+
+    csv_test = os.path.join(loader_parameters[LoaderParamsKW.PATH_DATA][0], "df_test.csv")
+    df_test.to_csv(csv_test, index=False)
+
+    # Calculate differences and ensure they are the same.
+    diff = csv_diff.compare(csv_diff.load_csv(open(csv_ref)), csv_diff.load_csv(open(csv_test)))
+    assert diff == {'added': [], 'removed': [], 'changed': [],
+                    'columns_added': [], 'columns_removed': []}
+
+
+def get_default_case() -> dict:
+    """
+    Generate a default case for the multi-session configuration JSON
+    Returns:
+
+    """
+
+    # A default dict which subsequent tests attempt to deviate from
+
+    default_loader_parameters: dict = {
+        LoaderParamsKW.MULTICHANNEL: "true",
+        LoaderParamsKW.TARGET_SESSIONS: ["01", "02", "03", "04"],
+        LoaderParamsKW.PATH_DATA: [str(path_data_multi_sessions_contrasts_tmp)],
+        LoaderParamsKW.TARGET_SUFFIX: ["_lesion-manual-rater1", "_lesion-manual-rater2"],
+        LoaderParamsKW.EXTENSIONS: [".nii", ".nii.gz"],
+        "roi_params": {"suffix": None, "slice_filter_roi": None},
+        LoaderParamsKW.CONTRAST_PARAMS: {
+            ContrastParamsKW.CONTRAST_LIST: ["T1w", "T2w", "FLAIR", "PD"]
+        }
+    }
+
+    return default_loader_parameters
