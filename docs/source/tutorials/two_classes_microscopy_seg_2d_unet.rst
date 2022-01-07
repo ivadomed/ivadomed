@@ -1,4 +1,4 @@
-Two-classes microscopy segmentation with 2D U-Net
+Two-class microscopy segmentation with 2D U-Net
 =================================================
 
 In this tutorial we will learn the following features:
@@ -12,7 +12,7 @@ In this tutorial we will learn the following features:
 Download dataset
 ----------------
 
-We will use a publicly-available dataset consisting of 10 microscopy sample of rat spinal cord.
+We will use a publicly-available dataset consisting of 10 microscopy samples of rat spinal cord.
 
 To download the dataset (~11MB), run the following commands in your terminal:
 
@@ -56,14 +56,14 @@ microscopy segmentation training.
 
      "path_data": "data_axondeepseg_sem"
 
-- ``loader_parameters:bids_config``: Location of the custom bids configuration file required for microscopy
+- ``loader_parameters:bids_config``: Location of the custom BIDS configuration file required for microscopy
   file indexing.
 
   .. code-block:: xml
 
      "bids_config": "ivadomed/config/config_bids.json",
 
-- ``loader_parameters:target_suffix``: Suffix of the ground truths segmentation. The ground truths are located
+- ``loader_parameters:target_suffix``: Suffix of the ground truth segmentations. The ground truths are located
   under the ``data_axondeepseg_sem/derivatives/labels`` folder. In our case, the suffix are ``_seg-axon-manual``
   and ``_seg-myelin-manual``:
 
@@ -241,7 +241,7 @@ Then run:
    ivadomed -c config_microscopy.json
 
 The model's parameters will be displayed in the terminal, followed by a preview of the results for each image.
-The resulting segmentations are saved for each image in the ``<PATH_TO_OUT_DIR>/pred_masks`` while a csv file,
+The resulting segmentations are saved for each image in the ``<PATH_TO_OUT_DIR>/pred_masks`` while a CSV file,
 saved in ``<PATH_TO_OUT_DIR>/results_eval/evaluation_3Dmetrics.csv``, contains all the evaluation metrics.
 For more details on the evaluation metrics, see :mod:`ivadomed.metrics`.
 
