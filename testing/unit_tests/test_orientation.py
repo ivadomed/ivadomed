@@ -37,7 +37,7 @@ def test_image_orientation(download_data_testing_test_files, loader_parameters):
     cuda_available = torch.cuda.is_available()
     if cuda_available:
         torch.cuda.set_device(device)
-        print("Using GPU ID {}".format(device))
+        logger.debug("Using GPU ID {}".format(device))
 
     bids_df = BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
 

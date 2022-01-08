@@ -122,7 +122,7 @@ def test_inference(download_data_testing_test_files, transforms_dict, test_lst, 
     metric_mgr(preds_npy, gt_npy)
     metrics_dict = metric_mgr.get_results()
     metric_mgr.reset()
-    print(metrics_dict)
+    logger.debug(metrics_dict)
 
 
 @pytest.mark.parametrize('transforms_dict', [{

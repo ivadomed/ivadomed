@@ -24,6 +24,7 @@ import nibabel as nib
 import numpy as np
 import seaborn as sns
 from scipy.ndimage import label, generate_binary_structure
+from loguru import logger
 
 from ivadomed import config_manager as imed_config_manager
 
@@ -35,9 +36,9 @@ def get_parser():
 
 
 def print_stats(arr):
-    print('\tMean: {}'.format(np.mean(arr)))
-    print('\tMedian: {}'.format(np.median(arr)))
-    print('\tInter-quartile range: [{}, {}]'.format(np.percentile(arr, 25), np.percentile(arr, 75)))
+    logger.debug('\tMean: {}'.format(np.mean(arr)))
+    logger.debug('\tMedian: {}'.format(np.median(arr)))
+    logger.debug('\tInter-quartile range: [{}, {}]'.format(np.percentile(arr, 25), np.percentile(arr, 75)))
 
 
 def plot_distrib(arr, label, xlim, fname_out):
@@ -52,7 +53,7 @@ def plot_distrib(arr, label, xlim, fname_out):
     plt.xlim(xlim)
     plt.ylabel('Density')
     fig.savefig(fname_out)
-    print('\tSave as: ' + fname_out)
+    logger.debug(f"\tSave as: {fname_out}")
 
 
 def run_main(args):
@@ -85,13 +86,13 @@ def run_main(args):
                             vox_lst.append(n_vox)
                             mm3_lst.append(n_vox * px * py * pz)
 
-    print('\nTarget distribution in vox:')
+    logger.debug('\nTarget distribution in vox:')
     print_stats(vox_lst)
     plot_distrib(vox_lst, context["target_suffix"] + ' size in vox',
                  [0, np.percentile(vox_lst, 90)],
                  context["target_suffix"] + '_vox.png')
 
-    print('\nTarget distribution in mm3:')
+    logger.debug('\nTarget distribution in mm3:')
     print_stats(mm3_lst)
     plot_distrib(mm3_lst, context["target_suffix"] + ' size in mm3',
                  [0, np.percentile(mm3_lst, 90)],

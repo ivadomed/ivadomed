@@ -16,6 +16,7 @@ import seaborn as sns
 from scipy.stats import ks_2samp
 from ivadomed.utils import init_ivadomed
 from pathlib import Path
+from loguru import logger
 import argparse
 matplotlib.rcParams['toolbar'] = 'None'  # Remove buttons
 
@@ -32,9 +33,9 @@ for gui in gui_env:
 # If none works
 if selected_gui_env == []:
     from matplotlib import pyplot as plt
-    print("No backend can be used - Visualization will fail")
+    logger.error("No backend can be used - Visualization will fail")
 else:
-    print("Using:", matplotlib.get_backend() + " gui")
+    logger.debug(f"Using: {matplotlib.get_backend()}  gui")
 
 # ---------------------------------------------------------------------------------------------------------------------#
 
@@ -124,20 +125,20 @@ def visualize_and_compare_models(ofolders, metric="dice_class0", metadata=None):
     """
 
     # access CLI options
-    print("ofolders: %r" % ofolders)
-    print("metric: %r" % metric)
+    logger.debug("ofolders: %r" % ofolders)
+    logger.debug("metric: %r" % metric)
     if metadata is None:
         metadata = []
     if metadata:
-        print("metadata: %r" % metadata)
+        logger.debug("metadata: %r" % metadata)
 
     # Do a quick check that all the required files are present
     for folder in ofolders:
         if not Path(folder, 'results_eval', 'evaluation_3Dmetrics.csv').exists():
-            print('evaluation_3Dmetrics.csv file is not present within ' + str(Path(folder, 'results_eval')))
+            logger.error(f"evaluation_3Dmetrics.csv file is not present within {Path(folder, 'results_eval')}")
             raise Exception('evaluation_3Dmetrics.csv missing')
         if not Path(folder, 'bids_dataframe.csv').exists():
-            print('bids_dataframe.csv file is not present within ' + folder)
+            logger.error(f"bids_dataframe.csv file is not present within {folder}")
             raise Exception('bids_dataframe.csv missing')
 
     if len(ofolders) < 1:
@@ -160,7 +161,7 @@ def visualize_and_compare_models(ofolders, metric="dice_class0", metadata=None):
             result = result.iloc[[i for i in range(len(result_subject_ids)) if result_subject_ids[i] in selected_subjects]]
 
             if result.empty:
-                print('No subject meet the selected criteria - skipping plot for: ' + folder)
+                logger.error('No subject meet the selected criteria - skipping plot for: ' + folder)
 
         if not result.empty:
             scores = result[metric]
@@ -228,8 +229,8 @@ def visualize_and_compare_models(ofolders, metric="dice_class0", metadata=None):
         plt.show(block=True)
 
     else:
-        print('No subjects meet the criteria selected for any model. '
-              'Probably you need to change the --metadata / --metric selection')
+        logger.error('No subjects meet the criteria selected for any model. '
+                     'Probably you need to change the --metadata / --metric selection')
 
 
 def main():

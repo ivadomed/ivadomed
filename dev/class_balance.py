@@ -24,6 +24,8 @@ from ivadomed import transforms as imed_transforms
 from torchvision import transforms as torch_transforms
 from torch.utils.data import DataLoader
 
+from loguru import logger
+
 
 def get_parser():
     parser = argparse.ArgumentParser()
@@ -33,9 +35,9 @@ def get_parser():
 
 
 def print_stats(arr):
-    print('\tMean: {} %'.format(np.mean(arr)))
-    print('\tMedian: {} %'.format(np.median(arr)))
-    print('\tInter-quartile range: [{}, {}] %'.format(np.percentile(arr, 25), np.percentile(arr, 75)))
+    logger.debug('\tMean: {} %'.format(np.mean(arr)))
+    logger.debug('\tMedian: {} %'.format(np.median(arr)))
+    logger.debug('\tInter-quartile range: [{}, {}] %'.format(np.percentile(arr, 25), np.percentile(arr, 75)))
 
 
 def run_main(args):
@@ -55,7 +57,7 @@ def run_main(args):
 
     balance_dct = {}
     for ds_lst, ds_name in zip([train_lst, valid_lst, test_lst], ['train', 'valid', 'test']):
-        print("\nLoading {} set.\n".format(ds_name))
+        logger.info("\nLoading {} set.\n".format(ds_name))
         ds = BidsDataset(context["path_data"],
                          subject_lst=ds_lst,
                          target_suffix=context["target_suffix"],
@@ -66,7 +68,7 @@ def run_main(args):
                          transform=transform_lst,
                          slice_filter_fn=SliceFilter())
 
-        print("Loaded {} axial slices for the {} set.".format(len(ds), ds_name))
+        logger.info("Loaded {} axial slices for the {} set.".format(len(ds), ds_name))
         ds_loader = DataLoader(ds, batch_size=1,
                                shuffle=False, pin_memory=False,
                                collate_fn=imed_loader_utils.imed_collate,
@@ -82,10 +84,10 @@ def run_main(args):
         balance_dct[ds_name] = balance_lst
 
     for ds_name in balance_dct:
-        print('\nClass balance in {} set:'.format(ds_name))
+        logger.info('\nClass balance in {} set:'.format(ds_name))
         print_stats(balance_dct[ds_name])
 
-    print('\nClass balance in full set:')
+    logger.info('\nClass balance in full set:')
     print_stats([e for d in balance_dct for e in balance_dct[d]])
 
 

@@ -693,8 +693,8 @@ def test_make_config_list(initial_config, all_combin, multi_params, param_list,
     assert len(config_list) == len(expected_config_list)
     for config_option in config_list:
         if config_option not in expected_config_list:
-            print(config_option['path_output'])
-            print(expected_config_list)
+            logger.debug(config_option['path_output'])
+            logger.debug(expected_config_list)
         assert config_option in expected_config_list
     for config_option in expected_config_list:
         assert config_option in config_list

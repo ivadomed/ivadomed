@@ -15,6 +15,8 @@ import os
 from ivadomed.loader.bids_dataframe import BidsDataframe
 from ivadomed import config_manager as imed_config_manager
 
+from loguru import logger
+
 # GET LOADER PARAMETERS FROM IVADOMED CONFIG FILE
 # The loader parameters have 2 new fields: "bids_config" and "extensions".
 # "bids_config" is mandatory for microscopy until BEP is merged and pybids is updated, the file is
@@ -35,10 +37,10 @@ derivatives = True
 # CREATE OUTPUT PATH
 path_output = context["path_output"]
 if not os.path.isdir(path_output):
-    print('Creating output path: {}'.format(path_output))
+    logger.info('Creating output path: {}'.format(path_output))
     os.makedirs(path_output)
 else:
-    print('Output path already exists: {}'.format(path_output))
+    logger.error('Output path already exists: {}'.format(path_output))
 
 # CREATE BIDSDataframe OBJECT
 bids_df = BidsDataframe(loader_params, path_output, derivatives)
@@ -51,4 +53,4 @@ df = df.sort_values(by=['filename']).reset_index(drop=True)
 # SAVE DATAFRAME TO CSV FILE FOR data-testing
 path_csv = "test_df_new_loader.csv"
 df.to_csv(path_csv, index=False)
-print(df)
+logger.debug(df)
