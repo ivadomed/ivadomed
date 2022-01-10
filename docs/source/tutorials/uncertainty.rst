@@ -4,7 +4,10 @@ Estimate uncertainty
     This tutorial shows how to estimate uncertainty measures on the model predictions. The uncertainty measures implemented
     in ``ivadomed`` are detailed in :ref:`Technical features <Uncertainty-measures>`.
 
-    An interactive Colab version of this tutorial is directly accessible `here <https://colab.research.google.com/github/ivadomed/ivadomed/blob/master/testing/tutorials/tutorial_3_uncertainty_estimation.ipynb>`_.
+    .. raw:: html
+
+            <div>An interactive Colab version of this tutorial is directly accessible: <a href="https://colab.research.google.com/github/ivadomed/ivadomed/blob/master/testing/tutorials/tutorial_3_uncertainty_estimation.ipynb"><img alt="Open in Colab" src="https://colab.research.google.com/assets/colab-badge.svg"></img></a><div>
+
 
 Download dataset
 ----------------
