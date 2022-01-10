@@ -1,9 +1,9 @@
 Two-class microscopy segmentation with 2D U-Net
-=================================================
+===============================================
 
 In this tutorial we will learn the following features:
 
-- Training of a segmentation model (U-Net 2D) with a two classes labels on a single contrast on microscopy PNG images,
+- Training of a segmentation model (U-Net 2D) with two-class labels on a single contrast on microscopy PNG images,
 
 - Testing of a trained model and computation of evaluation metrics,
 
@@ -12,7 +12,7 @@ In this tutorial we will learn the following features:
 Download dataset
 ----------------
 
-We will use a publicly-available dataset consisting of 10 microscopy samples of rat spinal cord.
+We will use a publicly available dataset consisting of 10 microscopy samples of rat spinal cord.
 
 To download the dataset (~11MB), run the following commands in your terminal:
 
@@ -107,7 +107,7 @@ microscopy segmentation training.
       "train_fraction": 0.6
       "test_fraction": 0.1
 
-- ``training_time:num_epochs``: the maximum number of epochs that will be run during training. Each epoch is composed
+- ``training_time:num_epochs``: The maximum number of epochs that will be run during training. Each epoch is composed
   of a training part and an evaluation part. It should be a strictly positive integer. In our case, we will use
   50 epochs.
 
@@ -125,13 +125,13 @@ microscopy segmentation training.
      "length_2D": [256, 256]
      "stride_2D": [244, 244]
 
-- ``postprocessing:binarize_maxpooling``: Use to binarize predictions across all classes in multiclass models.
+- ``postprocessing:binarize_maxpooling``: Used to binarize predictions across all classes in multiclass models.
 
   .. code-block:: xml
 
       "binarize_maxpooling": {}
 
-- ``transformation:Resample``: Use to resample images to a common resolution (in mm) before splitting into patches,
+- ``transformation:Resample``: Used to resample images to a common resolution (in mm) before splitting into patches,
   according to each image real pixel size. In our case, we resample the images to a common resolution of 0.0001 mm
   (0.1 um) in both dimensions.
 
