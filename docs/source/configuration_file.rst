@@ -1271,8 +1271,6 @@ Transformations applied during data augmentation. Transformations are sorted in 
 - ``applied_to``: list between ``"im", "gt", "roi"``. If not specified, then the transformation is applied to all loaded samples. Otherwise, only applied to the specified types: Example: ``["gt"]`` implies that this transformation is only applied to the ground-truth data.
 - ``dataset_type``: list between ``"training", "validation", "testing"``. If not specified, then the transformation is applied to the three sub-datasets. Otherwise, only applied to the specified subdatasets. Example: ``["testing"]`` implies that this transformation is only applied to the testing sub-dataset.
 
-Available Transformations:
-^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. jsonschema::
 
@@ -1691,6 +1689,77 @@ Available Transformations:
         "transformation": {
             "RandomGamma": {
                 "log_gamma_range": [-3.0, 3.0],
+                "p": 0.5,
+                "applied_to": ["im"],
+                "dataset_type": ["training"]
+            }
+        }
+    }
+
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "RandomBiasField",
+        "type": "dict",
+        "$$description": [
+            "Applies a random MRI bias field artifact to the image via `torchio.RandomBiasField()`"
+        ],
+        "options": {
+            "coefficients": {
+                "type": "float",
+                "description": "Maximum magnitude of polynomial coefficients."
+            },
+            "order": {
+                "type": "int",
+                "description": "Order of the basis polynomial functions."
+            },
+            "p": {
+                "type": "float"
+            }
+        }
+    }
+
+.. code-block:: JSON
+
+    {
+        "transformation": {
+            "RandomBiasField": {
+                "coefficients": 0.5,
+                "order": 3,
+                "p": 0.5,
+                "applied_to": ["im"],
+                "dataset_type": ["training"]
+            }
+        }
+    }
+
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "RandomBlur",
+        "type": "dict",
+        "$$description": [
+            "Applies a random blur to the image."
+        ],
+        "options": {
+            "sigma_range": {
+                "type": "(float, float)",
+                "description": "Standard deviation range for the gaussian filter."
+            },
+            "p": {
+                "type": "float"
+            }
+        }
+    }
+
+.. code-block:: JSON
+
+    {
+        "transformation": {
+            "RandomBlur": {
+                "sigma_range": [0.0, 2.0],
                 "p": 0.5,
                 "applied_to": ["im"],
                 "dataset_type": ["training"]
