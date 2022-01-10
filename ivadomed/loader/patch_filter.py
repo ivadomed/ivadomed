@@ -34,21 +34,25 @@ class PatchFilter(object):
         self.filter_empty_input = filter_empty_input
         self.is_train = is_train
 
-    def __call__(self, sample):
+    def __call__(self, sample: dict):
+        """Extract input_data and gt_data lists from sample dict and discard them if they don't match certain
+        conditions.
+
+        """
         input_data, gt_data = sample['input'], sample['gt']
 
         if self.is_train:
             if self.filter_empty_mask:
-                # Filter 2D patches at training time that do not have ANY ground truth (i.e. all masks are empty)
+                # Discard 2D patches that do not have ANY ground truth (i.e. all masks are empty) at training time
                 if not np.any(gt_data):
                     return False
             if self.filter_absent_class:
-                # Filter 2D patches at training time that have absent classes (i.e. one or more masks are empty)
+                # Discard 2D patches that have absent classes (i.e. one or more masks are empty) at training time
                 if not np.all([np.any(mask) for mask in gt_data]):
                     return False
             if self.filter_empty_input:
-                # Filter set of 2D patches at training time if one of them is empty or filled with constant value
-                # (i.e. std == 0)
+                # Discard set of 2D patches if one of them is empty or filled with constant value
+                # (i.e. std == 0) at training time
                 if np.any([img.std() == 0 for img in input_data]):
                     return False
 

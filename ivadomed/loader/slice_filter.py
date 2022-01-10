@@ -47,19 +47,22 @@ class SliceFilter(object):
             else:
                 self.classifier = torch.load(classifier_path, map_location='cpu')
 
-    def __call__(self, sample):
+    def __call__(self, sample: dict):
         input_data, gt_data = sample['input'], sample['gt']
+        """Extract input_data and gt_data lists from sample dict and discard them if they don't match certain
+        conditions.
 
+        """
         if self.filter_empty_mask:
-            # Filter slices that do not have ANY ground truth (i.e. all masks are empty)
+            # Discard slices that do not have ANY ground truth (i.e. all masks are empty)
             if not np.any(gt_data):
                 return False
         if self.filter_absent_class:
-            # Filter slices that have absent classes (i.e. one or more masks are empty)
+            # Discard slices that have absent classes (i.e. one or more masks are empty)
             if not np.all([np.any(mask) for mask in gt_data]):
                 return False
         if self.filter_empty_input:
-            # Filter set of images if one of them is empty or filled with constant value (i.e. std == 0)
+            # Discard set of images if one of them is empty or filled with constant value (i.e. std == 0)
             if np.any([img.std() == 0 for img in input_data]):
                 return False
         if self.filter_classification:
