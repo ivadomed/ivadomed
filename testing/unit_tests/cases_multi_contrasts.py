@@ -1,11 +1,11 @@
 from ivadomed.keywords import LoaderParamsKW, ContrastParamsKW
-from testing.common_testing_util import get_default_case
+from testing.common_testing_util import get_multi_default_case
 
 
 # Modality Related Testing
 
 def case_more_contrasts_than_available():
-    loader_parameters = get_default_case()
+    loader_parameters = get_multi_default_case()
 
     # Reduce MRI contrast list
     loader_parameters.update({
@@ -18,7 +18,7 @@ def case_more_contrasts_than_available():
 
 
 def case_partially_available_contrasts():
-    loader_parameters = get_default_case()
+    loader_parameters = get_multi_default_case()
 
     # Reduce MRI contrast list
     loader_parameters.update({
@@ -31,7 +31,7 @@ def case_partially_available_contrasts():
 
 
 def case_less_contrasts_than_available():
-    loader_parameters = get_default_case()
+    loader_parameters = get_multi_default_case()
 
     # Reduce MRI contrast list
     loader_parameters.update({
@@ -44,7 +44,7 @@ def case_less_contrasts_than_available():
 
 
 def case_single_contrast():
-    loader_parameters = get_default_case()
+    loader_parameters = get_multi_default_case()
 
     # Reduce MRI contrast list
     loader_parameters.update({
@@ -57,7 +57,7 @@ def case_single_contrast():
 
 
 def case_unavailable_contrast():
-    loader_parameters = get_default_case()
+    loader_parameters = get_multi_default_case()
 
     # Reduce MRI contrast list
     loader_parameters.update({
@@ -70,7 +70,7 @@ def case_unavailable_contrast():
 
 
 def case_not_specified_contrast():
-    loader_parameters = get_default_case()
+    loader_parameters = get_multi_default_case()
 
     # Reduce MRI contrast list
     loader_parameters.pop(LoaderParamsKW.CONTRAST_PARAMS)

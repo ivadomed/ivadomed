@@ -6,9 +6,10 @@ import pandas as pd
 import pytest
 from loguru import logger
 
-from ivadomed.keywords import BidsDataFrameKW, LoaderParamsKW, ContrastParamsKW
+from ivadomed.keywords import BidsDataFrameKW, LoaderParamsKW, ContrastParamsKW, ConfigKW
 from ivadomed.loader.bids_dataframe import BidsDataframe
 from ivadomed.scripts import download_data as ivadomed_download_data
+from ivadomed.main import set_loader_params
 import shutil
 import sys
 
@@ -169,16 +170,22 @@ def bids_dataframe_comparison_framework(loader_parameters: dict, target_csv: str
                     'columns_added': [], 'columns_removed': []}
 
 
-def get_default_case() -> dict:
+def get_multi_default_case() -> dict:
     """
     Generate a default case for the multi-session configuration JSON
-    Returns:
-
     """
 
-    # A default dict which subsequent tests attempt to deviate from
+    # Load the default config.json
+    path_config_json = Path(__file__).parent.parent / "ivadomed" / "config" / "config.json"
+    import json
+    with path_config_json.open("r") as config:
+        dict_config: dict = json.load(config)
 
-    default_loader_parameters: dict = {
+    # Update its loader parameters as though we are preparing for training and get its loader parameter
+    default_loader_parameters = set_loader_params(dict_config, is_train=True)
+
+    # A default dict which subsequent tests attempt to deviate from
+    default_loader_parameters.update({
         LoaderParamsKW.MULTICHANNEL: "true",
         LoaderParamsKW.TARGET_SESSIONS: ["01", "02", "03", "04"],
         LoaderParamsKW.PATH_DATA: [str(path_data_multi_sessions_contrasts_tmp)],
@@ -188,6 +195,6 @@ def get_default_case() -> dict:
         LoaderParamsKW.CONTRAST_PARAMS: {
             ContrastParamsKW.CONTRAST_LIST: ["T1w", "T2w", "FLAIR", "PD"]
         }
-    }
+    })
 
     return default_loader_parameters

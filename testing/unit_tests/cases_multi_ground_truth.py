@@ -1,11 +1,11 @@
 from ivadomed.keywords import LoaderParamsKW, ContrastParamsKW
-from testing.common_testing_util import get_default_case
+from testing.common_testing_util import get_multi_default_case
 
 
 # Ground Truth
 
 def case_more_ground_truth_than_available():
-    loader_parameters = get_default_case()
+    loader_parameters = get_multi_default_case()
 
     # Reduce MRI contrast list
     loader_parameters.update({
@@ -15,7 +15,7 @@ def case_more_ground_truth_than_available():
     return loader_parameters, "df_ref_more_target_suffix.csv"
 
 def case_partially_available_ground_truth():
-    loader_parameters = get_default_case()
+    loader_parameters = get_multi_default_case()
 
     # Reduce MRI contrast list
     loader_parameters.update({
@@ -25,7 +25,7 @@ def case_partially_available_ground_truth():
     return loader_parameters, "df_ref_fewer_target_suffix.csv"
 
 def case_less_ground_truth_than_available():
-    loader_parameters = get_default_case()
+    loader_parameters = get_multi_default_case()
 
     # Reduce MRI contrast list
     loader_parameters.update({
@@ -38,7 +38,7 @@ def case_less_ground_truth_than_available():
 def case_unavailable_ground_truth():
     # Target suffix does not EXIST!
     # Therefore
-    loader_parameters = get_default_case()
+    loader_parameters = get_multi_default_case()
 
     # Reduce MRI contrast list
     loader_parameters.update({

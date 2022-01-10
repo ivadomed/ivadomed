@@ -135,22 +135,32 @@ def save_config_file(context, path_output):
         json.dump(context, fp, indent=4)
 
 
-def set_loader_params(context, is_train):
+def set_loader_params(context: dict, is_train: bool):
+    """
+    Depending on if training vs other scenarios, SET the proper contrast list.
+    """
     loader_params = copy.deepcopy(context[ConfigKW.LOADER_PARAMETERS])
+    # Set the contrast list variable in the loader contrast_params sub dictionary
     if is_train:
         loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.CONTRAST_LIST] = \
             loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.TRAINING_VALIDATION]
     else:
         loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.CONTRAST_LIST] =\
             loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.TESTING]
-    if ConfigKW.FILMED_UNET in context and context[ConfigKW.FILMED_UNET][ModelParamsKW.APPLIED]:
-        loader_params.update({LoaderParamsKW.METADATA_TYPE: context[ConfigKW.FILMED_UNET][ModelParamsKW.METADATA]})
 
-    # Load metadata necessary to balance the loader
+    # FILMED U NET specific meta data type
+    if ConfigKW.FILMED_UNET in context and context[ConfigKW.FILMED_UNET][ModelParamsKW.APPLIED]:
+        loader_params.update({
+            LoaderParamsKW.METADATA_TYPE: context[ConfigKW.FILMED_UNET][ModelParamsKW.METADATA]
+        })
+
+    # Training Balance type, if load metadata is necessary to balance the loader
     if context[ConfigKW.TRAINING_PARAMETERS][TrainingParamsKW.BALANCE_SAMPLES][BalanceSamplesKW.APPLIED] and \
             context[ConfigKW.TRAINING_PARAMETERS][TrainingParamsKW.BALANCE_SAMPLES][BalanceSamplesKW.TYPE] != 'gt':
-        loader_params.update({LoaderParamsKW.METADATA_TYPE:
-                                  context[ConfigKW.TRAINING_PARAMETERS][TrainingParamsKW.BALANCE_SAMPLES][BalanceSamplesKW.TYPE]})
+        loader_params.update({
+            LoaderParamsKW.METADATA_TYPE:
+                context[ConfigKW.TRAINING_PARAMETERS][TrainingParamsKW.BALANCE_SAMPLES][BalanceSamplesKW.TYPE]
+        })
     return loader_params
 
 
