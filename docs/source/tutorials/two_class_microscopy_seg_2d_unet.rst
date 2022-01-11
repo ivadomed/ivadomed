@@ -14,7 +14,7 @@ Download dataset
 
 We will use a publicly available dataset consisting of 10 microscopy samples of rat spinal cord.
 
-To download the dataset (~11MB), run the following commands in your terminal:
+To download the dataset (~11MB), run the following command in your terminal:
 
 .. code-block:: bash
 
@@ -27,7 +27,7 @@ Configuration file
 In ``ivadomed``, training is orchestrated by a configuration file. Examples of configuration files are available in
 the ``ivadomed/config/`` and the documentation is available in :doc:`../configuration_file`.
 
-In this tutorial we will use the configuration file: ``ivadomed/config/config_microscopy.json``.
+In this tutorial, we will use the configuration file: ``ivadomed/config/config_microscopy.json``.
 First off, copy this configuration file in your local directory (to avoid modifying the source file):
 
 .. code-block:: bash
@@ -54,7 +54,7 @@ microscopy segmentation training.
 
   .. code-block:: xml
 
-     "path_data": "data_axondeepseg_sem"
+     "path_data": ["data_axondeepseg_sem"]
 
 - ``loader_parameters:bids_config``: Location of the custom BIDS configuration file required for microscopy
   file indexing.
@@ -71,13 +71,13 @@ microscopy segmentation training.
 
      "target_suffix": ["_seg-axon-manual", "_seg-myelin-manual"]
 
-- ``loader_parameters:extensions``: File extensions of the microscopy raw data
+- ``loader_parameters:extensions``: File extensions of the microscopy raw data.
 
   .. code-block:: xml
 
      "extensions": [".png"]
 
-- ``loader_parameters:contrast_params``: Contrasts of interest. In our case, we are training a single contrast model
+- ``loader_parameters:contrast_params``: Contrast(s) of interest. In our case, we are training a single contrast model
   with contrast ``SEM``.
 
   .. code-block:: xml
@@ -107,8 +107,8 @@ microscopy segmentation training.
       "train_fraction": 0.6
       "test_fraction": 0.1
 
-- ``training_time:num_epochs``: The maximum number of epochs that will be run during training. Each epoch is composed
-  of a training part and an evaluation part. It should be a strictly positive integer. In our case, we will use
+- ``training_parameters:training_time:num_epochs``: The maximum number of epochs that will be run during training. Each epoch is composed
+  of a training part and a validation part. It should be a strictly positive integer. In our case, we will use
   50 epochs.
 
   .. code-block:: xml
@@ -125,7 +125,7 @@ microscopy segmentation training.
      "length_2D": [256, 256]
      "stride_2D": [244, 244]
 
-- ``postprocessing:binarize_maxpooling``: Used to binarize predictions across all classes in multiclass models.
+- ``postprocessing:binarize_maxpooling``: Used to binarize predictions across all classes in multiclass models. For each pixel, the class, including the background class, with the highest output probability will be segmented.
 
   .. code-block:: xml
 
@@ -133,7 +133,7 @@ microscopy segmentation training.
 
 - ``transformation:Resample``: Used to resample images to a common resolution (in mm) before splitting into patches,
   according to each image real pixel size. In our case, we resample the images to a common resolution of 0.0001 mm
-  (0.1 um) in both dimensions.
+  (0.1 μm) in both dimensions.
 
   .. code-block:: xml
 
