@@ -171,6 +171,10 @@ on training and validation sets at every epoch. To know more about the meaning o
 
 .. code-block:: console
 
+   No CLI argument given for command: ( --train | --test | --segment ). Will check config file for command...
+   CLI flag --path-output not used to specify output directory. Will check config file for directory...
+   CLI flag --path-data not used to specify BIDS data directory. Will check config file for directory...
+
    Creating output path: log_microscopy_sem
    Using GPU ID 0
 
@@ -185,6 +189,7 @@ on training and validation sets at every epoch. To know more about the meaning o
    folder_name: model_seg_rat_axon-myelin_sem
    in_channel: 1
    out_channel: 3
+
    Dataframe has been saved in log_microscopy_sem/bids_dataframe.csv.
    After splitting: train, validation and test fractions are respectively 0.6, 0.3 and 0.1 of sample_id.
 
@@ -197,14 +202,13 @@ on training and validation sets at every epoch. To know more about the meaning o
    Resample: {'hspace': 0.0001, 'wspace': 0.0001}
    NormalizeInstance: {'applied_to': ['im']}
 
-   Loading dataset: 100%████████████████████████████████████████████████████████████████ 3/3 [00:00<00:00, 738.48it/s]
+   Loading dataset: 100%|████████████████████████████████████████████████████████████████| 3/3 [00:00<00:00, 738.48it/s]
    Loaded 76 axial patches of shape [256, 256] for the validation set.
-   Loading dataset: 100%████████████████████████████████████████████████████████████████ 6/6 [00:00<00:00, 829.21it/s]
+   Loading dataset: 100%|████████████████████████████████████████████████████████████████| 6/6 [00:00<00:00, 829.21it/s]
    Loaded 252 axial patches of shape [256, 256] for the training set.
    Creating model directory: log_microscopy_sem/model_seg_rat_axon-myelin_sem
 
    Initialising model's weights from scratch.
-
    Scheduler parameters: {'name': 'CosineAnnealingLR', 'base_lr': 1e-05, 'max_lr': 0.01}
 
    Selected Loss: DiceLoss
@@ -247,6 +251,9 @@ For more details on the evaluation metrics, see :mod:`ivadomed.metrics`.
 
 .. code-block:: console
 
+   CLI flag --path-output not used to specify output directory. Will check config file for directory...
+   CLI flag --path-data not used to specify BIDS data directory. Will check config file for directory...
+
    Output path already exists: log_microscopy_sem
    Using GPU ID 0
 
@@ -261,6 +268,7 @@ For more details on the evaluation metrics, see :mod:`ivadomed.metrics`.
    folder_name: model_seg_rat_axon-myelin_sem
    in_channel: 1
    out_channel: 3
+
    Dataframe has been saved in log_microscopy_sem/bids_dataframe.csv.
    After splitting: train, validation and test fractions are respectively 0.6, 0.3 and 0.1 of sample_id.
 
@@ -268,11 +276,11 @@ For more details on the evaluation metrics, see :mod:`ivadomed.metrics`.
    Resample: {'hspace': 0.0001, 'wspace': 0.0001}
    NormalizeInstance: {'applied_to': ['im']}
 
-   Loading dataset: 100%████████████████████████████████████████████████████████████████ 1/1 [00:00<00:00, 413.48it/s]
+   Loading dataset: 100%|████████████████████████████████████████████████████████████████| 1/1 [00:00<00:00, 413.48it/s]
    Loaded 16 axial patches of shape [256, 256] for the testing set.
    Loading model: log_microscopy_sem/best_model.pt
 
-   Inference - Iteration 0: 100%|████████████████████████████████████████████████████████████████ 4/4 [00:01<00:00,  2.89it/s]
+   Inference - Iteration 0: 100%|████████████████████████████████████████████████████████████████| 4/4 [00:01<00:00,  2.89it/s]
    Lossy conversion from float64 to uint8. Range [0, 1]. Convert image to uint8 prior to saving to suppress this warning.
    Lossy conversion from float64 to uint8. Range [0, 1]. Convert image to uint8 prior to saving to suppress this warning.
    {'dice_score': 0.8381376827003003, 'multi_class_dice_score': 0.8422281034034607, 'precision_score': 0.8342335786851753,
@@ -281,7 +289,7 @@ For more details on the evaluation metrics, see :mod:`ivadomed.metrics`.
 
    Run Evaluation on log_microscopy_sem/pred_masks
 
-   Evaluation: 100%████████████████████████████████████████████████████████████████ 1/1 [00:13<00:00, 13.56s/it]
+   Evaluation: 100%|████████████████████████████████████████████████████████████████| 1/1 [00:13<00:00, 13.56s/it]
    Lossy conversion from float64 to uint8. Range [0.0, 3.0]. Convert image to uint8 prior to saving to suppress this warning.
    Lossy conversion from float64 to uint8. Range [0.0, 3.0]. Convert image to uint8 prior to saving to suppress this warning.
                                 avd_class0  avd_class1  dice_class0  dice_class1  ...  vol_gt_class0  vol_gt_class1  vol_pred_class0  vol_pred_class1
