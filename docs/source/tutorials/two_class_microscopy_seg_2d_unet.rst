@@ -307,7 +307,5 @@ After the training for 50 epochs, the segmentations should be similar to the one
 The ground truth segmentations and predictions of the axons and myelin are presented in blue and red respectively for
 ``sub-rat3_sample-data9_SEM``):
 
-..
-   TODO: Update link to figure after merge of PR5 in doc-figures
-.. image:: https://raw.githubusercontent.com/ivadomed/doc-figures/mhb/micr-tuto-figure/tutorials/two_classes_microscopy_seg_2d_unet/axon_myelin_predictions.png
+.. image:: https://raw.githubusercontent.com/ivadomed/doc-figures/main/tutorials/two_classes_microscopy_seg_2d_unet/axon_myelin_predictions.png
    :align: center
