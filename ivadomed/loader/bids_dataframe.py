@@ -7,8 +7,7 @@ from loguru import logger
 from typing import List
 from ivadomed.keywords import LoaderParamsKW, ROIParamsKW, ContrastParamsKW, BidsDataFrameKW
 from pathlib import Path
-from pprint import pformat
-
+import json
 
 def write_derivatives_dataset_description(path_data: str):
     """Writes default dataset_description.json file if not found in path_data/derivatives folder
@@ -55,6 +54,10 @@ class BidsDataframe:
     """
 
     def __init__(self, loader_params: dict, path_output: str, derivatives: bool):
+
+        # Enable tracing of the input loader_params for easier debugging
+        logger.trace(f"Consolidated Loader Parameters Received:\n {json.dumps(loader_params, indent=4)}")
+
 
         # paths_data from loader parameters
         self.paths_data: list = loader_params[LoaderParamsKW.PATH_DATA]

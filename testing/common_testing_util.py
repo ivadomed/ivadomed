@@ -146,8 +146,6 @@ def bids_dataframe_comparison_framework(loader_parameters: dict, target_csv: str
     """
     import json
 
-    logger.debug(f"Consolidated Testing Loader Parameters:\n {json.dumps(loader_parameters, indent=4)}")
-
     # Create the bids frame.
     bids_df = BidsDataframe(loader_parameters,
                             str(path_data_multi_sessions_contrasts_tmp),

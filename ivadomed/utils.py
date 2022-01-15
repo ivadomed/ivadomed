@@ -7,6 +7,7 @@ from loguru import logger
 from pathlib import Path
 from ivadomed.keywords import ConfigKW, LoaderParamsKW
 from typing import List
+from difflib import SequenceMatcher
 
 AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 
@@ -400,6 +401,19 @@ def format_path_data(path_data):
     if isinstance(path_data, str):
         path_data = [path_data]
     return path_data
+
+
+def similarity_score(a:str, b:str):
+    """
+    use DiffLIb SequenceMatcher to resolve the similarity between text. Help make better choice in terms of derivatives.
+    Args:
+        a: a string
+        b: another string
+
+    Returns: a score indicative of the similarity between the sequence.
+
+    """
+    return SequenceMatcher(None, a, b).ratio()
 
 
 def init_ivadomed():
