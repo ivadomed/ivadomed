@@ -1,7 +1,5 @@
 import pytest
 import numpy as np
-import pprint
-
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
 
@@ -75,10 +73,6 @@ def test_slice_filter(download_data_testing_test_files, transforms_dict, train_l
         "multichannel": False
     }
     # Get Training dataset
-    import json
-    logger.debug(f"Loader Params are:")
-    logger.debug("\n"+json.dumps(loader_params, indent=4,))
-
     bids_df = BidsDataframe(loader_params, __tmp_dir__, derivatives=True)
     ds_train = imed_loader.load_dataset(bids_df, **loader_params)
 

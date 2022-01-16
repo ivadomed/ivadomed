@@ -68,6 +68,31 @@ def test_bids_df_anat(download_data_testing_test_files, loader_parameters):
     assert diff == {'added': [], 'removed': [], 'changed': [],
                     'columns_added': [], 'columns_removed': []}
 
+
+@pytest.mark.parametrize('loader_parameters', [{
+    "path_data": [__data_testing_dir__, str(Path(__data_testing_dir__, "microscopy_png"))],
+    "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
+    "target_suffix": ["_seg-manual", "seg-axon-manual"],
+    "extensions": [".nii.gz", ".png"],
+    "roi_params": {"suffix": None, "slice_filter_roi": None},
+    "contrast_params": {"contrast_lst": ["T1w", "T2w", "SEM"]}
+}])
+def test_bids_df_multi(download_data_testing_test_files, loader_parameters):
+    """
+    Test for multiple folders in path_data
+    """
+
+    bids_df = BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
+    df_test = bids_df.df.drop(columns=['path'])
+    df_test = df_test.sort_values(by=['filename']).reset_index(drop=True)
+    csv_ref = Path(loader_parameters["path_data"][0], "df_ref_multi.csv")
+    csv_test = Path(loader_parameters["path_data"][0], "df_test_multi.csv")
+    df_test.to_csv(csv_test, index=False)
+    diff = csv_diff.compare(csv_diff.load_csv(open(csv_ref)), csv_diff.load_csv(open(csv_test)))
+    assert diff == {'added': [], 'removed': [], 'changed': [],
+                    'columns_added': [], 'columns_removed': []}
+
+
 @pytest.mark.parametrize('loader_parameters', [{
     "path_data": [str(Path(__data_testing_dir__, "ct_scan"))],
     "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",

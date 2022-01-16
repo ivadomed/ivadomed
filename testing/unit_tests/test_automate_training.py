@@ -712,7 +712,7 @@ def test_config_sha256(download_data_testing_test_files, initial_config):
         "path_data": [__data_testing_dir__],
         "target_suffix": ["_lesion-manual"],
         "extensions": [".nii.gz"],
-        "roi_params": {"suffix": None, "slice_filter_roi": 10},
+        "roi_params": {"suffix": "_seg-manual", "slice_filter_roi": 10},
         "slice_filter_params": {
             "filter_empty_mask": False,
             "filter_empty_input": True
