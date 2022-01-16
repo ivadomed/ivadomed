@@ -16,10 +16,14 @@ Download dataset
     A dataset example is available for this tutorial. If not already done, download the dataset with the following line.
     For more details on this dataset see :ref:`One-class segmentation with 2D U-Net<Download dataset>`.
 
-    .. code-block:: bash
+    .. tabs::
 
-       # Download data
-       ivadomed_download_data -d data_example_spinegeneric
+        .. tab:: Command Line Interface
+
+            .. code-block:: bash
+
+                # Download data
+                ivadomed_download_data -d data_example_spinegeneric
 
 Configuration file
 ------------------
@@ -27,20 +31,169 @@ Configuration file
     In this tutorial we will use the configuration file: ``ivadomed/config/config.json``.
     First off, copy this configuration file in your local directory to avoid modifying the source file:
 
-    .. code-block:: bash
+    .. tabs::
 
-       cp <PATH_TO_IVADOMED>/ivadomed/config/config.json .
+        .. tab:: Command Line Interface
 
-    Then, open it with a text editor. As described in the tutorial :doc: `../tutorials/one_class_segmentation_2d_unet`, make
-    sure the ``command`` is set to ``train`` and ``path_data`` point to the location of the dataset. Below, we will discuss
-    some of the key parameters to use cascaded models.
+            .. code-block:: bash
+
+               cp <PATH_TO_IVADOMED>/ivadomed/config/config.json .
+
+
+    Then, open it with a text editor. Which you can `view directly here: <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json>`_ or you can see it in the collapsed JSON code block below.
+
+        .. collapse:: Reveal the embedded config.json
+
+            .. code-block:: json
+                :linenos:
+
+                {
+                    "command": "train",
+                    "gpu_ids": [0],
+                    "path_output": "spineGeneric",
+                    "model_name": "my_model",
+                    "debugging": false,
+                    "object_detection_params": {
+                        "object_detection_path": null,
+                        "safety_factor": [1.0, 1.0, 1.0]
+                    },
+                    "loader_parameters": {
+                        "path_data": ["data_example_spinegeneric"],
+                        "subject_selection": {"n": [], "metadata": [], "value": []},
+                        "target_suffix": ["_seg-manual"],
+                        "extensions": [".nii.gz"],
+                        "roi_params": {
+                            "suffix": null,
+                            "slice_filter_roi": null
+                        },
+                        "contrast_params": {
+                            "training_validation": ["T1w", "T2w", "T2star"],
+                            "testing": ["T1w", "T2w", "T2star"],
+                            "balance": {}
+                        },
+                        "slice_filter_params": {
+                            "filter_empty_mask": false,
+                            "filter_empty_input": true
+                        },
+                        "slice_axis": "axial",
+                        "multichannel": false,
+                        "soft_gt": false
+                    },
+                    "split_dataset": {
+                        "fname_split": null,
+                        "random_seed": 6,
+                        "split_method" : "participant_id",
+                        "data_testing": {"data_type": null, "data_value":[]},
+                        "balance": null,
+                        "train_fraction": 0.6,
+                        "test_fraction": 0.2
+                    },
+                    "training_parameters": {
+                        "batch_size": 18,
+                        "loss": {
+                            "name": "DiceLoss"
+                        },
+                        "training_time": {
+                            "num_epochs": 100,
+                            "early_stopping_patience": 50,
+                            "early_stopping_epsilon": 0.001
+                        },
+                        "scheduler": {
+                            "initial_lr": 0.001,
+                            "lr_scheduler": {
+                                "name": "CosineAnnealingLR",
+                                "base_lr": 1e-5,
+                                "max_lr": 1e-2
+                            }
+                        },
+                        "balance_samples": {
+                            "applied": false,
+                            "type": "gt"
+                        },
+                        "mixup_alpha": null,
+                        "transfer_learning": {
+                            "retrain_model": null,
+                            "retrain_fraction": 1.0,
+                            "reset": true
+                        }
+                    },
+                    "default_model": {
+                        "name": "Unet",
+                        "dropout_rate": 0.3,
+                        "bn_momentum": 0.1,
+                        "final_activation": "sigmoid",
+                        "depth": 3
+                    },
+                    "FiLMedUnet": {
+                        "applied": false,
+                        "metadata": "contrasts",
+                        "film_layers": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+                    },
+                    "Modified3DUNet": {
+                        "applied": false,
+                        "length_3D": [128, 128, 16],
+                        "stride_3D": [128, 128, 16],
+                        "attention": false,
+                        "n_filters": 8
+                    },
+                    "uncertainty": {
+                        "epistemic": false,
+                        "aleatoric": false,
+                        "n_it": 0
+                    },
+                    "postprocessing": {
+                        "remove_noise": {"thr": -1},
+                        "keep_largest": {},
+                        "binarize_prediction": {"thr": 0.5},
+                        "uncertainty": {"thr": -1, "suffix": "_unc-vox.nii.gz"},
+                        "fill_holes": {},
+                        "remove_small": {"unit": "vox", "thr": 3}
+                    },
+                    "evaluation_parameters": {
+                        "target_size": {"unit": "vox", "thr": [20, 100]},
+                        "overlap": {"unit": "vox", "thr": 3}
+                    },
+                    "transformation": {
+                        "Resample":
+                        {
+                            "hspace": 0.75,
+                            "wspace": 0.75,
+                            "dspace": 1
+                        },
+                        "CenterCrop": {
+                            "size": [128, 128]},
+                        "RandomAffine": {
+                            "degrees": 5,
+                            "scale": [0.1, 0.1],
+                            "translate": [0.03, 0.03],
+                            "applied_to": ["im", "gt"],
+                            "dataset_type": ["training"]
+                        },
+                        "ElasticTransform": {
+                            "alpha_range": [28.0, 30.0],
+                            "sigma_range":  [3.5, 4.5],
+                            "p": 0.1,
+                            "applied_to": ["im", "gt"],
+                            "dataset_type": ["training"]
+                        },
+                      "NormalizeInstance": {"applied_to": ["im"]}
+                    }
+                }
+
+
+    From this point onward, we will discuss some of the key parameters to use cascaded models. Most parameters are configurable only via modification of the configuration ``JSON file``.
+    For those that supports commandline run time configuration, we included the respective command versions under the ``Command Line Interface`` tab
 
     - ``debugging``: Boolean, create extended verbosity and intermediate outputs. Here we will look at the intermediate predictions
       with tensorboard, we therefore need to activate those intermediate outputs.
 
-      .. code-block:: json
+        .. tabs::
 
-         "debugging": true
+            .. tab:: JSON File
+
+                  .. code-block:: json
+
+                     "debugging": true
 
     - ``object_detection_params:object_detection_path``: Location of the object detection model. This parameter corresponds
       to the path of the first model from the cascaded architecture that segments the spinal cord. The packaged model in the
@@ -48,46 +201,66 @@ Configuration file
       This spinal cord segmentation model will be applied to the images and a bounding box will be created around this mask
       to crop the image.
 
-      .. code-block:: json
+        .. tabs::
 
-         "object_detection_path": "<PATH_TO_DATASET>/trained_model/seg_sc_t1-t2-t2s-mt"
+            .. tab:: JSON File
+
+                  .. code-block:: json
+
+                     "object_detection_path": "<PATH_TO_DATASET>/trained_model/seg_sc_t1-t2-t2s-mt"
 
     - ``object_detection_params:safety_factor``: Multiplicative factor to apply to each dimension of the bounding box. To
       ensure all the CSF is included, a safety factor should be applied to the bounding box generated from the spinal cord.
       A safety factor of 200% on each dimension is applied on the height and width of the image. The original depth of the
       bounding box is kept since the CSF should not be present past this border.
 
-      .. code-block:: json
+        .. tabs::
 
-         "safety_factor": [2, 2, 1]
+            .. tab:: JSON File
+
+                  .. code-block:: json
+
+                     "safety_factor": [2, 2, 1]
 
     - ``loader_parameters:target_suffix``: Suffix of the ground truth segmentation. The ground truth are located under the
       ``DATASET/derivatives/labels`` folder. The suffix for CSF labels in this dataset is ``_csfseg-manual``:
 
-      .. code-block:: json
+        .. tabs::
 
-         "target_suffix": ["_csfseg-manual"]
+            .. tab:: JSON File
+
+                  .. code-block:: json
+
+                     "target_suffix": ["_csfseg-manual"]
 
     - ``loader_parameters:contrast_params``: Contrast(s) of interest. The CSF labels are only available in T2w contrast in
       the example dataset.
 
-      .. code-block:: json
+        .. tabs::
 
-         "contrast_params": {
-             "training_validation": ["T2w"],
-             "testing": ["T2w"],
-             "balance": {}
-         }
+            .. tab:: JSON File
+
+                  .. code-block:: json
+
+                     "contrast_params": {
+                         "training_validation": ["T2w"],
+                         "testing": ["T2w"],
+                         "balance": {}
+                     }
 
     - ``transformation:CenterCrop:size``: Crop size in voxel. Images will be cropped or padded to fit these dimensions. This
       allows all the images to have the same size during training. Since the images will be cropped around the spinal cord,
       the image size can be reduced to avoid large zero padding.
 
-      .. code-block:: json
+        .. tabs::
 
-         "CenterCrop": {
-             "size": [64, 64]
-         }
+            .. tab:: JSON File
+
+                  .. code-block:: json
+
+                     "CenterCrop": {
+                         "size": [64, 64]
+                     }
 
 Train model
 -----------
@@ -102,23 +275,35 @@ Train model
 
     Make sure to run the CLI command with the ``--train`` flag, and to point to the location of the dataset via the flag ``--path-data path/to/bids/data``.
 
-    .. code-block:: bash
+    .. tabs::
 
-       ivadomed --train -c config.json --path-data path/to/bids/data --path-output path/to/output/directory -t 0.01 -g 1
+        .. tab:: Command Line Interface
+
+            .. code-block:: bash
+
+               ivadomed --train -c config.json --path-data path/to/bids/data --path-output path/to/output/directory -t 0.01 -g 1
 
     If you prefer to use config files over CLI flags, set ``command`` to the following in you config file:
 
-    .. code-block:: json
+        .. tabs::
 
-       "command": "train"
+            .. tab:: JSON File
 
-    You can also set ``path_output``, and ``path_data`` arguments in your config file.
+                  .. code-block:: json
 
-    Then run:
+                     "command": "train"
 
-    .. code-block:: bash
+        You can also set ``path_output``, and ``path_data`` arguments in your config file.
 
-       ivadomed -c config.json
+        Then run:
+
+        .. tabs::
+
+                .. tab:: Command Line Interface
+
+                    .. code-block:: bash
+
+                       ivadomed -c config.json
 
     At the end of the training, the optimal threshold will be indicated:
 
@@ -144,9 +329,13 @@ Visualize training data
     the model's prediction, the ground truth, the learning curves, and more. To access this data during or after training,
     use the following command-line:
 
-    .. code-block:: bash
+    .. tabs::
 
-       tensorboard --logdir <PATH_TO_OUT_DIR>
+            .. tab:: Command Line Interface
+
+                .. code-block:: bash
+
+                   tensorboard --logdir <PATH_TO_OUT_DIR>
 
     The following should be displayed in the terminal:
 
@@ -173,9 +362,13 @@ Evaluate model
     - ``postprocessing:binarize_prediction``: Threshold at which predictions are binarized. Before testing the model,
       modify the binarization threshold to have a threshold adapted to the data:
 
-    .. code-block:: json
+    .. tabs::
 
-        "binarize_prediction": 0.01
+        .. tab:: JSON File
+
+              .. code-block:: json
+
+                 "binarize_prediction": 0.01
 
 
     To test and apply this model on the testing dataset, go to the `Evaluate model` section of the tutorial
