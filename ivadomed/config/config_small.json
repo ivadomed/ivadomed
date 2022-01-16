@@ -7,7 +7,6 @@
     "loader_parameters": {
         "path_data": ["../duke/projects/ivadomed/spineGeneric_201907041011/result/"],
         "target_suffix": ["_seg-manual"],
-        "target_ground_truth": "_seg-manual",
         "extensions": [".nii.gz"],
         "roi_params": {
             "suffix": null,

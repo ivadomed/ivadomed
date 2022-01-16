@@ -7,7 +7,6 @@
     "loader_parameters": {
         "path_data": ["/home/GRAMES.POLYMTL.CA/luroub/luroub_local/lurou_local/deep_VL_2019/straight/"],
         "target_suffix": ["_heatmap3"],
-        "target_ground_truth": "_heatmap3",
         "extensions": [".nii.gz"],
         "roi_params": {
             "suffix": null,
