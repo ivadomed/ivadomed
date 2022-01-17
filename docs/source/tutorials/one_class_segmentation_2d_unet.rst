@@ -196,7 +196,7 @@ Configuration file
 
     From this point onward, we will discuss some of the key parameters to perform a one-class 2D
     segmentation training. Most parameters are configurable only via modification of the configuration ``JSON file``.
-    sFor those that supports commandline run time configuration, we included the respective command versions under the ``Command Line Interface`` tab
+    For those that supports command line run time configuration, we included the respective command versions under the ``Command Line Interface`` tab
 
 
     - ``command``: Action to perform. Here, we want to **train** a model:
@@ -205,7 +205,7 @@ Configuration file
 
             .. tab:: JSON File
 
-                We can set the field within the newly copied ``config.json`` file as follow, usually around **Line Number 2**:
+                We can set the field within the newly copied ``config.json`` file as follow, around `this line: <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L2>`__:
 
                 .. code-block:: json
 
@@ -227,7 +227,7 @@ Configuration file
 
             .. tab:: JSON File
 
-                Usually around **Line Number 4** in the ``config.json`` is where you can update the ``path_output``.
+                Usually around `this line: <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L4>`__ in the ``config.json`` is where you can update the ``path_output``.
 
                 .. code-block:: json
 
@@ -269,7 +269,7 @@ Configuration file
 
             .. tab:: JSON File
 
-                Usually around **Line Number 14** in the ``config.json`` is where you can update the ``target_suffix`` within the ``loader_parameters`` sub-dictionary.
+                Usually around `this line: <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L14>`__ in the ``config.json`` is where you can update the ``target_suffix`` within the ``loader_parameters`` sub-dictionary.
 
                 .. code-block:: json
 
@@ -281,7 +281,7 @@ Configuration file
 
             .. tab:: JSON File
 
-                Usually around **Line Number 20 to 24** in the ``config.json`` is where you can update the ``contrast_params`` sub-dictionary within the ``loader_parameters`` sub-dictionary.
+                Usually `this line: <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L20>`__ in the ``config.json`` is where you can update the ``contrast_params`` sub-dictionary within the ``loader_parameters`` sub-dictionary.
 
                 .. code-block:: json
 
@@ -297,7 +297,7 @@ Configuration file
 
             .. tab:: JSON File
 
-                Usually around **Line Number 29** in the ``config.json`` is where you can update the ``slice_axis`` subkey within the ``loader_parameters`` sub-dictionary.
+                Usually around `this line: <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L29>`__ in the ``config.json`` is where you can update the ``slice_axis`` subkey within the ``loader_parameters`` sub-dictionary.
 
                 .. code-block:: json
 
@@ -310,7 +310,7 @@ Configuration file
 
             .. tab:: JSON File
 
-                Usually around **Line Number 30** in the ``config.json`` is where you can update the ``multichannel`` subkey within the ``loader_parameters`` sub-dictionary.
+                Usually around `this line: <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L30>`__ in the ``config.json`` is where you can update the ``multichannel`` subkey within the ``loader_parameters`` sub-dictionary.
 
                 .. code-block:: json
 
@@ -329,7 +329,7 @@ Configuration file
 
             .. tab:: JSON File
 
-                Usually around **Line Number 29** in the ``config.json`` is where you can update the ``slice_axis`` subkey within the ``loader_parameters`` sub-dictionary.
+                Usually around `this line: <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L29>`__ in the ``config.json`` is where you can update the ``slice_axis`` subkey within the ``loader_parameters`` sub-dictionary.
 
                 .. code-block:: json
 
@@ -348,31 +348,16 @@ Train model
 
                ivadomed --train -c config.json --path-data path/to/bids/data --path-output path/to/output/directory
 
-    - We can pass other flags to execute different commands (training, testing, segmentation), see `Usage <../usage.html>`__.
+    - In the above command, we execute the ``train`` command and manually specified ``path-data`` and ``path-output`` and overwrote/replace the specification in ``config.json``
 
+    - ``--train``: We can pass other flags to execute different commands (training, testing, segmentation), see `Usage <../usage.html>`__.
 
     - ``--path-output``: Folder name that will contain the output files (e.g., trained model, predictions, results).
-
-        .. tabs::
-
-            .. tab:: Command Line Interface
-
-                  .. code-block:: bash
-
-                     --path-output path/to/output/directory
 
     - ``--path-data``: Location of the dataset. As discussed in `Data <../data.html>`__, the dataset
       should conform to the BIDS standard. Modify the path so it points to the location of the downloaded dataset.
 
-        .. tabs::
-
-            .. tab:: Command Line Interface
-
-                .. code-block:: bash
-
-                    --path-data path/to/bids/data
-
-    - If you set the ``command``, ``path_output``, and ``path_data`` arguments in your config file, you do not need to pass the CLI flags:
+    - If you set the ``command``, ``path_output``, and ``path_data`` arguments in your config file, you do not need to pass the above three CLI flags:
 
         .. tabs::
 
@@ -466,15 +451,15 @@ Evaluate model
 
             You can also set ``path_output``, and ``path_data`` arguments in your config file, usually around **Line Number 2, 4, and 12** in the `config.json` respectively.
 
-    Then run:
+            Then run:
 
-    .. tabs::
+            .. tabs::
 
-        .. tab:: Command Line Interface
+                .. tab:: Command Line Interface
 
-            .. code-block:: bash
+                    .. code-block:: bash
 
-                ivadomed -c config.json
+                        ivadomed -c config.json
 
     The model's parameters will be displayed in the terminal, followed by a preview of the results for each image.
     The resulting segmentation is saved for each image in the ``<PATH_TO_OUT_DIR>/pred_masks`` while a csv file,
