@@ -299,7 +299,8 @@ For more details on the evaluation metrics, see :mod:`ivadomed.metrics`.
    [1 rows x 26 columns]
 
 The test image segmentations are stored in ``<PATH_TO_OUT_DIR>/pred_masks/`` in PNG format and have the same name as
-the input image with the suffix ``<target_suffix>_pred.png``.
+the input image with the suffix ``<class-index>_pred.png``. In our case: ``sub-rat3_sample-data9_SEM_class-0_pred.png`` and
+``sub-rat3_sample-data9_SEM_class-1_pred.png`` for axons and myelin respectively (in the same order as ``target_suffix``).
 A temporary NIfTI files containing the predictions for both classes with the suffix ``_pred.nii.gz`` will also be
 present.
 
