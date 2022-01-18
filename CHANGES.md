@@ -7,6 +7,10 @@
 - Implementation of Random Bias Field Augmentation.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1033)
 - Implementation of Random Gamma Contrast Augmentation.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1015)
 
+**DEPENDENCIES**
+
+- Unpin `tensorboard` to avoid conflict with downstream SCT requirements.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1048)
+
 **BUG**
 
 - Rename prediction filenames: add class index and compat. for multi-rater.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1043)
