@@ -98,8 +98,10 @@ def evaluate(bids_df, path_output, target_suffix, eval_params):
         # For Microscopy PNG/TIF files (TODO: implement OMETIFF behavior)
         if "nii" not in extension:
             painted_list = imed_inference.split_classes(nib_painted)
+            # Reformat target list to include class index and be compatible with multiple raters
+            target_list = ["_class-%d" % i for i in range(len(target_suffix))]
             imed_inference.pred_to_png(painted_list,
-                                       target_suffix,
+                                       target_list,
                                        str(path_preds.joinpath(subj_acq)),
                                        suffix="_painted")
 
