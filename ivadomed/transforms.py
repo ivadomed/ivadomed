@@ -517,9 +517,9 @@ class RandomCrop(Crop):
             # Crop parameters
             th, tw, td = self.size
             h, w, d = sample.shape
-            fh = int(np.random.uniform(*sorted((0, h - th))))
-            fw = int(np.random.uniform(*sorted((0, w - tw))))
-            fd = int(np.random.uniform(*sorted((0, d - td))))
+            fh = random.randint(*sorted((0, h - th)))
+            fw = random.randint(*sorted((0, w - tw)))
+            fd = random.randint(*sorted((0, d - td)))
             params = (fh, fw, fd, h, w, d)
             metadata[MetadataKW.CROP_PARAMS][self.__class__.__name__] = params
 
