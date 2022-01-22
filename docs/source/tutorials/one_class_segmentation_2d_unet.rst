@@ -205,7 +205,7 @@ Configuration file
 
             .. tab:: JSON File
 
-                We can set the field within the newly copied ``config.json`` file as follow, around `this line: <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L2>`__:
+                We can set the field within the newly copied ``config.json`` file as follow, at `this line <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L2>`__:
 
                 .. code-block:: json
 
@@ -227,7 +227,7 @@ Configuration file
 
             .. tab:: JSON File
 
-                Usually around `this line: <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L4>`__ in the ``config.json`` is where you can update the ``path_output``.
+                Usually at `this line <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L4>`__ in the ``config.json`` is where you can update the ``path_output``.
 
                 .. code-block:: json
 
@@ -248,7 +248,7 @@ Configuration file
 
             .. tab:: JSON File
 
-                Usually around **Line Number 12** in the ``config.json`` is where you can update the ``path_data`` within the ``loader_parameters`` sub-dictionary.
+                Usually at <`this line <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L12>`__ in the ``config.json`` is where you can update the ``path_data`` within the ``loader_parameters`` sub-dictionary.
 
                 .. code-block:: json
 
@@ -269,7 +269,7 @@ Configuration file
 
             .. tab:: JSON File
 
-                Usually around `this line: <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L14>`__ in the ``config.json`` is where you can update the ``target_suffix`` within the ``loader_parameters`` sub-dictionary.
+                Usually at `this line <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L14>`__ in the ``config.json`` is where you can update the ``target_suffix`` within the ``loader_parameters`` sub-dictionary.
 
                 .. code-block:: json
 
@@ -281,7 +281,7 @@ Configuration file
 
             .. tab:: JSON File
 
-                Usually `this line: <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L20>`__ in the ``config.json`` is where you can update the ``contrast_params`` sub-dictionary within the ``loader_parameters`` sub-dictionary.
+                Usually at `this line <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L20>`__ in the ``config.json`` is where you can update the ``contrast_params`` sub-dictionary within the ``loader_parameters`` sub-dictionary.
 
                 .. code-block:: json
 
@@ -297,7 +297,7 @@ Configuration file
 
             .. tab:: JSON File
 
-                Usually around `this line: <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L29>`__ in the ``config.json`` is where you can update the ``slice_axis`` subkey within the ``loader_parameters`` sub-dictionary.
+                At `this line <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L29>`__ in the ``config.json`` is where you can update the ``slice_axis`` subkey within the ``loader_parameters`` sub-dictionary.
 
                 .. code-block:: json
 
@@ -310,7 +310,7 @@ Configuration file
 
             .. tab:: JSON File
 
-                Usually around `this line: <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L30>`__ in the ``config.json`` is where you can update the ``multichannel`` subkey within the ``loader_parameters`` sub-dictionary.
+                At `this line <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L30>`__ in the ``config.json`` is where you can update the ``multichannel`` subkey within the ``loader_parameters`` sub-dictionary.
 
                 .. code-block:: json
 
@@ -329,7 +329,7 @@ Configuration file
 
             .. tab:: JSON File
 
-                Usually around `this line: <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L29>`__ in the ``config.json`` is where you can update the ``slice_axis`` subkey within the ``loader_parameters`` sub-dictionary.
+                At `this line <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L29>`__ in the ``config.json`` is where you can update the ``slice_axis`` subkey within the ``loader_parameters`` sub-dictionary.
 
                 .. code-block:: json
 
@@ -348,7 +348,7 @@ Train model
 
                ivadomed --train -c config.json --path-data path/to/bids/data --path-output path/to/output/directory
 
-    - In the above command, we execute the ``train`` command and manually specified ``path-data`` and ``path-output`` and overwrote/replace the specification in ``config.json``
+    - In the above command, we execute the ``--train`` command and manually specified ``--path-data`` and ``--path-output`` and overwrote/replace the specification in ``config.json``
 
     - ``--train``: We can pass other flags to execute different commands (training, testing, segmentation), see `Usage <../usage.html>`__.
 
@@ -449,7 +449,7 @@ Evaluate model
 
                "command": "test"
 
-            You can also set ``path_output``, and ``path_data`` arguments in your config file, usually around **Line Number 2, 4, and 12** in the `config.json` respectively.
+            You can also set ``path_output``, and ``path_data`` arguments in the `config.json` respectively.
 
             Then run:
 
