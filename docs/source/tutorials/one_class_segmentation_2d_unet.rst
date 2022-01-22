@@ -227,7 +227,7 @@ Configuration file
 
             .. tab:: JSON File
 
-                Usually at `this line <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L4>`__ in the ``config.json`` is where you can update the ``path_output``.
+                At `this line <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L4>`__ in the ``config.json`` is where you can update the ``path_output``.
 
                 .. code-block:: json
 
@@ -248,7 +248,7 @@ Configuration file
 
             .. tab:: JSON File
 
-                Usually at <`this line <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L12>`__ in the ``config.json`` is where you can update the ``path_data`` within the ``loader_parameters`` sub-dictionary.
+                At <`this line <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L12>`__ in the ``config.json`` is where you can update the ``path_data`` within the ``loader_parameters`` sub-dictionary.
 
                 .. code-block:: json
 
@@ -269,7 +269,7 @@ Configuration file
 
             .. tab:: JSON File
 
-                Usually at `this line <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L14>`__ in the ``config.json`` is where you can update the ``target_suffix`` within the ``loader_parameters`` sub-dictionary.
+                At `this line <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L14>`__ in the ``config.json`` is where you can update the ``target_suffix`` within the ``loader_parameters`` sub-dictionary.
 
                 .. code-block:: json
 
@@ -281,7 +281,7 @@ Configuration file
 
             .. tab:: JSON File
 
-                Usually at `this line <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L20>`__ in the ``config.json`` is where you can update the ``contrast_params`` sub-dictionary within the ``loader_parameters`` sub-dictionary.
+                At `this line <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L20>`__ in the ``config.json`` is where you can update the ``contrast_params`` sub-dictionary within the ``loader_parameters`` sub-dictionary.
 
                 .. code-block:: json
 
