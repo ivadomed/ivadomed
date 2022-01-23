@@ -120,13 +120,6 @@ extra_requirements['dev'] = [
     'sphinx-tabs==3.2.0'
     ]
 
-extra_requirements['inference'] = [
-    requirements,
-    extra_requirements['cpu'],
-    'onnxruntime==1.7.0'
-]
-
-
 setup(
     name='ivadomed',
     version=version,
