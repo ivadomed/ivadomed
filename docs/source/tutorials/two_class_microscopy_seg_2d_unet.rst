@@ -65,7 +65,7 @@ microscopy segmentation training.
 
   .. code-block:: xml
 
-     "bids_config": "ivadomed/config/config_bids.json",
+     "bids_config": "<PATH_TO_IVADOMED>/ivadomed/config/config_bids.json",
 
 - ``loader_parameters:target_suffix``: Suffix of the ground truth segmentations. The ground truths are located
   under the ``data_axondeepseg_sem/derivatives/labels`` folder. In our case, the suffix are ``_seg-axon-manual``
