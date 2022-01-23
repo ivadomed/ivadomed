@@ -259,8 +259,10 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                     extension = imed_loader_utils.get_file_extension(fname_ref)
                     if "nii" not in extension and fname_pred:
                         output_list = imed_inference.split_classes(output_nii)
+                        # Reformat target list to include class index and be compatible with multiple raters
+                        target_list = ["_class-%d" % i for i in range(len(testing_params['target_suffix']))]
                         imed_inference.pred_to_png(output_list,
-                                                   testing_params['target_suffix'],
+                                                   target_list,
                                                    fname_pred.split("_pred.nii.gz")[0])
 
                     # re-init pred_stack_lst and last_slice_bool

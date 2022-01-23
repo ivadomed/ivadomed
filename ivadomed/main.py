@@ -337,6 +337,9 @@ def run_segment_command(context, model_params):
             if not pred_path.exists():
                 pred_path.mkdir(parents=True)
 
+            # Reformat target list to include class index and be compatible with multiple raters
+            target_list = ["_class-%d" % i for i in range(len(target_list))]
+
             for pred, target in zip(pred_list, target_list):
                 filename = subject.split('.')[0] + target + "_pred" + ".nii.gz"
                 nib.save(pred, Path(pred_path, filename))
