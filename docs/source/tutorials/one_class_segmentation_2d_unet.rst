@@ -348,24 +348,53 @@ Train model
 
                ivadomed --train -c config.json --path-data path/to/bids/data --path-output path/to/output/directory
 
-    - In the above command, we execute the ``--train`` command and manually specified ``--path-data`` and ``--path-output`` and overwrote/replace the specification in ``config.json``
+            - In the above command, we execute the ``--train`` command and manually specified ``--path-data`` and ``--path-output`` and overwrote/replace the specification in ``config.json``
 
-    - ``--train``: We can pass other flags to execute different commands (training, testing, segmentation), see `Usage <../usage.html>`__.
+            - ``--train``: We can pass other flags to execute different commands (training, testing, segmentation), see `Usage <../usage.html>`__.
 
-    - ``--path-output``: Folder name that will contain the output files (e.g., trained model, predictions, results).
+            - ``--path-output``: Folder name that will contain the output files (e.g., trained model, predictions, results).
 
-    - ``--path-data``: Location of the dataset. As discussed in `Data <../data.html>`__, the dataset
-      should conform to the BIDS standard. Modify the path so it points to the location of the downloaded dataset.
+            - ``--path-data``: Location of the dataset. As discussed in `Data <../data.html>`__, the dataset
+              should conform to the BIDS standard. Modify the path so it points to the location of the downloaded dataset.
 
-    - If you set the ``command``, ``path_output``, and ``path_data`` arguments in your config file, you do not need to pass the above three CLI flags:
+        .. tab:: JSON File
 
-        .. tabs::
+            If you set the ``command``, ``path_output``, and ``path_data`` arguments in your config file, you do not need to pass the above the specific CLI flags.
 
-            .. tab:: Command Line Interface
+            Instead, make the following changes to the JSOn file at the specific lines:
 
-                .. code-block:: bash
+            * Command parameter located `here <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L2>`__
 
-                    ivadomed -c config.json
+                .. code-block:: json
+
+                    "command": "train"
+
+            * Path output parameter located `here <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L4>`__
+
+                .. code-block:: json
+
+                    "path_output": "spineGeneric"
+
+                ``path-output``: Folder name that will contain the output files (e.g., trained model, predictions, results).
+
+            * Path Data located `here <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L12>`__
+
+                .. code-block:: json
+
+                    "path_data": "data_example_spinegeneric"
+
+                ``path-data``: Location of the dataset. As discussed in `Data <../data.html>`__, the dataset should conform to the BIDS standard. Modify the path so it points to the location of the downloaded dataset.
+
+
+            Then execute the following simplified command:
+
+                .. tabs::
+
+                    .. tab:: Command Line Interface
+
+                        .. code-block:: bash
+
+                            ivadomed -c config.json
 
     .. note::
 
@@ -443,23 +472,23 @@ Evaluate model
 
         .. tab:: JSON File
 
-            If you prefer to use config files over CLI flags, set ``command`` to the following in you config file:
+            If you prefer to use config files over CLI flags, set ``command`` to ``test`` in the `following line <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L2>`__ in you config file:
 
-            .. code-block:: json
+                .. code-block:: json
 
-               "command": "test"
+                   "command": "test"
 
-            You can also set ``path_output``, and ``path_data`` arguments in the `config.json` respectively.
+            You can also set ``path_output``, and ``path_data`` arguments in the ``config.json`` respectively.
 
             Then run:
 
-            .. tabs::
+                .. tabs::
 
-                .. tab:: Command Line Interface
+                    .. tab:: Command Line Interface
 
-                    .. code-block:: bash
+                        .. code-block:: bash
 
-                        ivadomed -c config.json
+                            ivadomed -c config.json
 
     The model's parameters will be displayed in the terminal, followed by a preview of the results for each image.
     The resulting segmentation is saved for each image in the ``<PATH_TO_OUT_DIR>/pred_masks`` while a csv file,
