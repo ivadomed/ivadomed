@@ -1,22 +1,36 @@
-from testing.common_testing_util import path_data_multi_sessions_contrasts_tmp, get_multi_default_case
-from ivadomed.keywords import LoaderParamsKW, ContrastParamsKW
-from copy import deepcopy
+from testing.common_testing_util import get_multi_default_case
+from ivadomed.keywords import LoaderParamsKW
+
+# Multi sessions related testing scenarios
 
 
-# Session Related Testing
 def case_sessions_only_subjects_have():
-    """Since only ms03 has session 05, only ms03 should be included."""
+    """Test Scenario where user specified sessions to index for ivadomed that contain files
+    does not exist at the file level for ALL subjects while other contrasts exist for all subjects.
+    """
+
+    # Get default multi-session loader parameter to be overwritten
     loader_parameters = get_multi_default_case()
-    # Target more sessions than what we have data for
+
+    # Target more sessions than what we have data for:
+    # Since only ms03 has session 05, only ms03 should be included as all specified sessions are
+    # mandatory required.
     loader_parameters.update({
         LoaderParamsKW.TARGET_SESSIONS: ["01", "02", "03", "04", "05"],
     })
 
     return loader_parameters, "df_ref_subject_3_only.csv"
 
+
 def case_more_sessions_than_available():
-    """Since NO ONE has session 06, no one should be included. An empty data frame should be generated. """
+    """Test Scenario where user specified sessions to index for ivadomed that contain session
+    which does not exist for any subjects.
+    """
+
+    # Get default multi-session loader parameter to be overwritten
     loader_parameters = get_multi_default_case()
+
+    # Since NO ONE has session 06, no one should be included. An empty data frame should be generated.
     # Target more sessions than what we have data for
     loader_parameters.update({
         LoaderParamsKW.TARGET_SESSIONS: ["01", "02", "03", "04", "05", "06"],
@@ -24,11 +38,17 @@ def case_more_sessions_than_available():
 
     return loader_parameters
 
+
 def case_partially_available_sessions():
-    """Since NO ONE has session 06, no one should be included. An EMPTY dataframe should be generated.
-    even if we ask fewer sessions"""
+    """Test Scenario where user specified some but not all of available sessions to index for ivadomed that contain
+    session which does not exist for any subjects.
+    """
+
+    # Get default multi-session loader parameter to be overwritten
     loader_parameters = get_multi_default_case()
-    # Target less sessions than we have data for
+
+    # Since NO ONE has session 06, no one should be included. An EMPTY dataframe should be generated.
+    # even if we ask fewer sessions
     loader_parameters.update({
         LoaderParamsKW.TARGET_SESSIONS: ["04", "05", "06"],
     })
@@ -37,10 +57,14 @@ def case_partially_available_sessions():
 
 
 def case_less_sessions_than_available():
-    """Since EVERYONE has session 02 and 03, EVERYONE should be included.
-    We also include ground truth but not data from outside of those sessions as well."""
+    """Test Scenario where user specified some but not all of available sessions to index for ivadomed
+    """
+
+    # Get default multi-session loader parameter to be overwritten
     loader_parameters = get_multi_default_case()
-    # Target less sessions than we have data for
+
+    # Target less sessions than what is available at the file level.
+    # Since EVERYONE has session 02 and 03, EVERYONE should be included.
     loader_parameters.update({
         LoaderParamsKW.TARGET_SESSIONS: ["02", "03"],
     })
@@ -49,10 +73,13 @@ def case_less_sessions_than_available():
 
 
 def case_single_session():
-    """Since only ms03 has session 05, only ms03 should be included."""
+    """Test scenario where user specified session only exist for a single subject."""
+
+    # Get default multi-session loader parameter to be overwritten
     loader_parameters = get_multi_default_case()
 
     # Target mostly non-existent target session
+    # Since only ms03 has session 05, only ms03 should be included
     loader_parameters.update({
         LoaderParamsKW.TARGET_SESSIONS: ["05"]
     })
@@ -61,10 +88,13 @@ def case_single_session():
 
 
 def case_unavailable_session():
-    """Since NO ONE has session 06, no one should be included."""
+    """Test scenario where the no one has the session. No one should be included."""
+
+    # Get default multi-session loader parameter to be overwritten
     loader_parameters = get_multi_default_case()
 
     # Target non-existent target session
+    # No valid session should raise an exception
     loader_parameters.update({
         LoaderParamsKW.TARGET_SESSIONS: ["06"]
     })
@@ -73,10 +103,14 @@ def case_unavailable_session():
 
 
 def case_not_specified_session():
-    """This should in theory throw an exception???"""
+    """Test scenario where the if user does not specify the session information.
+    When that happens, we assume we are not picky about the session information and therefore,
+    any sessions can be used."""
+
+    # Get default multi-session loader parameter to be overwritten
     loader_parameters = get_multi_default_case()
 
-    # Assume no session
+    # Remove session specification, should include all possible sessions data
     loader_parameters.pop(LoaderParamsKW.TARGET_SESSIONS)
 
     return loader_parameters, "df_ref.csv"

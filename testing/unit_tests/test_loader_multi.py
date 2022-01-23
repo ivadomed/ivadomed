@@ -4,7 +4,7 @@ import shutil
 from ivadomed.loader.bids_dataframe import BidsDataframe
 from testing.unit_tests.t_utils import path_temp, download_multi_data
 from testing.common_testing_util import remove_tmp_dir, path_data_multi_sessions_contrasts_source, \
-    assert_empty_bids_dataframe, bids_dataframe_comparison_framework
+    assert_empty_bids_dataframe, bids_dataframe_comparison_framework, path_data_multi_sessions_contrasts_tmp
 from pytest_cases import parametrize_with_cases
 import pytest
 from testing.unit_tests.cases_multi_sessions import *

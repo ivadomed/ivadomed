@@ -36,8 +36,10 @@ def test_automate_training(download_functional_test_files, script_runner):
 
 
 def test_automate_training_run_test_debug(download_functional_test_files):
-    """
-    A step through-able automated_training run of the above. Nothing else really changed.
+    """A unit test similar to test_automate_training_run_test but allow step through (instead of using script caller/
+    subprocess mode which cannot be stepped. Other than that, nothing else really changed and is exactly the same.
+    Very useful for debugging this high level function to spot problems
+
     Fixture Required:
         download_functional_test_files:
     """
@@ -63,8 +65,6 @@ def test_automate_training_run_test_debug(download_functional_test_files):
     assert os.path.exists(os.path.join(__output_dir__, 'detailed_results.csv'))
     assert os.path.exists(os.path.join(__output_dir__, 'temporary_results.csv'))
     assert os.path.exists(os.path.join(__output_dir__, 'average_eval.csv'))
-
-
 
 
 @pytest.mark.script_launch_mode('subprocess')
