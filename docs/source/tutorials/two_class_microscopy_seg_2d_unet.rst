@@ -34,7 +34,11 @@ First off, copy this configuration file in your local directory (to avoid modify
 
    cp <PATH_TO_IVADOMED>/ivadomed/config/config_microscopy.json .
 
-Then, open it with a text editor. Below we will discuss some of the key parameters to perform a two-class 2D
+Then, open it with a text editor. You will need to update the value of the
+``loader_parameters:bids_config`` key from ``"ivadomed/config/config_bids.json"`` to
+``"<PATH_TO_IVADOMED>/ivadomed/config/config_bids.json"``.
+
+Below we will discuss some of the key parameters to perform a two-class 2D
 microscopy segmentation training.
 
 - ``command``: Action to perform. Here, we want to train a model, so we set the fields as follows:
