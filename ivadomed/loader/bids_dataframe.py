@@ -69,7 +69,7 @@ class BidsDataframe:
             self.bids_config: str = loader_params[LoaderParamsKW.BIDS_CONFIG]
 
         # target_suffix and roi_suffix from loader parameters
-        self.target_suffix: List[str] = copy.deepcopy(loader_params[LoaderParamsKW.TARGET_SUFFIX])
+        self.target_suffix: List[str] = copy.deepcopy(loader_params.get(LoaderParamsKW.TARGET_SUFFIX, []))
 
         # If `target_suffix` is a list of lists convert to list
         if any(isinstance(t, list) for t in self.target_suffix):

@@ -50,6 +50,7 @@ def test_invalid_empty_dataframes(download_multi_data,
 
 @parametrize_with_cases("loader_parameters", cases=[
     case_not_specified_contrast,  # Contrast specification is required.
+    case_not_specified_ground_truth,  # ground gruth specification is required.
 ])
 def test_raise_value_errors(download_multi_data,
                             loader_parameters):
@@ -99,7 +100,7 @@ def test_valid_multi_target_suffixes(
         loader_parameters,
         target_csv):
     """
-    Test for target suffixes
+    Test for ground truth valid csv
     """
     bids_dataframe_comparison_framework(loader_parameters, target_csv)
 

@@ -64,3 +64,16 @@ def case_unavailable_ground_truth():
     })
 
     return loader_parameters
+
+
+def case_not_specified_ground_truth():
+    """Test scenario where the if user does not specify the ground truth information."""
+
+    # Get default multi-session loader parameter to be overwritten
+    loader_parameters = get_multi_default_case()
+
+    # Remove ground truth specification
+    # This shoudl raise exception
+    loader_parameters.pop(LoaderParamsKW.TARGET_SUFFIX)
+
+    return loader_parameters
