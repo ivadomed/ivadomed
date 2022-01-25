@@ -48,11 +48,12 @@ class SliceFilter(object):
                 self.classifier = torch.load(classifier_path, map_location='cpu')
 
     def __call__(self, sample: dict):
-        input_data, gt_data = sample['input'], sample['gt']
         """Extract input_data and gt_data lists from sample dict and discard them if they don't match certain
         conditions.
 
         """
+        input_data, gt_data = sample['input'], sample['gt']
+
         if self.filter_empty_mask:
             # Discard slices that do not have ANY ground truth (i.e. all masks are empty)
             if not np.any(gt_data):
