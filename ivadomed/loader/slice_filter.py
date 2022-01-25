@@ -29,10 +29,10 @@ class SliceFilter(object):
 
     """
 
-    def __init__(self, filter_empty_mask=False,
-                 filter_absent_class=False,
-                 filter_empty_input=True,
-                 filter_classification=False,
+    def __init__(self, filter_empty_mask: bool = False,
+                 filter_absent_class: bool = False,
+                 filter_empty_input: bool = True,
+                 filter_classification: bool = False,
                  classifier_path=None, device=None, cuda_available=None):
         self.filter_empty_mask = filter_empty_mask
         self.filter_absent_class = filter_absent_class
