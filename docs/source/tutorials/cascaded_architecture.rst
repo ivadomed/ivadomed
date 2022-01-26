@@ -187,7 +187,7 @@ Configuration file
     From this point onward, we will discuss some of the key parameters to use cascaded models. Most parameters are configurable only via modification of the configuration ``JSON file``.
     For those that supports commandline run time configuration, we included the respective command versions under the ``Command Line Interface`` tab
 
-    At `this line <https://github.com/ivadomed/ivadomed/blob/76b36a0a0f7141feb2d5b00b33e4c3a06865fc2c/ivadomed/config/config.json#L6>`_ in the ``config.json`` is where you can update the ``debugging``.
+    At `this line <https://github.com/ivadomed/ivadomed/blob/76b36a0a0f7141feb2d5b00b33e4c3a06865fc2c/ivadomed/config/config.json#L6>`__ in the ``config.json`` is where you can update the ``debugging``.
 
     - ``debugging``: Boolean, create extended verbosity and intermediate outputs. Here we will look at the intermediate predictions
       with tensorboard, we therefore need to activate those intermediate outputs.
@@ -200,7 +200,7 @@ Configuration file
 
                      "debugging": true
 
-    At `this line <https://github.com/ivadomed/ivadomed/blob/76b36a0a0f7141feb2d5b00b33e4c3a06865fc2c/ivadomed/config/config.json#L8>`_ in the ``config.json`` is where you can update the ``object_detection_path`` within the ``object_detection_params`` sub-dictionary.
+    At `this line <https://github.com/ivadomed/ivadomed/blob/76b36a0a0f7141feb2d5b00b33e4c3a06865fc2c/ivadomed/config/config.json#L8>`__ in the ``config.json`` is where you can update the ``object_detection_path`` within the ``object_detection_params`` sub-dictionary.
 
     - ``object_detection_params:object_detection_path``: Location of the object detection model. This parameter corresponds
       to the path of the first model from the cascaded architecture that segments the spinal cord. The packaged model in the
@@ -216,7 +216,7 @@ Configuration file
 
                      "object_detection_path": "<PATH_TO_DATASET>/trained_model/seg_sc_t1-t2-t2s-mt"
 
-    At `this line <https://github.com/ivadomed/ivadomed/blob/76b36a0a0f7141feb2d5b00b33e4c3a06865fc2c/ivadomed/config/config.json#L9>`_ in the ``config.json`` is where you can update the ``safety_factor`` within the ``object_detection_params`` sub-dictionary.
+    At `this line <https://github.com/ivadomed/ivadomed/blob/76b36a0a0f7141feb2d5b00b33e4c3a06865fc2c/ivadomed/config/config.json#L9>`__ in the ``config.json`` is where you can update the ``safety_factor`` within the ``object_detection_params`` sub-dictionary.
 
     - ``object_detection_params:safety_factor``: Multiplicative factor to apply to each dimension of the bounding box. To
       ensure all the CSF is included, a safety factor should be applied to the bounding box generated from the spinal cord.
@@ -231,7 +231,7 @@ Configuration file
 
                      "safety_factor": [2, 2, 1]
 
-    At `this line <https://github.com/ivadomed/ivadomed/blob/76b36a0a0f7141feb2d5b00b33e4c3a06865fc2c/ivadomed/config/config.json#L14>`_ in the ``config.json`` is where you can update the ``target_suffix`` within the ``loader_parameters`` sub-dictionary.
+    At `this line <https://github.com/ivadomed/ivadomed/blob/76b36a0a0f7141feb2d5b00b33e4c3a06865fc2c/ivadomed/config/config.json#L14>`__ in the ``config.json`` is where you can update the ``target_suffix`` within the ``loader_parameters`` sub-dictionary.
 
     - ``loader_parameters:target_suffix``: Suffix of the ground truth segmentation. The ground truth are located under the
       ``DATASET/derivatives/labels`` folder. The suffix for CSF labels in this dataset is ``_csfseg-manual``:
@@ -244,7 +244,7 @@ Configuration file
 
                      "target_suffix": ["_csfseg-manual"]
 
-    At `this line <https://github.com/ivadomed/ivadomed/blob/76b36a0a0f7141feb2d5b00b33e4c3a06865fc2c/ivadomed/config/config.json#L20>`_ in the ``config.json`` is where you can update the ``contrast_params`` within the ``loader_parameters`` sub-dictionary.
+    At `this line <https://github.com/ivadomed/ivadomed/blob/76b36a0a0f7141feb2d5b00b33e4c3a06865fc2c/ivadomed/config/config.json#L20>`__ in the ``config.json`` is where you can update the ``contrast_params`` within the ``loader_parameters`` sub-dictionary.
 
     - ``loader_parameters:contrast_params``: Contrast(s) of interest. The CSF labels are only available in T2w contrast in
       the example dataset.
@@ -261,7 +261,7 @@ Configuration file
                          "balance": {}
                      }
 
-    At `this line <https://github.com/ivadomed/ivadomed/blob/76b36a0a0f7141feb2d5b00b33e4c3a06865fc2c/ivadomed/config/config.json#L115>`_ in the ``config.json`` is where you can update the ``size`` within the ``transformation:CenterCrop`` sub-dictionary.
+    At `this line <https://github.com/ivadomed/ivadomed/blob/76b36a0a0f7141feb2d5b00b33e4c3a06865fc2c/ivadomed/config/config.json#L115>`__ in the ``config.json`` is where you can update the ``size`` within the ``transformation:CenterCrop`` sub-dictionary.
 
     - ``transformation:CenterCrop:size``: Crop size in voxel. Images will be cropped or padded to fit these dimensions. This
       allows all the images to have the same size during training. Since the images will be cropped around the spinal cord,
