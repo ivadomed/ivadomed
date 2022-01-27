@@ -60,10 +60,8 @@ def compute_statistics(dataframe, n_iterations, run_test=True, csv_out='comparis
     avg = dataframe.groupby(['path_output']).mean()
     std = dataframe.groupby(['path_output']).std()
 
-    logger.debug("Average dataframe")
-    logger.debug(avg)
-    logger.debug("Standard deviation dataframe")
-    logger.debug(std)
+    logger.info(f"Average dataframe: {avg}")
+    logger.info(f"Standard deviation dataframe: {std}")
 
     config_logs = list(avg.index.values)
     p_values = np.zeros((len(config_logs), len(config_logs)))
@@ -86,8 +84,8 @@ def compute_statistics(dataframe, n_iterations, run_test=True, csv_out='comparis
         i += 1
 
     p_df = pd.DataFrame(p_values, index=config_logs, columns=config_logs)
-    logger.debug("P-values dataframe")
-    logger.debug(p_df)
+    logger.info("P-values dataframe")
+    logger.info(p_df)
     if csv_out is not None:
         # Unnamed 0 column correspond to run number so we remoe that and add prefix for better readability
         df_concat = pd.concat([avg.add_prefix('avg_').drop(['avg_Unnamed: 0'], axis=1),

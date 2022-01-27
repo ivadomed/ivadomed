@@ -92,10 +92,9 @@ from ivadomed.loader.bids_dataframe import BidsDataframe
 from ivadomed.scripts.automate_training import make_config_list, get_param_list, \
     HyperparameterOption
 from ivadomed.utils import generate_sha_256
-import logging
+from loguru import logger
 from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__, download_data_testing_test_files
 from testing.common_testing_util import remove_tmp_dir
-logger = logging.getLogger(__name__)
 
 initial_config = {
     "training_parameters": {

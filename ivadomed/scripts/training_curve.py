@@ -167,7 +167,7 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
 
     # Create output folder
     if Path(output_folder).is_dir():
-        logger.info(f"Output folder already exists: {output_folder}.")
+        logger.warning(f"Output folder already exists: {output_folder}.")
     else:
         logger.info(f"Creating output folder: {output_folder}.")
         Path(output_folder).mkdir(parents=True)

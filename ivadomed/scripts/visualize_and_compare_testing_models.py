@@ -33,9 +33,9 @@ for gui in gui_env:
 # If none works
 if selected_gui_env == []:
     from matplotlib import pyplot as plt
-    logger.error("No backend can be used - Visualization will fail")
+    logger.warning("No backend can be used - Visualization will fail")
 else:
-    logger.debug(f"Using: {matplotlib.get_backend()}  gui")
+    logger.info(f"Using: {matplotlib.get_backend()}  gui")
 
 # ---------------------------------------------------------------------------------------------------------------------#
 
@@ -161,7 +161,7 @@ def visualize_and_compare_models(ofolders, metric="dice_class0", metadata=None):
             result = result.iloc[[i for i in range(len(result_subject_ids)) if result_subject_ids[i] in selected_subjects]]
 
             if result.empty:
-                logger.error('No subject meet the selected criteria - skipping plot for: ' + folder)
+                logger.warning(f"No subject meet the selected criteria - skipping plot for: {folder}")
 
         if not result.empty:
             scores = result[metric]
@@ -229,7 +229,7 @@ def visualize_and_compare_models(ofolders, metric="dice_class0", metadata=None):
         plt.show(block=True)
 
     else:
-        logger.error('No subjects meet the criteria selected for any model. '
+        logger.warning('No subjects meet the criteria selected for any model. '
                      'Probably you need to change the --metadata / --metric selection')
 
 

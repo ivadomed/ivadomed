@@ -48,7 +48,7 @@ def plot_decision_boundaries(data, model, x_range, metadata_name, fname_out):
         plt.xscale('log')
 
     fig.savefig(fname_out)
-    logger.debug(f"\tSave as: {fname_out}")
+    logger.info(f"\tSave as: {fname_out}")
 
 
 def run_main(context):
@@ -84,7 +84,7 @@ def run_main(context):
 
     for m in metadata_type:
         values = [v for s in ['train', 'valid', 'test'] for v in metadata_dct[s][m]]
-        logger.debug('\n{}: Min={}, Max={}, Median={}'.format(m, min(values), max(values), np.median(values)))
+        logger.info(f"\n{m}: Min={min(values)}, Max={max(values)}, Median={np.median(values)}")
         plot_decision_boundaries(metadata_dct, cluster_dct[m], metadata_range[m], m, os.path.join(out_dir, m + '.png'))
 
 

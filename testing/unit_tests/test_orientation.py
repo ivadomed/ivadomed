@@ -3,7 +3,7 @@ import nibabel as nib
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
-import logging
+from loguru import logger
 
 from ivadomed.loader.bids_dataframe import BidsDataframe
 from ivadomed.loader.bids3d_dataset import Bids3DDataset
@@ -16,7 +16,6 @@ from ivadomed.loader import loader as imed_loader, utils as imed_loader_utils
 from testing.unit_tests.t_utils import create_tmp_dir,  __data_testing_dir__, __tmp_dir__, download_data_testing_test_files
 from testing.common_testing_util import remove_tmp_dir
 
-logger = logging.getLogger(__name__)
 
 GPU_ID = 0
 
@@ -37,7 +36,7 @@ def test_image_orientation(download_data_testing_test_files, loader_parameters):
     cuda_available = torch.cuda.is_available()
     if cuda_available:
         torch.cuda.set_device(device)
-        logger.debug("Using GPU ID {}".format(device))
+        logger.info(f"Using GPU ID {device}")
 
     bids_df = BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
 

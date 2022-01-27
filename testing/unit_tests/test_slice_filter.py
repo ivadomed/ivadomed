@@ -73,13 +73,13 @@ def test_slice_filter(download_data_testing_test_files, transforms_dict, train_l
     bids_df = BidsDataframe(loader_params, __tmp_dir__, derivatives=True)
     ds_train = imed_loader.load_dataset(bids_df, **loader_params)
 
-    logger.debug('\tNumber of loaded slices: {}'.format(len(ds_train)))
+    logger.info(f"\tNumber of loaded slices: {len(ds_train)}")
 
     train_loader = DataLoader(ds_train, batch_size=BATCH_SIZE,
                               shuffle=True, pin_memory=True,
                               collate_fn=imed_loader_utils.imed_collate,
                               num_workers=0)
-    logger.debug('\tNumber of Neg/Pos slices in GT.')
+    logger.info('\tNumber of Neg/Pos slices in GT.')
     cmpt_neg, cmpt_pos = _cmpt_slice(train_loader)
     if slice_filter_params["filter_empty_mask"]:
         assert cmpt_neg == 0

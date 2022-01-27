@@ -200,12 +200,12 @@ def test_unet_time(download_data_testing_test_files, train_lst, target_lst, conf
         total_time = end_time - start_time
         tqdm.write("Epoch {} took {:.2f} seconds.".format(epoch, total_time))
 
-    logger.debug('Mean SD init {} -- {}'.format(np.mean(init_lst), np.std(init_lst)))
-    logger.debug('Mean SD load {} -- {}'.format(np.mean(load_lst), np.std(load_lst)))
-    logger.debug('Mean SD pred {} -- {}'.format(np.mean(pred_lst), np.std(pred_lst)))
-    logger.debug('Mean SDopt {} --  {}'.format(np.mean(opt_lst), np.std(opt_lst)))
-    logger.debug('Mean SD gen {} -- {}'.format(np.mean(gen_lst), np.std(gen_lst)))
-    logger.debug('Mean SD scheduler {} -- {}'.format(np.mean(schedule_lst), np.std(schedule_lst)))
+    logger.info(f"Mean SD init {np.mean(init_lst)} -- {np.std(init_lst)}")
+    logger.info(f"Mean SD load {np.mean(load_lst)} -- {np.std(load_lst)}")
+    logger.info(f"Mean SD pred {np.mean(pred_lst)} -- {np.std(pred_lst)}")
+    logger.info(f"Mean SDopt {np.mean(opt_lst)} --  {np.std(opt_lst)}")
+    logger.info(f"Mean SD gen {np.mean(gen_lst)} -- {np.std(gen_lst)}")
+    logger.info(f"Mean SD scheduler {np.mean(schedule_lst)} -- {np.std(schedule_lst)}")
 
 
 def teardown_function():

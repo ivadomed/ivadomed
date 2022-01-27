@@ -22,8 +22,8 @@ def setup_function():
 @pytest.mark.parametrize('path_model', [str(Path(__data_testing_dir__, 'model_unet_test.pt'))])
 def test_transfer_learning(download_data_testing_test_files, path_model, fraction, tolerance=0.15):
     device = torch.device("cpu")
-    logger.debug("Working on {}.".format('cpu'))
-    logger.debug(__data_testing_dir__)
+    logger.info(f"Working on {'cpu'}.")
+    logger.info(__data_testing_dir__)
 
     # Load pretrained model
     model_pretrained = torch.load(path_model, map_location=device)
@@ -31,7 +31,7 @@ def test_transfer_learning(download_data_testing_test_files, path_model, fractio
     model_to_retrain = imed_models.set_model_for_retrain(path_model, retrain_fraction=fraction,
                                                          map_location=device)
 
-    logger.debug(f"\nSet fraction to retrain: {fraction}")
+    logger.info(f"\nSet fraction to retrain: {fraction}")
 
     # Check Frozen part
     grad_list = [param.requires_grad for name, param in model_to_retrain.named_parameters()]
@@ -41,17 +41,17 @@ def test_transfer_learning(download_data_testing_test_files, path_model, fractio
     #    print("\t", name, param.requires_grad)
     assert (abs(fraction_retrain_measured - fraction) <= tolerance)
     total_params = sum(p.numel() for p in model_to_retrain.parameters())
-    logger.debug('{:,} total parameters.'.format(total_params))
+    logger.info(f"{total_params} total parameters.")
     total_trainable_params = sum(
         p.numel() for p in model_to_retrain.parameters() if p.requires_grad)
-    logger.debug('{:,} parameters to retrain.'.format(total_trainable_params))
+    logger.info(f"{total_trainable_params} parameters to retrain.")
     assert (total_params > total_trainable_params)
 
     # Check reset weights
     reset_list = [(p1.data.ne(p2.data).sum() > 0).cpu().numpy()
                   for p1, p2 in zip(model_pretrained.parameters(), model_to_retrain.parameters())]
     reset_measured = sum(reset_list) * 1.0 / len(reset_list)
-    logger.debug(f"\nMeasure: reset fraction of the model: {round(reset_measured, 1)}")
+    logger.info(f"\nMeasure: reset fraction of the model: {round(reset_measured, 1)}")
     assert (abs(reset_measured - fraction) <= tolerance)
     # weights_reset = False
     # for name_p1, p2 in zip(model_copy.named_parameters(), model.parameters()):

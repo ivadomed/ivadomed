@@ -159,15 +159,15 @@ def run_experiment(level, unc_name, thr_unc_lst, thr_pred_lst, gt_folder, pred_f
 
 
 def print_retained_elt(thr_unc_lst, retained_elt_lst):
-    logger.debug('Mean percentage of retained elt:')
+    logger.info('Mean percentage of retained elt:')
     for i, t in enumerate(thr_unc_lst):
-        logger.debug('\tUnc threshold: {} --> {}'.format(t, np.mean(retained_elt_lst[i])))
+        logger.info(f"\tUnc threshold: {t} --> {np.mean(retained_elt_lst[i])}")
 
 
 def plot_roc(thr_unc_lst, thr_pred_lst, res_dct, metric, fname_out):
     plt.figure(figsize=(10, 10))
     for i_unc, thr_unc in enumerate(thr_unc_lst):
-        logger.debug('Unc Thr: {}'.format(thr_unc))
+        logger.info(f"Unc Thr: {thr_unc}")
 
         tpr_vals = np.array([np.nanmean(res_dct['tpr'][i_unc][i_pred]) for i_pred in range(len(thr_pred_lst))])
         fdr_vals = np.array([np.nanmean(res_dct['fdr'][i_unc][i_pred]) for i_pred in range(len(thr_pred_lst))])
@@ -176,7 +176,7 @@ def plot_roc(thr_unc_lst, thr_pred_lst, res_dct, metric, fname_out):
 
         optimal_idx = np.argmax(tpr_vals - fdr_vals)
         optimal_threshold = thr_pred_lst[optimal_idx]
-        logger.debug('AUC: {}, Optimal Pred Thr: {}'.format(auc_, optimal_threshold))
+        logger.info(f"AUC: {auc_}, Optimal Pred Thr: {optimal_threshold}")
 
         plt.scatter(fdr_vals, tpr_vals, label='Unc thr={0:0.2f} (area = {1:0.2f})'.format(thr_unc, auc_), s=22)
 
@@ -302,7 +302,7 @@ def run_main(args):
                            thr_unc=thrUnc)
         logger.debug(df.head())
         vals = [v for v in df.dice_class0 if str(v) != 'nan']
-        logger.debug('Median (IQR): {} ({} - {}).'.format(np.median(vals), np.percentile(vals, 25), np.percentile(vals, 75)))
+        logger.info(f"Median (IQR): {np.median(vals)} ({np.percentile(vals, 25)} - {np.percentile(vals, 75)}).")
         df.to_csv(os.path.join(ofolder, '_'.join([str(sufUnc), str(thrUnc), str(thrPred)]) + '.csv'))
 
 

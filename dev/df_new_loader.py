@@ -37,10 +37,10 @@ derivatives = True
 # CREATE OUTPUT PATH
 path_output = context["path_output"]
 if not os.path.isdir(path_output):
-    logger.info('Creating output path: {}'.format(path_output))
+    logger.info(f"Creating output path: {path_output}")
     os.makedirs(path_output)
 else:
-    logger.error('Output path already exists: {}'.format(path_output))
+    logger.warning(f"Output path already exists: {path_output}")
 
 # CREATE BIDSDataframe OBJECT
 bids_df = BidsDataframe(loader_params, path_output, derivatives)

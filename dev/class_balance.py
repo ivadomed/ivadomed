@@ -20,6 +20,7 @@ from ivadomed import config_manager as imed_config_manager
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.loader.slice_filter import SliceFilter
 from ivadomed import transforms as imed_transforms
+from ivadomed import utils as imed_utils
 
 from torchvision import transforms as torch_transforms
 from torch.utils.data import DataLoader
@@ -32,12 +33,6 @@ def get_parser():
     parser.add_argument("-c", help="Config file path.")
 
     return parser
-
-
-def print_stats(arr):
-    logger.debug('\tMean: {} %'.format(np.mean(arr)))
-    logger.debug('\tMedian: {} %'.format(np.median(arr)))
-    logger.debug('\tInter-quartile range: [{}, {}] %'.format(np.percentile(arr, 25), np.percentile(arr, 75)))
 
 
 def run_main(args):
@@ -85,10 +80,10 @@ def run_main(args):
 
     for ds_name in balance_dct:
         logger.info('\nClass balance in {} set:'.format(ds_name))
-        print_stats(balance_dct[ds_name])
+        imed_utils.print_stats(balance_dct[ds_name])
 
     logger.info('\nClass balance in full set:')
-    print_stats([e for d in balance_dct for e in balance_dct[d]])
+    imed_utils.print_stats([e for d in balance_dct for e in balance_dct[d]])
 
 
 if __name__ == '__main__':

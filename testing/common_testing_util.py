@@ -35,7 +35,7 @@ def download_dataset(dataset: str = 'data_testing'):
 
     # Early abort if testing data already exist.
     if path_dataset.exists():
-        logger.info(f"\nTesting data files appear to already exist at {path_dataset}, aborting download")
+        logger.warning(f"\nTesting data files appear to already exist at {path_dataset}, aborting download")
         return
 
     logger.info(f'\nDownloading testing data... to {dataset}')
