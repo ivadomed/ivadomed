@@ -26,8 +26,8 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
         target_suffix (list of str): List of suffixes for target masks.
         roi_params (dict): Contains ROI related parameters.
         contrast_params (dict): Contains image contrasts related parameters.
-        slice_filter_params (dict): Contains slice_filter parameters, see :doc:`configuration_file` for more details.
-        patch_filter_params (dict): Contains patch_filter parameters, see :doc:`configuration_file` for more details.
+        slice_filter_params (dict): Contains slice_filter_params, see :doc:`configuration_file` for more details.
+        patch_filter_params (dict): Contains patch_filter_params, see :doc:`configuration_file` for more details.
         slice_axis (string): Choice between "axial", "sagittal", "coronal" ; controls the axis used to extract the 2D
             data from 3D NifTI files. 2D PNG/TIF/JPG files use default "axial.
         multichannel (bool): If True, the input contrasts are combined as input channels for the model. Otherwise, each
@@ -44,7 +44,7 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
         BidsDataset
 
     Note: For more details on the parameters transform_params, target_suffix, roi_params, contrast_params,
-    slice_filter_params and object_detection_params see :doc:`configuration_file`.
+    slice_filter_params, patch_filter_params and object_detection_params see :doc:`configuration_file`.
     """
 
     # Compose transforms

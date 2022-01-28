@@ -23,6 +23,7 @@ class BidsDataset(MRI2DSegmentationDataset):
         metadata_choice (str): Choice between "mri_params", "contrasts", the name of a column from the
             participants.tsv file, None or False, related to FiLM.
         slice_filter_fn (SliceFilter): Class that filters slices according to their content.
+        patch_filter_fn (PatchFilter): Class that filters patches according to their content.
         roi_params (dict): Dictionary containing parameters related to ROI image processing.
         multichannel (bool): If True, the input contrasts are combined as input channels for the model. Otherwise, each
             contrast is processed individually (ie different sample / tensor).
