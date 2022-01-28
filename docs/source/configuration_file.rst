@@ -452,16 +452,20 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "patch_filter_params",
-        "description": "Discard a 2D patch from the dataset if it meets a condition at training time, see below.",
+        "$$description": [
+            "Discard a 2D patch from the dataset if it meets a condition at training time, defined below.\n",
+            "Contrary to the field ``slice_filter_params`` which applies at training and testing time, ",
+            "this parameter only applies during training time."
+        ],
         "type": "dict",
         "options": {
             "filter_empty_input": {
                 "type": "boolean",
-                "description": "Discard 2D patches where all voxel intensities are zeros.Default: ``False``."
+                "description": "Discard 2D patches where all voxel intensities are zeros. Default: ``False``."
             },
             "filter_empty_mask": {
                 "type": "boolean",
-                "description": "Discard 2D patches where all voxel labels are zeros.Default: ``False``."
+                "description": "Discard 2D patches where all voxel labels are zeros. Default: ``False``."
             },
             "filter_absent_class": {
                 "type": "boolean",
