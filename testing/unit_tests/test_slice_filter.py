@@ -79,7 +79,6 @@ def test_slice_filter(download_data_testing_test_files, transforms_dict, train_l
                               shuffle=True, pin_memory=True,
                               collate_fn=imed_loader_utils.imed_collate,
                               num_workers=0)
-    logger.info('\tNumber of Neg/Pos slices in GT.')
     cmpt_neg, cmpt_pos = _cmpt_slice(train_loader)
     if slice_filter_params["filter_empty_mask"]:
         assert cmpt_neg == 0
@@ -87,6 +86,7 @@ def test_slice_filter(download_data_testing_test_files, transforms_dict, train_l
     else:
         # We verify if there are still some negative slices (they are removed with our filter)
         assert cmpt_neg != 0 and cmpt_pos != 0
+    logger.info(f"\tNumber of Neg/Pos slices in GT: {cmpt_neg/cmpt_pos}")
 
 
 def teardown_function():
