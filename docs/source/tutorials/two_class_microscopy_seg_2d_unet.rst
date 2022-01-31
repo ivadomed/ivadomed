@@ -34,7 +34,8 @@ First off, copy this configuration file in your local directory (to avoid modify
 
    cp <PATH_TO_IVADOMED>/ivadomed/config/config_microscopy.json .
 
-Then, open it with a text editor. Below we will discuss some of the key parameters to perform a two-class 2D
+Then, open it with a text editor.
+Below we will discuss some of the key parameters to perform a two-class 2D
 microscopy segmentation training.
 
 - ``command``: Action to perform. Here, we want to train a model, so we set the fields as follows:
@@ -59,9 +60,14 @@ microscopy segmentation training.
 - ``loader_parameters:bids_config``: Location of the custom BIDS configuration file required for microscopy
   file indexing.
 
+  .. note::
+
+     You will need to update the value ``"ivadomed/config/config_bids.json"`` to
+     ``"<PATH_TO_IVADOMED>/ivadomed/config/config_bids.json"``
+
   .. code-block:: xml
 
-     "bids_config": "ivadomed/config/config_bids.json",
+     "bids_config": "<PATH_TO_IVADOMED>/ivadomed/config/config_bids.json"
 
 - ``loader_parameters:target_suffix``: Suffix of the ground truth segmentations. The ground truths are located
   under the ``data_axondeepseg_sem/derivatives/labels`` folder. In our case, the suffix are ``_seg-axon-manual``
