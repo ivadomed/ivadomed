@@ -23,13 +23,13 @@ Step 1: Setup dedicated python environment
 
                 .. tabs::
 
-                    .. tab:: Mac/Linux
+                    .. group-tab:: Mac/Linux
 
                         .. code::
 
                             python3 --version
 
-                    .. tab:: Windows
+                    .. group-tab:: Windows
 
                         .. code::
 
@@ -42,7 +42,7 @@ Step 1: Setup dedicated python environment
 
                 .. tabs::
 
-                    .. tab:: Mac/Linux
+                    .. group-tab:: Mac/Linux
 
                         .. code::
 
@@ -53,7 +53,7 @@ Step 1: Setup dedicated python environment
 
                            If you use ``Debian`` or ``Ubuntu``, you may be prompted to install the ``python3-venv`` module when creating the virtual environment. This is expected, so please follow the instructions provided by Python. For other operating systems, ``venv`` will be installed by default.
 
-                    .. tab:: Windows
+                    .. group-tab:: Windows
 
                         .. code::
 
@@ -63,13 +63,13 @@ Step 1: Setup dedicated python environment
 
                 .. tabs::
 
-                    .. tab:: Mac/Linux
+                    .. group-tab:: Mac/Linux
 
                         .. code::
 
                             source ivadomed_env/bin/activate
 
-                    .. tab:: Windows
+                    .. group-tab:: Windows
 
                         .. code::
 
@@ -106,7 +106,7 @@ Step 2: Install ``ivadomed``
 
     .. tabs::
 
-        .. tab:: PyPI Installation
+        .. group-tab:: PyPI Installation
 
             Install ``ivadomed`` and its requirements from
             `PyPI <https://pypi.org/project/ivadomed/>`__:
@@ -117,7 +117,7 @@ Step 2: Install ``ivadomed``
 
                 pip install ivadomed
 
-        .. tab:: Repo Installation (Advanced or Developer)
+        .. group-tab:: Repo Installation (Advanced or Developer)
 
             Bleeding-edge developments are available on the project's master branch
             on Github. Install ``ivadomed`` from source:
@@ -136,15 +136,17 @@ Step 3: Install ``torch`` and ``torchvision`` with CPU or GPU Support
 
     .. tabs::
 
-        .. tab:: PyPI Installation
+        .. group-tab:: PyPI Installation
 
             .. tabs::
 
                 .. tab:: Nvidia GPU Support
 
-                    ``ivadomed`` requires CUDA11 to execute properly. If you have a nvidia GPU, try to look up its Cuda Compute Score `here <https://developer.nvidia.com/cuda-gpus>`_, which needs to be > 3.5 to support CUDA11. Then, make sure to upgrade to nvidia driver to be at least v450+ or newer.
+                    ``ivadomed`` requires CUDA11 to execute properly. If you have a nvidia GPU, try to look up its Cuda Compute Score `here <https://developer.nvidia.com/cuda-gpus>`__, which needs to be > 3.5 to support CUDA11. Then, make sure to upgrade to nvidia driver to be at least v450+ or newer.
 
-                    If you have a compatible NVIDIA GPU that supports CUDA11 and with the right driver installed try run the following command relevant to your situation:
+                    You can use ``nvidia-smi`` in both Linux and Windows to check for driver CUDA Version listed at the top right of the output console. On windows, follow `this example guide here until Step 4 <https://wiki.tuflow.com/index.php?title=DOS_GPU_Usage>`__. On Linux, simply type in ``nvidia-smi`` in any console to see the output.
+
+                    If you have a compatible NVIDIA GPU that supports CUDA11, and you have a recent enough driver installed, then run the following command:
 
                     .. code::
 
@@ -169,9 +171,10 @@ Step 3: Install ``torch`` and ``torchvision`` with CPU or GPU Support
                                pip install torch==1.8.0 torchvision==0.9.0 --find-links https://download.pytorch.org/whl/torch_stable.html
 
 
-        .. tab:: Repo Installation (Advanced or Developer)
+        .. group-tab:: Repo Installation (Advanced or Developer)
 
             Run this only if you have already downloaded/cloned the repo with access to the ``requirement_gpu.txt`` file, then run the following command while at the repository root level:
+
             .. code::
 
                pip install -r requirements_gpu.txt
