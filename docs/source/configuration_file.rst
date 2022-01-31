@@ -512,14 +512,12 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
     }
 
 .. note::
-    To get the full advantage of the soft segmentations, the following keys 
-    in the config file must be changed: 
-    (i) ``final_activation: relu`` - to use the normalized ReLU function
-    (ii) ``binarize_prediction: -1`` - so that only soft prediction masks 
-    are used
-    (iii) ``loss: AdapWingLoss`` - a regression loss described in the 
-    paper. Note: It is also recommended to also use the ``DiceLoss`` 
-    since convergence with ``AdapWingLoss`` is sometimes difficult to achieve.
+    To get the full advantage of the soft segmentations, in addition to setting 
+    ``soft_gt: true`` the following keys in the config file must also be changed: 
+    (i) ``final_activation: relu`` - to use the normalized ReLU activation function
+    (ii) ``loss: AdapWingLoss`` - a regression loss described in the 
+    paper. Note: It is also recommended to use the ``DiceLoss`` since convergence 
+    with ``AdapWingLoss`` is sometimes difficult to achieve.
 
 .. jsonschema::
 
