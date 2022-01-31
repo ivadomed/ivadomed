@@ -203,7 +203,7 @@ Configuration file
 
         .. tabs::
 
-            .. tab:: JSON File
+            .. group-tab:: JSON File
 
                 We can set the field within the newly copied ``config.json`` file as follow, at `this line <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L2>`__:
 
@@ -212,7 +212,7 @@ Configuration file
                     "command": "train"
 
 
-            .. tab:: Command Line Interface
+            .. group-tab:: Command Line Interface
 
                 Note that you can also pass this argument via CLI (see `Usage <../usage.html>`__)
 
@@ -225,7 +225,7 @@ Configuration file
 
         .. tabs::
 
-            .. tab:: JSON File
+            .. group-tab:: JSON File
 
                 At `this line <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L4>`__ in the ``config.json`` is where you can update the ``path_output``.
 
@@ -233,7 +233,7 @@ Configuration file
 
                     "path_output": "spineGeneric"
 
-            .. tab:: Command Line Interface
+            .. group-tab:: Command Line Interface
 
                 Note that you can also pass this argument via CLI (see `Usage <../usage.html>`__)
 
@@ -246,15 +246,15 @@ Configuration file
 
         .. tabs::
 
-            .. tab:: JSON File
+            .. group-tab:: JSON File
 
-                At <`this line <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L12>`__ in the ``config.json`` is where you can update the ``path_data`` within the ``loader_parameters`` sub-dictionary.
+                At `this line <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L12>`__ in the ``config.json`` is where you can update the ``path_data`` within the ``loader_parameters`` sub-dictionary.
 
                 .. code-block:: json
 
                     "path_data": "data_example_spinegeneric"
 
-            .. tab:: Command Line Interface
+            .. group-tab:: Command Line Interface
 
                 Note that you can also pass this argument via CLI (see `Usage <../usage.html>`__)
 
@@ -267,7 +267,7 @@ Configuration file
 
         .. tabs::
 
-            .. tab:: JSON File
+            .. group-tab:: JSON File
 
                 At `this line <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L14>`__ in the ``config.json`` is where you can update the ``target_suffix`` within the ``loader_parameters`` sub-dictionary.
 
@@ -279,7 +279,7 @@ Configuration file
 
         .. tabs::
 
-            .. tab:: JSON File
+            .. group-tab:: JSON File
 
                 At `this line <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L20>`__ in the ``config.json`` is where you can update the ``contrast_params`` sub-dictionary within the ``loader_parameters`` sub-dictionary.
 
@@ -295,7 +295,7 @@ Configuration file
 
         .. tabs::
 
-            .. tab:: JSON File
+            .. group-tab:: JSON File
 
                 At `this line <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L29>`__ in the ``config.json`` is where you can update the ``slice_axis`` subkey within the ``loader_parameters`` sub-dictionary.
 
@@ -308,7 +308,7 @@ Configuration file
 
         .. tabs::
 
-            .. tab:: JSON File
+            .. group-tab:: JSON File
 
                 At `this line <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L30>`__ in the ``config.json`` is where you can update the ``multichannel`` subkey within the ``loader_parameters`` sub-dictionary.
 
@@ -322,14 +322,14 @@ Configuration file
                     a ground truth segmentation is aligned with all contrasts, for a given subject. In this tutorial, only one channel
                     will be used.
 
-    - ``training_time:num_epochs``: the maximum number of epochs that will be run during training. Each epoch is composed
+    - ``training_parameters:training_time:num_epochs``: the maximum number of epochs that will be run during training. Each epoch is composed
       of a training part and an evaluation part. It should be a strictly positive integer.
 
         .. tabs::
 
-            .. tab:: JSON File
+            .. group-tab:: JSON File
 
-                At `this line <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L29>`__ in the ``config.json`` is where you can update the ``slice_axis`` subkey within the ``loader_parameters`` sub-dictionary.
+                At `this line <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L48>`__ in the ``config.json`` is where you can update the ``num_epochs`` subkey within the ``training_parameters:training_time`` sub-dictionary.
 
                 .. code-block:: json
 
@@ -342,7 +342,7 @@ Train model
 
     .. tabs::
 
-        .. tab:: Command Line Interface
+        .. group-tab:: Command Line Interface
 
             .. code-block:: bash
 
@@ -357,11 +357,11 @@ Train model
             - ``--path-data``: Location of the dataset. As discussed in `Data <../data.html>`__, the dataset
               should conform to the BIDS standard. Modify the path so it points to the location of the downloaded dataset.
 
-        .. tab:: JSON File
+        .. group-tab:: JSON File
 
             If you set the ``command``, ``path_output``, and ``path_data`` arguments in your config file, you do not need to pass the above the specific CLI flags.
 
-            Instead, make the following changes to the JSOn file at the specific lines:
+            Instead, make the following changes to the JSON file at the specific lines:
 
             * Command parameter located `here <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L2>`__
 
