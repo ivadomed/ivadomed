@@ -162,9 +162,9 @@ Step 3: Install ``torch`` and ``torchvision`` with CPU or GPU Support
 
                         pip install -r requirements.txt
 
-        .. tab:: Nvidia GPU Support
+        .. tab:: NVIDIA GPU Support
 
-            ``ivadomed`` requires CUDA11 to execute properly. If you have a nvidia GPU, try to look up its Cuda Compute Score `here <https://developer.nvidia.com/cuda-gpus>`_, which needs to be > 3.5 to support CUDA11. Then, make sure to upgrade to nvidia driver to be at least v450+ or newer.
+            ``ivadomed`` requires CUDA11 to execute properly. If you have a NVIDIA GPU, try to look up its Cuda Compute Score `here <https://developer.nvidia.com/cuda-gpus>`_, which needs to be > 3.5 to support CUDA11. Then, make sure to upgrade to NVIDIA driver to be at least v450+ or newer.
 
             If you have a compatible NVIDIA GPU that supports CUDA11 and with the right driver installed try run the following command relevant to your situation:
 
