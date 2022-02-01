@@ -263,7 +263,8 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                         target_list = ["_class-%d" % i for i in range(len(testing_params['target_suffix']))]
                         imed_inference.pred_to_png(output_list,
                                                    target_list,
-                                                   fname_pred.split("_pred.nii.gz")[0])
+                                                   fname_pred.split("_pred.nii.gz")[0],
+                                                   suffix="_pred.png")
 
                     # re-init pred_stack_lst and last_slice_bool
                     pred_tmp_lst, z_tmp_lst = [], []
