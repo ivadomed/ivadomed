@@ -7,7 +7,10 @@ One-class segmentation with 2D U-Net
     - Testing of a trained model and computation of 3D evaluation metrics.
     - Visualization of the outputs of a trained model.
 
-    An interactive Colab version of this tutorial is directly accessible `here <https://colab.research.google.com/github/ivadomed/ivadomed/blob/master/testing/tutorials/tutorial_1_2d_segmentation_unet.ipynb>`_.
+    .. raw:: html
+
+            <div>An interactive Colab version of this tutorial is directly accessible: <a href="https://colab.research.google.com/github/ivadomed/ivadomed/blob/master/testing/tutorials/tutorial_1_2d_segmentation_unet.ipynb"><img alt="Open in Colab" src="https://colab.research.google.com/assets/colab-badge.svg"></img></a><div>
+
 
 .. _Download dataset:
 
