@@ -22,12 +22,13 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
             contrast is processed individually (ie different sample / tensor).
         object_detection_params (dict): Object dection parameters.
         is_input_dropout (bool): Return input with missing modalities.
+        input_dropout_params (list): Dropout parameters: a list [p1, ..., pn] where p_i is the probability of the channel i to be dropped
     """
 
     def __init__(self, bids_df, subject_file_lst, target_suffix, model_params, contrast_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, roi_params=None,
                  multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False,
-                 is_input_dropout=False):
+                 is_input_dropout=False, input_dropout_params=[0.5, 0.5, 0.5]):
         dataset = BidsDataset(bids_df=bids_df,
                               subject_file_lst=subject_file_lst,
                               target_suffix=target_suffix,
@@ -39,9 +40,10 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
                               transform=transform,
                               multichannel=multichannel,
                               object_detection_params=object_detection_params,
-                              is_input_dropout=is_input_dropout)
+                              is_input_dropout=is_input_dropout
+                              input_dropout_params=input_dropout_params)
 
         super().__init__(dataset.filename_pairs, length=model_params[ModelParamsKW.LENGTH_3D],
                          stride=model_params[ModelParamsKW.STRIDE_3D],
                          transform=transform, slice_axis=slice_axis, task=task, soft_gt=soft_gt,
-                         is_input_dropout=is_input_dropout)
+                         is_input_dropout=is_input_dropout, input_dropout_params=input_dropout_params)

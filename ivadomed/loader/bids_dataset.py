@@ -32,6 +32,7 @@ class BidsDataset(MRI2DSegmentationDataset):
         soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
         truths are thresholded (0.5) after the data augmentation operations.
         is_input_dropout (bool): Return input with missing modalities.
+        input_dropout_params (list): Dropout parameters: a list [p1, ..., pn] where p_i is the probability of the channel i to be dropped
 
     Attributes:
         filename_pairs (list): A list of tuples in the format (input filename list containing all modalities,ground \
@@ -46,7 +47,7 @@ class BidsDataset(MRI2DSegmentationDataset):
     def __init__(self, bids_df, subject_file_lst, target_suffix, contrast_params, model_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, slice_filter_fn=None, roi_params=None,
                  multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False,
-                 is_input_dropout=False):
+                 is_input_dropout=False, input_dropout_params=[0.5, 0.5, 0.5]):
 
         self.roi_params = roi_params if roi_params is not None else \
             {ROIParamsKW.SUFFIX: None, ROIParamsKW.SLICE_FILTER_ROI: None}
@@ -128,7 +129,7 @@ class BidsDataset(MRI2DSegmentationDataset):
         stride = model_params[ModelParamsKW.STRIDE_2D] if ModelParamsKW.STRIDE_2D in model_params else []
 
         super().__init__(self.filename_pairs, length, stride, slice_axis, cache, transform, slice_filter_fn, task, self.roi_params,
-                         self.soft_gt, is_input_dropout)
+                         self.soft_gt, is_input_dropout, input_dropout_params)
 
     def get_target_filename(self, target_suffix, target_filename, derivative):
         for idx, suffix_list in enumerate(target_suffix):

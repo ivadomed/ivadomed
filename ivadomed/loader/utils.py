@@ -426,12 +426,13 @@ def update_filename_to_nifti(filename):
     return filename
 
 
-def dropout_input(seg_pair):
+def dropout_input(seg_pair, drop_param):
     """Applies input-level dropout: zero to all channels minus one will be randomly set to zeros. This function verifies
     if some channels are already empty. Always at least one input channel will be kept.
 
     Args:
         seg_pair (dict): Batch containing torch tensors (input and gt) and metadata.
+        drop_param (list): [p1, ..., pn], channel_1, ... and channel_n have respectively p1, ... and p3 chances to be dropped.
 
     Return:
         seg_pair (dict): Batch containing torch tensors (input and gt) and metadata with channel(s) dropped.
@@ -439,10 +440,31 @@ def dropout_input(seg_pair):
     n_channels = seg_pair['input'].size(0)
     # Verify if the input is multichannel
     if n_channels > 1:
+
         # Verify if some channels are already empty
         n_unique_values = [len(torch.unique(input_data)) > 1 for input_data in seg_pair['input']]
         idx_empty = np.where(np.invert(n_unique_values))[0]
 
+
+        # select n_dropped channels to be dropped between 0 and (n_channels - 1) (keep at least one input)
+        # taking into consideration the empty channels, so making sure: n_available_channel - (n_dropped_channels + n_empty_channels) >= 1
+        n_dropped = n_channels
+        while n_dropped > (n_channels - 1):
+
+            # choose some channels to drop, 1 means drop, 0 means keep
+            to_drop = [1 if ( (random.random()<drop_param[i]) or (i in idx_empty) ) else 0 for i in range(len(drop_param))]
+
+            # calculate the total number of channels chosen to be dropped
+            n_dropped = sum(to_drop)
+
+        # indexes of the channels to be dropped
+        idx_dropped = [i for i in range(len(to_drop)) if (to_drop[i]==1)]
+
+        # drop these channels
+        seg_pair['input'][idx_dropped] = torch.zeros_like(seg_pair['input'][idx_dropped])
+
+        
+        """
         # Select how many channels will be dropped between 0 and n_channels - 1 (keep at least one input)
         n_dropped = random.randint(0, n_channels - 1)
 
@@ -460,7 +482,7 @@ def dropout_input(seg_pair):
             idx_dropped = idx_empty
 
         seg_pair['input'][idx_dropped] = torch.zeros_like(seg_pair['input'][idx_dropped])
-
+        """
     else:
         logger.warning("\n Impossible to apply input-level dropout since input is not multi-channel.")
 

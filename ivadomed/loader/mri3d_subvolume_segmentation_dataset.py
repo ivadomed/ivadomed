@@ -32,10 +32,11 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
         truths are thresholded (0.5) after the data augmentation operations.
         is_input_dropout (bool): Return input with missing modalities.
+        input_dropout_params (list): Dropout parameters: a list [p1, ..., pn] where p_i is the probability of the channel i to be dropped
     """
 
     def __init__(self, filename_pairs, transform=None, length=(64, 64, 64), stride=(0, 0, 0), slice_axis=0,
-                 task="segmentation", soft_gt=False, is_input_dropout=False):
+                 task="segmentation", soft_gt=False, is_input_dropout=False, input_dropout_params=[0.5, 0.5, 0.5]):
         self.filename_pairs = filename_pairs
         self.handlers = []
         self.indexes = []
@@ -47,6 +48,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         self.task = task
         self.soft_gt = soft_gt
         self.is_input_dropout = is_input_dropout
+        self.input_dropout_params = input_dropout_params
 
         self._load_filenames()
         self._prepare_indices()
@@ -174,7 +176,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
 
         # Input-level dropout to train with missing modalities
         if self.is_input_dropout:
-            subvolumes = dropout_input(subvolumes)
+            subvolumes = dropout_input(subvolumes, self.input_dropout_params)
 
         if stack_gt is not None:
             for _ in range(len(stack_gt)):
