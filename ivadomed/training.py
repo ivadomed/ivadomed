@@ -6,6 +6,7 @@ import os
 import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
+import wandb
 from loguru import logger
 from torch import optim
 from torch.utils.data import DataLoader
@@ -53,6 +54,25 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
     """
     # Write the metrics, images, etc to TensorBoard format
     writer = SummaryWriter(log_dir=path_output)
+
+    # Collect all hyperparameters into a dictionary
+    cfg = {
+        "batch_size": training_params["batch_size"],
+        "num_epochs": training_params["training_time"]["num_epochs"],
+        "init_lr": training_params["scheduler"]["initial_lr"],
+        "scheduler": training_params["scheduler"]["lr_scheduler"],
+        "early_stopping_patience": training_params["training_time"]["early_stopping_patience"],
+        "early_stopping_epsilon": training_params["training_time"]["early_stopping_epsilon"],
+        "loss": training_params["loss"]["name"],
+        "model": model_params["name"],
+        "is_2d": model_params["is_2d"],
+        "in_channels": model_params["in_channel"],
+        "out_channels": model_params["out_channel"],
+        "depth": model_params["depth"]
+    }
+    # Initialize WandB with metrics and hyperparameters
+    # TODO: get project name, group name and run name from the config file (add them in keywords.py)
+    wandb.init(project="ivadomed", group='temp', name='run-1', config=cfg)
 
     # BALANCE SAMPLES AND PYTORCH LOADER
     conditions = all([training_params[TrainingParamsKW.BALANCE_SAMPLES][BalanceSamplesKW.APPLIED],
@@ -155,6 +175,7 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
 
         lr = scheduler.get_last_lr()[0]
         writer.add_scalar('learning_rate', lr, epoch)
+        wandb.log({"learning_rate": lr})
 
         # Training loop -----------------------------------------------------------
         model.train()
@@ -270,11 +291,16 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
             metrics_dict = metric_mgr.get_results()
             metric_mgr.reset()
             writer.add_scalars('Validation/Metrics', metrics_dict, epoch)
+            wandb.log({"Validation/Metrics": metrics_dict})
             val_loss_total_avg = val_loss_total / num_steps
             writer.add_scalars('losses', {
                 'train_loss': train_loss_total_avg,
                 'val_loss': val_loss_total_avg,
             }, epoch)
+            wandb.log({"losses": {
+                'train_loss': train_loss_total_avg,
+                'val_loss': val_loss_total_avg,
+            }})
             msg = "Epoch {} validation loss: {:.4f}.".format(epoch, val_loss_total_avg)
             val_dice_loss_total_avg = val_dice_loss_total / num_steps
             if training_params["loss"]["name"] != "DiceLoss":
@@ -350,6 +376,7 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
         gif_dict["gif"][i_gif].save(str(path_gif_out))
 
     writer.close()
+    wandb.finish()
     final_time = time.time()
     duration_time = final_time - begin_time
     logger.info('begin ' + time.strftime('%H:%M:%S', time.localtime(begin_time)) + "| End " +
