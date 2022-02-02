@@ -66,6 +66,7 @@ def test_slice_filter(download_data_testing_test_files, transforms_dict, train_l
         "roi_params": roi_params,
         "model_params": {"name": "Unet"},
         "slice_filter_params": slice_filter_params,
+        "patch_filter_params": {"filter_empty_mask": False, "filter_empty_input": False},
         "slice_axis": "axial",
         "multichannel": False
     }

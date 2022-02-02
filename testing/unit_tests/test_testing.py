@@ -64,10 +64,8 @@ def test_inference(download_data_testing_test_files, transforms_dict, test_lst, 
         "target_suffix": target_lst,
         "extensions": [".nii.gz"],
         "roi_params": roi_params,
-        "slice_filter_params": {
-            "filter_empty_mask": False,
-            "filter_empty_input": True
-        },
+        "slice_filter_params": {"filter_empty_mask": False, "filter_empty_input": True},
+        "patch_filter_params": {"filter_empty_mask": False, "filter_empty_input": False},
         "slice_axis": SLICE_AXIS,
         "multichannel": False
     }
@@ -166,10 +164,8 @@ def test_inference_2d_microscopy(download_data_testing_test_files, transforms_di
         "target_suffix": target_lst,
         "extensions": [".png"],
         "roi_params": roi_params,
-        "slice_filter_params": {
-            "filter_empty_mask": False,
-            "filter_empty_input": True
-        },
+        "slice_filter_params": {"filter_empty_mask": False, "filter_empty_input": True},
+        "patch_filter_params": {"filter_empty_mask": False, "filter_empty_input": False},
         "slice_axis": SLICE_AXIS,
         "multichannel": False
     }
