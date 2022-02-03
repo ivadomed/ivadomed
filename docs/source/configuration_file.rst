@@ -405,36 +405,35 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "slice_filter_params",
-        "description": "Discard a slice from the dataset if it meets a condition, see
-            below.",
+        "description": "Discard a slice from the dataset if it meets a condition, see below.",
         "type": "dict",
         "options": {
             "filter_empty_input": {
                 "type": "boolean",
-                "description": "Discard slices where all voxel
-                   intensities are zeros."
+                "description": "Discard slices where all voxel intensities are zeros. Default: ``True``."
             },
             "filter_empty_mask": {
                 "type": "boolean",
-                "description": "Discard slices where all voxel labels are zeros."
+                "description": "Discard slices where all voxel labels are zeros. Default: ``False``."
             },
             "filter_absent_class": {
                 "type": "boolean",
                 "$$description": [
                     "Discard slices where all voxel labels are zero for one or more classes\n",
-                    "(this is most relevant for multi-class models that need GT for all classes at train time)."
+                    "(this is most relevant for multi-class models that need GT for all classes at training time).\n",
+                    "Default: ``False``."
                 ]
             },
             "filter_classification": {
                 "type": "boolean",
                 "$$description": [
                     "Discard slices where all images fail a custom classifier filter. If used,\n",
-                    "``classifier_path`` must also be specified, pointing to a saved PyTorch classifier."
+                    "``classifier_path`` must also be specified, pointing to a saved PyTorch classifier.\n",
+                    "Default: ``False``."
                 ]
             }
         }
     }
-
 
 .. code-block:: JSON
 
@@ -446,6 +445,51 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
             }
         }
     }
+
+
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "patch_filter_params",
+        "$$description": [
+            "Discard a 2D patch from the dataset if it meets a condition at training time, defined below.\n",
+            "Contrary to the field ``slice_filter_params`` which applies at training and testing time, ",
+            "this parameter only applies during training time."
+        ],
+        "type": "dict",
+        "options": {
+            "filter_empty_input": {
+                "type": "boolean",
+                "description": "Discard 2D patches where all voxel intensities are zeros. Default: ``False``."
+            },
+            "filter_empty_mask": {
+                "type": "boolean",
+                "description": "Discard 2D patches where all voxel labels are zeros. Default: ``False``."
+            },
+            "filter_absent_class": {
+                "type": "boolean",
+                "$$description": [
+                    "Discard 2D patches where all voxel labels are zero for one or more classes\n",
+                    "(this is most relevant for multi-class models that need GT for all classes).\n",
+                    "Default: ``False``."
+                ]
+            }
+        }
+    }
+
+
+.. code-block:: JSON
+
+    {
+        "loader_parameters": {
+            "patch_filter_params": {
+                "filter_empty_mask": false,
+                "filter_empty_input": false
+            }
+        }
+    }
+
 
 .. jsonschema::
 
@@ -1231,8 +1275,6 @@ Transformations applied during data augmentation. Transformations are sorted in 
 - ``applied_to``: list between ``"im", "gt", "roi"``. If not specified, then the transformation is applied to all loaded samples. Otherwise, only applied to the specified types: Example: ``["gt"]`` implies that this transformation is only applied to the ground-truth data.
 - ``dataset_type``: list between ``"training", "validation", "testing"``. If not specified, then the transformation is applied to the three sub-datasets. Otherwise, only applied to the specified subdatasets. Example: ``["testing"]`` implies that this transformation is only applied to the testing sub-dataset.
 
-Available Transformations:
-^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. jsonschema::
 
@@ -1625,6 +1667,109 @@ Available Transformations:
         }
     }
 
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "RandomGamma",
+        "type": "dict",
+        "$$description": [
+            "Randomly changes the contrast of an image by gamma exponential."
+        ],
+        "options": {
+            "log_gamma_range": {
+                "type": "(float, float)",
+                "description": "Log gamma range for changing contrast."
+            },
+            "p": {
+                "type": "float"
+            }
+        }
+    }
+
+.. code-block:: JSON
+
+    {
+        "transformation": {
+            "RandomGamma": {
+                "log_gamma_range": [-3.0, 3.0],
+                "p": 0.5,
+                "applied_to": ["im"],
+                "dataset_type": ["training"]
+            }
+        }
+    }
+
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "RandomBiasField",
+        "type": "dict",
+        "$$description": [
+            "Applies a random MRI bias field artifact to the image via `torchio.RandomBiasField()`"
+        ],
+        "options": {
+            "coefficients": {
+                "type": "float",
+                "description": "Maximum magnitude of polynomial coefficients."
+            },
+            "order": {
+                "type": "int",
+                "description": "Order of the basis polynomial functions."
+            },
+            "p": {
+                "type": "float"
+            }
+        }
+    }
+
+.. code-block:: JSON
+
+    {
+        "transformation": {
+            "RandomBiasField": {
+                "coefficients": 0.5,
+                "order": 3,
+                "p": 0.5,
+                "applied_to": ["im"],
+                "dataset_type": ["training"]
+            }
+        }
+    }
+
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "RandomBlur",
+        "type": "dict",
+        "$$description": [
+            "Applies a random blur to the image."
+        ],
+        "options": {
+            "sigma_range": {
+                "type": "(float, float)",
+                "description": "Standard deviation range for the gaussian filter."
+            },
+            "p": {
+                "type": "float"
+            }
+        }
+    }
+
+.. code-block:: JSON
+
+    {
+        "transformation": {
+            "RandomBlur": {
+                "sigma_range": [0.0, 2.0],
+                "p": 0.5,
+                "applied_to": ["im"],
+                "dataset_type": ["training"]
+            }
+        }
+    }
 
 .. _Uncertainty:
 
