@@ -9,6 +9,7 @@ from loguru import logger
 
 from ivadomed.keywords import BidsDataFrameKW, LoaderParamsKW, ContrastParamsKW, ConfigKW
 from ivadomed.loader.bids_dataframe import BidsDataframe
+from ivadomed.loader import loader as imed_loader
 from ivadomed.scripts import download_data as ivadomed_download_data
 from ivadomed.main import set_loader_params
 import shutil
@@ -142,18 +143,22 @@ def assert_empty_bids_dataframe(loader_parameters: dict):
     assert bids_df.df.equals(pd.DataFrame())
 
 
-def bids_dataframe_comparison_framework(loader_parameters: dict, target_csv: str):
+def bids_dataframe_comparison_framework(loader_parameters: dict,
+                                        path_output: str,
+                                        target_csv: str,
+                                        test_csv: str = "df_test.csv"):
     """Main test function used to set up a CSV comparison between expected vs the output from the test
     Args:
         loader_parameters (dict): a dictionary object containing all loader parameters necessary derived from
         config.json to construct the BidsDataFrame
-
+        path_output: Output folder
         target_csv (str): the filename string  of a CSV which indicate the goal of the unit test scenario. It is
         derived from the bids_dataframe after stripping out its PATH column.
+        test_csv (str): the filename string of a CSV which is produced from Bids Dataframe
     """
     # Create the bids frame.
     bids_df = BidsDataframe(loader_parameters,
-                            str(path_data_multi_sessions_contrasts_tmp),
+                            path_output,
                             derivatives=True)
 
     # Drop path as that can varies across runs.
@@ -167,7 +172,7 @@ def bids_dataframe_comparison_framework(loader_parameters: dict, target_csv: str
     csv_ref = os.path.join(loader_parameters[LoaderParamsKW.PATH_DATA][0], target_csv)
 
     # Generate full path for the csv which is produced from Bids Dataframe so that we can save the CSV to that location
-    csv_test = os.path.join(loader_parameters[LoaderParamsKW.PATH_DATA][0], "df_test.csv")
+    csv_test = os.path.join(loader_parameters[LoaderParamsKW.PATH_DATA][0], test_csv)
     df_test.to_csv(csv_test, index=False)
 
     # Calculate differences between the generated versus the ground truth by comparing the output csv (csv_test) with
@@ -214,3 +219,19 @@ def get_multi_default_case() -> dict:
     })
 
     return default_loader_parameters
+
+
+def prepare_loader_dataset(loader_parameters, model_parameters, transform_parameters, path_output):
+    """
+    Loader the dataset for test in 2d patching,2d png and target_suffix
+    """
+
+    loader_parameters.update({"model_params": model_parameters})
+    bids_df = BidsDataframe(loader_parameters, path_output, derivatives=True)
+    data_lst = ['sub-rat3_ses-01_sample-data9_SEM.png']
+    ds = imed_loader.load_dataset(bids_df,
+                                  **{**loader_parameters, **{'data_list': data_lst,
+                                                             'transforms_params': transform_parameters,
+                                                             'dataset_type': 'training'}})
+
+    return ds

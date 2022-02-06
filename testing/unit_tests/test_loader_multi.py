@@ -34,7 +34,7 @@ def test_valid_multi_sessions(download_multi_data,
     """
     Test for when multi-sessions and multi-contrasts, how the filtering and ground truth identification process works.
     """
-    bids_dataframe_comparison_framework(loader_parameters, target_csv)
+    bids_dataframe_comparison_framework(loader_parameters, str(path_data_multi_sessions_contrasts_tmp), target_csv)
 
 
 @parametrize_with_cases("loader_parameters", cases=[
@@ -87,7 +87,7 @@ def test_valid_multi_contrasts(
     """
     Test for multi-contrasts, how the filtering and ground truth identification process works.
     """
-    bids_dataframe_comparison_framework(loader_parameters, target_csv)
+    bids_dataframe_comparison_framework(loader_parameters, str(path_data_multi_sessions_contrasts_tmp), target_csv)
 
 
 @parametrize_with_cases("loader_parameters, target_csv", cases=[
@@ -102,7 +102,7 @@ def test_valid_multi_target_suffixes(
     """
     Test for ground truth valid csv
     """
-    bids_dataframe_comparison_framework(loader_parameters, target_csv)
+    bids_dataframe_comparison_framework(loader_parameters, str(path_data_multi_sessions_contrasts_tmp), target_csv)
 
 
 def teardown_function():

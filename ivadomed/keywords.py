@@ -72,6 +72,9 @@ class TransformationKW:
     ROICROP = "ROICrop"
     CENTERCROP = "CenterCrop"
     RESAMPLE = "Resample"
+    NUMPY_TO_TENSOR = "NumpyToTensor"
+    W_SPACE = "wspace"
+    H_SPACE = "hspace"
 
 
 @dataclass
@@ -113,6 +116,9 @@ class ModelParamsKW:
     DEPTH = "depth"
     MISSING_PROBABILITY = "missing_probability"
     MISSING_PROBABILITY_GROWTH = "missing_probability_growth"
+    DROPOUT_RATE = "dropout_rate"
+    BN_MOMENTUM = "bn_momentum"
+    FINAL_ACTIVATION = "final_activation"
 
 
 @dataclass
