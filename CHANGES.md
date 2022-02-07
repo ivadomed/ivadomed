@@ -1,3 +1,19 @@
+## v2.9.3 (2022-02-01)
+[View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.9.2...release)
+
+**FEATURE**
+
+- Apply filter parameters on 2D patches to remove empty patches.  [View pull request](https://github.com/ivadomed/ivadomed/pull/980)
+
+**REFACTORING**
+
+- Update pred_to_png prediction filenames for ADS integration.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1050)
+
+**DOCUMENTATION**
+
+- Instruction to update `"bids_config"` key in microscopy tutorial.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1053)
+
+
 ## v2.9.2 (2022-01-18)
 [View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.9.1...release)
 
@@ -23,6 +39,7 @@
 - Removed one child-headings for clarity.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1028)
 - Typo fix for URL that is bricking the Colab link.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1021)
 - Experimental incorporation of tutorial jupyter notebooks open in Colab path.  [View pull request](https://github.com/ivadomed/ivadomed/pull/998)
+
 
 ## v2.9.1 (2021-12-13)
 [View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.9.0...release)
