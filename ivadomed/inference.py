@@ -220,10 +220,10 @@ def pred_to_png(pred_list: list, target_list: list, subj_path: str, suffix: str 
         target_list (list of str): list of target suffixes.
         subj_path (str): Path of the subject filename in output folder without extension
             (e.g. "path_output/pred_masks/sub-01_sample-01_SEM").
-        suffix (str): additional suffix to append to the filename.
+        suffix (str): additional suffix to append to the filename (e.g. "_pred.png")
     """
     for pred, target in zip(pred_list, target_list):
-        filename = subj_path + target + "_pred" + suffix + ".png"
+        filename = subj_path + target + suffix
         data = pred.get_fdata()
         imageio.imwrite(filename, data, format='png')
 
