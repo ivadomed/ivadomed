@@ -306,7 +306,8 @@ def run_segment_command(context, model_params):
             if "nii" not in extension:
                 imed_inference.pred_to_png(pred_list,
                                            target_list,
-                                           str(Path(pred_path, subject)).replace(extension, ''))
+                                           str(Path(pred_path, subject)).replace(extension, ''),
+                                           suffix="_pred.png")
 
 
 def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
