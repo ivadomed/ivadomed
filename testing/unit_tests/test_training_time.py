@@ -100,6 +100,7 @@ def test_unet_time(download_data_testing_test_files, train_lst, target_lst, conf
         "target_suffix": target_lst,
         "extensions": [".nii.gz"],
         "slice_filter_params": {"filter_empty_mask": False, "filter_empty_input": True},
+        "patch_filter_params": {"filter_empty_mask": False, "filter_empty_input": False},
         "slice_axis": "axial"
     }
     # Update loader_params with config

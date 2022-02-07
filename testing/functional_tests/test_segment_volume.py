@@ -196,6 +196,10 @@ def test_segment_volume_2d_with_patches(download_functional_test_files, center_c
                 "filter_empty_mask": False,
                 "filter_empty_input": False
             },
+            "patch_filter_params": {
+                "filter_empty_mask": False,
+                "filter_empty_input": False
+            },
             "roi_params": {
                 "suffix": None,
                 "slice_filter_roi": None
