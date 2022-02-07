@@ -144,7 +144,7 @@ Step 3: Install ``torch`` and ``torchvision`` with CPU or GPU Support
 
                     ``ivadomed`` requires CUDA11 to execute properly. If you have a nvidia GPU, try to look up its Cuda Compute Score `here <https://developer.nvidia.com/cuda-gpus>`__, which needs to be > 3.5 to support CUDA11. Then, make sure to upgrade to nvidia driver to be at least v450+ or newer.
 
-                    You can use ``nvidia-smi`` in both Linux and Windows to check for driver CUDA Version listed at the top right of the output console. On windows, follow `this example guide here until Step 4 <https://wiki.tuflow.com/index.php?title=DOS_GPU_Usage>`__. On Linux, simply type in ``nvidia-smi`` in any console to see the output.
+                    You can use ``nvidia-smi`` in both Linux and Windows to check for driver CUDA Version listed at the top right of the output console. On Linux, simply type in ``nvidia-smi`` in any console to see the output. On windows, you will need to locate the `nvidia-smi.exe` tool by following the instructions on `this page <https://stackoverflow.com/a/57100016>`__.
 
                     If you have a compatible NVIDIA GPU that supports CUDA11, and you have a recent enough driver installed, then run the following command:
 
