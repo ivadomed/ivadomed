@@ -541,7 +541,8 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
         "$$description": [
             "Indicates if a soft mask will be used as ground-truth to train\n",
             "and / or evaluate a model. In particular, the masks are not binarized\n",
-            "after interpolations implied by preprocessing or data-augmentation operations."
+            "after interpolations implied by preprocessing or data-augmentation operations.\n",
+            "Approach inspired by the `SoftSeg <https://arxiv.org/ftp/arxiv/papers/2011/2011.09041.pdf>`__ paper."
         ],
         "type": "boolean"
     }
@@ -553,6 +554,14 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
             "soft_gt": true
         }
     }
+
+.. note::
+    To get the full advantage of the soft segmentations, in addition to setting 
+    ``soft_gt: true`` the following keys in the config file must also be changed: 
+    (i) ``final_activation: relu`` - to use the normalized ReLU activation function
+    (ii) ``loss: AdapWingLoss`` - a regression loss described in the 
+    paper. Note: It is also recommended to use the ``DiceLoss`` since convergence 
+    with ``AdapWingLoss`` is sometimes difficult to achieve.
 
 .. jsonschema::
 
