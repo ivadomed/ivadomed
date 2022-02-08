@@ -130,7 +130,7 @@ def test_unet_time(download_data_testing_test_files, train_lst, target_lst, conf
     model_class = getattr(imed_models, model_params["name"])
     model = model_class(**model_params)
 
-    logger.debug("Training {}".format(model_params["name"]))
+    logger.debug(f"Training {model_params['name']}")
     if cuda_available:
         model.cuda()
 

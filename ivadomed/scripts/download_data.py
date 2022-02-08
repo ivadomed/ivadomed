@@ -146,7 +146,7 @@ def unzip(compressed, dest_folder):
     try:
         open(compressed).extractall(dest_folder)
     except Exception:
-        logger.error('ERROR: ZIP package corrupted. Please try downloading again.')
+        logger.error("ERROR: ZIP package corrupted. Please try downloading again.")
         raise
 
 

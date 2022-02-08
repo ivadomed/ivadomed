@@ -76,7 +76,7 @@ def test_sampler(download_data_testing_test_files, transforms_dict, train_lst, t
     bids_df = BidsDataframe(loader_params, __tmp_dir__, derivatives=True)
     ds_train = imed_loader.load_dataset(bids_df, **loader_params)
 
-    logger.info('\nLoading without sampling')
+    logger.info("\nLoading without sampling")
     train_loader = DataLoader(ds_train, batch_size=BATCH_SIZE,
                               shuffle=True, pin_memory=True,
                               collate_fn=imed_loader_utils.imed_collate,
@@ -84,7 +84,7 @@ def test_sampler(download_data_testing_test_files, transforms_dict, train_lst, t
     neg_percent, pos_percent = _cmpt_label(train_loader)
     assert abs(neg_percent - pos_percent) > 20
 
-    logger.info('\nLoading with sampling')
+    logger.info("\nLoading with sampling")
     train_loader_balanced = DataLoader(ds_train, batch_size=BATCH_SIZE,
                                        sampler=BalancedSampler(ds_train),
                                        shuffle=False, pin_memory=True,

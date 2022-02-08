@@ -102,7 +102,7 @@ def visualize_tsne(data, metadata_values, layer_no, fname_out):
 
     tsne_df = pd.concat([tsne_df, tsne_df2])
 
-    logger.info('t-SNE done!')
+    logger.info("t-SNE done!")
 
     # Visualize
     fig = plt.figure(figsize=(16,10))

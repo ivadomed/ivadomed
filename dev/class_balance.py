@@ -52,7 +52,7 @@ def run_main(args):
 
     balance_dct = {}
     for ds_lst, ds_name in zip([train_lst, valid_lst, test_lst], ['train', 'valid', 'test']):
-        logger.info("\nLoading {} set.\n".format(ds_name))
+        logger.info(f"\nLoading {ds_name} set.\n")
         ds = BidsDataset(context["path_data"],
                          subject_lst=ds_lst,
                          target_suffix=context["target_suffix"],
@@ -63,7 +63,7 @@ def run_main(args):
                          transform=transform_lst,
                          slice_filter_fn=SliceFilter())
 
-        logger.info("Loaded {} axial slices for the {} set.".format(len(ds), ds_name))
+        logger.info(f"Loaded {len(ds)} axial slices for the {ds_name} set.")
         ds_loader = DataLoader(ds, batch_size=1,
                                shuffle=False, pin_memory=False,
                                collate_fn=imed_loader_utils.imed_collate,
@@ -79,10 +79,10 @@ def run_main(args):
         balance_dct[ds_name] = balance_lst
 
     for ds_name in balance_dct:
-        logger.info('\nClass balance in {} set:'.format(ds_name))
+        logger.info(f"\nClass balance in {ds_name} set:")
         imed_utils.print_stats(balance_dct[ds_name])
 
-    logger.info('\nClass balance in full set:')
+    logger.info("\nClass balance in full set:")
     imed_utils.print_stats([e for d in balance_dct for e in balance_dct[d]])
 
 

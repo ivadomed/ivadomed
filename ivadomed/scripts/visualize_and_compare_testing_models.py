@@ -18,6 +18,7 @@ from ivadomed.utils import init_ivadomed
 from pathlib import Path
 from loguru import logger
 import argparse
+
 matplotlib.rcParams['toolbar'] = 'None'  # Remove buttons
 
 gui_env = ['TKAgg', 'GTKAgg', 'Qt4Agg', 'WXAgg']
@@ -26,6 +27,7 @@ for gui in gui_env:
     try:
         matplotlib.use(gui)
         from matplotlib import pyplot as plt
+
         selected_gui_env = gui
         break
     except:
@@ -33,9 +35,11 @@ for gui in gui_env:
 # If none works
 if selected_gui_env == []:
     from matplotlib import pyplot as plt
+
     logger.warning("No backend can be used - Visualization will fail")
 else:
     logger.info(f"Using: {matplotlib.get_backend()}  gui")
+
 
 # ---------------------------------------------------------------------------------------------------------------------#
 
@@ -46,14 +50,13 @@ def get_parser():
                         help="List of log folders from different models.")
     parser.add_argument("--metric", default='dice_class0', nargs=1, type=str, dest="metric",
                         help="Metric from evaluation_3Dmetrics.csv to base the plots on.")
-    parser.add_argument("--metadata", required=False,  nargs=2, type=str, dest="metadata",
+    parser.add_argument("--metadata", required=False, nargs=2, type=str, dest="metadata",
                         help="Selection based on metadata from participants.tsv:"
                              "(1) Label from column (2) string to match")
     return parser
 
 
 def onclick(event, df):
-
     # Get the index of the selected violinplot datapoint
     # WARNING: More than one can be selected if they are very close to each other
     #          If that's the case, all will be displayed
@@ -67,7 +70,8 @@ def onclick(event, df):
 
         # Remove the previously displayed subject(s)
         # This also takes care of the case where more than one subjects are displayed
-        while len(fig.texts) > nfolders+np.math.factorial(nfolders)/(np.math.factorial(2)*np.math.factorial(nfolders-2)):
+        while len(fig.texts) > nfolders + np.math.factorial(nfolders) / (
+                np.math.factorial(2) * np.math.factorial(nfolders - 2)):
             fig.texts.pop()
 
         # This is a hack to find the index of the Violinplot - There should be another way to get this from the
@@ -78,7 +82,7 @@ def onclick(event, df):
         selected_output_folder = df[df["EvaluationModel"] == output_folders[i_output_folder]]
 
         for iSubject in range(0, len(clicked_index.tolist())):
-            frame = plt.text(event.mouseevent.xdata, -0.08 - 0.08*iSubject + event.mouseevent.ydata,
+            frame = plt.text(event.mouseevent.xdata, -0.08 - 0.08 * iSubject + event.mouseevent.ydata,
                              selected_output_folder["subject"][clicked_index[iSubject]], size=10,
                              ha="center", va="center",
                              bbox=dict(facecolor='red', alpha=0.5)
@@ -125,12 +129,12 @@ def visualize_and_compare_models(ofolders, metric="dice_class0", metadata=None):
     """
 
     # access CLI options
-    logger.debug("ofolders: %r" % ofolders)
-    logger.debug("metric: %r" % metric)
+    logger.debug(f"ofolders: {ofolders}")
+    logger.debug(f"metric: {metric}")
     if metadata is None:
         metadata = []
     if metadata:
-        logger.debug("metadata: %r" % metadata)
+        logger.debug(f"metadata: {metadata}")
 
     # Do a quick check that all the required files are present
     for folder in ofolders:
@@ -153,12 +157,14 @@ def visualize_and_compare_models(ofolders, metric="dice_class0", metadata=None):
         if metadata:
             participant_metadata = pd.read_table(str(Path(folder, 'bids_dataframe.csv')), sep=',')
             # Select only the subjects that satisfy the --metadata input
-            selected_subjects = participant_metadata[participant_metadata[metadata[0]] == metadata[1]]["filename"].tolist()
+            selected_subjects = participant_metadata[participant_metadata[metadata[0]] == metadata[1]][
+                "filename"].tolist()
             selected_subjects = [i.replace(".nii.gz", "") for i in selected_subjects]
 
             # Now select only the scores from these subjects
             result_subject_ids = result["image_id"]
-            result = result.iloc[[i for i in range(len(result_subject_ids)) if result_subject_ids[i] in selected_subjects]]
+            result = result.iloc[
+                [i for i in range(len(result_subject_ids)) if result_subject_ids[i] in selected_subjects]]
 
             if result.empty:
                 logger.warning(f"No subject meet the selected criteria - skipping plot for: {folder}")
@@ -229,8 +235,8 @@ def visualize_and_compare_models(ofolders, metric="dice_class0", metadata=None):
         plt.show(block=True)
 
     else:
-        logger.warning('No subjects meet the criteria selected for any model. '
-                     'Probably you need to change the --metadata / --metric selection')
+        logger.warning("No subjects meet the criteria selected for any model. "
+                       "Probably you need to change the --metadata / --metric selection")
 
 
 def main():

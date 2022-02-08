@@ -14,7 +14,7 @@ PATH_SCTTESTING = os.path.join(os.path.expanduser('~'), 'duke', 'sct_testing', '
 def run_main():
     if not os.path.isdir(PATH_SCTTESTING):
         logger.warning(f"\nThis folder does not exist: {PATH_SCTTESTING}")
-        logger.warning('Please change the path at the top of this file')
+        logger.warning("Please change the path at the top of this file")
 
     subj_lst = [os.path.join(PATH_SCTTESTING, s, 'anat') for s in os.listdir(PATH_SCTTESTING) if
                 os.path.isdir(os.path.join(PATH_SCTTESTING, s, 'anat'))]
@@ -30,7 +30,7 @@ def run_main():
     contrast_lst_noDuplicate = list(set(contrast_lst))
     logger.info(f"\n{len(contrast_lst_noDuplicate)} contrasts found.\n")
 
-    logger.info('["{}"]'.format('", "'.join(contrast_lst_noDuplicate)))
+    logger.info(f"['{', '.join(contrast_lst_noDuplicate)}']")
 
 
 if __name__ == "__main__":

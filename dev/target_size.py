@@ -81,13 +81,13 @@ def run_main(args):
                             vox_lst.append(n_vox)
                             mm3_lst.append(n_vox * px * py * pz)
 
-    logger.debug('\nTarget distribution in vox:')
+    logger.debug("\nTarget distribution in vox:")
     imed_utils.print_stats(vox_lst)
     plot_distrib(vox_lst, context["target_suffix"] + ' size in vox',
                  [0, np.percentile(vox_lst, 90)],
                  context["target_suffix"] + '_vox.png')
 
-    logger.info('\nTarget distribution in mm3:')
+    logger.info("\nTarget distribution in mm3:")
     imed_utils.print_stats(mm3_lst)
     plot_distrib(mm3_lst, context["target_suffix"] + ' size in mm3',
                  [0, np.percentile(mm3_lst, 90)],

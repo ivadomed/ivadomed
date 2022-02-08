@@ -38,7 +38,7 @@ def download_dataset(dataset: str = 'data_testing'):
         logger.warning(f"\nTesting data files appear to already exist at {path_dataset}, aborting download")
         return
 
-    logger.info(f'\nDownloading testing data... to {dataset}')
+    logger.info(f"\nDownloading testing data... to {dataset}")
 
     # Call the ivadomed download CLI
     ivadomed_download_data.main([
@@ -56,7 +56,7 @@ def remove_dataset(dataset: str = 'data_testing'):
 
     path_dataset = Path(path_temp, dataset)
 
-    logger.debug("rm -rf %s" % path_dataset)
+    logger.debug(f"rm -rf {path_dataset}")
 
     shutil.rmtree(path_dataset, ignore_errors=True)
 

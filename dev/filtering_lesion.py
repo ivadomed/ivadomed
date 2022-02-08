@@ -82,7 +82,7 @@ def print_unc_stats(unc_name, pred_folder, im_lst):
             p75s.append(np.percentile(vals, 75))
 
     for n, l in zip(['min', 'max', 'p25', 'p50', 'p75'], [mins, maxs, p25s, p50s, p75s]):
-        logger.debug('\t{}: {}'.format(n, np.mean(l)))
+        logger.debug(f"\t{n}: {np.mean(l)}")
 
 
 def count_retained(data_before, data_after, level):
@@ -221,7 +221,7 @@ def run_inference(pred_folder, im_lst, thr_pred, gt_folder, target_suf, param_ev
         data_soft = np.mean(data_pred_lst, axis=0)
 
         if not any(elem is None for elem in [unc_name, thr_unc]):
-            logger.debug('thr')
+            logger.debug("thr")
             # discard uncertain lesions from data_soft
             data_soft[data_unc > thr_unc] = 0
 
