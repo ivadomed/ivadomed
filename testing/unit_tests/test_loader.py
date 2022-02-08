@@ -313,6 +313,7 @@ def test_get_target_filename_list_multiple_raters(loader_parameters, model_param
     "contrast_params": {"contrast_lst": [], "balance": {}},
     "slice_axis": "axial",
     "slice_filter_params": {"filter_empty_mask": False, "filter_empty_input": True},
+    "patch_filter_params": {"filter_empty_mask": False, "filter_empty_input": False},
     "multichannel": False
     }])
 @pytest.mark.parametrize('model_parameters', [{
