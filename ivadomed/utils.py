@@ -2,6 +2,7 @@ import os
 import sys
 import subprocess
 import hashlib
+import numpy as np
 from enum import Enum
 from loguru import logger
 from pathlib import Path
@@ -406,3 +407,9 @@ def init_ivadomed():
     """Initialize the ivadomed for typical terminal usage."""
     # Display ivadomed version
     logger.info('\nivadomed ({})\n'.format(__version__))
+
+
+def print_stats(arr):
+    logger.info(f"\tMean: {np.mean(arr)} %")
+    logger.info(f"\tMedian: {np.median(arr)} %")
+    logger.info(f"\tInter-quartile range: [{np.percentile(arr, 25)}, {np.percentile(arr, 75)}] %")

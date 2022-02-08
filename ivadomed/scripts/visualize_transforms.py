@@ -7,6 +7,7 @@ import random
 import torch
 
 from pathlib import Path
+from loguru import logger
 from ivadomed import config_manager as imed_config_manager
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.loader.sample_meta_data import SampleMetadata
@@ -155,8 +156,8 @@ def run_visualization(input, config, number, output, roi):
 
             # Plot before / after transformation
             fname_out = str(Path(output, stg_transforms + "slice" + str(i) + ".png"))
-            print(f"Fname out: {fname_out}.")
-            print(f"\t{dict(metadata)}")
+            logger.debug(f"Fname out: {fname_out}.")
+            logger.debug(f"\t{dict(metadata)}")
             # rescale intensities
             if len(stg_transforms[:-1].split("_")) == 1:
                 before = np.rot90(imed_maths.rescale_values_array(data[0], 0.0, 1.0))
