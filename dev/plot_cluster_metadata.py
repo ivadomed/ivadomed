@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 from sklearn.externals import joblib
 
 from torchvision import transforms as torch_transforms
+from loguru import logger
 
 from ivadomed.loader.bids_dataset import BidsDataset
 from ivadomed import config_manager as imed_config_manager
@@ -47,7 +48,7 @@ def plot_decision_boundaries(data, model, x_range, metadata_name, fname_out):
         plt.xscale('log')
 
     fig.savefig(fname_out)
-    print('\tSave as: ' + fname_out)
+    logger.info(f"\tSave as: {fname_out}")
 
 
 def run_main(context):
@@ -83,7 +84,7 @@ def run_main(context):
 
     for m in metadata_type:
         values = [v for s in ['train', 'valid', 'test'] for v in metadata_dct[s][m]]
-        print('\n{}: Min={}, Max={}, Median={}'.format(m, min(values), max(values), np.median(values)))
+        logger.info(f"\n{m}: Min={min(values)}, Max={max(values)}, Median={np.median(values)}")
         plot_decision_boundaries(metadata_dct, cluster_dct[m], metadata_range[m], m, os.path.join(out_dir, m + '.png'))
 
 
