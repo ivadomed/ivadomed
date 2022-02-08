@@ -13,6 +13,8 @@ from scipy.ndimage.interpolation import map_coordinates, affine_transform
 from scipy.ndimage.measurements import label, center_of_mass
 from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_closing
 from skimage.exposure import equalize_adapthist
+from dipy.denoise.noise_estimate import estimate_sigma
+from dipy.denoise.nlmeans import nlmeans
 from torchvision import transforms as torchvision_transforms
 import torchio as tio
 
@@ -1139,6 +1141,60 @@ class RandomBlur(ImedTransform):
             return sample, metadata
 
 
+class Denoise(ImedTransform):
+    """Denoise an image using non-local means adaptive denoising from P. Coupe et al. as implemented
+    in dipy
+
+    Args:
+        patch_radius (int): patch size equals 2 x patch radius + 1
+        block_radius (int): block size equals 2 x block radius + 1
+    """
+
+    def __init__(self, patch_radius=1, block_radius=5):
+        self.patch_radius = patch_radius
+        self.block_radius = block_radius
+
+    def denoise_nlmeans(self, sample):
+        """In-class function for denoising with nlmeans as implemented in spinalcordtoolbox.math"""
+        sample = np.asarray(sample)
+
+        block_radius_max = min(sample.shape) - 1
+        block_radius = block_radius_max if self.block_radius > block_radius_max else self.block_radius
+
+        sigma = estimate_sigma(sample)
+        denoised = nlmeans(sample, sigma, patch_radius=self.patch_radius, block_radius=block_radius)
+
+        return denoised
+
+    @multichannel_capable
+    @two_dim_compatible
+    def undo_transform(self, sample, metadata=None):
+        """Placeholder for consistency with preprocessing steps"""
+        pass
+
+    @multichannel_capable
+    @two_dim_compatible
+    def __call__(self, sample, metadata=None):
+        # @two_dim_compatible: 2D input shape is (H, W, 1) and 3D input shape is (H, W, Z)
+        original_shape = sample.shape
+
+        # If 2D input, repeat the last dimension to be compatible with `denoise_nlmeans()`
+        if original_shape[-1] == 1:
+            sample = np.repeat(sample, self.block_radius + 1, axis=2)
+
+        # Apply denoising filter
+        data_out = self.denoise_nlmeans(sample)
+
+        # If 2D input, get the first index from last dimension to preserve original shape
+        if original_shape[-1] == 1:
+            data_out = data_out[:, :, 0:1]
+
+        # Keep data type
+        data_out = data_out.astype(sample.dtype)
+
+        return data_out, metadata
+
+
 def get_subdatasets_transforms(transform_params):
     """Get transformation parameters for each subdataset: training, validation and testing.
 
@@ -1178,7 +1234,10 @@ def get_preprocessing_transforms(transforms):
     original_transforms = copy.deepcopy(transforms)
     preprocessing_transforms = copy.deepcopy(transforms)
     for idx, tr in enumerate(original_transforms):
-        if tr == TransformationKW.RESAMPLE or tr == TransformationKW.CENTERCROP or tr == TransformationKW.ROICROP:
+        if tr in [TransformationKW.RESAMPLE,
+                  TransformationKW.CENTERCROP,
+                  TransformationKW.ROICROP,
+                  TransformationKW.DENOISE]:
             del transforms[tr]
         else:
             del preprocessing_transforms[tr]
