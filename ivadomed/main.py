@@ -298,6 +298,9 @@ def run_segment_command(context, model_params):
             if not pred_path.exists():
                 pred_path.mkdir(parents=True)
 
+            # Reformat target list to include class index and be compatible with multiple raters
+            target_list = ["_class-%d" % i for i in range(len(target_list))]
+
             for pred, target in zip(pred_list, target_list):
                 filename = subject.split('.')[0] + target + "_pred" + ".nii.gz"
                 nib.save(pred, Path(pred_path, filename))
@@ -307,7 +310,8 @@ def run_segment_command(context, model_params):
             if "nii" not in extension:
                 imed_inference.pred_to_png(pred_list,
                                            target_list,
-                                           str(Path(pred_path, subject)).replace(extension, ''))
+                                           str(Path(pred_path, subject)).replace(extension, ''),
+                                           suffix="_pred.png")
 
 
 def run_command(context, n_gif=0, thr_increment=None, resume_training=False):

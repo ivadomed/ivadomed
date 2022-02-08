@@ -25,7 +25,8 @@ class MRI2DSegmentationDataset(Dataset):
             "axial": 2, "sagittal": 0, "coronal": 1. 2D PNG/TIF/JPG files use default "axial": 2.
         cache (bool): if the data should be cached in memory or not.
         transform (torchvision.Compose): transformations to apply.
-        slice_filter_fn (dict): Slice filter parameters, see :doc:`configuration_file` for more details.
+        slice_filter_fn (SliceFilter): SliceFilter object containing Slice filter parameters.
+        patch_filter_fn (PatchFilter): PatchFilter object containing Patch filter parameters.
         task (str): choice between segmentation or classification. If classification: GT is discrete values, \
             If segmentation: GT is binary mask.
         roi_params (dict): Dictionary containing parameters related to ROI image processing.
@@ -46,7 +47,8 @@ class MRI2DSegmentationDataset(Dataset):
         cache (bool): Tf the data should be cached in memory or not.
         slice_axis (int): Indicates the axis used to extract 2D slices from 3D NifTI files:
             "axial": 2, "sagittal": 0, "coronal": 1. 2D PNG/TIF/JPG files use default "axial": 2.
-        slice_filter_fn (dict): Slice filter parameters, see :doc:`configuration_file` for more details.
+        slice_filter_fn (SliceFilter): SliceFilter object containing Slice filter parameters.
+        patch_filter_fn (PatchFilter): PatchFilter object containing Patch filter parameters.
         n_contrasts (int): Number of input contrasts.
         has_bounding_box (bool): True if bounding box in all metadata, else False.
         task (str): Choice between segmentation or classification. If classification: GT is discrete values, \
@@ -61,7 +63,8 @@ class MRI2DSegmentationDataset(Dataset):
     """
 
     def __init__(self, filename_pairs, length=None, stride=None, slice_axis=2, cache=True, transform=None,
-                 slice_filter_fn=None, task="segmentation", roi_params=None, soft_gt=False, is_input_dropout=False):
+                 slice_filter_fn=None, patch_filter_fn=None, task="segmentation", roi_params=None, soft_gt=False,
+                 is_input_dropout=False):
         if length is None:
             length = []
         if stride is None:
@@ -76,6 +79,7 @@ class MRI2DSegmentationDataset(Dataset):
         self.cache = cache
         self.slice_axis = slice_axis
         self.slice_filter_fn = slice_filter_fn
+        self.patch_filter_fn = patch_filter_fn
         self.n_contrasts = len(self.filename_pairs[0][0])
         if roi_params is None:
             roi_params = {ROIParamsKW.SUFFIX: None, ROIParamsKW.SLICE_FILTER_ROI: None}
@@ -147,17 +151,29 @@ class MRI2DSegmentationDataset(Dataset):
                 if length > size:
                     raise RuntimeError('"length_2D" must be smaller or equal to image dimensions after resampling.')
 
-            for x in range(0, (shape[0] - self.length[0] + self.stride[0]), self.stride[0]):
-                if x + self.length[0] > shape[0]:
-                    x = (shape[0] - self.length[0])
-                for y in range(0, (shape[1] - self.length[1] + self.stride[1]), self.stride[1]):
-                    if y + self.length[1] > shape[1]:
-                        y = (shape[1] - self.length[1])
+            for x_min in range(0, (shape[0] - self.length[0] + self.stride[0]), self.stride[0]):
+                if x_min + self.length[0] > shape[0]:
+                    x_min = (shape[0] - self.length[0])
+                x_max = x_min + self.length[0]
+                for y_min in range(0, (shape[1] - self.length[1] + self.stride[1]), self.stride[1]):
+                    if y_min + self.length[1] > shape[1]:
+                        y_min = (shape[1] - self.length[1])
+                    y_max = y_min + self.length[1]
+
+                    # Extract patch from handlers for patch filter
+                    patch = {'input': list(np.asarray(self.handlers[i][0]['input'])[:, x_min:x_max, y_min:y_max]),
+                             'gt': list(np.asarray(self.handlers[i][0]['gt'])[:, x_min:x_max, y_min:y_max]) \
+                                   if self.handlers[i][0]['gt'] else [],
+                             'input_metadata': self.handlers[i][0]['input_metadata'],
+                             'gt_metadata': self.handlers[i][0]['gt_metadata']}
+                    if self.patch_filter_fn and not self.patch_filter_fn(patch):
+                        continue
+
                     self.indexes.append({
-                        'x_min': x,
-                        'x_max': x + self.length[0],
-                        'y_min': y,
-                        'y_max': y + self.length[1],
+                        'x_min': x_min,
+                        'x_max': x_max,
+                        'y_min': y_min,
+                        'y_max': y_max,
                         'handler_index': i})
 
     def set_transform(self, transform):
