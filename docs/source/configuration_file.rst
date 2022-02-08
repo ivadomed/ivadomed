@@ -1223,13 +1223,18 @@ Cascaded Architecture Features
     }
 
 
-Preprocessing
--------------
+Transformations
+---------------
 
-Transformations applied during preprocessing. Transformations are sorted in the order they are applied to the image samples. For each transformation, the following parameters are customizable:
+Transformations applied during preprocessing and data augmentations.
+Transformations are sorted in the order they are applied to the image samples.
+For each transformation, the following parameters are customizable:
 
 - ``applied_to``: list between ``"im", "gt", "roi"``. If not specified, then the transformation is applied to all loaded samples. Otherwise, only applied to the specified types: Example: ``["gt"]`` implies that this transformation is only applied to the ground-truth data.
 - ``dataset_type``: list between ``"training", "validation", "testing"``. If not specified, then the transformation is applied to the three sub-datasets. Otherwise, only applied to the specified subdatasets. Example: ``["testing"]`` implies that this transformation is only applied to the testing sub-dataset.
+
+Preprocessing
+^^^^^^^^^^^^^
 
 .. jsonschema::
 
@@ -1325,13 +1330,7 @@ Transformations applied during preprocessing. Transformations are sorted in the 
 
 
 Data Augmentations
-------------------
-
-Transformations applied during data augmentation. Transformations are sorted in the order they are applied to the image samples. For each transformation, the following parameters are customizable: 
-
-- ``applied_to``: list between ``"im", "gt", "roi"``. If not specified, then the transformation is applied to all loaded samples. Otherwise, only applied to the specified types: Example: ``["gt"]`` implies that this transformation is only applied to the ground-truth data.
-- ``dataset_type``: list between ``"training", "validation", "testing"``. If not specified, then the transformation is applied to the three sub-datasets. Otherwise, only applied to the specified subdatasets. Example: ``["testing"]`` implies that this transformation is only applied to the testing sub-dataset.
-
+^^^^^^^^^^^^^^^^^^
 
 .. jsonschema::
 
@@ -1492,6 +1491,27 @@ Transformations applied during data augmentation. Transformations are sorted in 
                 "min_percentile": 50,
                 "max_percentile": 75
             }
+        }
+    }
+
+
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "NormalizeInstance",
+        "type": "dict",
+        "$$description": [
+            "Normalize a tensor or an array image with mean and standard deviation estimated from\n",
+            "the sample itself."
+        ]
+    }
+
+.. code-block:: JSON
+
+    {
+        "transformation": {
+            "NormalizeInstance": {}
         }
     }
 
@@ -1693,55 +1713,6 @@ Transformations applied during data augmentation. Transformations are sorted in 
         "transformation": {
             "RandomShiftIntensity": {
                 "shift_range": [28.0, 30.0]
-            }
-        }
-    }
-
-
-Utility Transformations
------------------------
-
-Transformations applied for various utilities. Transformations are sorted in the order they are applied to the image samples. For each transformation, the following parameters are customizable:
-
-- ``applied_to``: list between ``"im", "gt", "roi"``. If not specified, then the transformation is applied to all loaded samples. Otherwise, only applied to the specified types: Example: ``["gt"]`` implies that this transformation is only applied to the ground-truth data.
-- ``dataset_type``: list between ``"training", "validation", "testing"``. If not specified, then the transformation is applied to the three sub-datasets. Otherwise, only applied to the specified subdatasets. Example: ``["testing"]`` implies that this transformation is only applied to the testing sub-dataset.
-
-.. jsonschema::
-
-    {
-        "$schema": "http://json-schema.org/draft-04/schema#",
-        "title": "NormalizeInstance",
-        "type": "dict",
-        "$$description": [
-            "Normalize a tensor or an array image with mean and standard deviation estimated from\n",
-            "the sample itself."
-        ]
-    }
-
-.. code-block:: JSON
-
-    {
-        "transformation": {
-            "NormalizeInstance": {}
-        }
-    }
-
-
-.. jsonschema::
-
-    {
-        "$schema": "http://json-schema.org/draft-04/schema#",
-        "title": "NumpyToTensor",
-        "type": "dict",
-        "description": "Converts nd array to tensor object."
-    }
-
-.. code-block:: JSON
-
-    {
-        "transformation": {
-            "NumpyToTensor": {
-                "applied_to": ["im", "gt"]
             }
         }
     }
