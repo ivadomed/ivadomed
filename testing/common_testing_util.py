@@ -122,7 +122,7 @@ def bids_dataframe_comparison_framework(loader_parameters: dict, target_csv: str
     csv_ref = os.path.join(loader_parameters[LoaderParamsKW.PATH_DATA][0], target_csv)
 
     # Generate full path for the csv which is produced from Bids Dataframe so that we can save the CSV to that location
-    csv_test = os.path.join(loader_parameters[LoaderParamsKW.PATH_DATA][0], "df_test.csv")
+    csv_test = Path(loader_parameters[LoaderParamsKW.PATH_DATA][0], "df_test.csv")
     df_test.to_csv(csv_test, index=False)
 
     # Calculate differences between the generated versus the ground truth by comparing the output csv (csv_test) with

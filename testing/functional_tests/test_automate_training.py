@@ -62,9 +62,9 @@ def test_automate_training_run_test_debug(download_functional_test_files):
                       multi_params=True,
                       )
 
-    assert os.path.exists(os.path.join(__output_dir__, 'detailed_results.csv'))
-    assert os.path.exists(os.path.join(__output_dir__, 'temporary_results.csv'))
-    assert os.path.exists(os.path.join(__output_dir__, 'average_eval.csv'))
+    assert Path(__output_dir__, 'detailed_results.csv').exists()
+    assert Path(__output_dir__, 'temporary_results.csv').exists()
+    assert Path(__output_dir__, 'average_eval.csv').exists()
 
 
 @pytest.mark.script_launch_mode('subprocess')

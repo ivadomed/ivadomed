@@ -9,6 +9,7 @@ from ivadomed.keywords import LoaderParamsKW, ROIParamsKW, ContrastParamsKW, Bid
 from pathlib import Path
 import json
 
+
 def write_derivatives_dataset_description(path_data: str):
     """Writes default dataset_description.json file if not found in path_data/derivatives folder
 
@@ -21,15 +22,14 @@ def write_derivatives_dataset_description(path_data: str):
     filename = "dataset_description"
     # Convert path_data to Path object for cross platform compatibility
     fname_data = Path(path_data)
-    deriv_desc_file = str(fname_data / "derivatives" / f"{filename}.json")
-    label_desc_file = str(fname_data / "derivatives" / "labels" / f"{filename}.json")
+    path_deriv_desc_file = fname_data / "derivatives" / f"{filename}.json"
+    path_label_desc_file = fname_data / "derivatives" / "labels" / f"{filename}.json"
 
     # need to write default dataset_description.json file if not found
-    if not os.path.isfile(deriv_desc_file) and not os.path.isfile(label_desc_file):
-        f = open(deriv_desc_file, 'w')
-        f.write(
-            '{"Name": "Example dataset", "BIDSVersion": "1.0.2", "PipelineDescription": {"Name": "Example pipeline"}}')
-        f.close()
+    if not path_deriv_desc_file.is_file() and not path_label_desc_file.is_file():
+        with path_deriv_desc_file.open('w') as f:
+            f.write(
+                '{"Name": "Example dataset", "BIDSVersion": "1.0.2", "PipelineDescription": {"Name": "Example pipeline"}}')
 
 
 class BidsDataframe:
@@ -57,7 +57,6 @@ class BidsDataframe:
 
         # Enable tracing of the input loader_params for easier debugging
         logger.trace(f"Consolidated Loader Parameters Received:\n {json.dumps(loader_params, indent=4)}")
-
 
         # paths_data from loader parameters
         self.paths_data: list = loader_params[LoaderParamsKW.PATH_DATA]

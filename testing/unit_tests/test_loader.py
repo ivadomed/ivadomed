@@ -10,7 +10,6 @@ from ivadomed.loader import loader as imed_loader
 import ivadomed.loader.utils as imed_loader_utils
 from ivadomed.keywords import MetadataKW
 from pathlib import Path
-from loguru import logger
 
 
 def setup_function():

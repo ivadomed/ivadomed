@@ -2,9 +2,9 @@ import os
 import shutil
 
 from ivadomed.loader.bids_dataframe import BidsDataframe
-from testing.unit_tests.t_utils import path_temp, download_multi_data
-from testing.common_testing_util import remove_tmp_dir, path_data_multi_sessions_contrasts_source, \
-    assert_empty_bids_dataframe, bids_dataframe_comparison_framework, path_data_multi_sessions_contrasts_tmp
+from testing.unit_tests.t_utils import download_multi_data, create_tmp_dir_multi_session
+from testing.common_testing_util import remove_tmp_dir, assert_empty_bids_dataframe, \
+    bids_dataframe_comparison_framework, path_data_multi_sessions_contrasts_tmp
 from pytest_cases import parametrize_with_cases
 import pytest
 from testing.unit_tests.cases_multi_sessions import *
@@ -13,13 +13,7 @@ from testing.unit_tests.cases_multi_ground_truth import *
 
 
 def setup_function():
-    # Dedicated setup function for multi-session data.
-    remove_tmp_dir()
-    os.mkdir(path_temp)
-    if os.path.exists(path_data_multi_sessions_contrasts_source):
-        shutil.copytree(path_data_multi_sessions_contrasts_source,
-                        path_data_multi_sessions_contrasts_tmp,
-                        ignore=shutil.ignore_patterns(str(path_data_multi_sessions_contrasts_source / '.git')))
+    create_tmp_dir_multi_session()
 
 
 @parametrize_with_cases("loader_parameters, target_csv", cases=[
