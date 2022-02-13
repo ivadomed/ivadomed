@@ -1,3 +1,65 @@
+## v2.9.3 (2022-02-01)
+[View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.9.2...release)
+
+**FEATURE**
+
+- Apply filter parameters on 2D patches to remove empty patches.  [View pull request](https://github.com/ivadomed/ivadomed/pull/980)
+
+**REFACTORING**
+
+- Update pred_to_png prediction filenames for ADS integration.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1050)
+
+**DOCUMENTATION**
+
+- Instruction to update `"bids_config"` key in microscopy tutorial.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1053)
+
+
+## v2.9.2 (2022-01-18)
+[View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.9.1...release)
+
+**FEATURE**
+
+- Implementation of Random Blur Augmentation.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1034)
+- Implementation of Random Bias Field Augmentation.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1033)
+- Implementation of Random Gamma Contrast Augmentation.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1015)
+
+**DEPENDENCIES**
+
+- Unpin `tensorboard` to avoid conflict with downstream SCT requirements.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1048)
+
+**BUG**
+
+- Rename prediction filenames: add class index and compat. for multi-rater.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1043)
+- Fix pixel size keyword in run_segment_command.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1024)
+- Replaced flip_axes with the correct bool element at index..  [View pull request](https://github.com/ivadomed/ivadomed/pull/1013)
+
+**DOCUMENTATION**
+
+- Add microscopy tutorial.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1036)
+- Removed one child-headings for clarity.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1028)
+- Typo fix for URL that is bricking the Colab link.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1021)
+- Experimental incorporation of tutorial jupyter notebooks open in Colab path.  [View pull request](https://github.com/ivadomed/ivadomed/pull/998)
+
+
+## v2.9.1 (2021-12-13)
+[View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.9.0...release)
+
+**ENHANCEMENT**
+
+- Add forced indexation of "micr" datatype.  [View pull request](https://github.com/ivadomed/ivadomed/pull/995)
+- Apply transforms on 2D patches.  [View pull request](https://github.com/ivadomed/ivadomed/pull/982)
+
+**DOCUMENTATION**
+
+- Update Tutorial 1/2/3 and readme.md to fix minor display issues.  [View pull request](https://github.com/ivadomed/ivadomed/pull/992)
+- Update installation instruction to fit recent CUDA11 and torch 1.8+ push.  [View pull request](https://github.com/ivadomed/ivadomed/pull/969)
+
+**REFACTORING**
+
+- Fully Remove HeMIS model, Adaptive and h5py/HDF5.  [View pull request](https://github.com/ivadomed/ivadomed/pull/984)
+- Use keywords for the rest of the files.  [View pull request](https://github.com/ivadomed/ivadomed/pull/946)
+
+
 ## v2.9.0 (2021-11-14)
 [View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.8.0...release)
 

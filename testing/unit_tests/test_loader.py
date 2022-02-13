@@ -9,6 +9,7 @@ from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __t
 from testing.common_testing_util import remove_tmp_dir
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.loader import loader as imed_loader
+from ivadomed.keywords import MetadataKW
 from pathlib import Path
 logger = logging.getLogger(__name__)
 
@@ -146,6 +147,7 @@ def test_dropout_input(seg_pair):
     "contrast_params": {"contrast_lst": [], "balance": {}},
     "slice_axis": "axial",
     "slice_filter_params": {"filter_empty_mask": False, "filter_empty_input": True},
+    "patch_filter_params": {"filter_empty_mask": False, "filter_empty_input": False},
     "multichannel": False
     }])
 @pytest.mark.parametrize('model_parameters', [{
@@ -188,6 +190,7 @@ def test_load_dataset_2d_png(download_data_testing_test_files,
     "contrast_params": {"contrast_lst": [], "balance": {}},
     "slice_axis": "axial",
     "slice_filter_params": {"filter_empty_mask": False, "filter_empty_input": True},
+    "patch_filter_params": {"filter_empty_mask": False, "filter_empty_input": False},
     "multichannel": False
     }])
 @pytest.mark.parametrize('model_parameters', [{
@@ -221,7 +224,7 @@ def test_2d_patches_and_resampling(download_data_testing_test_files,
                                                              'dataset_type': 'training'}})
     assert ds.is_2d_patch == True
     assert ds[0]['input'].shape == (1, 256, 128)
-    assert ds[0]['input_metadata'][0].metadata['index_shape'] == (1512, 382)
+    assert ds[0]['input_metadata'][0].metadata[MetadataKW.INDEX_SHAPE] == (1512, 382)
     assert len(ds) == 28
 
 
@@ -234,6 +237,7 @@ def test_2d_patches_and_resampling(download_data_testing_test_files,
     "contrast_params": {"contrast_lst": [], "balance": {}},
     "slice_axis": "axial",
     "slice_filter_params": {"filter_empty_mask": False, "filter_empty_input": True},
+    "patch_filter_params": {"filter_empty_mask": False, "filter_empty_input": False},
     "multichannel": False
     }])
 @pytest.mark.parametrize('model_parameters', [{
@@ -270,6 +274,7 @@ def test_get_target_filename_list(loader_parameters, model_parameters, transform
     "contrast_params": {"contrast_lst": [], "balance": {}},
     "slice_axis": "axial",
     "slice_filter_params": {"filter_empty_mask": False, "filter_empty_input": True},
+    "patch_filter_params": {"filter_empty_mask": False, "filter_empty_input": False},
     "multichannel": False
     }])
 @pytest.mark.parametrize('model_parameters', [{

@@ -117,7 +117,8 @@ extra_requirements['dev'] = [
     'sphinx-jsonschema~=1.16',
     'pytest-console-scripts~=1.1',
     'pre-commit>=2.10.1',
-    'sphinx-tabs==3.2.0'
+    'sphinx-tabs==3.2.0',
+    'sphinx-toolbox==2.15.2'
     ]
 
 setup(
