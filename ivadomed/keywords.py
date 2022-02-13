@@ -35,7 +35,6 @@ class LoaderParamsKW:
     CONTRAST_PARAMS = "contrast_params"
     MULTICHANNEL = "multichannel"  # boolean key that is used to change the configuration file ever slightly.
     EXTENSIONS = "extensions"
-    TARGET_GROUND_TRUTH = "target_ground_truth"
     TARGET_SESSIONS = "target_sessions"  # the sessions to focus the analyses on
     METADATA_TYPE = "metadata_type"
     MODEL_PARAMS = "model_params"
@@ -234,3 +233,13 @@ class IgnoredFolderKW:
 class MetricsKW:
     RECALL_SPECIFICITY = "recall_specificity"
     DICE = "dice"
+
+@dataclass
+class MetadataParamsKW:
+    CONTRAST = "contrast"
+    BOUNDING_BOX = "bounding_box"
+
+@dataclass
+class MetadataChoiceKW:
+    MRI_PARAMS = "mri_params"
+    CONTRASTS = "contrasts"
