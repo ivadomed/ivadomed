@@ -98,27 +98,25 @@ extra_requirements = {
     'docs':[
         # pin sphinx to match what RTD uses:
         # https://github.com/readthedocs/readthedocs.org/blob/ecac31de54bbb2c100f933e86eb22b0f4389ba84/requirements/pip.txt#L16
-        'sphinx==4.2.0',
-        'sphinx-rtd-theme<0.5',
+        'sphinx',
+        'sphinx_rtd_theme',
+        'sphinx-tabs==3.2.0',
+        'sphinx-toolbox==2.15.2'
+        'sphinx-jsonschema~=1.16',
     ]
 }
 
 extra_requirements['dev'] = [
     extra_requirements['gpu'],
+    extra_requirements['docs'],
     'pytest~=6.2',
     'pytest-cov',
     'pytest-ordering~=0.6',
-    'sphinx',
-    'flake8',
     'coverage',
     'coveralls',
     'pypandoc',
-    'sphinx_rtd_theme',
-    'sphinx-jsonschema~=1.16',
     'pytest-console-scripts~=1.1',
     'pre-commit>=2.10.1',
-    'sphinx-tabs==3.2.0',
-    'sphinx-toolbox==2.15.2'
     ]
 
 setup(
