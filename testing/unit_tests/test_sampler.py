@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
+from loguru import logger
 
 from ivadomed.loader.bids_dataframe import BidsDataframe
 from ivadomed import utils as imed_utils
@@ -32,7 +33,7 @@ def _cmpt_label(ds_loader):
 
     neg_sample_ratio = cmpt_label[0] * 100. / cmpt_sample
     pos_sample_ratio = cmpt_label[1] * 100. / cmpt_sample
-    print({'neg_sample_ratio': neg_sample_ratio,
+    logger.info({'neg_sample_ratio': neg_sample_ratio,
            'pos_sample_ratio': pos_sample_ratio})
     return neg_sample_ratio, pos_sample_ratio
 
@@ -66,10 +67,8 @@ def test_sampler(download_data_testing_test_files, transforms_dict, train_lst, t
         "extensions": [".nii.gz"],
         "roi_params": roi_params,
         "model_params": {"name": "Unet"},
-        "slice_filter_params": {
-            "filter_empty_mask": False,
-            "filter_empty_input": True
-        },
+        "slice_filter_params": {"filter_empty_mask": False, "filter_empty_input": True},
+        "patch_filter_params": {"filter_empty_mask": False, "filter_empty_input": False},
         "slice_axis": "axial",
         "multichannel": False
     }
@@ -77,7 +76,7 @@ def test_sampler(download_data_testing_test_files, transforms_dict, train_lst, t
     bids_df = BidsDataframe(loader_params, __tmp_dir__, derivatives=True)
     ds_train = imed_loader.load_dataset(bids_df, **loader_params)
 
-    print('\nLoading without sampling')
+    logger.info("\nLoading without sampling")
     train_loader = DataLoader(ds_train, batch_size=BATCH_SIZE,
                               shuffle=True, pin_memory=True,
                               collate_fn=imed_loader_utils.imed_collate,
@@ -85,7 +84,7 @@ def test_sampler(download_data_testing_test_files, transforms_dict, train_lst, t
     neg_percent, pos_percent = _cmpt_label(train_loader)
     assert abs(neg_percent - pos_percent) > 20
 
-    print('\nLoading with sampling')
+    logger.info("\nLoading with sampling")
     train_loader_balanced = DataLoader(ds_train, batch_size=BATCH_SIZE,
                                        sampler=BalancedSampler(ds_train),
                                        shuffle=False, pin_memory=True,

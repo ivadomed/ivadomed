@@ -24,8 +24,8 @@ def test_automate_training(download_functional_test_files, script_runner):
                             '--config-hyper', f'{file_config_hyper}',
                             '--path-data', f'{__data_testing_dir__}',
                             '--output_dir', f'{__output_dir__}')
-    print(f"{ret.stdout}")
-    print(f"{ret.stderr}")
+    logger.debug(f"{ret.stdout}")
+    logger.debug(f"{ret.stderr}")
     assert ret.success
     assert Path(__output_dir__, 'detailed_results.csv').exists()
     assert Path(__output_dir__, 'temporary_results.csv').exists()
@@ -78,8 +78,8 @@ def test_automate_training_run_test(download_functional_test_files, script_runne
                             '--path-data', f'{__data_testing_dir__}',
                             '--output_dir', f'{__output_dir__}',
                             '--run-test')
-    print(f"{ret.stdout}")
-    print(f"{ret.stderr}")
+    logger.debug(f"{ret.stdout}")
+    logger.debug(f"{ret.stderr}")
     assert ret.success
     assert Path(__output_dir__, 'detailed_results.csv').exists()
     assert Path(__output_dir__, 'temporary_results.csv').exists()

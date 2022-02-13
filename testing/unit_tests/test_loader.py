@@ -146,6 +146,7 @@ def test_dropout_input(seg_pair):
     "contrast_params": {"contrast_lst": [], "balance": {}},
     "slice_axis": "axial",
     "slice_filter_params": {"filter_empty_mask": False, "filter_empty_input": True},
+    "patch_filter_params": {"filter_empty_mask": False, "filter_empty_input": False},
     "multichannel": False
     }])
 @pytest.mark.parametrize('model_parameters', [{
@@ -188,6 +189,7 @@ def test_load_dataset_2d_png(download_data_testing_test_files,
     "contrast_params": {"contrast_lst": [], "balance": {}},
     "slice_axis": "axial",
     "slice_filter_params": {"filter_empty_mask": False, "filter_empty_input": True},
+    "patch_filter_params": {"filter_empty_mask": False, "filter_empty_input": False},
     "multichannel": False
     }])
 @pytest.mark.parametrize('model_parameters', [{
@@ -234,6 +236,7 @@ def test_2d_patches_and_resampling(download_data_testing_test_files,
     "contrast_params": {"contrast_lst": [], "balance": {}},
     "slice_axis": "axial",
     "slice_filter_params": {"filter_empty_mask": False, "filter_empty_input": True},
+    "patch_filter_params": {"filter_empty_mask": False, "filter_empty_input": False},
     "multichannel": False
     }])
 @pytest.mark.parametrize('model_parameters', [{
@@ -270,6 +273,7 @@ def test_get_target_filename_list(loader_parameters, model_parameters, transform
     "contrast_params": {"contrast_lst": [], "balance": {}},
     "slice_axis": "axial",
     "slice_filter_params": {"filter_empty_mask": False, "filter_empty_input": True},
+    "patch_filter_params": {"filter_empty_mask": False, "filter_empty_input": False},
     "multichannel": False
     }])
 @pytest.mark.parametrize('model_parameters', [{

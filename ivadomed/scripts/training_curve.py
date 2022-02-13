@@ -9,6 +9,7 @@ from textwrap import wrap
 from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
 from ivadomed import utils as imed_utils
 from pathlib import Path
+from loguru import logger
 
 
 def get_parser():
@@ -166,9 +167,9 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
 
     # Create output folder
     if Path(output_folder).is_dir():
-        print(f"Output folder already exists: {output_folder}.")
+        logger.warning(f"Output folder already exists: {output_folder}.")
     else:
-        print(f"Creating output folder: {output_folder}.")
+        logger.info(f"Creating output folder: {output_folder}.")
         Path(output_folder).mkdir(parents=True)
 
     # Config subplots

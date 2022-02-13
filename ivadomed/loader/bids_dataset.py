@@ -28,6 +28,7 @@ class BidsDataset(MRI2DSegmentationDataset):
         metadata_choice (str): Choice between "mri_params", "contrasts", the name of a column from the
             participants.tsv file, None or False, related to FiLM.
         slice_filter_fn (SliceFilter): Class that filters slices according to their content.
+        patch_filter_fn (PatchFilter): Class that filters patches according to their content.
         roi_params (dict): Dictionary containing parameters related to ROI image processing.
         multichannel (bool): If True, the input contrasts are combined as input channels for the model. Otherwise, each
             contrast is processed individually (ie different sample / tensor).
@@ -49,9 +50,9 @@ class BidsDataset(MRI2DSegmentationDataset):
     """
 
     def __init__(self, bids_df, subject_file_lst, target_suffix, contrast_params, model_params, slice_axis=2,
-                 cache=True, transform=None, metadata_choice=False, slice_filter_fn=None, roi_params=None,
-                 multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False,
-                 is_input_dropout=False):
+                 cache=True, transform=None, metadata_choice=False, slice_filter_fn=None, patch_filter_fn=None,
+                 roi_params=None, multichannel=False, object_detection_params=None, task="segmentation",
+                 soft_gt=False, is_input_dropout=False):
 
         self.roi_params = roi_params if roi_params is not None else \
             {ROIParamsKW.SUFFIX: None, ROIParamsKW.SLICE_FILTER_ROI: None}
@@ -152,9 +153,8 @@ class BidsDataset(MRI2DSegmentationDataset):
         length = model_params[ModelParamsKW.LENGTH_2D] if ModelParamsKW.LENGTH_2D in model_params else []
         stride = model_params[ModelParamsKW.STRIDE_2D] if ModelParamsKW.STRIDE_2D in model_params else []
 
-        super().__init__(self.filename_pairs, length, stride, slice_axis, cache, transform, slice_filter_fn, task,
-                         self.roi_params,
-                         self.soft_gt, is_input_dropout)
+        super().__init__(self.filename_pairs, length, stride, slice_axis, cache, transform, slice_filter_fn, patch_filter_fn,
+                         task, self.roi_params, self.soft_gt, is_input_dropout)
 
     def validate_derivative_path_to_update_target_filename(self,
                                                            subject_file_name: str,
