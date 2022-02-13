@@ -27,7 +27,7 @@ def get_whl_info():
     Returns:
         str, str, str: python_tag, abi_tag, platform.
     """
-    py_version = python_version()[0:3].replace('.','')
+    py_version = python_version()[0:3].replace('.', '')
     python_tag = f'cp{py_version}'
 
     if py_version == '36' or py_version == '37':
@@ -42,8 +42,9 @@ def get_whl_info():
             return python_tag, abi_tag, platform
         elif sysinfo.machine == 'aarch64':
             raise ValueError(f"ivadomed doesn't handpick torch whls for {sysinfo.machine}, \
-            install torch==1.8.0+cpu, torchvision==0.9.0+cpu or torch==1.8.1+cu111, torchvision==0.9.1+cu111 \
-            from https://pytorch.org/get-started/previous-versions/")
+            install torch==1.8.0+cpu, torchvision==0.9.0+cpu or \
+            torch==1.8.1+cu111, torchvision==0.9.1+cu111 from \
+            https://pytorch.org/get-started/previous-versions/")
     elif sysinfo.system == 'Windows' and sysinfo.machine == 'AMD64':
         platform = 'win_amd64'
         return python_tag, abi_tag, platform
@@ -86,6 +87,7 @@ def get_torch_whls(backend):
             torchvision_whl = f'torchvision@https://download.pytorch.org/whl/cu111/torchvision-0.9.1{whl}'
             return torch_whl, torchvision_whl
 
+
 extra_requirements = {
     'cpu': [
         requirements,
@@ -95,7 +97,7 @@ extra_requirements = {
         requirements,
         get_torch_whls(backend='gpu'),
     ],
-    'docs':[
+    'docs': [
         # pin sphinx to match what RTD uses:
         # https://github.com/readthedocs/readthedocs.org/blob/ecac31de54bbb2c100f933e86eb22b0f4389ba84/requirements/pip.txt#L16
         'sphinx',
@@ -103,20 +105,24 @@ extra_requirements = {
         'sphinx-tabs==3.2.0',
         'sphinx-toolbox==2.15.2'
         'sphinx-jsonschema~=1.16',
+    ],
+    'tests': [
+        'pytest~=6.2',
+        'pytest-cov',
+        'pytest-ordering~=0.6',
+        'pytest-console-scripts~=1.1',
+        'coverage',
+        'coveralls',
     ]
 }
 
 extra_requirements['dev'] = [
-    extra_requirements['gpu'],
+    extra_requirements['cpu'],
     extra_requirements['docs'],
-    'pytest~=6.2',
-    'pytest-cov',
-    'pytest-ordering~=0.6',
-    'coverage',
-    'coveralls',
+    extra_requirements['tests'],
     'pypandoc',
-    'pytest-console-scripts~=1.1',
     'pre-commit>=2.10.1',
+    'flake8'
     ]
 
 setup(
