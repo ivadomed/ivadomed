@@ -103,7 +103,7 @@ extra_requirements = {
         'sphinx',
         'sphinx_rtd_theme',
         'sphinx-tabs==3.2.0',
-        'sphinx-toolbox==2.15.2'
+        'sphinx-toolbox==2.15.2',
         'sphinx-jsonschema~=1.16',
     ],
     'tests': [
