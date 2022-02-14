@@ -49,10 +49,12 @@ def get_whl_info():
         platform = 'win_amd64'
         return python_tag, abi_tag, platform
     elif sysinfo.system == 'Darwin':
-        macinfo = mac_ver()
-        if macinfo[0].startswith('10') and macinfo[2] == 'x86_64':
-            platform = 'macosx_10_9_x86_64'
-            return python_tag, abi_tag, platform
+        # TODO: update mac conditions as we upgrade to higher torch versions
+        # with separate binaries for 10 and 11 versions   
+        # macinfo = mac_ver()
+        # if macinfo[0].startswith('10') and macinfo[2] == 'x86_64':
+        platform = 'macosx_10_9_x86_64'
+        return python_tag, abi_tag, platform 
 
 
 def get_torch_whls(backend):
@@ -79,7 +81,7 @@ def get_torch_whls(backend):
             return torch_whl, torchvision_whl
     elif backend == 'gpu':
         if platform.startswith('macosx'):
-            raise ValueError("MacOS Binaries don't support CUDA, install from source if CUDA is needed")
+            print("MacOS Binaries don't support CUDA, install from source if CUDA is needed")
         else:
             backend = 'cu111'
             whl = f'%2B{backend}-{python_tag}-{abi_tag}-{platform}.whl'
