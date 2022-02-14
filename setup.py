@@ -82,7 +82,7 @@ def get_torch_whls(backend):
     elif backend == 'gpu':
         if platform.startswith('macosx'):
             # MacOS Binaries don't support CUDA, install from source if CUDA is needed
-            # Installing on CPU by default
+            # install on CPU by default
             _torch_whl = f'-{python_tag}-none-{platform}.whl'
             torch_whl = f'torch@https://download.pytorch.org/whl/cpu/torch-1.8.0{_torch_whl}'
             _torchvision_whl = f'-{python_tag}-{abi_tag}-{platform}.whl'
@@ -99,6 +99,7 @@ def get_torch_whls(backend):
 extra_requirements = {
     'cpu': [
         requirements,
+        'onnxruntime==1.7.0',
         get_torch_whls(backend='cpu')
     ],
     'gpu': [
@@ -125,7 +126,6 @@ extra_requirements = {
 }
 
 extra_requirements['dev'] = [
-    extra_requirements['cpu'],
     extra_requirements['docs'],
     extra_requirements['tests'],
     'pypandoc',

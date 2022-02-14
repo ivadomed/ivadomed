@@ -1,6 +1,5 @@
 import nibabel as nib
 import numpy as np
-import onnxruntime
 import torch
 import imageio
 import joblib
@@ -38,11 +37,16 @@ def onnx_inference(model_path: str, inputs: tensor) -> tensor:
     Returns:
         Tensor: Network output.
     """
-    inputs = np.array(inputs.cpu())
-    ort_session = onnxruntime.InferenceSession(model_path)
-    ort_inputs = {ort_session.get_inputs()[0].name: inputs}
-    ort_outs = ort_session.run(None, ort_inputs)
-    return torch.tensor(ort_outs[0])
+    try:
+        import onnxruntime
+    except:
+        raise
+    else:
+        inputs = np.array(inputs.cpu())
+        ort_session = onnxruntime.InferenceSession(model_path)
+        ort_inputs = {ort_session.get_inputs()[0].name: inputs}
+        ort_outs = ort_session.run(None, ort_inputs)
+        return torch.tensor(ort_outs[0])
 
 
 def get_preds(context: dict, fname_model: str, model_params: dict, gpu_id: int, batch: dict) -> tensor:
