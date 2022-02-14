@@ -81,8 +81,8 @@ def get_torch_whls(backend):
             return torch_whl, torchvision_whl
     elif backend == 'gpu':
         if platform.startswith('macosx'):
-            print("MacOS Binaries don't support CUDA, install from source if CUDA is needed")
-            print("Installing on CPU by default...")
+            # MacOS Binaries don't support CUDA, install from source if CUDA is needed
+            # Installing on CPU by default...
             get_torch_whls(backend='cpu')
         else:
             backend = 'cu111'
