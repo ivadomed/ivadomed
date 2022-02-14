@@ -58,7 +58,7 @@ jobs:
       # Step 2: Install dependencies
       - name: Install ivadomed
         run: |
-          pip install -e .[cpu, dev]
+          pip install -e .[dev_cpu]
 
       # Step 3: List installed packages
       - name: List installed packages

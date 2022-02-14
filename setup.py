@@ -114,6 +114,7 @@ extra_requirements = {
         'sphinx-tabs==3.2.0',
         'sphinx-toolbox==2.15.2',
         'sphinx-jsonschema~=1.16',
+        'pypandoc',
     ],
     'tests': [
         'pytest~=6.2',
@@ -122,15 +123,25 @@ extra_requirements = {
         'pytest-console-scripts~=1.1',
         'coverage',
         'coveralls',
+    ],
+    'contrib': [
+        'pre-commit>=2.10.1',
+        'flake8',    
     ]
 }
 
-extra_requirements['dev'] = [
+extra_requirements['dev_cpu'] = [
+    extra_requirements['cpu'],
     extra_requirements['docs'],
     extra_requirements['tests'],
-    'pypandoc',
-    'pre-commit>=2.10.1',
-    'flake8'
+    extra_requirements['contrib'],
+    ]
+
+extra_requirements['dev_gpu'] = [
+    extra_requirements['gpu'],
+    extra_requirements['docs'],
+    extra_requirements['tests'],
+    extra_requirements['contrib'],
     ]
 
 setup(
