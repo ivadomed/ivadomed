@@ -88,6 +88,7 @@
     },
     "postprocessing": {},
     "evaluation_parameters": {
+        "object_detection_metrics": true
     },
     "transformation": {
     }
