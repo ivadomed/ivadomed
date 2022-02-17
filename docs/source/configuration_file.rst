@@ -2105,7 +2105,8 @@ for defined object sizes.
                     "These values will create several consecutive target size bins. For instance\n",
                     "with a list of two values, we will have three target size bins: minimal size\n",
                     "to first list element, first list element to second list element, and second\n",
-                    "list element to infinity."
+                    "list element to infinity.\n",
+                    "``object_detection_metrics`` must be ``true`` for the target_size to apply."
                 ]
             },
             "unit": {
@@ -2140,7 +2141,8 @@ for defined object sizes.
             "thr": {
                 "type": "int",
                 "$$description": [
-                    "Minimal object size overlapping to be considered a TP, FP, or FN."
+                    "Minimal object size overlapping to be considered a TP, FP, or FN.\n",
+                    "``object_detection_metrics`` must be ``true`` for the overlap to apply."
                 ]
             },
             "unit": {
