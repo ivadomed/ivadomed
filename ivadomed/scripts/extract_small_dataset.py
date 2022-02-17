@@ -7,6 +7,7 @@ import pandas as pd
 from ivadomed import utils as imed_utils
 from pathlib import Path
 from typing import List
+from loguru import logger
 
 EXCLUDED_SUBJECT = ["sub-mniPilot1"]
 
@@ -103,12 +104,12 @@ def extract_small_dataset(input, output, n=10, contrast_list=None, include_deriv
 
     # Loop across subjects
     for subject in subject_random_list:
-        print(f"\nSubject: {subject}")
+        logger.debug(f"\nSubject: {subject}")
         # Copy images
         in_subj_folder = Path(input, subject)
         out_subj_folder = Path(output, subject)
         assert in_subj_folder.is_dir()
-        print(f"\tCopying {in_subj_folder} to {out_subj_folder}.")
+        logger.debug(f"\tCopying {in_subj_folder} to {out_subj_folder}.")
         shutil.copytree(str(in_subj_folder), str(out_subj_folder))
         # Remove dwi data
         if Path(output, subject, "dwi").is_dir():
@@ -118,7 +119,7 @@ def extract_small_dataset(input, output, n=10, contrast_list=None, include_deriv
             in_subj_derivatives = Path(in_derivatives, subject)
             out_subj_derivatives = Path(out_derivatives, subject)
             assert in_subj_derivatives.is_dir()
-            print(f"\tCopying {in_subj_derivatives} to {out_subj_derivatives}.")
+            logger.debug(f"\tCopying {in_subj_derivatives} to {out_subj_derivatives}.")
             shutil.copytree(str(in_subj_derivatives), str(out_subj_derivatives))
             # Remove dwi data
             if Path(out_subj_derivatives, subject, "dwi").is_dir():
