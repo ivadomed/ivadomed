@@ -2077,8 +2077,8 @@ for defined object sizes.
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "object_detection_metrics",
         "$$description": [
-            "Indicate if object detection metrics (lesions true positive and false detection rates) are computed or not.\n",
-            "Default: ``true``",
+            "Indicate if object detection metrics (lesions true positive and false detection rates) are computed or not\n",
+            "at evaluation time. Default: ``true``",
         ],
         "type": "boolean"
     }

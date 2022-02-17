@@ -139,7 +139,7 @@ microscopy segmentation training.
       "binarize_maxpooling": {}
 
 - ``evaluation_parameters:object_detection_metrics``: Used to indicate if object detection metrics
-  (lesions true positive and false detection rates) are computed at evaluation time of not.
+  (lesions true positive and false detection rates) are computed or not at evaluation time.
   For the axons and myelin segmentation task, we set this parameter to ``false``.
 
   .. code-block:: xml
