@@ -2068,8 +2068,28 @@ Postprocessing
 
 Evaluation Parameters
 ---------------------
-Dict. Parameters to get object detection metrics (true positive and false detection rates), and this, for defined
-object sizes.
+Dict. Parameters to get object detection metrics (lesions true positive and false detection rates), and this,
+for defined object sizes.
+
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "object_detection_metrics",
+        "$$description": [
+            "Indicate if object detection metrics (lesions true positive and false detection rates) are computed or not.\n",
+            "Default: ``true``",
+        ],
+        "type": "boolean"
+    }
+
+.. code-block:: JSON
+
+    {
+        "evaluation_parameters": {
+            "object_detection_metrics": false
+        }
+    }
 
 
 .. jsonschema::
