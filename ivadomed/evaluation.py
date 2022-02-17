@@ -135,6 +135,8 @@ class Evaluation3DMetrics(object):
         bin_struct (ndarray): Binary structure.
         size_min (int): Minimum size of objects. Objects that are smaller than this limit can be removed if
             "removeSmall" is in params.
+        object_detection_metrics (bool): Indicate if object detection metrics (lesions true positive and false detection
+            rates) are computed or not.
         overlap_vox (int): A prediction and ground-truth are considered as overlapping if they overlap for at least this
             amount of voxels.
         overlap_ratio (float): A prediction and ground-truth are considered as overlapping if they overlap for at least
@@ -166,6 +168,8 @@ class Evaluation3DMetrics(object):
         self.bin_struct = generate_binary_structure(3, 2)  # 18-connectivity
         self.postprocessing_dict = {}
         self.size_min = 0
+
+        self.object_detection_metrics = params["object_detection_metrics"]
 
         if "target_size" in params:
             self.size_rng_lst, self.size_suffix_lst = \
@@ -389,8 +393,12 @@ class Evaluation3DMetrics(object):
             label_size (int): Size of label.
             class_idx (int): Label index. If monolabel 0, else ranges from 0 to number of output channels - 1.
 
-        Note: computed only if n_obj >= 1.
+        Note: computed only if n_obj >= 1 and "object_detection_metrics" evaluation parameter is True.
         """
+        if not self.object_detection_metrics:
+            n_obj = 0
+            return np.nan, n_obj
+
         ltp, lfn, n_obj = self._get_ltp_lfn(label_size, class_idx)
 
         denom = ltp + lfn
@@ -406,8 +414,12 @@ class Evaluation3DMetrics(object):
             label_size (int): Size of label.
             class_idx (int): Label index. If monolabel 0, else ranges from 0 to number of output channels - 1.
 
-        Note: computed only if n_obj >= 1.
+        Note: computed only if n_obj >= 1 and "object_detection_metrics" evaluation parameter is True.
         """
+
+        if not self.object_detection_metrics:
+            return np.nan
+
         ltp, _, n_obj = self._get_ltp_lfn(label_size, class_idx)
         lfp = self._get_lfp(label_size, class_idx)
 
