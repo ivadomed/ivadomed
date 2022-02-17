@@ -113,9 +113,9 @@ microscopy segmentation training.
       "train_fraction": 0.6
       "test_fraction": 0.1
 
-- ``training_parameters:training_time:num_epochs``: The maximum number of epochs that will be run during training. Each epoch is composed
-  of a training part and a validation part. It should be a strictly positive integer. In our case, we will use
-  50 epochs.
+- ``training_parameters:training_time:num_epochs``: The maximum number of epochs that will be run during training.
+  Each epoch is composed of a training part and a validation part. It should be a strictly positive integer.
+  In our case, we will use 50 epochs.
 
   .. code-block:: xml
 
@@ -131,11 +131,20 @@ microscopy segmentation training.
      "length_2D": [256, 256]
      "stride_2D": [244, 244]
 
-- ``postprocessing:binarize_maxpooling``: Used to binarize predictions across all classes in multiclass models. For each pixel, the class, including the background class, with the highest output probability will be segmented.
+- ``postprocessing:binarize_maxpooling``: Used to binarize predictions across all classes in multiclass models.
+  For each pixel, the class, including the background class, with the highest output probability will be segmented.
 
   .. code-block:: xml
 
       "binarize_maxpooling": {}
+
+- ``evaluation_parameters:object_detection_metrics``: Used to indicate if object detection metrics
+  (lesions true positive and false detection rates) are computed at evaluation time of not.
+  For the axons and myelin segmentation task, we set this parameter to ``false``.
+
+  .. code-block:: xml
+
+      "object_detection_metrics": false
 
 - ``transformation:Resample``: Used to resample images to a common resolution (in mm) before splitting into patches,
   according to each image real pixel size. In our case, we resample the images to a common resolution of 0.0001 mm
