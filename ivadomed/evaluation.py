@@ -86,24 +86,25 @@ def evaluate(bids_df, path_output, target_suffix, eval_params):
                                    params=eval_params)
         results_pred, data_painted = eval.run_eval()
 
-        # SAVE PAINTED DATA, TP FP FN
-        fname_paint = str(fname_pred).split('.nii.gz')[0] + '_painted.nii.gz'
-        nib_painted = nib.Nifti1Image(
-            dataobj=data_painted,
-            affine=nib_pred.header.get_best_affine(),
-            header=nib_pred.header.copy()
-        )
-        nib.save(nib_painted, fname_paint)
+        if eval_params['object_detection_metrics']:
+            # SAVE PAINTED DATA, TP FP FN
+            fname_paint = str(fname_pred).split('.nii.gz')[0] + '_painted.nii.gz'
+            nib_painted = nib.Nifti1Image(
+                dataobj=data_painted,
+                affine=nib_pred.header.get_best_affine(),
+                header=nib_pred.header.copy()
+            )
+            nib.save(nib_painted, fname_paint)
 
-        # For Microscopy PNG/TIF files (TODO: implement OMETIFF behavior)
-        if "nii" not in extension:
-            painted_list = imed_inference.split_classes(nib_painted)
-            # Reformat target list to include class index and be compatible with multiple raters
-            target_list = ["_class-%d" % i for i in range(len(target_suffix))]
-            imed_inference.pred_to_png(painted_list,
-                                       target_list,
-                                       str(path_preds.joinpath(subj_acq)),
-                                       suffix="_pred_painted.png")
+            # For Microscopy PNG/TIF files (TODO: implement OMETIFF behavior)
+            if "nii" not in extension:
+                painted_list = imed_inference.split_classes(nib_painted)
+                # Reformat target list to include class index and be compatible with multiple raters
+                target_list = ["_class-%d" % i for i in range(len(target_suffix))]
+                imed_inference.pred_to_png(painted_list,
+                                           target_list,
+                                           str(path_preds.joinpath(subj_acq)),
+                                           suffix="_pred_painted.png")
 
         # SAVE RESULTS FOR THIS PRED
         results_pred['image_id'] = subj_acq
