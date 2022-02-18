@@ -26,7 +26,7 @@ AxonDeepSeg
 
 `AxonDeepSeg <https://axondeepseg.readthedocs.io/>`__ (ADS) is an open-source analysis software package for segmentating and computing morphometry on microscopy data of nerve fibers `[Zaimi et al. 2018] <https://doi.org/10.1038/s41598-018-22181-4>`__. `ivadomed` is ADS's backbone for the automated segmentation of axons and myelin on scanning electron microscopy (SEM), transmission electron microscopy (TEM; Figure herebelow) and bright-field optical microscopy (BF) images.
 
-.. figure:: https://raw.githubusercontent.com/ivadomed/doc-figures/main/use_cases/ADS.png
+.. figure:: https://raw.githubusercontent.com/ivadomed/doc-figures/mhb/ads-figure-usecase/use_cases/ADS.png
    :alt: Figure of automatic axons and myelin segmentation on TEM input image
 
    Automatic axons and myelin segmentation on TEM input image.
