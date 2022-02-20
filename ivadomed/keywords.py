@@ -8,10 +8,7 @@ class ConfigKW:
     MODEL_NAME = "model_name"
     MODIFIED_3D_UNET = "Modified3DUNet"
     DEBUGGING = "debugging"
-    EXPERIMENT_TRACKING = "experiment_tracking"
-    PROJECT_NAME = "project_name"
-    GROUP_NAME = "group_name"
-    RUN_NAME = "run_name"
+    WANDB = "wandb"
     FILMED_UNET = "FiLMedUnet"
     DEFAULT_MODEL = "default_model"
     OBJECT_DETECTION_PARAMS = "object_detection_params"
@@ -28,6 +25,14 @@ class ConfigKW:
     HEMIS_UNET = "HeMISUnet"
     SPLIT_PATH = "split_path"
     TRAINING_SHA256 = "training_sha256"
+
+
+@dataclass
+class WandbKW:
+    PROJECT_NAME = "project_name"
+    GROUP_NAME = "group_name"
+    RUN_NAME = "run_name"
+    LOG_GRADS_EVERY = "log_grads_every"
 
 
 @dataclass
