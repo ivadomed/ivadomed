@@ -8,8 +8,14 @@
         "object_detection_path": null,
         "safety_factor": [1.0, 1.0, 1.0]
     },
+    "wandb": {
+        "project_name": "ivado-wandb-testing",
+        "group_name": "temp",
+        "run_name": "run-1",
+        "log_grads_every": 100
+    },
     "loader_parameters": {
-        "path_data": ["data_example_spinegeneric"],
+        "path_data": ["/home/GRAMES.POLYMTL.CA/u114716/wandb_testing/data_example_spinegeneric"],
         "subject_selection": {"n": [], "metadata": [], "value": []},
         "target_suffix": ["_seg-manual"],
         "extensions": [".nii.gz"],
@@ -40,12 +46,12 @@
         "test_fraction": 0.2
     },
     "training_parameters": {
-        "batch_size": 18,
+        "batch_size": 32,
         "loss": {
             "name": "DiceLoss"
         },
         "training_time": {
-            "num_epochs": 100,
+            "num_epochs": 15,
             "early_stopping_patience": 50,
             "early_stopping_epsilon": 0.001
         },
