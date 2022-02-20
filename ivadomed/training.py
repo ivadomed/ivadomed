@@ -27,7 +27,7 @@ from ivadomed.keywords import ModelParamsKW, ConfigKW, BalanceSamplesKW, Trainin
 cudnn.benchmark = True
 
 
-def train(model_params, dataset_train, dataset_val, training_params, path_output, device,
+def train(model_params, dataset_train, dataset_val, training_params, wandb_params, path_output, device,
           cuda_available=True, metric_fns=None, n_gif=0, resume_training=False, debugging=False):
     """Main command to train the network.
 
@@ -56,23 +56,10 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
     writer = SummaryWriter(log_dir=path_output)
 
     # Collect all hyperparameters into a dictionary
-    cfg = {
-        "batch_size": training_params["batch_size"],
-        "num_epochs": training_params["training_time"]["num_epochs"],
-        "init_lr": training_params["scheduler"]["initial_lr"],
-        "scheduler": training_params["scheduler"]["lr_scheduler"],
-        "early_stopping_patience": training_params["training_time"]["early_stopping_patience"],
-        "early_stopping_epsilon": training_params["training_time"]["early_stopping_epsilon"],
-        "loss": training_params["loss"]["name"],
-        "model": model_params["name"],
-        "is_2d": model_params["is_2d"],
-        "in_channels": model_params["in_channel"],
-        "out_channels": model_params["out_channel"],
-        "depth": model_params["depth"]
-    }
+    cfg = { **training_params, **model_params}
     # Initialize WandB with metrics and hyperparameters
-    # TODO: get project name, group name and run name from the config file (add them in keywords.py)
-    wandb.init(project="ivadomed", group='temp', name='run-1', config=cfg)
+    wandb.init(project=wandb_params["project_name"], group=wandb_params["group_name"], 
+                                name=wandb_params["run_name"], config=cfg)
 
     # BALANCE SAMPLES AND PYTORCH LOADER
     conditions = all([training_params[TrainingParamsKW.BALANCE_SAMPLES][BalanceSamplesKW.APPLIED],
@@ -138,6 +125,9 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
                                                     num_epochs)
     logger.info("Scheduler parameters: {}".format(training_params["scheduler"]["lr_scheduler"]))
 
+    # Logs gradients (at every log_freq steps) to the dashboard.
+    wandb.watch(model, log="gradients", log_freq=wandb_params["log_grads_every"])
+
     # Resume
     start_epoch = 1
     resume_path = Path(path_output, "checkpoint.pth.tar")
@@ -174,7 +164,6 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
         start_time = time.time()
 
         lr = scheduler.get_last_lr()[0]
-        writer.add_scalar('learning_rate', lr, epoch)
         wandb.log({"learning_rate": lr})
 
         # Training loop -----------------------------------------------------------
@@ -215,8 +204,9 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
                 scheduler.step()
             num_steps += 1
 
-            if i == 0 and debugging:
-                imed_visualize.save_tensorboard_img(writer, epoch, "Train", input_samples, gt_samples, preds,
+            # Save image at every 50th step if debugging is true
+            if i%50 == 0 and debugging:
+                imed_visualize.save_wandb_img(writer, epoch, "Train", input_samples, gt_samples, preds,
                                                     is_three_dim=not model_params[ModelParamsKW.IS_2D])
 
         if not step_scheduler_batch:
@@ -282,21 +272,17 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
                 preds_npy = preds.data.cpu().numpy()
                 metric_mgr(preds_npy, gt_npy)
 
-                if i == 0 and debugging:
-                    imed_visualize.save_tensorboard_img(writer, epoch, "Validation", input_samples, gt_samples, preds,
+                # Save image at every 10th step if debugging is true
+                if i%50 == 0 and debugging:
+                    imed_visualize.save_wandb_img(writer, epoch, "Validation", input_samples, gt_samples, preds,
                                                         is_three_dim=not model_params[ModelParamsKW.IS_2D])
 
             # METRICS COMPUTATION FOR CURRENT EPOCH
             val_loss_total_avg_old = val_loss_total_avg if epoch > 1 else None
             metrics_dict = metric_mgr.get_results()
             metric_mgr.reset()
-            writer.add_scalars('Validation/Metrics', metrics_dict, epoch)
-            wandb.log({"Validation/Metrics": metrics_dict})
+            wandb.log({"validation-metrics": metrics_dict})
             val_loss_total_avg = val_loss_total / num_steps
-            writer.add_scalars('losses', {
-                'train_loss': train_loss_total_avg,
-                'val_loss': val_loss_total_avg,
-            }, epoch)
             wandb.log({"losses": {
                 'train_loss': train_loss_total_avg,
                 'val_loss': val_loss_total_avg,
