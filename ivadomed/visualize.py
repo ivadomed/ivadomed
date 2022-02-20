@@ -129,7 +129,7 @@ def convert_labels_to_RGB(grid_img):
     return rgb_img
 
 
-def save_tensorboard_img(writer, epoch, dataset_type, input_samples, gt_samples, preds, is_three_dim=False):
+def save_wandb_img(writer, epoch, dataset_type, input_samples, gt_samples, preds, is_three_dim=False):
     """Saves input images, gt and predictions in tensorboard.
 
     Args:
@@ -174,22 +174,17 @@ def save_tensorboard_img(writer, epoch, dataset_type, input_samples, gt_samples,
         grid_img = vutils.make_grid(input_samples,
                                     normalize=True,
                                     scale_each=True)
-        writer.add_image(dataset_type + '/Input', grid_img, epoch)
         wandb.log({dataset_type+"/Input": wandb.Image(grid_img)})
 
         grid_img = vutils.make_grid(convert_labels_to_RGB(preds),
                                     normalize=True,
                                     scale_each=True)
-
-        writer.add_image(dataset_type + '/Predictions', grid_img, epoch)
         wandb.log({dataset_type+"/Predictions": wandb.Image(grid_img)})
 
         grid_img = vutils.make_grid(convert_labels_to_RGB(gt_samples),
                                     normalize=True,
                                     scale_each=True)
-
-        writer.add_image(dataset_type + '/Ground Truth', grid_img, epoch)
-        wandb.log({dataset_type+"/Ground Truth": wandb.Image(grid_img)})
+        wandb.log({dataset_type+"/Ground-Truth": wandb.Image(grid_img)})
 
 
 def save_feature_map(batch, layer_name, path_output, model, test_input, slice_axis):
