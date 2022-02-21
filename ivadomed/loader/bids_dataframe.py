@@ -302,6 +302,5 @@ class BidsDataframe:
                 f.write(
                     '{"Name": "Example dataset", '
                     '"BIDSVersion": "1.0.2", '
-                    '"PipelineDescription": {"Name": "Example pipeline"}, '
                     '"GeneratedBy": [{"Name": "Example pipeline"}]}'
                 )
