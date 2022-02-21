@@ -3,6 +3,7 @@ import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
 from pathlib import Path
 
+import ivadomed.architecture.unet
 from ivadomed.loader.bids_dataframe import BidsDataframe
 from ivadomed import metrics as imed_metrics
 from ivadomed import transforms as imed_transforms
@@ -91,7 +92,7 @@ def test_inference(download_data_testing_test_files, transforms_dict, test_lst, 
     })
 
     # Model
-    model = imed_models.Unet()
+    model = ivadomed.architecture.unet.Unet()
 
     if cuda_available:
         model.cuda()
@@ -191,7 +192,7 @@ def test_inference_2d_microscopy(download_data_testing_test_files, transforms_di
     })
 
     # Model
-    model = imed_models.Unet(out_channel=model_params['out_channel'])
+    model = ivadomed.architecture.unet.Unet(out_channel=model_params['out_channel'])
 
     if cuda_available:
         model.cuda()
