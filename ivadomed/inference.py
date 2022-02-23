@@ -50,7 +50,7 @@ def get_preds(context: dict, fname_model: str, model_params: dict, gpu_id: int, 
 
     Args:
         context (dict): configuration dict.
-        fname_model (str): name of file containing model (without .pt or .onnx extension).
+        fname_model (str): name of file containing model.
         model_params (dict): dictionary containing model parameters.
         gpu_id (int): Number representing gpu number if available. Currently does NOT support multiple GPU segmentation.
         batch (dict): dictionary containing input, gt and metadata
@@ -60,16 +60,6 @@ def get_preds(context: dict, fname_model: str, model_params: dict, gpu_id: int, 
     """
     # Define device
     cuda_available, device = imed_utils.define_device(gpu_id)
-
-    # Assign '.onnx' or '.pt' model based on availability and device
-    # On GPU, '.pt' model is prioritized whereas '.onnx' model is prioritized on CPU.
-    if Path(fname_model + '.onnx').is_file():
-        if cuda_available and Path(fname_model + '.pt').is_file():
-            fname_model = fname_model + '.pt'
-        else:
-            fname_model = fname_model + '.onnx'
-    else:
-        fname_model = fname_model + '.pt'
 
     with torch.no_grad():
 
