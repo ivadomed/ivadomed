@@ -8,7 +8,6 @@ from pathlib import Path
 import torchvision.models
 
 
-
 #Modified from torchvision.models.resnet.Resnet
 class ResNet(nn.Module):
     """ResNet model based on
@@ -1486,23 +1485,33 @@ def set_model_for_retrain(model_path, retrain_fraction, map_location, reset=True
 def get_model_filenames(folder_model):
     """Get trained model filenames from its folder path.
 
-    This function checks if the folder_model exists and get trained model path (without .pt or .onnx extension)
-    and its configuration file (.json) from it.
+    This function checks if the folder_model exists and get trained model path (.pt or .onnx based on
+    model and GPU availability) and its configuration file (.json) from it.
 
     Args:
         folder_name (str): Path of the model folder.
 
     Returns:
-        str, str: Paths of the model (without .pt or .onnx extension) and its configuration file (.json).
+        str, str: Paths of the model (.pt or .onnx) and its configuration file (.json).
     """
     if Path(folder_model).is_dir():
-        prefix_model = Path(folder_model).name
-        fname_model = Path(folder_model, prefix_model)
 
-        # Check if at least one of '.pt' or '.onnx' model exists
-        if not Path(str(fname_model) + '.onnx').is_file() and not Path(str(fname_model) + '.pt').is_file():
+        prefix_model = Path(folder_model).name
+        fname_model_onnx = Path(folder_model, prefix_model + '.onnx')
+        fname_model_pt = Path(folder_model, prefix_model + '.pt')
+
+        # Assign '.pt' or '.onnx' model based on availability and device.
+        # On GPU, '.pt' model is prioritized whereas the '.onnx' model is prioritized on CPU.
+        if fname_model_onnx.is_file():
+            if fname_model_pt.is_file() and torch.cuda.is_available():
+                fname_model = fname_model_pt
+            else:
+                fname_model = fname_model_onnx
+        elif fname_model_pt.is_file():
+            fname_model = fname_model_pt
+        else:
             raise FileNotFoundError(f"Model files not found in model folder: "
-                                    f"'{str(fname_model) + '.onnx'}' or '{str(fname_model) + '.pt'}'")
+                                    f"'{str(fname_model_onnx)}' or '{str(fname_model_pt)}'")
 
         fname_model_metadata = Path(folder_model, prefix_model + '.json')
         if not fname_model_metadata.is_file():
