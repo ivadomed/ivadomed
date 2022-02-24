@@ -1499,19 +1499,20 @@ def get_model_filenames(folder_model):
         prefix_model = Path(folder_model).name
         fname_model_onnx = Path(folder_model, prefix_model + '.onnx')
         fname_model_pt = Path(folder_model, prefix_model + '.pt')
+        cuda_available = torch.cuda.is_available()
 
-        # Assign '.pt' or '.onnx' model based on availability and device.
-        # On GPU, '.pt' model is prioritized whereas the '.onnx' model is prioritized on CPU.
-        if fname_model_onnx.is_file():
-            if fname_model_pt.is_file() and torch.cuda.is_available():
-                fname_model = fname_model_pt
-            else:
-                fname_model = fname_model_onnx
-        elif fname_model_pt.is_file():
-            fname_model = fname_model_pt
-        else:
+        # Assign '.pt' or '.onnx' model based on file existence and GPU/CPU device availability
+        if not fname_model_pt.is_file() and not fname_model_onnx.is_file():
             raise FileNotFoundError(f"Model files not found in model folder: "
                                     f"'{str(fname_model_onnx)}' or '{str(fname_model_pt)}'")
+        # '.pt' is preferred on GPU, or on CPU if '.onnx' doesn't exist
+        elif ((    cuda_available and     fname_model_pt.is_file()) or
+              (not cuda_available and not fname_model_onnx.is_file())):
+            fname_model = fname_model_pt
+        # '.onnx' is preferred on CPU, or on GPU if '.pt' doesn't exist
+        elif ((not cuda_available and     fname_model_onnx.is_file()) or
+              (    cuda_available and not fname_model_pt.is_file())):
+            fname_model = fname_model_onnx
 
         fname_model_metadata = Path(folder_model, prefix_model + '.json')
         if not fname_model_metadata.is_file():
