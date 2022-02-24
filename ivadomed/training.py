@@ -336,7 +336,7 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
 
         # Save best model as PT in the model directory
         best_model_path = Path(path_output, model_params[ModelParamsKW.FOLDER_NAME],
-                                       model_params[ModelParamsKW.FOLDER_NAME] + ".pt")
+                               model_params[ModelParamsKW.FOLDER_NAME] + ".pt")
         torch.save(model, best_model_path)
         logger.info(f"Model saved as '.pt': {best_model_path}")
 
