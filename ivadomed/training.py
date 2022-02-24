@@ -331,8 +331,8 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
                                            model_params[ModelParamsKW.FOLDER_NAME] + ".onnx")
             imed_utils.save_onnx_model(model, input_samples, str(best_model_path))
             logger.info(f"Model saved as '.onnx': {best_model_path}")
-        except:
-            logger.warning(f"Failed to save the model as '.onnx'")
+        except Exception as e:
+            logger.warning(f"Failed to save the model as '.onnx': {e}")
 
         # Save best model as PT in the model directory
         best_model_path = Path(path_output, model_params[ModelParamsKW.FOLDER_NAME],
