@@ -5,6 +5,7 @@ import shutil
 import logging
 
 import ivadomed.architecture.unet
+import ivadomed.architecture.unet3d
 from ivadomed import utils as imed_utils
 from ivadomed import inference as imed_inference
 from ivadomed import models as imed_models
@@ -26,7 +27,7 @@ LENGTH_3D = (112, 112, 112)
 
 
 def test_onnx(download_data_testing_test_files):
-    model = ivadomed.architecture.unet.Modified3DUNet(1, 1)
+    model = ivadomed.architecture.unet3d.Modified3DUNet(1, 1)
     if not PATH_MODEL.exists():
         PATH_MODEL.mkdir()
     torch.save(model, PATH_MODEL_PT)

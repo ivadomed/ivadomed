@@ -1,6 +1,6 @@
 import torch
 from torchviz import make_dot
-from ivadomed.architecture.unet import Modified3DUNet
+from ivadomed.architecture.unet3d import Modified3DUNet
 from loguru import logger
 from torch.utils.tensorboard import SummaryWriter
 from pytorch_model_summary import summary

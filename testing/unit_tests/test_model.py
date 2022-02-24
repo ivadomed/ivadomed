@@ -2,6 +2,7 @@ import ivadomed.architecture.blocks
 import ivadomed.architecture.densenet
 import ivadomed.architecture.resnet
 import ivadomed.architecture.unet
+import ivadomed.architecture.unet3d
 import ivadomed.models as imed_model
 import torch
 import torchvision
@@ -19,7 +20,7 @@ def test_model_3d_att():
     # verifying if 3d attention model can be created
     a = [[[[[0 for i in range(48)] for j in range(48)] for k in range(16)]]]
     inp = torch.tensor(a).float()
-    model = ivadomed.architecture.unet.Modified3DUNet(in_channel=1, out_channel=1, attention=True)
+    model = ivadomed.architecture.unet3d.Modified3DUNet(in_channel=1, out_channel=1, attention=True)
     inf = model(inp)
     assert(type(inf) == torch.Tensor)
 

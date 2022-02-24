@@ -6,6 +6,7 @@ import pytest
 import torch
 
 import ivadomed.architecture.unet
+import ivadomed.architecture.unet3d
 from ivadomed import models as imed_models
 from ivadomed import inference as imed_inference
 from testing.functional_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__, download_functional_test_files
@@ -243,9 +244,9 @@ def test_segment_volume_2d_with_patches(download_functional_test_files, center_c
 
 @pytest.mark.parametrize("center_crop", [[192, 192, 16]])
 def test_segment_volume_3d(download_functional_test_files, center_crop):
-    model = ivadomed.architecture.unet.Modified3DUNet(in_channel=1,
-                                                      out_channel=1,
-                                                      base_n_filter=1)
+    model = ivadomed.architecture.unet3d.Modified3DUNet(in_channel=1,
+                                                        out_channel=1,
+                                                        base_n_filter=1)
 
     if not PATH_MODEL.exists():
         PATH_MODEL.mkdir(parents=True, exist_ok=True)
