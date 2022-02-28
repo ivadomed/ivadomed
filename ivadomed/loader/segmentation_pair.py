@@ -324,7 +324,7 @@ class SegmentationPair(object):
 
         # Get PixelSize in millimeters in order (PixelSizeY, PixelSizeX, PixelSizeZ), where X is the width,
         # Y the height and Z the depth of the image.
-        ps_in_mm = self.get_microscopy_pixelsize()
+        ps_in_mm = self.get_microscopy_pixelsize(filename)
 
         # Set "pixdim" (zooms) in Nifti1Image object header
         img.header.set_zooms(ps_in_mm)
@@ -337,58 +337,66 @@ class SegmentationPair(object):
         return img
 
 
-    def get_microscopy_pixelsize(self):
+    def get_microscopy_pixelsize(self, filename):
         """
-        Get the microscopy pixel size in millimeters from the metadata.
+        Get the microscopy pixel size from the metadata and convert to millimeters.
 
-        The implementation of this method is dependent on the development of the corresponding
-        microscopy BEP (github.com/ivadomed/ivadomed/issues/301, bids.neuroimaging.io/bep031):
+        The implementation of this method is compliant with BIDS version 1.7.0:
         * "pixdim" (zooms) for Nifti1Image object is extracted as follows:
             * For train, test and segment commands, PixelSize is taken from the metadata in BIDS JSON sidecar file.
-            * For inference with the segment_volume function, PixelSize must be provided in the 'options' argument.
-        * The function supports the PixelSize definition of BIDS BEP031 v0.0.4 as a list of 2-numbers
-          [PixelSizeX, PixelSizeY] or 3-numbers [PixelSizeX, PixelSizeY, PixelSizeZ] in micrometers for 2D and 3D
+            * For inference with the segment_volume function, PixelSize and PixelSizeUnits must be provided in the
+              'options' argument.
+        * The function supports the PixelSize definition of BIDS 1.7.0 as a list of 2-numbers
+          [PixelSizeX, PixelSizeY] or 3-numbers [PixelSizeX, PixelSizeY, PixelSizeZ] for 2D and 3D
           respectively, where X is the width, Y the height and Z the depth of the image.
-        * The function also supports the previous definition of PixelSize as a float (BIDS BEP031 v0.0.2).
-        * In the future BIDS BEP031 v0.0.5 version, a separate field PixelSizeUnits will be used to describe the unit
-          of PixelSize. The only accepted value will be "um" but could be expand in the future.
+        * The function supports the PixelSizeUnits definition of BIDS 1.7.0 as "mm", "um" or "nm".
 
         Returns:
-            ndrray: Pixel size in millimeters in order (PixelSizeY, PixelSizeX, PixelSizeZ), where Y is the height,
-                    X the width and Z the depth of the image.
+            ndrray: Pixel size in millimeters (ps_in_mm) in order (PixelSizeY, PixelSizeX, PixelSizeZ),
+            where Y is the height, X the width and Z the depth of the image.
         """
 
-        # Get pixel size in um from json metadata and convert to mm
-        array_length = [2, 3]        # Accepted array length for 'PixelSize' metadata
-        conversion_factor = 0.001    # Conversion factor from um to mm
+        # Get pixel size units from json metadata and set conversion factor from pixel size units to mm
+        if MetadataKW.PIXEL_SIZE_UNITS in self.metadata[0]:
+            pixel_size_units = self.metadata[0][MetadataKW.PIXEL_SIZE_UNITS]
+            if pixel_size_units == "mm":
+                conversion_factor = 1          # Conversion factor from mm to mm
+            elif pixel_size_units == "um":
+                conversion_factor = 0.001      # Conversion factor from um to mm
+            elif pixel_size_units == "nm":
+                conversion_factor = 0.000001   # Conversion factor from nm to mm
+            else:
+                raise RuntimeError(f"The PixelSizeUnits '{pixel_size_units}' of '{Path(filename).stem}' is not "
+                                   f"supported. ivadomed supports the following PixelSizeUnits: 'mm', 'um' and 'nm'.")
+        else:
+            raise RuntimeError("'PixelSizeUnits' is missing from metadata")
 
+        # Set accepted array length for 'PixelSize' metadata
+        array_length = [2, 3]
+
+        # Get pixel size from json metadata and convert to mm
         if MetadataKW.PIXEL_SIZE in self.metadata[0]:
-            ps_in_um = self.metadata[0][MetadataKW.PIXEL_SIZE]
+            pixel_size = self.metadata[0][MetadataKW.PIXEL_SIZE]
 
-            if isinstance(ps_in_um, list) and (len(ps_in_um) in array_length):
+            if len(pixel_size) in array_length:
                 # PixelSize array in order [PixelSizeX, PixelSizeY] or [PixelSizeX, PixelSizeY, PixelSizeZ]
-                ps_in_um = np.asarray(ps_in_um)
+                pixel_size = np.asarray(pixel_size)
 
                 # Note: pixdim[3] (PixelSizeZ) must be non-zero in Nifti objects even if there is only one slice.
                 # When PixelSizeZ is not present or 0, we assign the same PixelSize as PixelSizeX
-                ps_in_um = np.resize(ps_in_um, 3)
-                if ps_in_um[2] == 0:
-                    ps_in_um[2] = ps_in_um[0]
+                pixel_size = np.resize(pixel_size, 3)
+                if pixel_size[2] == 0:
+                    pixel_size[2] = pixel_size[0]
 
                 # Swap PixelSizeX and PixelSizeY resulting in an array in order [PixelSizeY, PixelSizeX, PixelSizeZ]
                 # to match NIfTI pixdim[1,2,3] in [Height, Width, Depth] orientation with axial slice axis.
-                ps_in_um[[1, 0]] = ps_in_um[[0, 1]]
-
-            elif isinstance(ps_in_um, float):
-                ps_in_um = np.asarray([ps_in_um, ps_in_um, ps_in_um])
+                pixel_size[[1, 0]] = pixel_size[[0, 1]]
 
             else:
-                raise RuntimeError("'PixelSize' metadata type is not supported. Format must be a float,"
-                                   " 2D [PixelSizeX, PixelSizeY] array or 3D [PixelSizeX, PixelSizeY, PixelSizeZ] array"
+                raise RuntimeError("'PixelSize' metadata type is not supported. Format must be a 2D"
+                                   " [PixelSizeX, PixelSizeY] array or 3D [PixelSizeX, PixelSizeY, PixelSizeZ] array"
                                    " where X is the width, Y the height and Z the depth of the image.")
-
-            ps_in_mm = tuple(ps_in_um * conversion_factor)
-
+            ps_in_mm = tuple(pixel_size * conversion_factor)
         else:
             raise RuntimeError("'PixelSize' is missing from metadata")
 
