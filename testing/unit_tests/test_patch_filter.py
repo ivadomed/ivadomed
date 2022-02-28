@@ -3,6 +3,7 @@ import pytest
 import numpy as np
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
+from loguru import logger
 
 from ivadomed.loader.bids_dataframe import BidsDataframe
 from ivadomed import utils as imed_utils
@@ -29,7 +30,7 @@ def _cmpt_slice(ds_loader):
                 cmpt_label[1] += 1
             else:
                 cmpt_label[0] += 1
-    print(cmpt_label)
+    logger.debug(cmpt_label)
     return cmpt_label[0], cmpt_label[1]
 
 
@@ -66,13 +67,13 @@ def test_patch_filter(download_data_testing_test_files, transforms_dict, train_l
     bids_df = BidsDataframe(loader_params, __tmp_dir__, derivatives=True)
     ds = imed_loader.load_dataset(bids_df, **loader_params)
 
-    print('\tNumber of loaded patches: {}'.format(len(ds)))
+    logger.info(f"\tNumber of loaded patches: {len(ds)}")
 
     loader = DataLoader(ds, batch_size=BATCH_SIZE,
                         shuffle=True, pin_memory=True,
                         collate_fn=imed_loader_utils.imed_collate,
                         num_workers=0)
-    print('\tNumber of Neg/Pos patches in GT.')
+    logger.info("\tNumber of Neg/Pos patches in GT.")
     cmpt_neg, cmpt_pos = _cmpt_slice(loader)
     if patch_filter_params["filter_empty_mask"]:
         if dataset_type == "testing":
