@@ -60,8 +60,8 @@ def create_tmp_dir_multi_session():
     """
     ignore_git_pattern = shutil.ignore_patterns(str(path_data_multi_sessions_contrasts_source / '.git'))
     remove_tmp_dir()
-    os.mkdir(path_temp)
-    if os.path.exists(path_data_multi_sessions_contrasts_source):
+    Path(path_temp).mkdir()
+    if Path(path_data_multi_sessions_contrasts_source).exists():
         shutil.copytree(path_data_multi_sessions_contrasts_source,
                         path_data_multi_sessions_contrasts_tmp,
                         ignore=ignore_git_pattern)
