@@ -25,7 +25,7 @@ def download_data_testing_test_files():
 @pytest.fixture(scope='session')
 def download_multi_data():
     """
-    This Pytest fixture DOWNLOAD all the test data set REQUIRED for the multi-session, multi-contrast related unite
+    This Pytest fixture DOWNLOAD all the test data set REQUIRED for the multi-session, multi-contrast related unit
     testing.
     """
     download_dataset("data_multi_testing")
