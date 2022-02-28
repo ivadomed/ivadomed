@@ -69,11 +69,6 @@ class BidsDataframe:
     def create_bids_dataframe(self):
         """Generate the dataframe."""
 
-        # Suppress a Future Warning from pybids about leading dot included in 'extension' from version 0.14.0
-        # The config_bids.json file used matches the future behavior
-        # TODO: when reaching version 0.14.0, remove the following line
-        pybids.config.set_option('extension_initial_dot', True)
-
         for path_data in self.paths_data:
             path_data = Path(path_data, '')
 
@@ -301,12 +296,11 @@ class BidsDataframe:
         # need to write default dataset_description.json file if not found
         if not path_deriv_desc_file.is_file() and not path_label_desc_file.is_file():
 
-            logger.warning(f"{path_deriv_desc_file} not found. Please ensure a full path is specified in the "
-                           f"configuration file. Will attempt to create a place holder description file for now at"
-                           f"{path_deriv_desc_file}.")
+            logger.warning(f"{path_deriv_desc_file} not found. Will attempt to create a place holder "
+                           f"description file for now at {path_deriv_desc_file}.")
             with path_deriv_desc_file.open(mode='w') as f:
                 f.write(
                     '{"Name": "Example dataset", '
                     '"BIDSVersion": "1.0.2", '
-                    '"PipelineDescription": {"Name": "Example pipeline"}}'
+                    '"GeneratedBy": [{"Name": "Example pipeline"}]}'
                 )
