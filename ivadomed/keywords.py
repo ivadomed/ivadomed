@@ -140,6 +140,7 @@ class OptionKW:
     REMOVE_SMALL = "remove_small"
     OVERLAP_2D = "overlap_2D"
     PIXEL_SIZE = "pixel_size"
+    PIXEL_SIZE_UNITS = "pixel_size_units"
 
 
 @dataclass
@@ -194,6 +195,7 @@ class MetadataKW:
     INPUT_FILENAMES = "input_filenames"
     ROI_METADATA = "roi_metadata"
     PIXEL_SIZE = "PixelSize"
+    PIXEL_SIZE_UNITS = "PixelSizeUnits"
 
 
 @dataclass
