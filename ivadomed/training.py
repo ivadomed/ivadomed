@@ -329,14 +329,17 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
         try:
             # Convert best model to ONNX and save it in model directory
             best_model_path = Path(path_output, model_params[ModelParamsKW.FOLDER_NAME],
-                                           model_params[ModelParamsKW.FOLDER_NAME] + ".onnx")
+                                   model_params[ModelParamsKW.FOLDER_NAME] + ".onnx")
             imed_utils.save_onnx_model(model, input_samples, str(best_model_path))
-        except:
-            # Save best model in model directory
-            best_model_path = Path(path_output, model_params[ModelParamsKW.FOLDER_NAME],
-                                           model_params[ModelParamsKW.FOLDER_NAME] + ".pt")
-            torch.save(model, best_model_path)
-            logger.warning(f"Failed to save the model as '.onnx', saved it as '.pt': {best_model_path}")
+            logger.info(f"Model saved as '.onnx': {best_model_path}")
+        except Exception as e:
+            logger.warning(f"Failed to save the model as '.onnx': {e}")
+
+        # Save best model as PT in the model directory
+        best_model_path = Path(path_output, model_params[ModelParamsKW.FOLDER_NAME],
+                               model_params[ModelParamsKW.FOLDER_NAME] + ".pt")
+        torch.save(model, best_model_path)
+        logger.info(f"Model saved as '.pt': {best_model_path}")
 
     # Save GIFs
     gif_folder = Path(path_output, "gifs")

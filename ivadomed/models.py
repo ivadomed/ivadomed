@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from torch.nn import Module
 from torch.nn import init
+from pathlib import Path
 
 #Modified from torchvision.models.resnet.Resnet
 from ivadomed.architecture.blocks import ConvBlock, SimpleBlock
@@ -86,4 +87,85 @@ class Countception(Module):
 
         return net
 
+
+def set_model_for_retrain(model_path, retrain_fraction, map_location, reset=True):
+    """Set model for transfer learning.
+
+    The first layers (defined by 1-retrain_fraction) are frozen (i.e. requires_grad=False).
+    The weights of the last layers (defined by retrain_fraction) are reset unless reset option is False.
+
+    Args:
+        model_path (str): Pretrained model path.
+        retrain_fraction (float): Fraction of the model that will be retrained, between 0 and 1. If set to 0.3,
+            then the 30% last fraction of the model will be re-initalised and retrained.
+        map_location (str): Device.
+        reset (bool): if the un-frozen weight should be reset or kept as loaded.
+
+    Returns:
+        torch.Module: Model ready for retrain.
+    """
+    # Load pretrained model
+    model = torch.load(model_path, map_location=map_location)
+    # Get number of layers with learnt parameters
+    layer_names = [name for name, layer in model.named_modules() if hasattr(layer, 'reset_parameters')]
+    n_layers = len(layer_names)
+    # Compute the number of these layers we want to freeze
+    n_freeze = int(round(n_layers * (1 - retrain_fraction)))
+    # Last frozen layer
+    last_frozen_layer = layer_names[n_freeze]
+
+    # Set freeze first layers
+    for name, layer in model.named_parameters():
+        if not name.startswith(last_frozen_layer):
+            layer.requires_grad = False
+        else:
+            break
+
+    # Reset weights of the last layers
+    if reset:
+        for name, layer in model.named_modules():
+            if name in layer_names[n_freeze:]:
+                layer.reset_parameters()
+
+    return model
+
+
+def get_model_filenames(folder_model):
+    """Get trained model filenames from its folder path.
+
+    This function checks if the folder_model exists and get trained model path (.pt or .onnx based on
+    model and GPU availability) and its configuration file (.json) from it.
+
+    Args:
+        folder_name (str): Path of the model folder.
+
+    Returns:
+        str, str: Paths of the model (.pt or .onnx) and its configuration file (.json).
+    """
+    if Path(folder_model).is_dir():
+        prefix_model = Path(folder_model).name
+        fname_model_onnx = Path(folder_model, prefix_model + '.onnx')
+        fname_model_pt = Path(folder_model, prefix_model + '.pt')
+        cuda_available = torch.cuda.is_available()
+
+        # Assign '.pt' or '.onnx' model based on file existence and GPU/CPU device availability
+        if not fname_model_pt.is_file() and not fname_model_onnx.is_file():
+            raise FileNotFoundError(f"Model files not found in model folder: "
+                                    f"'{str(fname_model_onnx)}' or '{str(fname_model_pt)}'")
+        # '.pt' is preferred on GPU, or on CPU if '.onnx' doesn't exist
+        elif ((    cuda_available and     fname_model_pt.is_file()) or
+              (not cuda_available and not fname_model_onnx.is_file())):
+            fname_model = fname_model_pt
+        # '.onnx' is preferred on CPU, or on GPU if '.pt' doesn't exist
+        elif ((not cuda_available and     fname_model_onnx.is_file()) or
+              (    cuda_available and not fname_model_pt.is_file())):
+            fname_model = fname_model_onnx
+
+        fname_model_metadata = Path(folder_model, prefix_model + '.json')
+        if not fname_model_metadata.is_file():
+            raise FileNotFoundError(f"Model config file not found in model folder: '{str(fname_model_metadata)}'")
+    else:
+        raise FileNotFoundError(folder_model)
+
+    return str(fname_model), str(fname_model_metadata)
 
