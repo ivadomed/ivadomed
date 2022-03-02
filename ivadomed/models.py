@@ -1495,7 +1495,6 @@ def get_model_filenames(folder_model):
         str, str: Paths of the model (.pt or .onnx) and its configuration file (.json).
     """
     if Path(folder_model).is_dir():
-
         prefix_model = Path(folder_model).name
         fname_model_onnx = Path(folder_model, prefix_model + '.onnx')
         fname_model_pt = Path(folder_model, prefix_model + '.pt')
@@ -1517,7 +1516,6 @@ def get_model_filenames(folder_model):
         fname_model_metadata = Path(folder_model, prefix_model + '.json')
         if not fname_model_metadata.is_file():
             raise FileNotFoundError(f"Model config file not found in model folder: '{str(fname_model_metadata)}'")
-
     else:
         raise FileNotFoundError(folder_model)
 
