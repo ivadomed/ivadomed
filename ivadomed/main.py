@@ -281,9 +281,13 @@ def run_segment_command(context, model_params):
             metadata = bids_df.df[bids_df.df['filename'] == subject][model_params[ModelParamsKW.METADATA]].values[0]
             options[OptionKW.METADATA] = metadata
 
-        # Add microscopy pixel size metadata to options for segment_volume
+        # Add microscopy pixel size and pixel size units metadata to options for segment_volume
         if MetadataKW.PIXEL_SIZE in bids_df.df.columns:
-            options[OptionKW.PIXEL_SIZE] = bids_df.df.loc[bids_df.df['filename'] == subject][MetadataKW.PIXEL_SIZE].values[0]
+            options[OptionKW.PIXEL_SIZE] = \
+                bids_df.df.loc[bids_df.df['filename'] == subject][MetadataKW.PIXEL_SIZE].values[0]
+        if MetadataKW.PIXEL_SIZE_UNITS in bids_df.df.columns:
+            options[OptionKW.PIXEL_SIZE_UNITS] = \
+                bids_df.df.loc[bids_df.df['filename'] == subject][MetadataKW.PIXEL_SIZE_UNITS].values[0]
 
         if fname_img:
             pred_list, target_list = imed_inference.segment_volume(str(path_model),
