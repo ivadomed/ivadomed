@@ -72,6 +72,7 @@ class TrainingParamsKW:
 class TransformationKW:
     ROICROP = "ROICrop"
     CENTERCROP = "CenterCrop"
+    RANDOMCROP = "RandomCrop"
     RESAMPLE = "Resample"
 
 

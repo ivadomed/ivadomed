@@ -505,6 +505,28 @@ class ROICrop(Crop):
         return super().__call__(sample, metadata)
 
 
+class RandomCrop(Crop):
+    """Make a random crop of a specified size."""
+
+    @multichannel_capable
+    @multichannel_capable  # for multiple raters during training/preprocessing
+    @two_dim_compatible
+    def __call__(self, sample, metadata=None):
+        # Only modify metadata if random crop is not specified on sample beforehand
+        if self.__class__.__name__ not in metadata[MetadataKW.CROP_PARAMS]:
+            # Crop parameters
+            th, tw, td = self.size
+            h, w, d = sample.shape
+            fh = random.randint(*sorted((0, h - th)))
+            fw = random.randint(*sorted((0, w - tw)))
+            fd = random.randint(*sorted((0, d - td)))
+            params = (fh, fw, fd, h, w, d)
+            metadata[MetadataKW.CROP_PARAMS][self.__class__.__name__] = params
+
+        # Call base method
+        return super().__call__(sample, metadata)
+
+
 class DilateGT(ImedTransform):
     """Randomly dilate a ground-truth tensor.
 
