@@ -4,6 +4,7 @@ import numpy as np
 
 def set_seed(seed=6, rank=0):
     """
+    This function controls sources of randomness to aid reproducibility.
     Args:
         seed: int to initialize random number generator (RNG)
         rank: int specifying the GPU id for training
