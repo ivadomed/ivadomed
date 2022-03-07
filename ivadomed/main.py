@@ -9,6 +9,7 @@ import platform
 import multiprocessing
 import re
 
+from ivadomed.random import set_seed
 from ivadomed.loader.bids_dataframe import BidsDataframe
 from ivadomed import evaluation as imed_evaluation
 from ivadomed import config_manager as imed_config_manager
@@ -347,6 +348,8 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     logger.add(str(path_log))
     logger.add(sys.stdout)
 
+    set_seed(context[ConfigKW.RANDOM_SEED])
+   
     # Create a log with the version of the Ivadomed software and the version of the Annexed dataset (if present)
     create_dataset_and_ivadomed_version_log(context)
 
@@ -378,6 +381,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     train_lst, valid_lst, test_lst = imed_loader_utils.get_subdatasets_subject_files_list(context[ConfigKW.SPLIT_DATASET],
                                                                                           bids_df.df,
                                                                                           path_output,
+                                                                                          context[ConfigKW.RANDOM_SEED],
                                                                                           context.get(ConfigKW.LOADER_PARAMETERS).get(
                                                                                               LoaderParamsKW.SUBJECT_SELECTION))
 
@@ -436,6 +440,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
             dataset_val=ds_valid,
             training_params=context[ConfigKW.TRAINING_PARAMETERS],
             path_output=path_output,
+            random_seed=context[ConfigKW.RANDOM_SEED],
             device=device,
             cuda_available=cuda_available,
             metric_fns=metric_fns,
@@ -578,7 +583,6 @@ def create_dataset_and_ivadomed_version_log(context):
 
     f.close()
 
-
 def run_main():
     imed_utils.init_ivadomed()
 
@@ -598,7 +602,6 @@ def run_main():
                 n_gif=args.gif if args.gif is not None else 0,
                 thr_increment=args.thr_increment if args.thr_increment else None,
                 resume_training=bool(args.resume_training))
-
 
 if __name__ == "__main__":
     run_main()
