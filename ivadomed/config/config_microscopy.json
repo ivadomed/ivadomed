@@ -1,5 +1,6 @@
 {
     "command": "train",
+    "random_seed": 6,
     "gpu_ids": [0],
     "path_output": "log_microscopy_sem",
     "model_name": "model_seg_rat_axon-myelin_sem",
@@ -37,7 +38,6 @@
     },
     "split_dataset": {
         "fname_split": null,
-        "random_seed": 6,
         "split_method" : "sample_id",
         "data_testing": {"data_type": null, "data_value":[]},
         "balance": null,

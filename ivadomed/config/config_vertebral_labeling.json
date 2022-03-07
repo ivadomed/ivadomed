@@ -1,5 +1,6 @@
 {
     "command": "train",
+    "random_seed": 8,
     "gpu_ids": [7],
     "path_output": "labeling_t2test",
     "model_name": "find_disc_t1",
@@ -27,7 +28,6 @@
     },
     "split_dataset": {
         "fname_split": null,
-        "random_seed": 8,
         "split_method" : "participant_id",
         "data_testing": {"data_type": null, "data_value":[]},
         "balance": null,
