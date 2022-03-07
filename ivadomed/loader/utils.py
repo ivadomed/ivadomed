@@ -8,9 +8,10 @@ import os
 from pathlib import Path
 from loguru import logger
 from sklearn.model_selection import train_test_split
-from torch._six import string_classes, int_classes
+from torch._six import string_classes #, int_classes
 from ivadomed import utils as imed_utils
-from ivadomed.keywords import SplitDatasetKW, LoaderParamsKW, ROIParamsKW, ContrastParamsKW
+from ivadomed.keywords import SplitDatasetKW, LoaderParamsKW, ROIParamsKW, ContrastParamsKW, ConfigKW
+from ivadomed.random import set_seed
 import nibabel as nib
 import random
 
@@ -141,7 +142,7 @@ def get_new_subject_file_split(df, split_method, data_testing, random_seed,
             raise ValueError("All lists in subject_selection parameter should have the same length.")
 
         sampled_dfs = []
-        random.seed(random_seed)
+        set_seed(random_seed)
         for m, n, v in zip(subject_selection["metadata"], subject_selection["n"], subject_selection["value"]):
             participants = random.sample(df[df[m] == v]['participant_id'].unique().tolist(), n)
             for participant in participants:
@@ -183,7 +184,7 @@ def get_new_subject_file_split(df, split_method, data_testing, random_seed,
     return train_lst, valid_lst, test_lst
 
 
-def get_subdatasets_subject_files_list(split_params, df, path_output, subject_selection=None):
+def get_subdatasets_subject_files_list(split_params, df, path_output, random_seed, subject_selection=None):
     """Get lists of subject filenames for each sub-dataset between training / validation / testing.
 
     Args:
@@ -219,7 +220,7 @@ def get_subdatasets_subject_files_list(split_params, df, path_output, subject_se
         train_lst, valid_lst, test_lst = get_new_subject_file_split(df=df,
                                                                     split_method=split_params[SplitDatasetKW.SPLIT_METHOD],
                                                                     data_testing=split_params[SplitDatasetKW.DATA_TESTING],
-                                                                    random_seed=split_params[SplitDatasetKW.RANDOM_SEED],
+                                                                    random_seed=random_seed,
                                                                     train_frac=split_params[SplitDatasetKW.TRAIN_FRACTION],
                                                                     test_frac=split_params[SplitDatasetKW.TEST_FRACTION],
                                                                     path_output=path_output,
@@ -254,7 +255,7 @@ def imed_collate(batch):
         if elem.shape == ():  # scalars
             py_type = float if elem.dtype.name.startswith('float') else int
             return __numpy_type_map[elem.dtype.name](list(map(py_type, batch)))
-    elif isinstance(batch[0], int_classes):
+    elif isinstance(batch[0], int): #int_classes):
         return torch.LongTensor(batch)
     elif isinstance(batch[0], float):
         return torch.DoubleTensor(batch)
