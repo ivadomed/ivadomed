@@ -583,6 +583,7 @@ def create_dataset_and_ivadomed_version_log(context):
 
     f.close()
 
+
 def run_main():
     imed_utils.init_ivadomed()
 
