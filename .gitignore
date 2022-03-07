@@ -33,3 +33,6 @@ data_functional_testing/
 
 # venv
 venv/
+
+# Singularity Container
+*.sif
