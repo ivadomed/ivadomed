@@ -22,7 +22,7 @@ from ivadomed import inference as imed_inference
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, film as imed_film
 from ivadomed.keywords import ConfigKW, ModelParamsKW, LoaderParamsKW, ContrastParamsKW, BalanceSamplesKW, \
     TrainingParamsKW, ObjectDetectionParamsKW, UncertaintyKW, PostprocessingKW, BinarizeProdictionKW, MetricsKW, \
-    MetadataKW, OptionKW
+    MetadataKW, OptionKW, SplitDatasetKW
 from loguru import logger
 from pathlib import Path
 
@@ -348,7 +348,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     logger.add(str(path_log))
     logger.add(sys.stdout)
 
-    set_seed(context[ConfigKW.RANDOM_SEED])
+    set_seed(context[ConfigKW.SPLIT_DATASET][SplitDatasetKW.RANDOM_SEED])
    
     # Create a log with the version of the Ivadomed software and the version of the Annexed dataset (if present)
     create_dataset_and_ivadomed_version_log(context)
@@ -381,7 +381,6 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     train_lst, valid_lst, test_lst = imed_loader_utils.get_subdatasets_subject_files_list(context[ConfigKW.SPLIT_DATASET],
                                                                                           bids_df.df,
                                                                                           path_output,
-                                                                                          context[ConfigKW.RANDOM_SEED],
                                                                                           context.get(ConfigKW.LOADER_PARAMETERS).get(
                                                                                               LoaderParamsKW.SUBJECT_SELECTION))
 
@@ -440,7 +439,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
             dataset_val=ds_valid,
             training_params=context[ConfigKW.TRAINING_PARAMETERS],
             path_output=path_output,
-            random_seed=context[ConfigKW.RANDOM_SEED],
+            random_seed=context[ConfigKW.SPLIT_DATASET][SplitDatasetKW.RANDOM_SEED],
             device=device,
             cuda_available=cuda_available,
             metric_fns=metric_fns,

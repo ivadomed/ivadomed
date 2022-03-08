@@ -184,7 +184,7 @@ def get_new_subject_file_split(df, split_method, data_testing, random_seed,
     return train_lst, valid_lst, test_lst
 
 
-def get_subdatasets_subject_files_list(split_params, df, path_output, random_seed, subject_selection=None):
+def get_subdatasets_subject_files_list(split_params, df, path_output, subject_selection=None):
     """Get lists of subject filenames for each sub-dataset between training / validation / testing.
 
     Args:
@@ -220,7 +220,7 @@ def get_subdatasets_subject_files_list(split_params, df, path_output, random_see
         train_lst, valid_lst, test_lst = get_new_subject_file_split(df=df,
                                                                     split_method=split_params[SplitDatasetKW.SPLIT_METHOD],
                                                                     data_testing=split_params[SplitDatasetKW.DATA_TESTING],
-                                                                    random_seed=random_seed,
+                                                                    random_seed=split_params[SplitDatasetKW.RANDOM_SEED],
                                                                     train_frac=split_params[SplitDatasetKW.TRAIN_FRACTION],
                                                                     test_frac=split_params[SplitDatasetKW.TEST_FRACTION],
                                                                     path_output=path_output,
