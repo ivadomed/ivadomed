@@ -1,6 +1,5 @@
 {
     "command": "train",
-    "random_seed": 6,
     "gpu_ids": [0],
     "path_output": "spineGeneric",
     "model_name": "my_model",
@@ -33,6 +32,7 @@
     },
     "split_dataset": {
         "fname_split": null,
+        "random_seed": 6,
         "split_method" : "participant_id",
         "data_testing": {"data_type": null, "data_value":[]},
         "balance": null,

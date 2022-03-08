@@ -1,6 +1,5 @@
 {
     "command": "test",
-    "random_seed": 6,
     "gpu_ids": [2],
     "path_output": "spineGeneric_small",
     "model_name": "seg_sc_t2star",
@@ -28,6 +27,7 @@
     },
     "split_dataset": {
         "fname_split": null,
+        "random_seed": 6,
         "split_method" : "participant_id",
         "data_testing": {"data_type": "institution_id", "data_value":["amu"]},
         "balance": null,

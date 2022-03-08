@@ -1,6 +1,5 @@
 {
     "command": "train",
-    "random_seed": 6,
     "gpu_ids": [6],
     "path_output": "classification_lesion_ax",
     "model_name": "label_lesion_t2_t2star",
@@ -28,6 +27,7 @@
     },
     "split_dataset": {
         "fname_split": null,
+        "random_seed": 6,
         "split_method" : "participant_id",
         "data_testing": {"data_type": null, "data_value":[]},
         "balance": null,
