@@ -430,7 +430,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
             dataset_train=ds_train,
             dataset_val=ds_valid,
             training_params=context[ConfigKW.TRAINING_PARAMETERS],
-            wandb_params=context[ConfigKW.WANDB],
+            wandb_params=context.get(ConfigKW.WANDB),
             path_output=path_output,
             device=device,
             cuda_available=cuda_available,
