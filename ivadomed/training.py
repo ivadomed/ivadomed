@@ -22,12 +22,12 @@ from ivadomed import utils as imed_utils
 from ivadomed import visualize as imed_visualize
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.loader.balanced_sampler import BalancedSampler
-from ivadomed.keywords import ModelParamsKW, ConfigKW, BalanceSamplesKW, TrainingParamsKW, MetadataKW
+from ivadomed.keywords import ModelParamsKW, ConfigKW, BalanceSamplesKW, TrainingParamsKW, MetadataKW, WandbKW
 
 cudnn.benchmark = True
 
 
-def train(model_params, dataset_train, dataset_val, training_params, wandb_params, path_output, device,
+def train(model_params, dataset_train, dataset_val, training_params, path_output, device, wandb_params=None,
           cuda_available=True, metric_fns=None, n_gif=0, resume_training=False, debugging=False):
     """Main command to train the network.
 
@@ -55,11 +55,21 @@ def train(model_params, dataset_train, dataset_val, training_params, wandb_param
     # Write the metrics, images, etc to TensorBoard format
     writer = SummaryWriter(log_dir=path_output)
 
-    # Collect all hyperparameters into a dictionary
-    cfg = { **training_params, **model_params}
-    # Initialize WandB with metrics and hyperparameters
-    wandb.init(project=wandb_params["project_name"], group=wandb_params["group_name"], 
-                                name=wandb_params["run_name"], config=cfg)
+    # Only initialize wandb if required params are found in the config file
+    if wandb_params is not None and wandb_params[WandbKW.WANDB_API_KEY]:
+        # Collect all hyperparameters into a dictionary
+        cfg = { **training_params, **model_params}
+
+        # Get the actual project, group, and run names if they exist, else choose the temporary names as default
+        project_name = wandb_params.get(WandbKW.PROJECT_NAME, "temp_project")
+        group_name = wandb_params.get(WandbKW.GROUP_NAME, "temp_group")
+        run_name = wandb_params.get(WandbKW.RUN_NAME, "temp_run")
+
+        # Log on to WandB (since the API_KEY is already provided)
+        wandb.login(key=wandb_params[WandbKW.WANDB_API_KEY])
+
+        # Initialize WandB with metrics and hyperparameters
+        wandb.init(project=project_name, group=group_name, name=run_name, config=cfg)
 
     # BALANCE SAMPLES AND PYTORCH LOADER
     conditions = all([training_params[TrainingParamsKW.BALANCE_SAMPLES][BalanceSamplesKW.APPLIED],
@@ -125,8 +135,10 @@ def train(model_params, dataset_train, dataset_val, training_params, wandb_param
                                                     num_epochs)
     logger.info("Scheduler parameters: {}".format(training_params["scheduler"]["lr_scheduler"]))
 
-    # Logs gradients (at every log_freq steps) to the dashboard.
-    wandb.watch(model, log="gradients", log_freq=wandb_params["log_grads_every"])
+    # Only call wandb methods if required params are found in the config file
+    if wandb_params is not None and wandb_params[WandbKW.WANDB_API_KEY]:
+        # Logs gradients (at every log_freq steps) to the dashboard.
+        wandb.watch(model, log="gradients", log_freq=wandb_params["log_grads_every"])
 
     # Resume
     start_epoch = 1
@@ -164,7 +176,9 @@ def train(model_params, dataset_train, dataset_val, training_params, wandb_param
         start_time = time.time()
 
         lr = scheduler.get_last_lr()[0]
-        wandb.log({"learning_rate": lr})
+        writer.add_scalar('learning_rate', lr, epoch)
+        if wandb_params is not None and wandb_params[WandbKW.WANDB_API_KEY]:
+            wandb.log({"learning_rate": lr})
 
         # Training loop -----------------------------------------------------------
         model.train()
@@ -206,8 +220,9 @@ def train(model_params, dataset_train, dataset_val, training_params, wandb_param
 
             # Save image at every 50th step if debugging is true
             if i%50 == 0 and debugging:
-                imed_visualize.save_wandb_img(writer, epoch, "Train", input_samples, gt_samples, preds,
-                                                    is_three_dim=not model_params[ModelParamsKW.IS_2D])
+                imed_visualize.save_img(writer, epoch, "Train", input_samples, gt_samples, preds,
+                                                wandb_params=wandb_params,
+                                                is_three_dim=not model_params[ModelParamsKW.IS_2D])
 
         if not step_scheduler_batch:
             scheduler.step()
@@ -274,19 +289,28 @@ def train(model_params, dataset_train, dataset_val, training_params, wandb_param
 
                 # Save image at every 10th step if debugging is true
                 if i%50 == 0 and debugging:
-                    imed_visualize.save_wandb_img(writer, epoch, "Validation", input_samples, gt_samples, preds,
-                                                        is_three_dim=not model_params[ModelParamsKW.IS_2D])
+                    imed_visualize.save_img(writer, epoch, "Validation", input_samples, gt_samples, preds,
+                                            wandb_params=wandb_params, 
+                                            is_three_dim=not model_params[ModelParamsKW.IS_2D])
 
             # METRICS COMPUTATION FOR CURRENT EPOCH
             val_loss_total_avg_old = val_loss_total_avg if epoch > 1 else None
             metrics_dict = metric_mgr.get_results()
             metric_mgr.reset()
-            wandb.log({"validation-metrics": metrics_dict})
             val_loss_total_avg = val_loss_total / num_steps
-            wandb.log({"losses": {
+            # log losses on Tensorboard by default
+            writer.add_scalars('Validation/Metrics', metrics_dict, epoch)
+            writer.add_scalars('losses', {
                 'train_loss': train_loss_total_avg,
                 'val_loss': val_loss_total_avg,
-            }})
+            }, epoch)
+            # log on wandb if the corresponding dictionary is provided
+            if wandb_params is not None and wandb_params[WandbKW.WANDB_API_KEY]:
+                wandb.log({"validation-metrics": metrics_dict})
+                wandb.log({"losses": {
+                    'train_loss': train_loss_total_avg,
+                    'val_loss': val_loss_total_avg,
+                }})
             msg = "Epoch {} validation loss: {:.4f}.".format(epoch, val_loss_total_avg)
             val_dice_loss_total_avg = val_dice_loss_total / num_steps
             if training_params["loss"]["name"] != "DiceLoss":
