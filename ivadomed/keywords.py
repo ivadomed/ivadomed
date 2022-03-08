@@ -24,7 +24,6 @@ class ConfigKW:
     HEMIS_UNET = "HeMISUnet"
     SPLIT_PATH = "split_path"
     TRAINING_SHA256 = "training_sha256"
-    RANDOM_SEED = "random_seed"
 
 
 @dataclass
@@ -51,6 +50,7 @@ class SplitDatasetKW:
     SPLIT_METHOD = "split_method"
     FNAME_SPLIT = "fname_split"
     DATA_TESTING = "data_testing"
+    RANDOM_SEED = "random_seed"
     TRAIN_FRACTION = "train_fraction"
     TEST_FRACTION = "test_fraction"
     BALANCE = "balance"
