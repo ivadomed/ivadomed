@@ -3,9 +3,9 @@ The data are structure in a folder such as:
 dataset/
 ├── 20220309_demo_mouse_07_0001
 │         ├── image.png
-│         ├── mask.png
-│         ├── mask_seg-axon-manual.png
-│         ├── mask_seg-myelin-manual.png
+│         ├── mask_axon.png
+│         ├── mask_axonmyelin.png
+│         ├── mask_myelin.png
 │         └── pixel_size_in_micrometer.txt
 ├── 20220309_demo_mouse_07_0002
 │         ├── image.png
