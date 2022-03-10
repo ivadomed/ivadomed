@@ -3,21 +3,21 @@ The data are structure in a folder such as:
 dataset/
 ├── 20220309_demo_mouse_07_0001
 │         ├── image.png
-│         ├── mask_axon.png
-│         ├── mask_axonmyelin.png
-│         ├── mask_myelin.png
+│         ├── image_seg-axon.png
+│         ├── image_seg-axonmyelin.png
+│         ├── image_seg-myelin.png
 │         └── pixel_size_in_micrometer.txt
 ├── 20220309_demo_mouse_07_0002
 │         ├── image.png
-│         ├── mask.png
-│         ├── mask_seg-axon-manual.png
-│         ├── mask_seg-myelin-manual.png
+│         ├── image_seg-axon.png
+│         ├── image_seg-axonmyelin.png
+│         ├── image_seg-myelin.png
 │         └── pixel_size_in_micrometer.txt
 └── 20220309_demo_mouse_07_0003
           ├── image.png
-          ├── mask.png
-          ├── mask_seg-axon-manual.png
-          ├── mask_seg-myelin-manual.png
+          ├── image_seg-axon.png
+          ├── image_seg-axonmyelin.png
+          ├── image_seg-myelin.png
           └── pixel_size_in_micrometer.txt
 
 """
@@ -40,9 +40,9 @@ images = {
 
 ## Dictionary for derivatives
 der = {
-    "mask.png": "_TEM_seg-axonmyelin-manual.png",
-    "mask_seg-axon-manual.png": "_TEM_seg-axon-manual.png",
-    "mask_seg-myelin-manual.png": "_TEM_seg-myelin-manual.png"
+    "image_seg-axon.png": "_TEM_seg-axon-manual.png",
+    "image_seg-axonmyelin.png": "_TEM_seg-axonmyelin-manual.png",
+    "image_seg-myelin.png": "_TEM_seg-myelin-manual.png"
 }
 
 # Define function to get the input and output path for data
