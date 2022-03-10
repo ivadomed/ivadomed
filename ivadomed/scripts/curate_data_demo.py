@@ -64,7 +64,7 @@ def get_parameters():
 def create_json_sidecar(output_data, sub_id):
 
     # Path for each subject  destination bids folder
-    path_folder_sub_id_bids = os.path.join(output_data, sub_id, 'microscopy')
+    path_folder_sub_id_bids = os.path.join(output_data, sub_id, 'micr')
 
     # Create filename for json sidecar
     item_out = sub_id + "_TEM.json"
