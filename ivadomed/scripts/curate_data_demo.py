@@ -71,11 +71,7 @@ def create_json_sidecar(output_data, sub_id):
 
     # Define json sidecar content
     data_json = {"PixelSize": [0.00236, 0.00236],
-                 "FieldOfView": [8.88, 5.39],
-                 "BodyPart": "BRAIN",
-                 "BodyPartDetails": "splenium",
-                 "SampleFixation": "2% paraformaldehyde, 2.5% glutaraldehyde",
-                 "Environment": "exvivo"
+                 "PixelSizeUnits: "um"
                  }
 
     # Write content to file
