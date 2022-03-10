@@ -156,7 +156,7 @@ def main(root_data, output_data):
             row_sub.append(subject)
             row_sub.append('mus musculus')
             tsv_writer_participants.writerow(row_sub)
-            subject_samples = sorted(glob.glob(os.path.join(output_data, subject, 'microscopy', '*.png')))
+            subject_samples = sorted(glob.glob(os.path.join(output_data, subject, 'micr', '*.png')))
             for file_sample in subject_samples:
                 row_sub_samples = []
                 row_sub_samples.append(os.path.basename(file_sample).split('_')[1])
