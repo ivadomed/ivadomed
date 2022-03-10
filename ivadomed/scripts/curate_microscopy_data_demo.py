@@ -1,24 +1,21 @@
 """
 The data are structure in a folder such as:
-dataset/
+demo_microscopy_dataset/
 ├── 20220309_demo_mouse_07_0001
 │         ├── image.png
 │         ├── image_seg-axon.png
 │         ├── image_seg-axonmyelin.png
-│         ├── image_seg-myelin.png
-│         └── pixel_size_in_micrometer.txt
+│         └── image_seg-myelin.png
 ├── 20220309_demo_mouse_07_0002
 │         ├── image.png
 │         ├── image_seg-axon.png
 │         ├── image_seg-axonmyelin.png
-│         ├── image_seg-myelin.png
-│         └── pixel_size_in_micrometer.txt
+│         └── image_seg-myelin.png
 └── 20220309_demo_mouse_07_0003
           ├── image.png
           ├── image_seg-axon.png
           ├── image_seg-axonmyelin.png
-          ├── image_seg-myelin.png
-          └── pixel_size_in_micrometer.txt
+          └── image_seg-myelin.png
 
 """
 
