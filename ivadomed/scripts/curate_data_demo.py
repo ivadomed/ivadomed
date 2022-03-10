@@ -125,7 +125,7 @@ def main(root_data, output_data):
             elif file in der:
 
                 # Derivatives go somewhere else
-                path_sub_id_dir_out = os.path.join(output_data, 'derivatives', 'labels', sub_id, 'microscopy')
+                path_sub_id_dir_out = os.path.join(output_data, 'derivatives', 'labels', sub_id, 'micr')
 
                 # Define the output file path
                 path_file_out = os.path.join(path_sub_id_dir_out, sub_bids_full + der[file])
