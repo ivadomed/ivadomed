@@ -32,4 +32,4 @@ An example of this organization is shown below:
 
 .. note:: For an exhaustive list of derivatives used in ``ivadomed``, please see our `wiki <https://github.com/ivadomed/ivadomed/wiki/repositories#derivatives>`_
 
-.. note:: For a demo of data curation, please see script `here <https://github.com/ivadomed/ivadomed/scripts/curate_data_demo.py>`_
+.. note:: For a demo of microscopy data curation, please see script `here <https://github.com/ivadomed/ivadomed/scripts/curate_data_demo.py>`_
