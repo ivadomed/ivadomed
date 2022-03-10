@@ -165,9 +165,8 @@ def main(root_data, output_data):
                 tsv_writer_samples.writerow(row_sub_samples)
 
     # Create dataset_description.json
-    dataset_description = {"Name": "data_axondeepseg_tem",
-                           "BIDSVersion": "1.7.0",
-                           "License": "MIT"
+    dataset_description = {"Name": "demo dataset",
+                           "BIDSVersion": "1.7.0"
                            }
 
     with open(output_data + '/dataset_description.json', 'w') as json_file:
