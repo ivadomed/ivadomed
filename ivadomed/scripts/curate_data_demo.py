@@ -47,7 +47,7 @@ der = {
 
 # Define function to get the input and output path for data
 def get_parameters():
-    parser = argparse.ArgumentParser(description='This script is curating dataset data_axondeepseg_tem to BIDS')
+    parser = argparse.ArgumentParser(description='This script is curating the demo dataset to BIDS')
     # Define input path
     parser.add_argument("-d", "--data",
                         help="Path to folder containing the dataset to be curated",
