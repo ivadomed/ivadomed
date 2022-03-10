@@ -116,7 +116,7 @@ def main(root_data, output_data):
             if file in images:
 
                 # Most files go into the subject's data folder
-                path_sub_id_dir_out = os.path.join(output_data, sub_id, 'microscopy')
+                path_sub_id_dir_out = os.path.join(output_data, sub_id, 'micr')
 
                 # Define the output file path
                 path_file_out = os.path.join(path_sub_id_dir_out, sub_bids_full + images[file])
