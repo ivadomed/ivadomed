@@ -173,11 +173,10 @@ def main(root_data, output_data):
         json.dump(dataset_description, json_file, indent=4)
 
     # Create dataset_description.json for derivatives/labels
-    dataset_description_derivatives = {"Name": "data_axondeepseg_tem labels",
+    dataset_description_derivatives = {"Name": "demo dataset labels",
                                        "BIDSVersion": "1.7.0",
-                                       "PipelineDescription": {
-                                           "Name": "Axon and myelin manual segmentation labels"
-                                       }}
+                                       "GeneratedBy": [{"Name": "demo dataset labels pipeline name"}]
+                                       }
 
     with open(output_data + '/derivatives/labels/dataset_description.json', 'w') as json_file:
         json.dump(dataset_description_derivatives, json_file, indent=4)
