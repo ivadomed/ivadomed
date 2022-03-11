@@ -349,6 +349,8 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
                             Length equals 2 [PixelSizeX, PixelSizeY] for 2D or 3 [PixelSizeX, PixelSizeY, PixelSizeZ] for 3D, \
                             where X is the width, Y the height and Z the depth of the image.
             * 'pixel_size_units': (str) Units of pixel size (Must be either "mm", "um" or "nm")
+            * 'patch': (bool) Indicate if 2d patching is used while segmenting (command '--segment'), otherwise inference is \
+                       performed on the entire image at once.
             * 'overlap_2D': (list of int) List of overlaps in pixels for 2D patching. Length equals 2 [OverlapX, OverlapY], \
                             where X is the width and Y the height of the image.
             * 'metadata': (str) Film metadata.
@@ -406,20 +408,39 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
     kernel_3D = bool(ConfigKW.MODIFIED_3D_UNET in context and context[ConfigKW.MODIFIED_3D_UNET][ModelParamsKW.APPLIED]) or \
                 not context[ConfigKW.DEFAULT_MODEL][ModelParamsKW.IS_2D]
 
-    # Assign length_2D and stride_2D for 2D patching
-    length_2D = context[ConfigKW.DEFAULT_MODEL][ModelParamsKW.LENGTH_2D] if \
-        ModelParamsKW.LENGTH_2D in context[ConfigKW.DEFAULT_MODEL] else []
-    stride_2D = context[ConfigKW.DEFAULT_MODEL][ModelParamsKW.STRIDE_2D] if \
-        ModelParamsKW.STRIDE_2D in context[ConfigKW.DEFAULT_MODEL] else []
-    is_2d_patch = bool(length_2D)
+    if (options is not None) and ('patch' in options):
+        is_2d_patch = options['patch']
+    else:
+        is_2d_patch = False
 
-    if is_2d_patch and (options is not None) and (OptionKW.OVERLAP_2D in options):
-        overlap_2D = options.get(OptionKW.OVERLAP_2D)
-        # Swap OverlapX and OverlapY resulting in an array in order [OverlapY, OverlapX]
-        # to match length_2D and stride_2D in [Height, Width] orientation.
-        overlap_2D[1], overlap_2D[0] = overlap_2D[0], overlap_2D[1]
-        # Adjust stride_2D with overlap_2D
-        stride_2D = [x1 - x2 for (x1, x2) in zip(length_2D, overlap_2D)]
+    if is_2d_patch:
+        # Assign length_2D and stride_2D for 2D patching
+        length_2D = context[ConfigKW.DEFAULT_MODEL][ModelParamsKW.LENGTH_2D] if \
+            ModelParamsKW.LENGTH_2D in context[ConfigKW.DEFAULT_MODEL] else []
+        stride_2D = context[ConfigKW.DEFAULT_MODEL][ModelParamsKW.STRIDE_2D] if \
+            ModelParamsKW.STRIDE_2D in context[ConfigKW.DEFAULT_MODEL] else []
+        if not (length_2D and stride_2D):
+            is_2d_patch = False
+            logger.warning(f"'patch' option is provided but the default model has no 'length_2D' and 'stride_2D' "
+                           f"parameters in the configuration file '{fname_model_metadata.split('/')[-1]}'. "
+                           f"2D patching is ignored and segmentation is done without patches.")
+    else:
+        length_2D = []
+        stride_2D = []
+
+    if (options is not None) and (OptionKW.OVERLAP_2D in options):
+        if (length_2D and stride_2D):
+            overlap_2D = options.get(OptionKW.OVERLAP_2D)
+            # Swap OverlapX and OverlapY resulting in an array in order [OverlapY, OverlapX]
+            # to match length_2D and stride_2D in [Height, Width] orientation.
+            overlap_2D[1], overlap_2D[0] = overlap_2D[0], overlap_2D[1]
+            # Adjust stride_2D with overlap_2D
+            stride_2D = [x1 - x2 for (x1, x2) in zip(length_2D, overlap_2D)]
+        else:
+            logger.warning(f"'overlap_2d' option is provided but 'patch' option is not, or the default model has no "
+                           f"'length_2D' and 'stride_2D' parameters in the configuration file "
+                           f"'{fname_model_metadata.split('/')[-1]}'. 2D patching is ignored and the segmentation is "
+                           f"done without patches.")
 
     # Add microscopy pixel size and pixel size units from options to metadata for filenames_pairs
     if (options is not None) and (OptionKW.PIXEL_SIZE in options):
@@ -516,7 +537,7 @@ def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompo
         preds (tensor): Subvolume predictions
         preds_list (list of tensor): list of subvolume predictions.
         kernel_3D (bool): true when using 3D kernel.
-        is_2d_patch (bool): True if length in default model params.
+        is_2d_patch (bool): Indicates if 2d patching is used.
         slice_axis (int): Indicates the axis used for the 2D slice extraction: Sagittal: 0, Coronal: 1, Axial: 2.
         slice_idx_list (list of int): list of indices for the axis slices.
         data_loader (DataLoader): DataLoader object containing batches using in object construction.
