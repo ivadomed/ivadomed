@@ -119,8 +119,8 @@ class BidsDataframe:
             # and with derivative files of chosen target_suffix
             df_next = df_next[(~df_next['path'].str.contains('derivatives')
                                & df_next['suffix'].str.contains('|'.join(self.contrast_lst)))
-                              | (df_next['path'].str.contains('derivatives')
-                                 & df_next['filename'].str.contains('|'.join(self.target_suffix)))]
+                               | (df_next['path'].str.contains('derivatives')
+                               & (df_next['filename'].str.split('.').apply(lambda x: x[0])).str.endswith(tuple(self.target_suffix)))]
 
             # Update dataframe with files of chosen extensions
             df_next = df_next[df_next['filename'].str.endswith(tuple(self.extensions))]
