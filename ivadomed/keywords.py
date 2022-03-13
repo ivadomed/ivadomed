@@ -73,6 +73,7 @@ class TransformationKW:
     ROICROP = "ROICrop"
     CENTERCROP = "CenterCrop"
     RESAMPLE = "Resample"
+    DENOISE = "Denoise"
 
 
 @dataclass

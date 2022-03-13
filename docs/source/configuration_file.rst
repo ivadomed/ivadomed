@@ -1780,6 +1780,37 @@ Transformations applied during data augmentation. Transformations are sorted in 
         }
     }
 
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "Denoise",
+        "type": "dict",
+        "$$description": [
+            "Denoise an image using non-local means adaptive denoising from P. Coupe et al."
+        ],
+        "options": {
+            "patch_radius": {
+                "type": "int"
+            },
+            "block_radius": {
+                "type": "int"
+            }
+        }
+    }
+
+.. code-block:: JSON
+
+    {
+        "transformation": {
+            "Denoise": {
+                "patch_radius": 1,
+                "block_radius": 5,
+                "applied_to": ["im"]
+            }
+        }
+    }
+
 .. _Uncertainty:
 
 Uncertainty
