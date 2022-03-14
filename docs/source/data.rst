@@ -52,5 +52,4 @@ Further examples of the BIDS organization can be found in the
 
 .. note:: ``participants.tsv`` should, at least, include a column ``participant_id``, which is used when loading the dataset.
 
-.. note:: For an exhaustive list of derivatives used in ``ivadomed``, please see our
-`wiki <https://github.com/ivadomed/ivadomed/wiki/repositories#derivatives>`_.
+.. note:: For an exhaustive list of derivatives used in ``ivadomed``, please see our `wiki <https://github.com/ivadomed/ivadomed/wiki/repositories#derivatives>`_.
