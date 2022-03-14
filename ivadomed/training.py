@@ -153,7 +153,7 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
         epoch = epoch + start_epoch
         start_time = time.time()
 
-        lr = scheduler.get_last_lr()[0]
+        lr = [group['lr'] for group in optimizer.param_groups][0]
         writer.add_scalar('learning_rate', lr, epoch)
 
         # Training loop -----------------------------------------------------------
