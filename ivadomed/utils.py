@@ -2,10 +2,11 @@ import os
 import sys
 import subprocess
 import hashlib
+import wandb
 from enum import Enum
 from loguru import logger
 from pathlib import Path
-from ivadomed.keywords import ConfigKW, LoaderParamsKW
+from ivadomed.keywords import ConfigKW, LoaderParamsKW, WandbKW
 from typing import List
 
 AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
@@ -26,6 +27,31 @@ class Metavar(Enum):
 
     def __str__(self):
         return self.value
+
+
+def initialize_wandb(wandb_params):
+    try:
+        # Log on to WandB (assuming that the API Key is correct)
+        # if not, login would raise an exception for the cases invalid API key and not found
+        wandb.login(key=wandb_params[WandbKW.WANDB_API_KEY])
+    
+    except Exception as e:
+        # log error mssg for unsuccessful wandb authentication
+        if wandb_params is not None:
+            logger.info("Incorrect WandB API Key! Please re-check the entered API key.")
+            logger.info("Disabling WandB Tracking, continuing with Tensorboard Logging")
+        else:
+            logger.info("No WandB parameters found! Continuing with Tensorboard Logging")
+
+        # set flag
+        wandb_tracking = False
+
+    else:
+        # setting flag after successful authentication
+        logger.info("WandB API Authentication Successful!")
+        wandb_tracking = True
+
+    return wandb_tracking
 
 
 def get_task(model_name):
