@@ -55,8 +55,10 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
     # Write the metrics, images, etc to TensorBoard format
     writer = SummaryWriter(log_dir=path_output)
 
-    # Only initialize wandb if required params are found in the config file
-    if wandb_params is not None and wandb_params[WandbKW.WANDB_API_KEY]:
+    # Enable wandb tracking  if the required params are found in the config file and the api key is correct
+    wandb_tracking = imed_utils.initialize_wandb(wandb_params)
+
+    if wandb_tracking:
         # Collect all hyperparameters into a dictionary
         cfg = { **training_params, **model_params}
 
@@ -65,8 +67,8 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
         group_name = wandb_params.get(WandbKW.GROUP_NAME, "temp_group")
         run_name = wandb_params.get(WandbKW.RUN_NAME, "temp_run")
 
-        # Log on to WandB (since the API_KEY is already provided)
-        wandb.login(key=wandb_params[WandbKW.WANDB_API_KEY])
+        if project_name == "temp_project" or group_name == "temp_group" or run_name == "temp_run":     
+            logger.info("{PROJECT/GROUP/RUN} name not found, initializing as {'temp_project'/'temp_group'/'temp_run'}")
 
         # Initialize WandB with metrics and hyperparameters
         wandb.init(project=project_name, group=group_name, name=run_name, config=cfg)
@@ -136,7 +138,7 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
     logger.info("Scheduler parameters: {}".format(training_params["scheduler"]["lr_scheduler"]))
 
     # Only call wandb methods if required params are found in the config file
-    if wandb_params is not None and wandb_params[WandbKW.WANDB_API_KEY]:
+    if wandb_tracking:
         # Logs gradients (at every log_freq steps) to the dashboard.
         wandb.watch(model, log="gradients", log_freq=wandb_params["log_grads_every"])
 
@@ -177,7 +179,7 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
 
         lr = scheduler.get_last_lr()[0]
         writer.add_scalar('learning_rate', lr, epoch)
-        if wandb_params is not None and wandb_params[WandbKW.WANDB_API_KEY]:
+        if wandb_tracking:
             wandb.log({"learning_rate": lr})
 
         # Training loop -----------------------------------------------------------
@@ -221,7 +223,7 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
             # Save image at every 50th step if debugging is true
             if i%50 == 0 and debugging:
                 imed_visualize.save_img(writer, epoch, "Train", input_samples, gt_samples, preds,
-                                                wandb_params=wandb_params,
+                                                wandb_tracking=wandb_tracking,
                                                 is_three_dim=not model_params[ModelParamsKW.IS_2D])
 
         if not step_scheduler_batch:
@@ -290,7 +292,7 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
                 # Save image at every 10th step if debugging is true
                 if i%50 == 0 and debugging:
                     imed_visualize.save_img(writer, epoch, "Validation", input_samples, gt_samples, preds,
-                                            wandb_params=wandb_params, 
+                                            wandb_tracking=wandb_tracking, 
                                             is_three_dim=not model_params[ModelParamsKW.IS_2D])
 
             # METRICS COMPUTATION FOR CURRENT EPOCH
@@ -305,7 +307,7 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
                 'val_loss': val_loss_total_avg,
             }, epoch)
             # log on wandb if the corresponding dictionary is provided
-            if wandb_params is not None and wandb_params[WandbKW.WANDB_API_KEY]:
+            if wandb_tracking:
                 wandb.log({"validation-metrics": metrics_dict})
                 wandb.log({"losses": {
                     'train_loss': train_loss_total_avg,
