@@ -68,7 +68,7 @@ def create_json_sidecar(output_data, sub_id):
 
     # Define json sidecar content
     data_json = {"PixelSize": [0.00236, 0.00236],
-                 "PixelSizeUnits: "um"
+                 "PixelSizeUnits": "um"
                  }
 
     # Write content to file
