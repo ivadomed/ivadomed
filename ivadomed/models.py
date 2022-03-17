@@ -8,7 +8,6 @@ from pathlib import Path
 import torchvision.models
 
 
-
 #Modified from torchvision.models.resnet.Resnet
 class ResNet(nn.Module):
     """ResNet model based on
@@ -1486,27 +1485,38 @@ def set_model_for_retrain(model_path, retrain_fraction, map_location, reset=True
 def get_model_filenames(folder_model):
     """Get trained model filenames from its folder path.
 
-    This function checks if the folder_model exists and get trained model (.pt or .onnx) and its configuration file
-    (.json) from it.
-    Note: if the model exists as .onnx, then this function returns its onnx path instead of the .pt version.
+    This function checks if the folder_model exists and get trained model path (.pt or .onnx based on
+    model and GPU availability) and its configuration file (.json) from it.
 
     Args:
         folder_name (str): Path of the model folder.
 
     Returns:
-        str, str: Paths of the model (.onnx) and its configuration file (.json).
+        str, str: Paths of the model (.pt or .onnx) and its configuration file (.json).
     """
     if Path(folder_model).is_dir():
         prefix_model = Path(folder_model).name
-        # Check if model and model metadata exist. Verify if ONNX model exists, if not try to find .pt model
-        fname_model = Path(folder_model, prefix_model + '.onnx')
-        if not fname_model.is_file():
-            fname_model = Path(folder_model, prefix_model + '.pt')
-            if not fname_model.exists():
-                raise FileNotFoundError(fname_model)
+        fname_model_onnx = Path(folder_model, prefix_model + '.onnx')
+        fname_model_pt = Path(folder_model, prefix_model + '.pt')
+        cuda_available = torch.cuda.is_available()
+
+        # Assign '.pt' or '.onnx' model based on file existence and GPU/CPU device availability
+        if not fname_model_pt.is_file() and not fname_model_onnx.is_file():
+            raise FileNotFoundError(f"Model files not found in model folder: "
+                                    f"'{str(fname_model_onnx)}' or '{str(fname_model_pt)}'")
+        # '.pt' is preferred on GPU, or on CPU if '.onnx' doesn't exist
+        elif ((    cuda_available and     fname_model_pt.is_file()) or
+              (not cuda_available and not fname_model_onnx.is_file())):
+            fname_model = fname_model_pt
+        # '.onnx' is preferred on CPU, or on GPU if '.pt' doesn't exist
+        elif ((not cuda_available and     fname_model_onnx.is_file()) or
+              (    cuda_available and not fname_model_pt.is_file())):
+            fname_model = fname_model_onnx
+
         fname_model_metadata = Path(folder_model, prefix_model + '.json')
         if not fname_model_metadata.is_file():
-            raise FileNotFoundError(fname_model)
+            raise FileNotFoundError(f"Model config file not found in model folder: '{str(fname_model_metadata)}'")
     else:
         raise FileNotFoundError(folder_model)
+
     return str(fname_model), str(fname_model_metadata)

@@ -203,5 +203,60 @@ def test_get_target_filename_list_multiple_raters(loader_parameters, model_param
     assert len(target_filename[1]) == len(loader_parameters["target_suffix"][1])
 
 
+@pytest.mark.parametrize('loader_parameters', [{
+    "path_data": [str(Path(__data_testing_dir__, "microscopy_png"))],
+    "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
+    "target_suffix": ["_seg-myelin-manual"],
+    "extensions": [".png"],
+    "roi_params": {"suffix": None, "slice_filter_roi": None},
+    "contrast_params": {"contrast_lst": [], "balance": {}},
+    "slice_axis": "axial",
+    "slice_filter_params": {"filter_empty_mask": False, "filter_empty_input": True},
+    "patch_filter_params": {"filter_empty_mask": False, "filter_empty_input": False},
+    "multichannel": False
+    }])
+@pytest.mark.parametrize('model_parameters', [{
+    "name": "Unet",
+    "dropout_rate": 0.3,
+    "bn_momentum": 0.1,
+    "final_activation": "sigmoid",
+    "depth": 3
+    }])
+def test_microscopy_pixelsize(download_data_testing_test_files, loader_parameters, model_parameters):
+    """
+    Test that PixelSize and PixelSizeUnits microscopy metadata
+    are handled properly for PixelSizeUnits: "mm", "um" and "nm"
+    """
+    loader_parameters.update({"model_params": model_parameters})
+    bids_df = BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
+
+    # PixelSizeUnits: "mm"
+    data_lst = ['sub-rat2_sample-data5_SEM.png']
+    transform_parameters = {"Resample": {"wspace": 0.000093, "hspace": 0.000093}}
+    ds = imed_loader.load_dataset(bids_df,
+                                  **{**loader_parameters, **{'data_list': data_lst,
+                                                             'transforms_params': transform_parameters,
+                                                             'dataset_type': 'training'}})
+    assert ds[0]['input'].shape == (1, 725, 725)
+
+    # PixelSizeUnits: "um"
+    data_lst = ['sub-rat3_ses-02_sample-data11_run-1_SEM.png']
+    transform_parameters = {"Resample": {"wspace": 0.0001, "hspace": 0.0001}}
+    ds = imed_loader.load_dataset(bids_df,
+                                  **{**loader_parameters, **{'data_list': data_lst,
+                                                             'transforms_params': transform_parameters,
+                                                             'dataset_type': 'training'}})
+    assert ds[0]['input'].shape == (1, 839, 769)
+
+    # PixelSizeUnits: "nm"
+    data_lst = ['sub-rat3_ses-02_sample-data10_SEM.png']
+    transform_parameters = {"Resample": {"wspace": 0.0001, "hspace": 0.0001}}
+    ds = imed_loader.load_dataset(bids_df,
+                                  **{**loader_parameters, **{'data_list': data_lst,
+                                                             'transforms_params': transform_parameters,
+                                                             'dataset_type': 'training'}})
+    assert ds[0]['input'].shape == (1, 758, 737)
+
+
 def teardown_function():
     remove_tmp_dir()

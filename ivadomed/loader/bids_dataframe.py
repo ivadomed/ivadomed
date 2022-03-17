@@ -69,11 +69,6 @@ class BidsDataframe:
     def create_bids_dataframe(self):
         """Generate the dataframe."""
 
-        # Suppress a Future Warning from pybids about leading dot included in 'extension' from version 0.14.0
-        # The config_bids.json file used matches the future behavior
-        # TODO: when reaching version 0.14.0, remove the following line
-        pybids.config.set_option('extension_initial_dot', True)
-
         for path_data in self.paths_data:
             path_data = Path(path_data, '')
 
@@ -81,9 +76,9 @@ class BidsDataframe:
             # validate=True by default for both indexer and layout, BIDS-validator is not skipped
             # Force index for samples tsv and json files, and for subject subfolders containing microscopy files based on extensions.
             # Force index of subject subfolders containing CT-scan files under "anat" or "ct" folder based on extensions and modality suffix.
-            # TODO: remove force indexing of microscopy files after BEP microscopy is merged in BIDS
+            # TODO: remove force indexing of microscopy files after Microscopy-BIDS is integrated in pybids
             # TODO: remove force indexing of CT-scan files after BEP CT-scan is merged in BIDS
-            ext_microscopy = ('.png', '.tif', '.tiff', '.ome.tif', '.ome.tiff', '.ome.tf2', '.ome.tf8', '.ome.btf')
+            ext_microscopy = ('.png', '.tif', '.ome.tif', '.ome.btf')
             ext_ct = ('.nii.gz', '.nii')
             suffix_ct = ('ct', 'CT')
             force_index = []
@@ -94,8 +89,8 @@ class BidsDataframe:
                     subject_path = path_object.parts[subject_path_index]
                     if path_object.name == "samples.tsv" or path_object.name == "samples.json":
                         force_index.append(path_object.name)
-                    if (path_object.name.endswith(ext_microscopy) and (path_object.parent.name == "microscopy" or
-                            path_object.parent.name == "micr") and subject_path.startswith('sub')):
+                    if (path_object.name.endswith(ext_microscopy) and path_object.parent.name == "micr" and
+                        subject_path.startswith('sub')):
                         force_index.append(str(Path(*path_object.parent.parts[subject_path_index:])))
                     # CT-scan
                     if (path_object.name.endswith(ext_ct) and path_object.name.split('.')[0].endswith(suffix_ct) and
@@ -188,7 +183,7 @@ class BidsDataframe:
             df = pd.merge(df, df_participants, on='subject', suffixes=("_x", None), how='left')
 
         # Add sample_id column if sample column exists, and add metadata from samples.tsv file if present
-        # TODO: use pybids function after BEP microscopy is merged in BIDS
+        # TODO: use pybids function after Microscopy-BIDS is integrated in pybids
         if 'sample' in df:
             df['sample_id'] = "sample-" + df['sample']
         fname_samples = Path(path_data, "samples.tsv")
@@ -205,7 +200,7 @@ class BidsDataframe:
             df = pd.merge(df, df_sessions, on=['subject', 'session'], suffixes=("_x", None), how='left')
 
         # Add metadata from all _scans.tsv files, if present
-        # TODO: use pybids function after BEP microscopy is merged in BIDS
+        # TODO: use pybids function after Microscopy-BIDS is integrated in pybids
         # TODO: verify merge behavior with EEG and DWI scans files, tested with anat and microscopy only
         df_scans = pd.DataFrame()
         for path_object in Path(path_data).glob("**/*"):
@@ -301,12 +296,11 @@ class BidsDataframe:
         # need to write default dataset_description.json file if not found
         if not path_deriv_desc_file.is_file() and not path_label_desc_file.is_file():
 
-            logger.warning(f"{path_deriv_desc_file} not found. Please ensure a full path is specified in the "
-                           f"configuration file. Will attempt to create a place holder description file for now at"
-                           f"{path_deriv_desc_file}.")
+            logger.warning(f"{path_deriv_desc_file} not found. Will attempt to create a place holder "
+                           f"description file for now at {path_deriv_desc_file}.")
             with path_deriv_desc_file.open(mode='w') as f:
                 f.write(
                     '{"Name": "Example dataset", '
                     '"BIDSVersion": "1.0.2", '
-                    '"PipelineDescription": {"Name": "Example pipeline"}}'
+                    '"GeneratedBy": [{"Name": "Example pipeline"}]}'
                 )
