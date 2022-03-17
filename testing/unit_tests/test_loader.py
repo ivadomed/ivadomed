@@ -378,9 +378,7 @@ def test_microscopy_pixelsize(download_data_testing_test_files, loader_parameter
     "dropout_rate": 0.3,
     "bn_momentum": 0.1,
     "final_activation": "sigmoid",
-    "depth": 3,
-    "length_2D": [256, 256],
-    "stride_2D": [256, 256]
+    "depth": 3
     }])
 def test_read_png_tif(download_data_testing_test_files, loader_parameters, model_parameters):
     """
@@ -396,13 +394,12 @@ def test_read_png_tif(download_data_testing_test_files, loader_parameters, model
     filename_pairs = [(file_lst, None, None, metadata if isinstance(metadata, list) else [metadata])]
     slice_axis = imed_utils.AXIS_DCT[loader_parameters[LoaderParamsKW.SLICE_AXIS]]
     ds = imed_loader_mri2dseg.MRI2DSegmentationDataset(filename_pairs,
-                                                       length=model_parameters[ModelParamsKW.LENGTH_2D],
-                                                       stride=model_parameters[ModelParamsKW.STRIDE_2D],
                                                        slice_axis=slice_axis,
                                                        cache=True,
                                                        transform=[None, None],
                                                        slice_filter_fn=None)
     ds.load_filenames()
+
 
 def teardown_function():
     remove_tmp_dir()
