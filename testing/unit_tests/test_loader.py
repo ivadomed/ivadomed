@@ -203,25 +203,9 @@ def test_get_target_filename_list_multiple_raters(loader_parameters, model_param
     assert len(target_filename[1]) == len(loader_parameters["target_suffix"][1])
 
 
-@pytest.mark.parametrize('loader_parameters', [{
-    "path_data": [str(Path(__data_testing_dir__, "microscopy_png"))],
-    "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
-    "target_suffix": ["_seg-myelin-manual"],
-    "extensions": [".png"],
-    "roi_params": {"suffix": None, "slice_filter_roi": None},
-    "contrast_params": {"contrast_lst": [], "balance": {}},
-    "slice_axis": "axial",
-    "slice_filter_params": {"filter_empty_mask": False, "filter_empty_input": True},
-    "patch_filter_params": {"filter_empty_mask": False, "filter_empty_input": False},
-    "multichannel": False
-    }])
-@pytest.mark.parametrize('model_parameters', [{
-    "name": "Unet",
-    "dropout_rate": 0.3,
-    "bn_momentum": 0.1,
-    "final_activation": "sigmoid",
-    "depth": 3
-    }])
+@parametrize_with_cases("loader_parameters, model_parameters", cases=[
+    case_microscopy_pixelsize,
+])
 def test_microscopy_pixelsize(download_data_testing_test_files, loader_parameters, model_parameters):
     """
     Test that PixelSize and PixelSizeUnits microscopy metadata
