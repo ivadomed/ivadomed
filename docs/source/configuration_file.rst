@@ -644,9 +644,9 @@ Split Dataset
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "split_method",
         "$$description": [
-            "Metadata contained in a BIDS tabular file on which the files are shuffled, then split\n",
-            "between train/validation/test, according to ``train_fraction`` and ``test_fraction``.\n",
-            "For example, ``participant_id`` from the ``participants.tsv`` file will shuffle all participants,\n",
+            "Metadata contained in a BIDS tabular (TSV) file or a BIDS sidecar JSON file on which the files are shuffled\n",
+            "then split between train/validation/test, according to ``train_fraction`` and ``test_fraction``.\n",
+            "For examples, ``participant_id`` from the ``participants.tsv`` file will shuffle all participants\n",
             "then split between train/validation/test sets."
         ],
         "type": "string"
