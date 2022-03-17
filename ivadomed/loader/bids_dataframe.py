@@ -174,23 +174,30 @@ class BidsDataframe:
             layout (BIDSLayout): pybids BIDSLayout of the indexed files of the path_data
         """
 
-        # Add participant_id column, and metadata from participants.tsv file if present
+        # Drop columns with all null values before loading TSV metadata
+        # Avoid conflicts with unused columns descriptions from TSV sidecar JSON files
+        df.dropna(axis=1, inplace=True, how='all')
+
+        # Add metadata from 'participants.tsv' file if present
         # Uses pybids function
-        df['participant_id'] = "sub-" + df['subject']
         if layout.get_collections(level='dataset'):
             df_participants = layout.get_collections(level='dataset', merge=True).to_df()
+            df_participants.insert(1, 'participant_id', "sub-" + df_participants['subject'])
             df_participants.drop(['suffix'], axis=1, inplace=True)
             df = pd.merge(df, df_participants, on='subject', suffixes=("_x", None), how='left')
 
-        # Add sample_id column if sample column exists, and add metadata from samples.tsv file if present
+        # Add metadata from 'samples.tsv' file if present
+        # The 'participant_id' column is added only if not already present from the 'participants.tsv' file.
         # TODO: use pybids function after Microscopy-BIDS is integrated in pybids
-        if 'sample' in df:
-            df['sample_id'] = "sample-" + df['sample']
         fname_samples = Path(path_data, "samples.tsv")
         if fname_samples.exists():
             df_samples = pd.read_csv(str(fname_samples), sep='\t')
-            df = pd.merge(df, df_samples, on=['participant_id', 'sample_id'], suffixes=("_x", None),
-                          how='left')
+            df_samples['sample'] = df_samples['sample_id'].str.split("sample-").apply(lambda x: x[1])
+            df_samples['subject'] = df_samples['participant_id'].str.split("sub-").apply(lambda x: x[1])
+            columns = df_samples.columns.tolist()
+            if 'participant_id' in df.columns:
+                columns.remove('participant_id')
+            df = pd.merge(df, df_samples[columns], on=['subject', 'sample'], suffixes=("_x", None), how='left')
 
         # Add metadata from all _sessions.tsv files, if present
         # Uses pybids function
