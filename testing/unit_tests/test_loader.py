@@ -7,9 +7,11 @@ import numpy as np
 from ivadomed.loader.bids_dataframe import BidsDataframe
 from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__, download_data_testing_test_files, path_repo_root
 from testing.common_testing_util import remove_tmp_dir
+from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.loader import loader as imed_loader
-from ivadomed.keywords import MetadataKW
+from ivadomed.loader import mri2d_segmentation_dataset as imed_loader_mri2dseg
+from ivadomed.keywords import LoaderParamsKW, MetadataKW, ModelParamsKW
 from pathlib import Path
 logger = logging.getLogger(__name__)
 
@@ -358,6 +360,49 @@ def test_microscopy_pixelsize(download_data_testing_test_files, loader_parameter
                                                              'dataset_type': 'training'}})
     assert ds[0]['input'].shape == (1, 758, 737)
 
+
+@pytest.mark.parametrize('loader_parameters', [{
+    "path_data": [str(Path(__data_testing_dir__, "data_test_png_tif"))],
+    "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
+    "target_suffix": ["_seg-myelin-manual"],
+    "extensions": [".png", ".tif"],
+    "roi_params": {"suffix": None, "slice_filter_roi": None},
+    "contrast_params": {"contrast_lst": [], "balance": {}},
+    "slice_axis": "axial",
+    "slice_filter_params": {"filter_empty_mask": False, "filter_empty_input": True},
+    "patch_filter_params": {"filter_empty_mask": False, "filter_empty_input": False},
+    "multichannel": False
+    }])
+@pytest.mark.parametrize('model_parameters', [{
+    "name": "Unet",
+    "dropout_rate": 0.3,
+    "bn_momentum": 0.1,
+    "final_activation": "sigmoid",
+    "depth": 3,
+    "length_2D": [256, 256],
+    "stride_2D": [256, 256]
+    }])
+def test_read_png_tif(download_data_testing_test_files, loader_parameters, model_parameters):
+    """
+    Test to make sure all combinaitions of PNG/TIF, 8/16 bits, Grayscale/RGB/RGBA files
+    can be loaded without errors.
+    """
+    metadata = {}
+    metadata[MetadataKW.PIXEL_SIZE] = [0.07, 0.07]
+    metadata[MetadataKW.PIXEL_SIZE_UNITS] = "um"
+    loader_parameters.update({LoaderParamsKW.MODEL_PARAMS: model_parameters})
+    bids_df = BidsDataframe(loader_parameters, __tmp_dir__, derivatives=False)
+    file_lst = bids_df.df['path'].tolist()
+    filename_pairs = [(file_lst, None, None, metadata if isinstance(metadata, list) else [metadata])]
+    slice_axis = imed_utils.AXIS_DCT[loader_parameters[LoaderParamsKW.SLICE_AXIS]]
+    ds = imed_loader_mri2dseg.MRI2DSegmentationDataset(filename_pairs,
+                                                       length=model_parameters[ModelParamsKW.LENGTH_2D],
+                                                       stride=model_parameters[ModelParamsKW.STRIDE_2D],
+                                                       slice_axis=slice_axis,
+                                                       cache=True,
+                                                       transform=[None, None],
+                                                       slice_filter_fn=None)
+    ds.load_filenames()
 
 def teardown_function():
     remove_tmp_dir()
