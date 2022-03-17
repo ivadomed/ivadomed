@@ -8,11 +8,13 @@ import os
 from pathlib import Path
 from loguru import logger
 from sklearn.model_selection import train_test_split
-from torch._six import string_classes, int_classes
+from torch._six import string_classes
 from ivadomed import utils as imed_utils
 from ivadomed.keywords import SplitDatasetKW, LoaderParamsKW, ROIParamsKW, ContrastParamsKW
 import nibabel as nib
 import random
+
+int_classes = int
 
 __numpy_type_map = {
     'float64': torch.DoubleTensor,
