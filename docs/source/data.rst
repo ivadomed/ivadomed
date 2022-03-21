@@ -28,13 +28,13 @@ An example of this organization is shown below for MRI data:
 
     dataset/
     └── dataset_description.json
-    └── participants.tsv  <--------------------------------- Metadata describing subjects attributes e.g. sex, age, etc.
-    └── sub-01  <------------------------------------------- Folder enclosing data for subject 1
+    └── participants.tsv  <-------------------------------- Metadata describing subjects attributes e.g. sex, age, etc.
+    └── sub-01  <------------------------------------------ Folder enclosing data for subject 1
     └── sub-02
     └── sub-03
         └── anat
-            └── sub-03_T1w.nii.gz  <------------------------ MRI image in NIfTI format
-            └── sub-03_T1w.json  <-------------------------- Metadata including image parameters, MRI vendor, etc.
+            └── sub-03_T1w.nii.gz  <----------------------- MRI image in NIfTI format
+            └── sub-03_T1w.json  <------------------------- Metadata including image parameters, MRI vendor, etc.
             └── sub-03_T2w.nii.gz
             └── sub-03_T2w.json
     └── derivatives
