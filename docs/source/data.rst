@@ -11,7 +11,7 @@ The details of the standard can be found in the `BIDS specification <https://bid
 Validation
 ----------
 
-The compliance of the dataset with BIDS can be validate with the `BIDS-validator
+The compliance of the dataset with BIDS can be validated with the `BIDS-validator
 web version <http://bids-standard.github.io/bids-validator>`_.
 Other options for validation are available `here <https://github.com/bids-standard/bids-validator/#quickstart>`_.
 
