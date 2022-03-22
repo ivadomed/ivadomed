@@ -16,6 +16,8 @@ class BidsDataframe:
         loader_params (dict): Loader parameters, see :doc:`configuration_file` for more details.
         path_output (str): Output folder.
         derivatives (bool): If True, derivatives are indexed.
+        split_method (str): split_method from Split Dataset parameters, see :doc:`configuration_file` for more details.
+            Default: None. Used to remove unused subject files from the bids_dataframe.
 
     Attributes:
         path_data (list): Paths to the BIDS datasets.
@@ -25,10 +27,11 @@ class BidsDataframe:
         extensions (list of str): List of file extensions of interest.
         contrast_lst (list of str): List of the contrasts of interest.
         derivatives (bool): If True, derivatives are indexed.
+        split_method (str): split_method from Split Dataset parameters
         df (pd.DataFrame): Dataframe containing dataset information
     """
 
-    def __init__(self, loader_params, path_output, derivatives):
+    def __init__(self, loader_params, path_output, derivatives, split_method=None):
 
         # paths_data from loader parameters
         self.paths_data = loader_params['path_data']
@@ -55,6 +58,9 @@ class BidsDataframe:
         # contrast_lst from loader parameters
         self.contrast_lst = [] if 'contrast_lst' not in loader_params['contrast_params'] \
             else loader_params['contrast_params']['contrast_lst']
+
+        # split_method
+        self.split_method = split_method
 
         # derivatives
         self.derivatives = derivatives
@@ -148,6 +154,16 @@ class BidsDataframe:
         columns.remove('path')
         self.df = self.df[~(self.df.astype(str).duplicated(subset=columns, keep='first'))]
 
+        # Remove subject files without the "split_method" metadata if specified
+        # Keep all derivatives
+        if self.split_method:
+            files_remove = (self.df[(~self.df['path'].str.contains('derivatives')
+                               & self.df[self.split_method].isnull())]['filename']).tolist()
+            if files_remove:
+                logger.warning("The files {} don't have the '{}' metadata used as split_method. Skipping files."
+                               .format(files_remove, self.split_method))
+                self.df = self.df[~self.df['filename'].str.contains('|'.join(files_remove))]
+
         # If indexing of derivatives is true
         if self.derivatives:
 
@@ -240,7 +256,7 @@ class BidsDataframe:
                         has_deriv.append(subject_fname)
                         deriv.extend(available)
                     else:
-                        logger.warning("Missing roi_suffix {} for {}. Skipping."
+                        logger.warning("Missing roi_suffix {} for {}. Skipping file."
                                        .format(self.roi_suffix, subject_fname))
                 else:
                     has_deriv.append(subject_fname)
@@ -249,7 +265,7 @@ class BidsDataframe:
                     if target not in str(available) and target != self.roi_suffix:
                         logger.warning("Missing target_suffix {} for {}".format(target, subject_fname))
             else:
-                logger.warning("Missing derivatives for {}. Skipping.".format(subject_fname))
+                logger.warning("Missing derivatives for {}. Skipping file.".format(subject_fname))
 
         return has_deriv, deriv
 
