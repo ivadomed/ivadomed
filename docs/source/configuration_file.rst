@@ -646,7 +646,7 @@ Split Dataset
         "$$description": [
             "Metadata contained in a BIDS tabular (TSV) file or a BIDS sidecar JSON file on which the files are shuffled\n",
             "then split between train/validation/test, according to ``train_fraction`` and ``test_fraction``.\n",
-            "For examples, ``participant_id`` from the ``participants.tsv`` file will shuffle all participants\n",
+            "For examples, ``participant_id`` will shuffle all participants from the ``participants.tsv`` file\n",
             "then split between train/validation/test sets."
         ],
         "type": "string"
