@@ -1,7 +1,16 @@
+import os
 from pathlib import Path
-from loguru import logger
+
+import json
+import csv_diff
+import pandas as pd
 import pytest
+from loguru import logger
+
+from ivadomed.keywords import BidsDataFrameKW, LoaderParamsKW, ContrastParamsKW, ConfigKW
+from ivadomed.loader.bids_dataframe import BidsDataframe
 from ivadomed.scripts import download_data as ivadomed_download_data
+from ivadomed.main import set_loader_params
 import shutil
 import sys
 
@@ -22,6 +31,10 @@ path_data_testing_tmp: str = str(path_repo_root / "tmp" / Path(path_data_testing
 path_functional_tests: str = str(path_repo_root / "testing" / "functional_tests")
 path_data_functional_source: str = str(path_repo_root / "data_functional_testing")
 path_data_functional_tmp: str = str(path_repo_root / "tmp" / Path(path_data_functional_source).name)
+
+path_data_multi_sessions_contrasts_source: Path = path_repo_root / "data_multi_testing"
+path_data_multi_sessions_contrasts_tmp: Path = path_repo_root / "tmp" / Path(
+    path_data_multi_sessions_contrasts_source).name
 
 
 def download_dataset(dataset: str = 'data_testing'):
@@ -64,4 +77,3 @@ def remove_dataset(dataset: str = 'data_testing'):
 def remove_tmp_dir():
     """Recursively remove the ``tmp`` directory if it exists."""
     shutil.rmtree(path_temp, ignore_errors=True)
-
