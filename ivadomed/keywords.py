@@ -236,3 +236,13 @@ class IgnoredFolderKW:
 class MetricsKW:
     RECALL_SPECIFICITY: str = "recall_specificity"
     DICE: str = "dice"
+
+@dataclass
+class MetadataParamsKW:
+    CONTRAST = "contrast"
+    BOUNDING_BOX = "bounding_box"
+
+@dataclass
+class MetadataChoiceKW:
+    MRI_PARAMS = "mri_params"
+    CONTRASTS = "contrasts"
