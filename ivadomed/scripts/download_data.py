@@ -25,6 +25,9 @@ DICT_URL = {
     "data_testing": {
         "url": ["https://github.com/ivadomed/data-testing/archive/r20220221.zip"],
         "description": "Data Used for integration/unit test in Ivadomed."},
+    "data_multi_testing": {
+        "url": ["https://github.com/MotionCorrect/data_multi-sessions-contrasts/archive/refs/tags/v2022-01-06.zip"],
+        "description": "Large Data Used for multi-session contrasts integration/unit test in Ivadomed."},
     "t2_tumor": {
         "url": ["https://github.com/ivadomed/t2_tumor/archive/r20200621.zip"],
         "description": "Cord tumor segmentation model, trained on T2-weighted contrast."},
