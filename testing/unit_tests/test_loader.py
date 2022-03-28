@@ -1,6 +1,5 @@
 import pytest
 import csv_diff
-import logging
 import torch
 import numpy as np
 
@@ -8,12 +7,11 @@ from ivadomed.loader.bids_dataframe import BidsDataframe
 from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__, download_data_testing_test_files, path_repo_root
 from testing.common_testing_util import remove_tmp_dir
 from ivadomed import utils as imed_utils
-from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.loader import loader as imed_loader
+import ivadomed.loader.utils as imed_loader_utils
 from ivadomed.loader import mri2d_segmentation_dataset as imed_loader_mri2dseg
 from ivadomed.keywords import LoaderParamsKW, MetadataKW, ModelParamsKW, TransformationKW
 from pathlib import Path
-logger = logging.getLogger(__name__)
 
 
 def setup_function():
@@ -27,7 +25,7 @@ def setup_function():
     "extensions": [".png"],
     "roi_params": {"suffix": None, "slice_filter_roi": None},
     "contrast_params": {"contrast_lst": []}
-    }])
+}])
 def test_bids_df_microscopy_png(download_data_testing_test_files, loader_parameters):
     """
     Test for microscopy png file format
