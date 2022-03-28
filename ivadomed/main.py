@@ -439,7 +439,6 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
             dataset_val=ds_valid,
             training_params=context[ConfigKW.TRAINING_PARAMETERS],
             path_output=path_output,
-            random_seed=context[ConfigKW.SPLIT_DATASET][SplitDatasetKW.RANDOM_SEED],
             device=device,
             cuda_available=cuda_available,
             metric_fns=metric_fns,
