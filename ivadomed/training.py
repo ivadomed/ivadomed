@@ -22,12 +22,11 @@ from ivadomed import visualize as imed_visualize
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.loader.balanced_sampler import BalancedSampler
 from ivadomed.keywords import ModelParamsKW, ConfigKW, BalanceSamplesKW, TrainingParamsKW, MetadataKW
-from ivadomed.random import set_seed
 
 cudnn.benchmark = True
 
 
-def train(model_params, dataset_train, dataset_val, training_params, path_output, random_seed, device,
+def train(model_params, dataset_train, dataset_val, training_params, path_output, device,
           cuda_available=True, metric_fns=None, n_gif=0, resume_training=False, debugging=False):
     """Main command to train the network.
 
@@ -54,8 +53,6 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
     """
     # Write the metrics, images, etc to TensorBoard format
     writer = SummaryWriter(log_dir=path_output)
-
-    set_seed(random_seed)
 
     # BALANCE SAMPLES AND PYTORCH LOADER
     conditions = all([training_params[TrainingParamsKW.BALANCE_SAMPLES][BalanceSamplesKW.APPLIED],
