@@ -133,7 +133,7 @@ class BidsDataframe:
 
             # Warning if no subject files are found in path_data
             if df_next[~df_next['path'].str.contains('derivatives')].empty:
-                logger.warning("No subject files were found in '{}' dataset. Skipping dataset.".format(path_data))
+                logger.warning(f"No subject files were found in '{path_data}' dataset. Skipping dataset.")
             else:
                 # Add tsv files metadata to dataframe
                 df_next = self.add_tsv_metadata(df_next, path_data, layout)
@@ -164,8 +164,8 @@ class BidsDataframe:
                                 # Get these filesnames and convert to list.
                                 ['filename']).tolist()
             if files_remove:
-                logger.warning("The files {} don't have the '{}' metadata used as split_method. Skipping files."
-                               .format(files_remove, self.split_method))
+                logger.warning(f"The following files don't have the '{self.split_method}' metadata indicated as the "
+                               f"split_method in the configuration JSON file. Skipping these files: {files_remove}")
                 self.df = self.df[~self.df['filename'].str.contains('|'.join(files_remove))]
 
         # If indexing of derivatives is true
@@ -266,16 +266,15 @@ class BidsDataframe:
                         has_deriv.append(subject_fname)
                         deriv.extend(available)
                     else:
-                        logger.warning("Missing roi_suffix {} for {}. Skipping file."
-                                       .format(self.roi_suffix, subject_fname))
+                        logger.warning(f"Missing roi_suffix {self.roi_suffix} for {subject_fname}. Skipping file.")
                 else:
                     has_deriv.append(subject_fname)
                     deriv.extend(available)
                 for target in self.target_suffix:
                     if target not in str(available) and target != self.roi_suffix:
-                        logger.warning("Missing target_suffix {} for {}".format(target, subject_fname))
+                        logger.warning(f"Missing target_suffix {target} for {subject_fname}")
             else:
-                logger.warning("Missing derivatives for {}. Skipping file.".format(subject_fname))
+                logger.warning(f"Missing derivatives for {subject_fname}. Skipping file.")
 
         return has_deriv, deriv
 
@@ -316,9 +315,9 @@ class BidsDataframe:
         """
         try:
             self.df.to_csv(path, index=False)
-            logger.info("Dataframe has been saved in {}.".format(path))
+            logger.info(f"Dataframe has been saved in {path}.")
         except FileNotFoundError:
-            logger.error("Wrong path, bids_dataframe.csv could not be saved in {}.".format(path))
+            logger.error(f"Wrong path, bids_dataframe.csv could not be saved in {path}.")
 
     def write_derivatives_dataset_description(self, path_data: str):
         """Writes default dataset_description.json file if not found in path_data/derivatives folder
