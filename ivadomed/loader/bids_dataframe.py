@@ -154,11 +154,15 @@ class BidsDataframe:
         columns.remove('path')
         self.df = self.df[~(self.df.astype(str).duplicated(subset=columns, keep='first'))]
 
-        # Remove subject files without the "split_method" metadata if specified
-        # Keep all derivatives
+        # Remove subject files without the "split_method" metadata if specified and keep all derivatives
         if self.split_method:
-            files_remove = (self.df[(~self.df['path'].str.contains('derivatives')
-                               & self.df[self.split_method].isnull())]['filename']).tolist()
+            files_remove = (self.df[(
+                                # Path does not contain derivative string (i.e. we only target subject raw data files)
+                                ~self.df['path'].str.contains('derivatives')
+                                # and split method metadata is null (i.e. the subject must have the split_method metadata or will be excluded)
+                                & self.df[self.split_method].isnull())]
+                                # Get these filesnames and convert to list.
+                                ['filename']).tolist()
             if files_remove:
                 logger.warning("The files {} don't have the '{}' metadata used as split_method. Skipping files."
                                .format(files_remove, self.split_method))
