@@ -166,6 +166,7 @@ class BidsDataframe:
             if files_remove:
                 logger.warning(f"The following files don't have the '{self.split_method}' metadata indicated as the "
                                f"split_method in the configuration JSON file. Skipping these files: {files_remove}")
+                # Removing from dataframe all filenames which contain any of the file from files_remove field.
                 self.df = self.df[~self.df['filename'].str.contains('|'.join(files_remove))]
 
         # If indexing of derivatives is true
