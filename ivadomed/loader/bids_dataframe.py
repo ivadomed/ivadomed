@@ -31,7 +31,7 @@ class BidsDataframe:
         df (pd.DataFrame): Dataframe containing dataset information
     """
 
-    def __init__(self, loader_params, path_output, derivatives, split_method=None):
+    def __init__(self, loader_params: dict, path_output: str, derivatives: bool, split_method: str = None):
 
         # paths_data from loader parameters
         self.paths_data = loader_params['path_data']
@@ -184,10 +184,16 @@ class BidsDataframe:
         # Drop columns with all null values
         self.df.dropna(axis=1, inplace=True, how='all')
 
-    def add_tsv_metadata(self, df, path_data, layout):
+    def add_tsv_metadata(self, df: pd.DataFrame, path_data: str, layout: pybids.BIDSLayout):
         """Add tsv files metadata to dataframe.
+
         Args:
-            layout (BIDSLayout): pybids BIDSLayout of the indexed files of the path_data
+            df (pd.DataFrame): Dataframe containing dataset information
+            path_data (str): Path to the BIDS dataset
+            layout (pybids.BIDSLayout): pybids BIDSLayout of the indexed files of the path_data
+
+        Returns:
+            pd.DataFrame: Dataframe containing datasets information
         """
 
         # Drop columns with all null values before loading TSV metadata
@@ -285,8 +291,9 @@ class BidsDataframe:
         """
         return self.df[self.df['path'].str.contains('derivatives')]['filename'].tolist()
 
-    def get_derivatives(self, subject_fname, deriv_fnames):
+    def get_derivatives(self, subject_fname: str, deriv_fnames: list):
         """Return list of available derivative filenames for a subject filename.
+
         Args:
             subject_fname (str): Subject filename.
             deriv_fnames (list of str): List of derivative filenames.
@@ -297,8 +304,9 @@ class BidsDataframe:
         prefix_fname = subject_fname.split('.')[0]
         return [d for d in deriv_fnames if prefix_fname in d]
 
-    def save(self, path):
+    def save(self, path: str):
         """Save the dataframe into a csv file.
+
         Args:
             path (str): Path to csv file.
         """
@@ -308,8 +316,11 @@ class BidsDataframe:
         except FileNotFoundError:
             logger.error("Wrong path, bids_dataframe.csv could not be saved in {}.".format(path))
 
-    def write_derivatives_dataset_description(self, path_data):
+    def write_derivatives_dataset_description(self, path_data: str):
         """Writes default dataset_description.json file if not found in path_data/derivatives folder
+
+        Args:
+            path_data (str): Path to the BIDS dataset.
         """
         path_data = Path(path_data).absolute()
 
