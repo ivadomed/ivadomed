@@ -30,16 +30,18 @@ import subprocess
 import csv
 from textwrap import dedent
 
+modality_suffix = "TEM"
+
 ## Dictionary for images
 images = {
-    "image.png": "_TEM.png"
+    "image.png": "_" + modality_suffix + ".png"
 }
 
 ## Dictionary for derivatives
 der = {
-    "image_seg-axon.png": "_TEM_seg-axon-manual.png",
-    "image_seg-axonmyelin.png": "_TEM_seg-axonmyelin-manual.png",
-    "image_seg-myelin.png": "_TEM_seg-myelin-manual.png"
+    "image_seg-axon.png": "_" + modality_suffix + "_seg-axon-manual.png",
+    "image_seg-axonmyelin.png": "_" + modality_suffix + "_seg-axonmyelin-manual.png",
+    "image_seg-myelin.png": "_" + modality_suffix + "_seg-myelin-manual.png"
 }
 
 # Define function to get the input and output path for data
@@ -64,7 +66,7 @@ def create_json_sidecar(output_data, sub_id):
     path_folder_sub_id_bids = os.path.join(output_data, sub_id, 'micr')
 
     # Create filename for json sidecar
-    item_out = sub_id + "_TEM.json"
+    item_out = sub_id + "_" + modality_suffix + ".json"
 
     # Define json sidecar content
     data_json = {"PixelSize": [0.00236, 0.00236],
