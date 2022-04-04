@@ -6,6 +6,7 @@ from torch.nn import Module
 from torch.nn import init
 from pathlib import Path
 import torchvision.models
+from monai.networks.nets import BasicUNet
 
 
 #Modified from torchvision.models.resnet.Resnet
@@ -1440,6 +1441,79 @@ class Countception(Module):
         return net
 
 
+class MONAIUNet(Module):
+    """MONAI's BasicUNet (2D/3D) model adopted in ivadomed"""
+    def __init__(self, in_channel, out_channel, features=(32, 32, 64, 128, 256, 32),
+                 attention=False, dropout_rate=0.3, final_activation="sigmoid", **kwargs):
+        super(MONAIUNet, self).__init__()
+        self.in_channel = in_channel
+        self.out_channel = out_channel
+        self.features = features
+        self.attention = attention
+        self.dropout_rate = dropout_rate
+        self.final_activation = final_activation
+
+        ivadomed_params = {**self.__dict__, **kwargs}
+        monai_model_keys = ['features', 'act', 'norm', 'bias', 'upsample']
+        monai_params = ivadomed_params_to_monai_params(ivadomed_params, monai_model_keys)
+
+        self.model = BasicUNet(**monai_params)
+
+    def forward(self, x):
+        out = self.model(x)
+
+        if hasattr(self, "final_activation") and self.final_activation not in ["softmax", "relu", "sigmoid"]:
+            raise ValueError("final_activation value has to be either softmax, relu, or sigmoid")
+        elif hasattr(self, "final_activation") and self.final_activation == "softmax":
+            out = self.softmax(out)
+        elif hasattr(self, "final_activation") and self.final_activation == "relu":
+            out = nn.ReLU()(out) / nn.ReLU()(out).max() if bool(nn.ReLU()(out).max()) else nn.ReLU()(out)
+        else:
+            out = torch.sigmoid(out)
+
+        return out
+
+
+class UNETR(Module):
+    """MONAI'S UNETR model (<https://arxiv.org/abs/2103.10504>) adopted in ivadomed"""
+
+    def __init__(self, in_channel, out_channel, feature_size=16, hidden_size=768, mlp_dim=3072,
+                 num_heads=12, pos_embed="conv", dropout_rate=0.3, final_activation="sigmoid",
+                 **kwargs):
+        super(UNETR, self).__init__()
+        self.in_channel = in_channel
+        self.out_channel = out_channel
+        self.img_size = kwargs['length_3D']
+        self.feature_size = feature_size
+        self.hidden_size = hidden_size
+        self.mlp_dim = mlp_dim
+        self.num_heads = num_heads
+        self.pos_embed = pos_embed
+        self.dropout_rate = dropout_rate
+        self.final_activation = final_activation
+
+        ivadomed_params = {**self.__dict__, **kwargs}
+        monai_model_keys = ['img_size', 'feature_size', 'hidden_size', 'mlp_dim', 'num_heads', 'pos_embed']
+        monai_params = ivadomed_params_to_monai_params(ivadomed_params, monai_model_keys)
+        self.model = BasicUNet(**monai_params)
+
+    def forward(self, x):
+        out = self.model(x)
+
+        if hasattr(self, "final_activation") and self.final_activation not in ["softmax", "relu",
+                                                                               "sigmoid"]:
+            raise ValueError("final_activation value has to be either softmax, relu, or sigmoid")
+        elif hasattr(self, "final_activation") and self.final_activation == "softmax":
+            out = self.softmax(out)
+        elif hasattr(self, "final_activation") and self.final_activation == "relu":
+            out = nn.ReLU()(out) / nn.ReLU()(out).max() if bool(
+                nn.ReLU()(out).max()) else nn.ReLU()(out)
+        else:
+            out = torch.sigmoid(out)
+
+        return out
+
+
 def set_model_for_retrain(model_path, retrain_fraction, map_location, reset=True):
     """Set model for transfer learning.
 
@@ -1520,3 +1594,32 @@ def get_model_filenames(folder_model):
         raise FileNotFoundError(folder_model)
 
     return str(fname_model), str(fname_model_metadata)
+
+
+def ivadomed_params_to_monai_params(ivadomed_params, monai_model_keys):
+    """
+    Converts from ivadomed param signatures to MONAI param signatures for interoperability
+
+    Args:
+        ivadomed_params (dict): dictionary containing model parameters and values for ivadomed
+        monai_model_keys (list): list containing input attributes for the specific MONAI model
+
+    Returns:
+        dict: dictionary containing model parameters and values for MONAI
+    """
+    monai_model_keys = [] if monai_model_keys is None else monai_model_keys
+
+    # Translate to MONAI the default known ivadomed parameters
+    monai_params = {
+        'spatial_dims': 2 if ivadomed_params['is_2d'] else 3,
+        'in_channels': ivadomed_params['in_channel'],
+        'out_channels': ivadomed_params['out_channel'],
+        'dropout': ivadomed_params['dropout_rate']
+    }
+
+    # Grab parameters that are not conventionally used in ivadomed, tailored for the specific model
+    for key, value in ivadomed_params.items():
+        if key in monai_model_keys:
+            monai_params[key] = value
+
+    return monai_params
