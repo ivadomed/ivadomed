@@ -121,12 +121,15 @@ class BidsDataframe:
             # Drop rows with json, tsv and LICENSE files in case no extensions are provided in config file for filtering
             df_next = df_next[~df_next['filename'].str.endswith(tuple(['.json', '.tsv', 'LICENSE']))]
 
-            # Update dataframe with subject files of chosen contrasts
-            # and with derivative files of chosen target_suffix
+            # The following command updates the dataframe by doing 2 things:
+            # 1. Keep only subject files of chosen contrasts (for files that are not in the 'derivatives' folder)
+            #    (ex: '<dataset_path>/sub-XX/anat/sub-XX_T1w.nii.gz' with contrast_lst:["T1w"])
+            # 2. Keep only derivatives files of chosen target_suffix (for files that are in the 'derivatives' folder)
+            #    (ex: '<dataset_path>/derivatives/labels/sub-XX/anat/sub-XX_T1w_seg-manual.nii.gz' with target_suffix:["_seg-manual"])
             df_next = df_next[(~df_next['path'].str.contains('derivatives')
                                & df_next['suffix'].str.contains('|'.join(self.contrast_lst)))
-                              | (df_next['path'].str.contains('derivatives')
-                                 & df_next['filename'].str.contains('|'.join(self.target_suffix)))]
+                               | (df_next['path'].str.contains('derivatives')
+                               & (df_next['filename'].str.split('.').apply(lambda x: x[0])).str.endswith(tuple(self.target_suffix)))]
 
             # Update dataframe with files of chosen extensions
             df_next = df_next[df_next['filename'].str.endswith(tuple(self.extensions))]
