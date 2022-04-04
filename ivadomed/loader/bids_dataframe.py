@@ -16,6 +16,8 @@ class BidsDataframe:
         loader_params (dict): Loader parameters, see :doc:`configuration_file` for more details.
         path_output (str): Output folder.
         derivatives (bool): If True, derivatives are indexed.
+        split_method (str): split_method from Split Dataset parameters, see :doc:`configuration_file` for more details.
+            Default: None. Used to remove unused subject files from the bids_dataframe.
 
     Attributes:
         path_data (list): Paths to the BIDS datasets.
@@ -25,10 +27,11 @@ class BidsDataframe:
         extensions (list of str): List of file extensions of interest.
         contrast_lst (list of str): List of the contrasts of interest.
         derivatives (bool): If True, derivatives are indexed.
+        split_method (str): split_method from Split Dataset parameters
         df (pd.DataFrame): Dataframe containing dataset information
     """
 
-    def __init__(self, loader_params, path_output, derivatives):
+    def __init__(self, loader_params: dict, path_output: str, derivatives: bool, split_method: str = None):
 
         # paths_data from loader parameters
         self.paths_data = loader_params['path_data']
@@ -55,6 +58,9 @@ class BidsDataframe:
         # contrast_lst from loader parameters
         self.contrast_lst = [] if 'contrast_lst' not in loader_params['contrast_params'] \
             else loader_params['contrast_params']['contrast_lst']
+
+        # split_method
+        self.split_method = split_method
 
         # derivatives
         self.derivatives = derivatives
@@ -130,7 +136,7 @@ class BidsDataframe:
 
             # Warning if no subject files are found in path_data
             if df_next[~df_next['path'].str.contains('derivatives')].empty:
-                logger.warning("No subject files were found in '{}' dataset. Skipping dataset.".format(path_data))
+                logger.warning(f"No subject files were found in '{path_data}' dataset. Skipping dataset.")
             else:
                 # Add tsv files metadata to dataframe
                 df_next = self.add_tsv_metadata(df_next, path_data, layout)
@@ -150,6 +156,21 @@ class BidsDataframe:
         columns = self.df.columns.to_list()
         columns.remove('path')
         self.df = self.df[~(self.df.astype(str).duplicated(subset=columns, keep='first'))]
+
+        # Remove subject files without the "split_method" metadata if specified and keep all derivatives
+        if self.split_method:
+            files_remove = (self.df[(
+                                # Path does not contain derivative string (i.e. we only target subject raw data files)
+                                ~self.df['path'].str.contains('derivatives')
+                                # and split method metadata is null (i.e. the subject must have the split_method metadata or will be excluded)
+                                & self.df[self.split_method].isnull())]
+                                # Get these filesnames and convert to list.
+                                ['filename']).tolist()
+            if files_remove:
+                logger.warning(f"The following files don't have the '{self.split_method}' metadata indicated as the "
+                               f"split_method in the configuration JSON file. Skipping these files: {files_remove}")
+                # Removing from dataframe all filenames which contain any of the file from files_remove field.
+                self.df = self.df[~self.df['filename'].str.contains('|'.join(files_remove))]
 
         # If indexing of derivatives is true
         if self.derivatives:
@@ -171,29 +192,42 @@ class BidsDataframe:
         # Drop columns with all null values
         self.df.dropna(axis=1, inplace=True, how='all')
 
-    def add_tsv_metadata(self, df, path_data, layout):
+    def add_tsv_metadata(self, df: pd.DataFrame, path_data: str, layout: pybids.BIDSLayout):
         """Add tsv files metadata to dataframe.
+
         Args:
-            layout (BIDSLayout): pybids BIDSLayout of the indexed files of the path_data
+            df (pd.DataFrame): Dataframe containing dataset information
+            path_data (str): Path to the BIDS dataset
+            layout (pybids.BIDSLayout): pybids BIDSLayout of the indexed files of the path_data
+
+        Returns:
+            pd.DataFrame: Dataframe containing datasets information
         """
 
-        # Add participant_id column, and metadata from participants.tsv file if present
+        # Drop columns with all null values before loading TSV metadata
+        # Avoid conflicts with unused columns descriptions from TSV sidecar JSON files
+        df.dropna(axis=1, inplace=True, how='all')
+
+        # Add metadata from 'participants.tsv' file if present
         # Uses pybids function
-        df['participant_id'] = "sub-" + df['subject']
         if layout.get_collections(level='dataset'):
             df_participants = layout.get_collections(level='dataset', merge=True).to_df()
+            df_participants.insert(1, 'participant_id', "sub-" + df_participants['subject'])
             df_participants.drop(['suffix'], axis=1, inplace=True)
             df = pd.merge(df, df_participants, on='subject', suffixes=("_x", None), how='left')
 
-        # Add sample_id column if sample column exists, and add metadata from samples.tsv file if present
+        # Add metadata from 'samples.tsv' file if present
+        # The 'participant_id' column is added only if not already present from the 'participants.tsv' file.
         # TODO: use pybids function after Microscopy-BIDS is integrated in pybids
-        if 'sample' in df:
-            df['sample_id'] = "sample-" + df['sample']
         fname_samples = Path(path_data, "samples.tsv")
         if fname_samples.exists():
             df_samples = pd.read_csv(str(fname_samples), sep='\t')
-            df = pd.merge(df, df_samples, on=['participant_id', 'sample_id'], suffixes=("_x", None),
-                          how='left')
+            df_samples['sample'] = df_samples['sample_id'].str.split("sample-").apply(lambda x: x[1])
+            df_samples['subject'] = df_samples['participant_id'].str.split("sub-").apply(lambda x: x[1])
+            columns = df_samples.columns.tolist()
+            if 'participant_id' in df.columns:
+                columns.remove('participant_id')
+            df = pd.merge(df, df_samples[columns], on=['subject', 'sample'], suffixes=("_x", None), how='left')
 
         # Add metadata from all _sessions.tsv files, if present
         # Uses pybids function
@@ -236,16 +270,15 @@ class BidsDataframe:
                         has_deriv.append(subject_fname)
                         deriv.extend(available)
                     else:
-                        logger.warning("Missing roi_suffix {} for {}. Skipping."
-                                       .format(self.roi_suffix, subject_fname))
+                        logger.warning(f"Missing roi_suffix {self.roi_suffix} for {subject_fname}. Skipping file.")
                 else:
                     has_deriv.append(subject_fname)
                     deriv.extend(available)
                 for target in self.target_suffix:
                     if target not in str(available) and target != self.roi_suffix:
-                        logger.warning("Missing target_suffix {} for {}".format(target, subject_fname))
+                        logger.warning(f"Missing target_suffix {target} for {subject_fname}")
             else:
-                logger.warning("Missing derivatives for {}. Skipping.".format(subject_fname))
+                logger.warning(f"Missing derivatives for {subject_fname}. Skipping file.")
 
         return has_deriv, deriv
 
@@ -265,8 +298,9 @@ class BidsDataframe:
         """
         return self.df[self.df['path'].str.contains('derivatives')]['filename'].tolist()
 
-    def get_derivatives(self, subject_fname, deriv_fnames):
+    def get_derivatives(self, subject_fname: str, deriv_fnames: list):
         """Return list of available derivative filenames for a subject filename.
+
         Args:
             subject_fname (str): Subject filename.
             deriv_fnames (list of str): List of derivative filenames.
@@ -277,19 +311,23 @@ class BidsDataframe:
         prefix_fname = subject_fname.split('.')[0]
         return [d for d in deriv_fnames if prefix_fname in d]
 
-    def save(self, path):
+    def save(self, path: str):
         """Save the dataframe into a csv file.
+
         Args:
             path (str): Path to csv file.
         """
         try:
             self.df.to_csv(path, index=False)
-            logger.info("Dataframe has been saved in {}.".format(path))
+            logger.info(f"Dataframe has been saved in {path}.")
         except FileNotFoundError:
-            logger.error("Wrong path, bids_dataframe.csv could not be saved in {}.".format(path))
+            logger.error(f"Wrong path, bids_dataframe.csv could not be saved in {path}.")
 
-    def write_derivatives_dataset_description(self, path_data):
+    def write_derivatives_dataset_description(self, path_data: str):
         """Writes default dataset_description.json file if not found in path_data/derivatives folder
+
+        Args:
+            path_data (str): Path to the BIDS dataset.
         """
         path_data = Path(path_data).absolute()
 
