@@ -7,10 +7,10 @@ import nibabel as nib
 import numpy as np
 import pytest
 import scipy
-import os
 from ivadomed import postprocessing as imed_postpro
 from testing.unit_tests.t_utils import create_tmp_dir,  __data_testing_dir__, download_data_testing_test_files
 from testing.common_testing_util import remove_tmp_dir
+from pathlib import Path
 
 
 def setup_function():
@@ -18,7 +18,7 @@ def setup_function():
 
 
 def nii_dummy_seg(size_arr=(15, 15, 9), pixdim=(1, 1, 1), dtype=np.float64, orientation='LPI',
-                  shape='rectangle', radius_RL=3.0, radius_AP=2.0, zeroslice=[], softseg=False):
+                  shape='rectangle', radius_RL=3.0, radius_AP=2.0, zeroslice=None, softseg=False):
     """Create a dummy nibabel object.
 
     Create either an ellipse or rectangle of ones running from top to bottom in the 3rd
@@ -39,6 +39,8 @@ def nii_dummy_seg(size_arr=(15, 15, 9), pixdim=(1, 1, 1), dtype=np.float64, orie
     Retunrs:
         nibabel: Image object
     """
+    if zeroslice is None:
+        zeroslice = []
     # Create a 3d array, with dimensions corresponding to x: RL, y: AP, z: IS
     nx, ny, nz = [int(size_arr[i] * pixdim[i]) for i in range(3)]
     data = np.zeros((nx, ny, nz), dtype)
@@ -171,7 +173,7 @@ def test_label_file_from_coordinates(download_data_testing_test_files):
     coord = [[0, 0, 0]]
     # load test image
     nifti = nib.load(
-        os.path.join(__data_testing_dir__, 'sub-unf01/anat/sub-unf01_T1w.nii.gz'))
+        Path(__data_testing_dir__, 'sub-unf01/anat/sub-unf01_T1w.nii.gz'))
     # create fake label
     label = imed_postpro.label_file_from_coordinates(nifti, coord)
     # check if it worked

@@ -1,11 +1,11 @@
 import numpy as np
 import pytest
-import os
 import json
 import shutil
 
+from pathlib import Path
+from ivadomed.loader.bids_dataframe import BidsDataframe
 from ivadomed.loader import loader as imed_loader
-from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.object_detection import utils as imed_obj_detect
 import logging
 from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__, download_data_testing_test_files
@@ -13,21 +13,21 @@ from testing.common_testing_util import remove_tmp_dir
 logger = logging.getLogger(__name__)
 
 BATCH_SIZE = 8
-PATH_OUTPUT = os.path.join(__tmp_dir__, "log")
+PATH_OUTPUT = Path(__tmp_dir__, "log")
 
 
 def setup_function():
     create_tmp_dir()
 
 
-@pytest.mark.parametrize('train_lst', [['sub-unf01']])
+@pytest.mark.parametrize('train_lst', [['sub-unf01_T2w.nii.gz']])
 @pytest.mark.parametrize('target_lst', [["_lesion-manual"]])
 @pytest.mark.parametrize('config', [
     {
         "object_detection_params": {
             "object_detection_path": "object_detection",
             "safety_factor": [1.0, 1.0, 1.0],
-            "path_output": PATH_OUTPUT
+            "path_output": str(PATH_OUTPUT)
         },
         "transforms_params": {
             "NumpyToTensor": {}},
@@ -39,7 +39,7 @@ def setup_function():
         "object_detection_params": {
             "object_detection_path": "object_detection",
             "safety_factor": [1.0, 1.0, 1.0],
-            "path_output": PATH_OUTPUT
+            "path_output": str(PATH_OUTPUT)
         },
         "transforms_params": {"NumpyToTensor": {}},
         "roi_params": {"suffix": "_seg-manual", "slice_filter_roi": 10},
@@ -71,6 +71,7 @@ def test_bounding_box(download_data_testing_test_files, train_lst, target_lst, c
         "target_suffix": target_lst,
         "extensions": [".nii.gz"],
         "slice_filter_params": {"filter_empty_mask": False, "filter_empty_input": True},
+        "patch_filter_params": {"filter_empty_mask": False, "filter_empty_input": False},
         "slice_axis": "axial"
     }
 
@@ -79,13 +80,13 @@ def test_bounding_box(download_data_testing_test_files, train_lst, target_lst, c
         config['model_params'].update(config["Modified3DUNet"])
 
     bounding_box_dict = {}
-    bounding_box_path = os.path.join(PATH_OUTPUT, 'bounding_boxes.json')
-    if not os.path.exists(PATH_OUTPUT):
-        os.mkdir(PATH_OUTPUT)
-    current_dir = os.getcwd()
-    sub = train_lst[0]
+    bounding_box_path = Path(PATH_OUTPUT, 'bounding_boxes.json')
+    if not Path(PATH_OUTPUT).exists():
+        PATH_OUTPUT.mkdir(parents=True, exist_ok=True)
+    current_dir = Path.cwd()
+    sub = train_lst[0].split('_')[0]
     contrast = config['contrast_params']['contrast_lst'][0]
-    bb_path = os.path.join(current_dir, __data_testing_dir__, sub, "anat", sub + "_" + contrast + ".nii.gz")
+    bb_path = str(Path(current_dir, __data_testing_dir__, sub, "anat", sub + "_" + contrast + ".nii.gz"))
     bounding_box_dict[bb_path] = coord
     with open(bounding_box_path, 'w') as fp:
         json.dump(bounding_box_dict, fp, indent=4)
@@ -93,7 +94,7 @@ def test_bounding_box(download_data_testing_test_files, train_lst, target_lst, c
     # Update loader_params with config
     loader_params.update(config)
 
-    bids_df = imed_loader_utils.BidsDataframe(loader_params, __tmp_dir__, derivatives=True)
+    bids_df = BidsDataframe(loader_params, __tmp_dir__, derivatives=True)
 
     ds = imed_loader.load_dataset(bids_df, **loader_params)
 
@@ -116,8 +117,8 @@ def test_adjust_bb_size():
 
 def test_compute_bb_statistics(download_data_testing_test_files):
     """Check to make sure compute_bb_statistics runs."""
-    imed_obj_detect.compute_bb_statistics(os.path.join(__data_testing_dir__,
-                                                       "bounding_box_dict.json"))
+    imed_obj_detect.compute_bb_statistics(str(Path(__data_testing_dir__,
+                                                       "bounding_box_dict.json")))
 
 
 def teardown_function():

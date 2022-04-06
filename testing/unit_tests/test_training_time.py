@@ -5,7 +5,9 @@ import torch.backends.cudnn as cudnn
 from torch import optim
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+from loguru import logger
 
+from ivadomed.loader.bids_dataframe import BidsDataframe
 from ivadomed import losses as imed_losses
 from ivadomed import models as imed_models
 from ivadomed import utils as imed_utils
@@ -30,10 +32,9 @@ def setup_function():
     create_tmp_dir()
 
 
-@pytest.mark.parametrize('train_lst', [['sub-unf01']])
 @pytest.mark.parametrize('target_lst', [["_lesion-manual"]])
-@pytest.mark.parametrize('config', [
-    {
+@pytest.mark.parametrize('train_lst, config', [
+    (['sub-unf01_T2w.nii.gz'], {
         "transforms_params": {"Resample": {"wspace": 0.75, "hspace": 0.75},
                               "ROICrop": {"size": [48, 48]},
                               "NumpyToTensor": {}},
@@ -41,8 +42,8 @@ def setup_function():
         "contrast_params": {"contrast_lst": ['T2w'], "balance": {}},
         "multichannel": False,
         "model_params": {"name": "Unet"},
-    },
-    {
+    }),
+    (['sub-unf01_T1w.nii.gz', 'sub-unf01_T2w.nii.gz'], {
         "transforms_params": {"Resample": {"wspace": 0.75, "hspace": 0.75},
                               "ROICrop": {"size": [48, 48]},
                               "NumpyToTensor": {}},
@@ -50,8 +51,8 @@ def setup_function():
         "contrast_params": {"contrast_lst": ['T1w', 'T2w'], "balance": {}},
         "multichannel": True,
         "model_params": {"name": "Unet"},
-    },
-    {
+    }),
+    (['sub-unf01_T1w.nii.gz', 'sub-unf01_T2w.nii.gz'], {
         "transforms_params": {"CenterCrop": {"size": [96, 96, 16]},
                               "NumpyToTensor": {}},
         "roi_params": {"suffix": None, "slice_filter_roi": 0},
@@ -59,8 +60,8 @@ def setup_function():
         "multichannel": False,
         "model_params": {"name": "Modified3DUNet", "length_3D": [96, 96, 16], "n_filters": 8, "stride_3D": [96, 96, 16],
                          "attention": True},
-    },
-    {
+    }),
+    (['sub-unf01_T1w.nii.gz', 'sub-unf01_T2w.nii.gz'], {
         "transforms_params": {"CenterCrop": {"size": [96, 96, 16]},
                               "NumpyToTensor": {}},
         "roi_params": {"suffix": None, "slice_filter_roi": 0},
@@ -68,8 +69,8 @@ def setup_function():
         "multichannel": False,
         "model_params": {"name": "Modified3DUNet", "length_3D": [96, 96, 16], "n_filters": 8, "stride_3D": [96, 96, 16],
                          "attention": False},
-    },
-    {
+    }),
+    (['sub-unf01_T1w.nii.gz', 'sub-unf01_T2w.nii.gz'], {
         "transforms_params": {"CenterCrop": {"size": [96, 96, 16]},
                               "NumpyToTensor": {}},
         "roi_params": {"suffix": None, "slice_filter_roi": 0},
@@ -78,8 +79,8 @@ def setup_function():
         "model_params": {"name": "Modified3DUNet", "length_3D": [96, 96, 16], "n_filters": 8, "stride_3D": [96, 96, 16],
                          "attention": False, "metadata": "contrasts", "film_layers": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
                          "n_metadata": 2},
-    },
-    {
+    }),
+    (['sub-unf01_T2w.nii.gz'], {
         "transforms_params": {"CenterCrop": {"size": [96, 96, 16]},
                               "NumpyToTensor": {}},
         "roi_params": {"suffix": "_seg-manual", "slice_filter_roi": 10},
@@ -87,7 +88,7 @@ def setup_function():
         "multichannel": False,
         "model_params": {"name": "Unet", 'is_2d': False, "length_3D": [96, 96, 16], "n_filters": 8,
                          "stride_3D": [96, 96, 16]},
-    }
+    })
 ])
 def test_unet_time(download_data_testing_test_files, train_lst, target_lst, config):
     cuda_available, device = imed_utils.define_device(GPU_ID)
@@ -100,12 +101,13 @@ def test_unet_time(download_data_testing_test_files, train_lst, target_lst, conf
         "target_suffix": target_lst,
         "extensions": [".nii.gz"],
         "slice_filter_params": {"filter_empty_mask": False, "filter_empty_input": True},
+        "patch_filter_params": {"filter_empty_mask": False, "filter_empty_input": False},
         "slice_axis": "axial"
     }
     # Update loader_params with config
     loader_params.update(config)
     # Get Training dataset
-    bids_df = imed_loader_utils.BidsDataframe(loader_params, __tmp_dir__, derivatives=True)
+    bids_df = BidsDataframe(loader_params, __tmp_dir__, derivatives=True)
     ds_train = imed_loader.load_dataset(bids_df, **loader_params)
 
     # Loader
@@ -128,7 +130,7 @@ def test_unet_time(download_data_testing_test_files, train_lst, target_lst, conf
     model_class = getattr(imed_models, model_params["name"])
     model = model_class(**model_params)
 
-    print("Training {}".format(model_params["name"]))
+    logger.debug(f"Training {model_params['name']}")
     if cuda_available:
         model.cuda()
 
@@ -199,12 +201,12 @@ def test_unet_time(download_data_testing_test_files, train_lst, target_lst, conf
         total_time = end_time - start_time
         tqdm.write("Epoch {} took {:.2f} seconds.".format(epoch, total_time))
 
-    print('Mean SD init {} -- {}'.format(np.mean(init_lst), np.std(init_lst)))
-    print('Mean SD load {} -- {}'.format(np.mean(load_lst), np.std(load_lst)))
-    print('Mean SD pred {} -- {}'.format(np.mean(pred_lst), np.std(pred_lst)))
-    print('Mean SDopt {} --  {}'.format(np.mean(opt_lst), np.std(opt_lst)))
-    print('Mean SD gen {} -- {}'.format(np.mean(gen_lst), np.std(gen_lst)))
-    print('Mean SD scheduler {} -- {}'.format(np.mean(schedule_lst), np.std(schedule_lst)))
+    logger.info(f"Mean SD init {np.mean(init_lst)} -- {np.std(init_lst)}")
+    logger.info(f"Mean SD load {np.mean(load_lst)} -- {np.std(load_lst)}")
+    logger.info(f"Mean SD pred {np.mean(pred_lst)} -- {np.std(pred_lst)}")
+    logger.info(f"Mean SDopt {np.mean(opt_lst)} --  {np.std(opt_lst)}")
+    logger.info(f"Mean SD gen {np.mean(gen_lst)} -- {np.std(gen_lst)}")
+    logger.info(f"Mean SD scheduler {np.mean(schedule_lst)} -- {np.std(schedule_lst)}")
 
 
 def teardown_function():

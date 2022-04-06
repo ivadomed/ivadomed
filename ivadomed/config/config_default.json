@@ -27,6 +27,10 @@
             "filter_empty_mask": false,
             "filter_empty_input": true
         },
+        "patch_filter_params": {
+            "filter_empty_mask": false,
+            "filter_empty_input": false
+        },
         "slice_axis": "axial",
         "multichannel": false,
         "soft_gt": false,

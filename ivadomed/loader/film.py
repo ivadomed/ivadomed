@@ -1,5 +1,5 @@
 import json
-import os
+from pathlib import Path
 from copy import deepcopy
 
 import numpy as np
@@ -8,10 +8,11 @@ from scipy.signal import argrelextrema
 from sklearn.model_selection import GridSearchCV
 from sklearn.neighbors import KernelDensity
 from sklearn.preprocessing import OneHotEncoder
+from ivadomed.keywords import MetadataKW
 
 from ivadomed import __path__
 
-with open(os.path.join(__path__[0], "config/contrast_dct.json"), "r") as fhandle:
+with Path(__path__[0], "config", "contrast_dct.json").open(mode="r") as fhandle:
     GENERIC_CONTRAST = json.load(fhandle)
 MANUFACTURER_CATEGORY = {'Siemens': 0, 'Philips': 1, 'GE': 2}
 CONTRAST_CATEGORY = {"T1w": 0, "T2w": 1, "T2star": 2,
@@ -42,7 +43,7 @@ def normalize_metadata(ds_in, clustering_models, debugging, metadata_type, train
     ds_out = []
     for idx, subject in enumerate(ds_in):
         s_out = deepcopy(subject)
-        if metadata_type == 'mri_params':
+        if metadata_type == MetadataKW.MRI_PARAMS:
             # categorize flip angle, repetition time and echo time values using KDE
             for m in ['FlipAngle', 'RepetitionTime', 'EchoTime']:
                 v = subject["input_metadata"][m]
@@ -65,7 +66,7 @@ def normalize_metadata(ds_in, clustering_models, debugging, metadata_type, train
 
             s_out["input_metadata"]["film_input"] = [s_out["input_metadata"][k] for k in
                                                      ["FlipAngle", "RepetitionTime", "EchoTime", "Manufacturer"]]
-        elif metadata_type == "contrasts":
+        elif metadata_type == MetadataKW.CONTRASTS:
             for i, input_metadata in enumerate(subject["input_metadata"]):
                 generic_contrast = GENERIC_CONTRAST[input_metadata["contrast"]]
                 label_contrast = CONTRAST_CATEGORY[generic_contrast]
@@ -162,12 +163,12 @@ def clustering_fit(dataset, key_lst):
     return model_dct
 
 
-def check_isMRIparam(mri_param_type, mri_param, subject, metadata):
+def check_isMRIparam(mri_param_type: str, mri_param: dict, subject: str, metadata: dict) -> bool:
     """Check if a given metadata belongs to the MRI parameters.
 
     Args:
         mri_param_type (str): Metadata type name.
-        mri_param (list): List of MRI params names.
+        mri_param (dict): List of MRI params names.
         subject (str): Current subject name.
         metadata (dict): Metadata.
 
@@ -205,7 +206,7 @@ def get_film_metadata_models(ds_train, metadata_type, debugging=False):
     Returns:
         MRI2DSegmentationDataset, OneHotEncoder, KernelDensity: dataset, one-hot encoder and KDE model
     """
-    if metadata_type == "mri_params":
+    if metadata_type == MetadataKW.MRI_PARAMS:
         metadata_vector = ["RepetitionTime", "EchoTime", "FlipAngle"]
         metadata_clustering_models = clustering_fit(ds_train.metadata, metadata_vector)
     else:
@@ -274,12 +275,12 @@ def save_film_params(gammas, betas, metadata_values, depth, ofolder):
 
     # Save the numpy arrays for gammas/betas inside files.npy in log_directory
     for i in range(1, 2 * depth + 3):
-        gamma_layer_path = os.path.join(ofolder, "gamma_layer_{}.npy".format(i))
-        np.save(gamma_layer_path, gammas_dict[i])
-        beta_layer_path = os.path.join(ofolder, "beta_layer_{}.npy".format(i))
-        np.save(beta_layer_path, betas_dict[i])
+        gamma_layer_path = Path(ofolder, f"gamma_layer_{i}.npy")
+        np.save(str(gamma_layer_path), gammas_dict[i])
+        beta_layer_path = Path(ofolder, f"beta_layer_{i}.npy")
+        np.save(str(beta_layer_path), betas_dict[i])
 
     # Convert into numpy and save the metadata_values of all batch images
     metadata_values = np.array(metadata_values)
-    contrast_path = os.path.join(ofolder, "metadata_values.npy")
-    np.save(contrast_path, metadata_values)
+    contrast_path = Path(ofolder, "metadata_values.npy")
+    np.save(str(contrast_path), metadata_values)
