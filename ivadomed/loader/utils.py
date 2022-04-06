@@ -1,13 +1,14 @@
 import collections.abc
 import re
-import os
 import numpy as np
 import pandas as pd
 import torch
 import joblib
+import os
+from pathlib import Path
 from loguru import logger
 from sklearn.model_selection import train_test_split
-from torch._six import string_classes, int_classes
+from torch._six import string_classes
 from ivadomed import utils as imed_utils
 from ivadomed.keywords import SplitDatasetKW, LoaderParamsKW, ROIParamsKW, ContrastParamsKW
 import nibabel as nib
@@ -176,7 +177,7 @@ def get_new_subject_file_split(df, split_method, data_testing, random_seed,
 
     # save the subject distribution
     split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
-    split_path = os.path.join(path_output, "split_datasets.joblib")
+    split_path = Path(path_output, "split_datasets.joblib")
     joblib.dump(split_dct, split_path)
 
     return train_lst, valid_lst, test_lst
@@ -253,7 +254,7 @@ def imed_collate(batch):
         if elem.shape == ():  # scalars
             py_type = float if elem.dtype.name.startswith('float') else int
             return __numpy_type_map[elem.dtype.name](list(map(py_type, batch)))
-    elif isinstance(batch[0], int_classes):
+    elif isinstance(batch[0], int):
         return torch.LongTensor(batch)
     elif isinstance(batch[0], float):
         return torch.DoubleTensor(batch)

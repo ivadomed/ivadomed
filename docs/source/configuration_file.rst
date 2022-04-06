@@ -286,8 +286,11 @@ will be randomly chosen.
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "extensions",
-        "description": "Used to specify a list of file extensions to be selected for
-            training/testing. If not specified, then `.nii` and `.nii.gz` will be used by default.",
+        "$$description": [
+            "Used to specify a list of file extensions to be selected for training/testing.\n",
+            "Must include the file extensions of both the raw data and derivatives.\n",
+            "If not specified, then `.nii` and `.nii.gz` will be used by default.",
+            ],
         "type": "list, string"
     }
 
@@ -405,36 +408,35 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "slice_filter_params",
-        "description": "Discard a slice from the dataset if it meets a condition, see
-            below.",
+        "description": "Discard a slice from the dataset if it meets a condition, see below.",
         "type": "dict",
         "options": {
             "filter_empty_input": {
                 "type": "boolean",
-                "description": "Discard slices where all voxel
-                   intensities are zeros."
+                "description": "Discard slices where all voxel intensities are zeros. Default: ``True``."
             },
             "filter_empty_mask": {
                 "type": "boolean",
-                "description": "Discard slices where all voxel labels are zeros."
+                "description": "Discard slices where all voxel labels are zeros. Default: ``False``."
             },
             "filter_absent_class": {
                 "type": "boolean",
                 "$$description": [
                     "Discard slices where all voxel labels are zero for one or more classes\n",
-                    "(this is most relevant for multi-class models that need GT for all classes at train time)."
+                    "(this is most relevant for multi-class models that need GT for all classes at training time).\n",
+                    "Default: ``False``."
                 ]
             },
             "filter_classification": {
                 "type": "boolean",
                 "$$description": [
                     "Discard slices where all images fail a custom classifier filter. If used,\n",
-                    "``classifier_path`` must also be specified, pointing to a saved PyTorch classifier."
+                    "``classifier_path`` must also be specified, pointing to a saved PyTorch classifier.\n",
+                    "Default: ``False``."
                 ]
             }
         }
     }
-
 
 .. code-block:: JSON
 
@@ -446,6 +448,51 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
             }
         }
     }
+
+
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "patch_filter_params",
+        "$$description": [
+            "Discard a 2D patch from the dataset if it meets a condition at training time, defined below.\n",
+            "Contrary to the field ``slice_filter_params`` which applies at training and testing time, ",
+            "this parameter only applies during training time."
+        ],
+        "type": "dict",
+        "options": {
+            "filter_empty_input": {
+                "type": "boolean",
+                "description": "Discard 2D patches where all voxel intensities are zeros. Default: ``False``."
+            },
+            "filter_empty_mask": {
+                "type": "boolean",
+                "description": "Discard 2D patches where all voxel labels are zeros. Default: ``False``."
+            },
+            "filter_absent_class": {
+                "type": "boolean",
+                "$$description": [
+                    "Discard 2D patches where all voxel labels are zero for one or more classes\n",
+                    "(this is most relevant for multi-class models that need GT for all classes).\n",
+                    "Default: ``False``."
+                ]
+            }
+        }
+    }
+
+
+.. code-block:: JSON
+
+    {
+        "loader_parameters": {
+            "patch_filter_params": {
+                "filter_empty_mask": false,
+                "filter_empty_input": false
+            }
+        }
+    }
+
 
 .. jsonschema::
 
@@ -497,7 +544,8 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
         "$$description": [
             "Indicates if a soft mask will be used as ground-truth to train\n",
             "and / or evaluate a model. In particular, the masks are not binarized\n",
-            "after interpolations implied by preprocessing or data-augmentation operations."
+            "after interpolations implied by preprocessing or data-augmentation operations.\n",
+            "Approach inspired by the `SoftSeg <https://arxiv.org/ftp/arxiv/papers/2011/2011.09041.pdf>`__ paper."
         ],
         "type": "boolean"
     }
@@ -509,6 +557,14 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
             "soft_gt": true
         }
     }
+
+.. note::
+    To get the full advantage of the soft segmentations, in addition to setting 
+    ``soft_gt: true`` the following keys in the config file must also be changed: 
+    (i) ``final_activation: relu`` - to use the normalized ReLU activation function
+    (ii) ``loss: AdapWingLoss`` - a regression loss described in the 
+    paper. Note: It is also recommended to use the ``DiceLoss`` since convergence 
+    with ``AdapWingLoss`` is sometimes difficult to achieve.
 
 .. jsonschema::
 
@@ -591,9 +647,9 @@ Split Dataset
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "split_method",
         "$$description": [
-            "Metadata contained in a BIDS tabular file on which the files are shuffled, then split\n",
-            "between train/validation/test, according to ``train_fraction`` and ``test_fraction``.\n",
-            "For example, ``participant_id`` from the ``participants.tsv`` file will shuffle all participants,\n",
+            "Metadata contained in a BIDS tabular (TSV) file or a BIDS sidecar JSON file on which the files are shuffled\n",
+            "then split between train/validation/test, according to ``train_fraction`` and ``test_fraction``.\n",
+            "For examples, ``participant_id`` will shuffle all participants from the ``participants.tsv`` file\n",
             "then split between train/validation/test sets."
         ],
         "type": "string"
@@ -976,27 +1032,28 @@ being used for the segmentation task).
                "description": "Default: ``Unet``"
            },
            "dropout_rate": {
-               "type": "float"
+               "type": "float",
+               "description": "Default: ``0.3``"
            },
            "bn_momentum": {
                "type": "float",
                "$$description": [
                     "Defines the importance of the running average: (1 - `bn_momentum`). A large running\n",
                     "average factor will lead to a slow and smooth learning.\n",
-                    "See `PyTorch's BatchNorm classes for more details. <https://pytorch.org/docs/stable/generated/torch.nn.BatchNorm2d.html>`__ for more details.\n"
+                    "See `PyTorch's BatchNorm classes for more details. <https://pytorch.org/docs/stable/generated/torch.nn.BatchNorm2d.html>`__ for more details. Default: ``0.1``\n"
                ]
 
            },
            "depth": {
                "type": "int",
                "range": "(0, inf)",
-               "description": "Number of down-sampling operations."
+               "description": "Number of down-sampling operations. Default: ``3``"
            },
            "final_activation": {
                "type": "string",
                "required": "false",
                "$$description": [
-                   "Final activation layer. Options: ``sigmoid`` (default), ``relu``(normalized ReLU), or ``softmax``."
+                   "Final activation layer. Options: ``sigmoid`` (default), ``relu`` (normalized ReLU), or ``softmax``."
                ]
            },
            "length_2D": {
@@ -1029,8 +1086,10 @@ being used for the segmentation task).
     {
         "default_model": {
             "name": "Unet",
-            "dropout_rate": 0.4,
-            "batch_norm_momentum": 0.1
+            "dropout_rate": 0.3,
+            "bn_momentum": 0.1,
+            "depth": 3,
+            "final_activation": "sigmoid"
         }
     }
 
@@ -1228,8 +1287,6 @@ Transformations applied during data augmentation. Transformations are sorted in 
 - ``applied_to``: list between ``"im", "gt", "roi"``. If not specified, then the transformation is applied to all loaded samples. Otherwise, only applied to the specified types: Example: ``["gt"]`` implies that this transformation is only applied to the ground-truth data.
 - ``dataset_type``: list between ``"training", "validation", "testing"``. If not specified, then the transformation is applied to the three sub-datasets. Otherwise, only applied to the specified subdatasets. Example: ``["testing"]`` implies that this transformation is only applied to the testing sub-dataset.
 
-Available Transformations:
-^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. jsonschema::
 
@@ -1450,12 +1507,12 @@ Available Transformations:
         "title": "Resample",
         "type": "dict",
         "options": {
-            "wspace": {
+            "hspace": {
                 "type": "float",
                 "range": "[0, 1]",
                 "description": "Resolution along the first axis, in mm."
             },
-            "hspace": {
+            "wspace": {
                 "type": "float",
                 "range": "[0, 1]",
                 "description": "Resolution along the second axis, in mm."
@@ -1473,8 +1530,8 @@ Available Transformations:
     {
         "transformation": {
             "Resample": {
-                "wspace": 0.75,
                 "hspace": 0.75,
+                "wspace": 0.75,
                 "dspace": 1
             }
         }
@@ -1622,6 +1679,109 @@ Available Transformations:
         }
     }
 
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "RandomGamma",
+        "type": "dict",
+        "$$description": [
+            "Randomly changes the contrast of an image by gamma exponential."
+        ],
+        "options": {
+            "log_gamma_range": {
+                "type": "(float, float)",
+                "description": "Log gamma range for changing contrast."
+            },
+            "p": {
+                "type": "float"
+            }
+        }
+    }
+
+.. code-block:: JSON
+
+    {
+        "transformation": {
+            "RandomGamma": {
+                "log_gamma_range": [-3.0, 3.0],
+                "p": 0.5,
+                "applied_to": ["im"],
+                "dataset_type": ["training"]
+            }
+        }
+    }
+
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "RandomBiasField",
+        "type": "dict",
+        "$$description": [
+            "Applies a random MRI bias field artifact to the image via `torchio.RandomBiasField()`"
+        ],
+        "options": {
+            "coefficients": {
+                "type": "float",
+                "description": "Maximum magnitude of polynomial coefficients."
+            },
+            "order": {
+                "type": "int",
+                "description": "Order of the basis polynomial functions."
+            },
+            "p": {
+                "type": "float"
+            }
+        }
+    }
+
+.. code-block:: JSON
+
+    {
+        "transformation": {
+            "RandomBiasField": {
+                "coefficients": 0.5,
+                "order": 3,
+                "p": 0.5,
+                "applied_to": ["im"],
+                "dataset_type": ["training"]
+            }
+        }
+    }
+
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "RandomBlur",
+        "type": "dict",
+        "$$description": [
+            "Applies a random blur to the image."
+        ],
+        "options": {
+            "sigma_range": {
+                "type": "(float, float)",
+                "description": "Standard deviation range for the gaussian filter."
+            },
+            "p": {
+                "type": "float"
+            }
+        }
+    }
+
+.. code-block:: JSON
+
+    {
+        "transformation": {
+            "RandomBlur": {
+                "sigma_range": [0.0, 2.0],
+                "p": 0.5,
+                "applied_to": ["im"],
+                "dataset_type": ["training"]
+            }
+        }
+    }
 
 .. _Uncertainty:
 

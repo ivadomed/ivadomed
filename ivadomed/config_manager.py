@@ -3,6 +3,7 @@ import collections.abc
 from loguru import logger
 from pathlib import Path
 from ivadomed import utils as imed_utils
+from ivadomed.keywords import ConfigKW, LoaderParamsKW, SplitDatasetKW, DataTestingKW
 import copy
 
 
@@ -67,7 +68,8 @@ def load_json(config_path):
 
 
 # To ensure retrocompatibility for parameter changes in configuration file
-KEY_CHANGE_DICT = {'UNet3D': 'Modified3DUNet', 'bids_path': 'path_data', 'log_directory': 'path_output'}
+KEY_CHANGE_DICT = {'UNet3D': ConfigKW.MODIFIED_3D_UNET, 'bids_path': LoaderParamsKW.PATH_DATA,
+                   'log_directory': ConfigKW.PATH_OUTPUT}
 KEY_SPLIT_DATASET_CHANGE_LST = ['method', 'center_test']
 
 
@@ -102,7 +104,7 @@ class ConfigurationManager(object):
             context = copy.deepcopy(self.context_original)
             self.change_keys(context, list(context.keys()))
             config_updated = update(self.config_default, context)
-            self.change_keys_values(config_updated['split_dataset'], config_updated['split_dataset'].keys())
+            self.change_keys_values(config_updated[ConfigKW.SPLIT_DATASET], config_updated[ConfigKW.SPLIT_DATASET].keys())
 
         self._config_updated = config_updated
         if config_updated['debugging']:
@@ -138,10 +140,11 @@ class ConfigurationManager(object):
             if k in keys:
                 value = config_updated[k]
                 if k == 'method' and value == "per_center":
-                    config_updated['data_testing']['data_type'] = "institution_id"
-                if k == 'center_test' and config_updated['data_testing']['data_type'] == "institution_id" and \
+                    config_updated[SplitDatasetKW.DATA_TESTING][DataTestingKW.DATA_TYPE] = "institution_id"
+                if k == 'center_test' and \
+                        config_updated[SplitDatasetKW.DATA_TESTING][DataTestingKW.DATA_TYPE] == "institution_id" and \
                 value is not None:
-                    config_updated['data_testing']['data_value'] = value
+                    config_updated[SplitDatasetKW.DATA_TESTING][DataTestingKW.DATA_VALUE] = value
                 del config_updated[k]
 
     def _display_differing_keys(self):
@@ -154,6 +157,21 @@ class ConfigurationManager(object):
     def _validate_path(self):
         """Ensure validity of configuration file path.
         """
-        if not Path(self.path_context).is_file() or not self.path_context.endswith('.json'):
+        if not Path(self.path_context).exists():
             raise ValueError(
-                "\nERROR: The provided configuration file path (.json) is invalid: {}\n".format(self.path_context))
+                f"\nERROR: The provided configuration file path (.json) does not exist: "
+                f"{Path(self.path_context).absolute()}\n")
+        elif Path(self.path_context).is_dir():
+            raise IsADirectoryError(f"ERROR: The provided configuration file path (.json) is a directory not a file: "
+                                    f"{Path(self.path_context).absolute()}\n")
+        elif not Path(self.path_context).is_file():
+            raise FileNotFoundError(f"ERROR: The provided configuration file path (.json) is not found: "
+                                    f"{Path(self.path_context).absolute()}\n")
+        elif self.path_context.endswith('.yaml') or self.path_context.endswith('.yml'):
+            raise ValueError(
+                f"\nERROR: The provided configuration file path (.json) is a yaml file not a json file, "
+                f"yaml files are not yet supported: {Path(self.path_context).absolute()}\n")
+        elif not self.path_context.endswith('.json'):
+            raise ValueError(
+                f"\nERROR: The provided configuration file path (.json) is not a json file: "
+                f"{Path(self.path_context).absolute()}\n")

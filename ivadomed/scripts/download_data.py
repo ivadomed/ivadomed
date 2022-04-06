@@ -13,7 +13,7 @@ import argparse
 import textwrap
 
 from ivadomed import utils as imed_utils
-from ivadomed.keywords import *
+from ivadomed.keywords import IgnoredFolderKW
 
 
 DICT_URL = {
@@ -23,8 +23,11 @@ DICT_URL = {
             `Spine Generic <https://github.com/spine-generic/data-multi-subject>`_.
             Used for Tutorial and example in Ivadomed."""},
     "data_testing": {
-        "url": ["https://github.com/ivadomed/data-testing/archive/r20210823.zip"],
+        "url": ["https://github.com/ivadomed/data-testing/archive/r20220328.zip"],
         "description": "Data Used for integration/unit test in Ivadomed."},
+    "data_multi_testing": {
+        "url": ["https://github.com/MotionCorrect/data_multi-sessions-contrasts/archive/refs/tags/v2022-01-06.zip"],
+        "description": "Large Data Used for multi-session contrasts integration/unit test in Ivadomed."},
     "t2_tumor": {
         "url": ["https://github.com/ivadomed/t2_tumor/archive/r20200621.zip"],
         "description": "Cord tumor segmentation model, trained on T2-weighted contrast."},
@@ -49,9 +52,11 @@ DICT_URL = {
         "description": "Intervertebral disc detection model trained on T2-weighted images."},
     "data_functional_testing": {
         "url": ["https://github.com/ivadomed/data_functional_testing/archive/r20210617.zip"],
-        "description": "Data used for functional testing in Ivadomed."
-    }
-
+        "description": "Data used for functional testing in Ivadomed."},
+    "data_axondeepseg_sem": {
+        "url": ["https://github.com/axondeepseg/data_axondeepseg_sem/archive/r20211130.zip"],
+        "description": """SEM dataset for AxonDeepSeg. 10 rat spinal cord samples with axon and myelin
+            manual segmentation labels. Used for microscopy tutorial in ivadomed."""},
 }
 
 
@@ -144,7 +149,7 @@ def unzip(compressed, dest_folder):
     try:
         open(compressed).extractall(dest_folder)
     except Exception:
-        print('ERROR: ZIP package corrupted. Please try downloading again.')
+        logger.error("ERROR: ZIP package corrupted. Please try downloading again.")
         raise
 
 

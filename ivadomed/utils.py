@@ -1,12 +1,14 @@
-import sys
 import os
+import sys
 import subprocess
 import hashlib
+import numpy as np
 from enum import Enum
 from loguru import logger
 from pathlib import Path
-
+from ivadomed.keywords import ConfigKW, LoaderParamsKW
 from typing import List
+from difflib import SequenceMatcher
 
 AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 
@@ -79,7 +81,7 @@ def generate_sha_256(context: dict, df, file_lst: List[str]) -> None:
     assert isinstance(df, DataFrame)
 
     # generating sha256 for list of data
-    context['training_sha256'] = {}
+    context[ConfigKW.TRAINING_SHA256] = {}
     # file_list is a list of filename strings
     for file in file_lst:
         # bids_df is a dataframe with column values path...filename...
@@ -90,7 +92,7 @@ def generate_sha_256(context: dict, df, file_lst: List[str]) -> None:
         with open(file_path, "rb") as f:
             for byte_block in iter(lambda: f.read(4096), b""):
                 sha256_hash.update(byte_block)
-            context['training_sha256'][file] = sha256_hash.hexdigest()
+            context[ConfigKW.TRAINING_SHA256][file] = sha256_hash.hexdigest()
 
 
 def save_onnx_model(model, inputs, model_path):
@@ -265,10 +267,7 @@ def get_arguments(parser, args):
             ["-d", "SOME_ARG", "--model", "SOME_ARG"]
     """
     try:
-        if args:
-            args = parser.parse_args(args)
-        else:
-            args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+        args = parser.parse_args(args)
     except SystemExit as e:
         if e.code != 0:  # Calling `--help` raises SystemExit with 0 exit code (i.e. not an ArgParseException)
             raise ArgParseException('Error parsing args')
@@ -359,8 +358,8 @@ def get_command(args, context):
         logger.info("No CLI argument given for command: ( --train | --test | --segment ). Will check config file for command...")
 
         try:
-            if context["command"] == "train" or context["command"] == "test" or context["command"] == "segment":
-                return context["command"]
+            if context[ConfigKW.COMMAND] == "train" or context[ConfigKW.COMMAND] == "test" or context[ConfigKW.COMMAND] == "segment":
+                return context[ConfigKW.COMMAND]
             else:
                 logger.error("Specified invalid command argument in config file.")
         except AttributeError:
@@ -373,8 +372,8 @@ def get_path_output(args, context):
     else:
         logger.info("CLI flag --path-output not used to specify output directory. Will check config file for directory...")
         try:
-            if context["path_output"]:
-                return context["path_output"]
+            if context[ConfigKW.PATH_OUTPUT]:
+                return context[ConfigKW.PATH_OUTPUT]
         except AttributeError:
             logger.error("Have not specified a path-output argument via CLI nor config file.")
 
@@ -385,8 +384,8 @@ def get_path_data(args, context):
     else:
         logger.info("CLI flag --path-data not used to specify BIDS data directory. Will check config file for directory...")
         try:
-            if context["loader_parameters"]["path_data"]:
-                return context["loader_parameters"]["path_data"]
+            if context[ConfigKW.LOADER_PARAMETERS][LoaderParamsKW.PATH_DATA]:
+                return context[ConfigKW.LOADER_PARAMETERS][LoaderParamsKW.PATH_DATA]
         except AttributeError:
             logger.error("Have not specified a path-data argument via CLI nor config file.")
 
@@ -405,7 +404,24 @@ def format_path_data(path_data):
     return path_data
 
 
+def similarity_score(a: str, b: str) -> float:
+    """
+    use DiffLIb SequenceMatcher to resolve the similarity between text. Help make better choice in terms of derivatives.
+    Args:
+        a: a string
+        b: another string
+    Returns: a score indicative of the similarity between the sequence.
+    """
+    return SequenceMatcher(None, a, b).ratio()
+
+
 def init_ivadomed():
     """Initialize the ivadomed for typical terminal usage."""
     # Display ivadomed version
     logger.info('\nivadomed ({})\n'.format(__version__))
+
+
+def print_stats(arr):
+    logger.info(f"\tMean: {np.mean(arr)} %")
+    logger.info(f"\tMedian: {np.median(arr)} %")
+    logger.info(f"\tInter-quartile range: [{np.percentile(arr, 25)}, {np.percentile(arr, 75)}] %")
