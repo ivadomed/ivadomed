@@ -37,7 +37,7 @@ def test_optimize_hyperparameters_all_combinations(download_functional_test_file
     ret = script_runner.run('ivadomed_automate_training', '-c', f'{file_config}',
                             '-ch', f'{hyper_config}',
                             '-n', '1',
-                            '--all_combin',
+                            '--all-combin',
                             cwd=path_repo_root)
 
     print(f"{ret.stdout}")
@@ -54,7 +54,7 @@ def test_optimize_hyperparameters_multiple_parameters(download_functional_test_f
     ret = script_runner.run('ivadomed_automate_training', '-c', f'{file_config}',
                             '-ch', f'{hyper_config}',
                             '-n', '1',
-                            '--multi_params',
+                            '--multi-params',
                             cwd=path_repo_root)
 
     print(f"{ret.stdout}")

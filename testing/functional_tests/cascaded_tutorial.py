@@ -18,9 +18,6 @@ def test_cascaded_architecture_tutorial(download_functional_test_files, script_r
     file_config = os.path.join(__data_testing_dir__, 'cascaded_architecture_tutorial_config.json')
 
     ret = script_runner.run('ivadomed', '-c', f'{file_config}',
-                            '--path-output', f'{__tmp_dir__}',
-                            '-t', '0.01',
-                            '-g', '1',
                             cwd=path_repo_root)
 
     print(f"{ret.stdout}")

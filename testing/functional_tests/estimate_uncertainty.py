@@ -17,9 +17,7 @@ def test_estimate_uncertainty(download_functional_test_files, script_runner):
     download_dataset("data_example_spinegeneric")
     file_config = os.path.join(__data_testing_dir__, 'estimate_uncertainty_config.json')
 
-    ret = script_runner.run('ivadomed', '--test', '-c', f'{file_config}',
-                            '--path-data', 'data_example_spinegeneric',
-                            '--path-output', 'data_example_spinegeneric/trained_model',
+    ret = script_runner.run('ivadomed', '-c', f'{file_config}',
                             cwd=path_repo_root)
 
     print(f"{ret.stdout}")
