@@ -1,3 +1,50 @@
+## v2.9.5 (2022-04-06)
+[View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.9.4...release)
+
+**BUG**
+
+- Fix TSV metadata indexation and remove unused lines from bids_dataframe based on split_method.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1112)
+- Fix loading of TIF 16bits grayscale files.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1107)
+- Fix loading when names of multiple target_suffix overlap.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1100)
+
+**ENHANCEMENT**
+
+- Add type hintings to fields inside all keywords(KW) dataclasses.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1109)
+
+**DOCUMENTATION**
+
+- Clarify data and loading documentation.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1103)
+
+
+## v2.9.4 (2022-03-09)
+[View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.9.3...release)
+
+**FEATURE**
+
+- Segment with ONNX or PT model based on CPU/GPU availability.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1086)
+
+**ENHANCEMENT**
+
+- Update microscopy following BEP release.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1025)
+
+**BUG**
+
+- Fixing mix-up for GPU training.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1063)
+
+- **REFACTORING**
+
+- Refactor missing print statements to be using logger.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1085)
+- Convert print to logger format for much more granular unified control..  [View pull request](https://github.com/ivadomed/ivadomed/pull/1040)
+- Update pybids to 0.14.0.  [View pull request](https://github.com/ivadomed/ivadomed/pull/994)
+
+**DOCUMENTATION**
+
+- Add ADS use case in documentation.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1080)
+- Updated documentation for SoftSeg training.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1064)
+- Rewrite tutorial 2 with sphinx tab.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1045)
+- Format revamped Tutorial 1 to highlight the CLI vs JSON approaches.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1039)
+- Improve Installation Doc Readability based for Step 3 relating to GPU setup.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1037)
+
 ## v2.9.3 (2022-02-01)
 [View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.9.2...release)
 
