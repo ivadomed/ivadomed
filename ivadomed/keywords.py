@@ -7,6 +7,8 @@ class ConfigKW:
     TRAINING_PARAMETERS: str = "training_parameters"
     MODEL_NAME: str = "model_name"
     MODIFIED_3D_UNET: str = "Modified3DUNet"
+    MONAI_UNET: str = "MONAIUNet"
+    UNETR: str = "UNETR"
     DEBUGGING: str = "debugging"
     FILMED_UNET: str = "FiLMedUnet"
     DEFAULT_MODEL: str = "default_model"
