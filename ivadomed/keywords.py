@@ -28,22 +28,22 @@ class ConfigKW:
 
 @dataclass
 class LoaderParamsKW:
-    PATH_DATA = "path_data"
-    BIDS_CONFIG = "bids_config"
-    TARGET_SUFFIX = "target_suffix"
-    ROI_PARAMS = "roi_params"
-    CONTRAST_PARAMS = "contrast_params"
-    MULTICHANNEL = "multichannel"  # boolean key that is used to change the configuration file ever slightly.
-    EXTENSIONS = "extensions"
-    TARGET_GROUND_TRUTH = "target_ground_truth"
-    TARGET_SESSIONS = "target_sessions"  # the sessions to focus the analyses on
-    METADATA_TYPE = "metadata_type"
-    MODEL_PARAMS = "model_params"
-    SLICE_AXIS = "slice_axis"
-    IS_INPUT_DROPOUT = "is_input_dropout"
-    SLICE_FILTER_PARAMS = "slice_filter_params"
-    SUBJECT_SELECTION = "subject_selection"
-    PATCH_FILTER_PARAMS = "patch_filter_params"
+    PATH_DATA: str = "path_data"
+    BIDS_CONFIG: str = "bids_config"
+    TARGET_SUFFIX: str = "target_suffix"
+    ROI_PARAMS: str = "roi_params"
+    CONTRAST_PARAMS: str = "contrast_params"
+    MULTICHANNEL: str = "multichannel"  # boolean key that is used to change the configuration file ever slightly.
+    EXTENSIONS: str = "extensions"
+    TARGET_GROUND_TRUTH: str = "target_ground_truth"
+    TARGET_SESSIONS: str = "target_sessions"  # the sessions to focus the analyses on
+    METADATA_TYPE: str = "metadata_type"
+    MODEL_PARAMS: str = "model_params"
+    SLICE_AXIS: str = "slice_axis"
+    IS_INPUT_DROPOUT: str = "is_input_dropout"
+    SLICE_FILTER_PARAMS: str = "slice_filter_params"
+    SUBJECT_SELECTION: str = "subject_selection"
+    PATCH_FILTER_PARAMS: str = "patch_filter_params"
 
 
 @dataclass
@@ -71,12 +71,12 @@ class TrainingParamsKW:
 
 @dataclass
 class TransformationKW:
-    ROICROP = "ROICrop"
-    CENTERCROP = "CenterCrop"
-    RESAMPLE = "Resample"
-    NUMPY_TO_TENSOR = "NumpyToTensor"
-    W_SPACE = "wspace"
-    H_SPACE = "hspace"
+    ROICROP: str = "ROICrop"
+    CENTERCROP: str = "CenterCrop"
+    RESAMPLE: str = "Resample"
+    NUMPY_TO_TENSOR: str = "NumpyToTensor"
+    W_SPACE: str = "wspace"
+    H_SPACE: str = "hspace"
 
 
 @dataclass
@@ -94,32 +94,32 @@ class ContrastParamsKW:
 
 
 class ModelParamsKW:
-    LENGTH_2D = "length_2D"
-    STRIDE_2D = "stride_2D"
-    LENGTH_3D = "length_3D"
-    STRIDE_3D = "stride_3D"
-    FILM_LAYERS = "film_layers"
-    FOLDER_NAME = "folder_name"
-    METADATA = "metadata"
-    FILM_ONEHOTENCODER = "film_onehotencoder"
-    N_METADATA = "n_metadata"
-    APPLIED = "applied"
-    NAME = "name"
-    IS_2D = "is_2d"
-    IN_CHANNEL = "in_channel"
-    OUT_CHANNEL = "out_channel"
-    TARGET_LST = "target_lst"
-    ROI_LST = "roi_lst"
-    PATH_HDF5 = "path_hdf5"
-    CSV_PATH = "csv_path"
-    RAM = "ram"
-    ATTENTION = "attention"
-    DEPTH = "depth"
-    MISSING_PROBABILITY = "missing_probability"
-    MISSING_PROBABILITY_GROWTH = "missing_probability_growth"
-    DROPOUT_RATE = "dropout_rate"
-    BN_MOMENTUM = "bn_momentum"
-    FINAL_ACTIVATION = "final_activation"
+    LENGTH_2D: str = "length_2D"
+    STRIDE_2D: str = "stride_2D"
+    LENGTH_3D: str = "length_3D"
+    STRIDE_3D: str = "stride_3D"
+    FILM_LAYERS: str = "film_layers"
+    FOLDER_NAME: str = "folder_name"
+    METADATA: str = "metadata"
+    FILM_ONEHOTENCODER: str = "film_onehotencoder"
+    N_METADATA: str = "n_metadata"
+    APPLIED: str = "applied"
+    NAME: str = "name"
+    IS_2D: str = "is_2d"
+    IN_CHANNEL: str = "in_channel"
+    OUT_CHANNEL: str = "out_channel"
+    TARGET_LST: str = "target_lst"
+    ROI_LST: str = "roi_lst"
+    PATH_HDF5: str = "path_hdf5"
+    CSV_PATH: str = "csv_path"
+    RAM: str = "ram"
+    ATTENTION: str = "attention"
+    DEPTH: str = "depth"
+    MISSING_PROBABILITY: str = "missing_probability"
+    MISSING_PROBABILITY_GROWTH: str = "missing_probability_growth"
+    DROPOUT_RATE: str = "dropout_rate"
+    BN_MOMENTUM: str = "bn_momentum"
+    FINAL_ACTIVATION: str = "final_activation"
 
 
 @dataclass
