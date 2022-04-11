@@ -482,7 +482,7 @@ def get_path_data(args, context):
             logger.error("Have not specified a path-data argument via CLI nor config file.")
 
 
-def format_path_data(path_data):
+def format_path_data(path_data: list or str) -> list:
     """
     Args:
         path_data (list or str): Either a list of paths, or just one path.
