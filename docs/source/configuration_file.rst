@@ -286,8 +286,11 @@ will be randomly chosen.
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "extensions",
-        "description": "Used to specify a list of file extensions to be selected for
-            training/testing. If not specified, then `.nii` and `.nii.gz` will be used by default.",
+        "$$description": [
+            "Used to specify a list of file extensions to be selected for training/testing.\n",
+            "Must include the file extensions of both the raw data and derivatives.\n",
+            "If not specified, then `.nii` and `.nii.gz` will be used by default.",
+            ],
         "type": "list, string"
     }
 
@@ -644,9 +647,9 @@ Split Dataset
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "split_method",
         "$$description": [
-            "Metadata contained in a BIDS tabular file on which the files are shuffled, then split\n",
-            "between train/validation/test, according to ``train_fraction`` and ``test_fraction``.\n",
-            "For example, ``participant_id`` from the ``participants.tsv`` file will shuffle all participants,\n",
+            "Metadata contained in a BIDS tabular (TSV) file or a BIDS sidecar JSON file on which the files are shuffled\n",
+            "then split between train/validation/test, according to ``train_fraction`` and ``test_fraction``.\n",
+            "For examples, ``participant_id`` will shuffle all participants from the ``participants.tsv`` file\n",
             "then split between train/validation/test sets."
         ],
         "type": "string"

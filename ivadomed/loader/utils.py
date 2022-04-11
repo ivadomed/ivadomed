@@ -8,7 +8,7 @@ import os
 from pathlib import Path
 from loguru import logger
 from sklearn.model_selection import train_test_split
-from torch._six import string_classes, int_classes
+from torch._six import string_classes
 from ivadomed import utils as imed_utils
 from ivadomed.keywords import SplitDatasetKW, LoaderParamsKW, ROIParamsKW, ContrastParamsKW
 import nibabel as nib
@@ -254,7 +254,7 @@ def imed_collate(batch):
         if elem.shape == ():  # scalars
             py_type = float if elem.dtype.name.startswith('float') else int
             return __numpy_type_map[elem.dtype.name](list(map(py_type, batch)))
-    elif isinstance(batch[0], int_classes):
+    elif isinstance(batch[0], int):
         return torch.LongTensor(batch)
     elif isinstance(batch[0], float):
         return torch.DoubleTensor(batch)

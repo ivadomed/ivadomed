@@ -163,12 +163,12 @@ def clustering_fit(dataset, key_lst):
     return model_dct
 
 
-def check_isMRIparam(mri_param_type, mri_param, subject, metadata):
+def check_isMRIparam(mri_param_type: str, mri_param: dict, subject: str, metadata: dict) -> bool:
     """Check if a given metadata belongs to the MRI parameters.
 
     Args:
         mri_param_type (str): Metadata type name.
-        mri_param (list): List of MRI params names.
+        mri_param (dict): List of MRI params names.
         subject (str): Current subject name.
         metadata (dict): Metadata.
 

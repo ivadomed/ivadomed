@@ -3,27 +3,27 @@ from dataclasses import dataclass
 
 @dataclass
 class ConfigKW:
-    LOADER_PARAMETERS = "loader_parameters"
-    TRAINING_PARAMETERS = "training_parameters"
-    MODEL_NAME = "model_name"
-    MODIFIED_3D_UNET = "Modified3DUNet"
-    DEBUGGING = "debugging"
-    FILMED_UNET = "FiLMedUnet"
-    DEFAULT_MODEL = "default_model"
-    OBJECT_DETECTION_PARAMS = "object_detection_params"
-    GPU_IDS = "gpu_ids"
-    PATH_OUTPUT = "path_output"
-    POSTPROCESSING = "postprocessing"
-    COMMAND = "command"
-    LOG_FILE = "log_file"
-    TRANSFORMATION = "transformation"
-    SPLIT_DATASET = "split_dataset"
-    UNCERTAINTY = "uncertainty"
-    UNDO_TRANSFORMS = "undo_transforms"
-    EVALUATION_PARAMETERS = "evaluation_parameters"
-    HEMIS_UNET = "HeMISUnet"
-    SPLIT_PATH = "split_path"
-    TRAINING_SHA256 = "training_sha256"
+    LOADER_PARAMETERS: str = "loader_parameters"
+    TRAINING_PARAMETERS: str = "training_parameters"
+    MODEL_NAME: str = "model_name"
+    MODIFIED_3D_UNET: str = "Modified3DUNet"
+    DEBUGGING: str = "debugging"
+    FILMED_UNET: str = "FiLMedUnet"
+    DEFAULT_MODEL: str = "default_model"
+    OBJECT_DETECTION_PARAMS: str = "object_detection_params"
+    GPU_IDS: str = "gpu_ids"
+    PATH_OUTPUT: str = "path_output"
+    POSTPROCESSING: str = "postprocessing"
+    COMMAND: str = "command"
+    LOG_FILE: str = "log_file"
+    TRANSFORMATION: str = "transformation"
+    SPLIT_DATASET: str = "split_dataset"
+    UNCERTAINTY: str = "uncertainty"
+    UNDO_TRANSFORMS: str = "undo_transforms"
+    EVALUATION_PARAMETERS: str = "evaluation_parameters"
+    HEMIS_UNET: str = "HeMISUnet"
+    SPLIT_PATH: str = "split_path"
+    TRAINING_SHA256: str = "training_sha256"
 
 
 @dataclass
@@ -48,25 +48,25 @@ class LoaderParamsKW:
 
 @dataclass
 class SplitDatasetKW:
-    SPLIT_METHOD = "split_method"
-    FNAME_SPLIT = "fname_split"
-    DATA_TESTING = "data_testing"
-    RANDOM_SEED = "random_seed"
-    TRAIN_FRACTION = "train_fraction"
-    TEST_FRACTION = "test_fraction"
-    BALANCE = "balance"
+    SPLIT_METHOD: str = "split_method"
+    FNAME_SPLIT: str = "fname_split"
+    DATA_TESTING: str = "data_testing"
+    RANDOM_SEED: str = "random_seed"
+    TRAIN_FRACTION: str = "train_fraction"
+    TEST_FRACTION: str = "test_fraction"
+    BALANCE: str = "balance"
 
 
 @dataclass
 class DataTestingKW:
-    DATA_TYPE = "data_type"
-    DATA_VALUE = "data_value"
+    DATA_TYPE: str = "data_type"
+    DATA_VALUE: str = "data_value"
 
 
 @dataclass
 class TrainingParamsKW:
-    BALANCE_SAMPLES = "balance_samples"
-    BATCH_SIZE = "batch_size"
+    BALANCE_SAMPLES: str = "balance_samples"
+    BATCH_SIZE: str = "batch_size"
 
 
 @dataclass
@@ -81,19 +81,18 @@ class TransformationKW:
 
 @dataclass
 class BalanceSamplesKW:
-    APPLIED = "applied"
-    TYPE = "type"
+    APPLIED: str = "applied"
+    TYPE: str = "type"
 
 
 @dataclass
 class ContrastParamsKW:
-    CONTRAST_LST = "contrast_lst"  # The list help determine the number of model parameter inputs.
-    BALANCE = "balance"
-    TRAINING_VALIDATION = "training_validation"
-    TESTING = "testing"
+    CONTRAST_LST: str = "contrast_lst"  # The list help determine the number of model parameter inputs.
+    BALANCE: str = "balance"
+    TRAINING_VALIDATION: str = "training_validation"
+    TESTING: str = "testing"
 
 
-@dataclass
 class ModelParamsKW:
     LENGTH_2D = "length_2D"
     STRIDE_2D = "stride_2D"
@@ -125,121 +124,132 @@ class ModelParamsKW:
 
 @dataclass
 class SubjectDictKW:
-    ABSOLUTE_PATHS = "absolute_paths"
-    DERIV_PATH = "deriv_path"
-    ROI_FILENAME = "roi_filename"
-    METADATA = "metadata"
-    EXTENSIONS = "extensions"
+    ABSOLUTE_PATHS: str = "absolute_paths"
+    DERIV_PATH: str = "deriv_path"
+    ROI_FILENAME: str = "roi_filename"
+    METADATA: str = "metadata"
+    EXTENSIONS: str = "extensions"
 
 
 @dataclass
 class SubjectDataFrameKW:
-    FILENAME = "filename"
+    FILENAME: str = "filename"
+
 
 @dataclass
 class OptionKW:
-    METADATA = "metadata"
-    FNAME_PRIOR = 'fname_prior'
-    BINARIZE_PREDICTION = "binarize_prediction"
-    BINARIZE_MAXPOOLING = "binarize_maxpooling"
-    KEEP_LARGEST = "keep_largest"
-    FILL_HOLES = "fill_holes"
-    REMOVE_SMALL = "remove_small"
-    OVERLAP_2D = "overlap_2D"
-    PIXEL_SIZE = "pixel_size"
-    PIXEL_SIZE_UNITS = "pixel_size_units"
+    METADATA: str = "metadata"
+    FNAME_PRIOR: str = 'fname_prior'
+    BINARIZE_PREDICTION: str = "binarize_prediction"
+    BINARIZE_MAXPOOLING: str = "binarize_maxpooling"
+    KEEP_LARGEST: str = "keep_largest"
+    FILL_HOLES: str = "fill_holes"
+    REMOVE_SMALL: str = "remove_small"
+    OVERLAP_2D: str = "overlap_2D"
+    PIXEL_SIZE: str = "pixel_size"
+    PIXEL_SIZE_UNITS: str = "pixel_size_units"
 
 
 @dataclass
 class BidsDataFrameKW:
     # bids layout converted to dataframe during bids dataset creation
-    PATH = "path"   # full path.
-    FILENAME = "filename"  # the actual file's name (base)
-    PARTICIPANT_ID = "participant_id"  # i.e.    sub-unf01
-    SUBJECT = "subject"  # i.e.  unf01
-    SUFFIX = "suffix"   # T1w
-    SESSION = "session"  # session field (single int) in Bids DataFrame
-    EXTENSION = "extension"   # .nii.gz
-    DERIVATIVES = "derivatives"
+    PATH: str = "path"   # full path.
+    FILENAME: str = "filename"  # the actual file's name (base)
+    PARTICIPANT_I: str = "participant_id"  # i.e.    sub-unf01
+    SUBJECT: str = "subject"  # i.e.  unf01
+    SUFFIX: str = "suffix"   # T1w
+    SESSION: str = "session"  # session field (single int) in Bids DataFrame
+    EXTENSION: str = "extension"   # .nii.gz
+    DERIVATIVES: str = "derivatives"
 
 
 @dataclass
 class ROIParamsKW:
-    SUFFIX = "suffix"
-    SLICE_FILTER_ROI = "slice_filter_roi"
+    SUFFIX: str = "suffix"
+    SLICE_FILTER_ROI: str = "slice_filter_roi"
 
 
 @dataclass
 class MetadataKW:
-    CONTRAST = "contrast"
-    CONTRASTS = "contrasts"
-    BOUNDING_BOX = "bounding_box"
-    DATA_TYPE = "data_type"
-    PRE_RESAMPLE_SHAPE = "preresample_shape"
-    CROP_PARAMS = "crop_params"
-    MRI_PARAMS = "mri_params"
-    ROTATION = "rotation"
-    TRANSLATION = "translation"
-    SCALE = "scale"
-    COORD = "coord"
-    ZOOMS = "zooms"
-    UNDO = "undo"
-    REVERSE = "reverse"
-    OFFSET = "offset"
-    ELASTIC = "elastic"
-    GAUSSIAN_NOISE = "gaussian_noise"
-    GAMMA = "gamma"
-    BIAS_FIELD = "bias_field"
-    BLUR = "blur"
-    DATA_SHAPE = "data_shape"
-    SLICE_INDEX = "slice_index"
-    MISSING_MOD = "missing_mod"
-    METADATA_DICT = "metadata_dict"
-    INDEX_SHAPE = "index_shape"
-    GT_METADATA = "gt_metadata"
-    GT_FILENAMES = "gt_filenames"
-    INPUT_METADATA = "input_metadata"
-    INPUT_FILENAMES = "input_filenames"
-    ROI_METADATA = "roi_metadata"
-    PIXEL_SIZE = "PixelSize"
-    PIXEL_SIZE_UNITS = "PixelSizeUnits"
+    CONTRAST: str = "contrast"
+    CONTRASTS: str = "contrasts"
+    BOUNDING_BOX: str = "bounding_box"
+    DATA_TYPE: str = "data_type"
+    PRE_RESAMPLE_SHAPE: str = "preresample_shape"
+    CROP_PARAMS: str = "crop_params"
+    MRI_PARAMS: str = "mri_params"
+    ROTATION: str = "rotation"
+    TRANSLATION: str = "translation"
+    SCALE: str = "scale"
+    COORD: str = "coord"
+    ZOOMS: str = "zooms"
+    UNDO: str = "undo"
+    REVERSE: str = "reverse"
+    OFFSET: str = "offset"
+    ELASTIC: str = "elastic"
+    GAUSSIAN_NOISE: str = "gaussian_noise"
+    GAMMA: str = "gamma"
+    BIAS_FIELD: str = "bias_field"
+    BLUR: str = "blur"
+    DATA_SHAPE: str = "data_shape"
+    SLICE_INDEX: str = "slice_index"
+    MISSING_MOD: str = "missing_mod"
+    METADATA_DICT: str = "metadata_dict"
+    INDEX_SHAPE: str = "index_shape"
+    GT_METADATA: str = "gt_metadata"
+    GT_FILENAMES: str = "gt_filenames"
+    INPUT_METADATA: str = "input_metadata"
+    INPUT_FILENAMES: str = "input_filenames"
+    ROI_METADATA: str = "roi_metadata"
+    PIXEL_SIZE: str = "PixelSize"
+    PIXEL_SIZE_UNITS: str = "PixelSizeUnits"
 
 
 @dataclass
 class ObjectDetectionParamsKW:
-    GPU_IDS = "gpu_ids"
-    PATH_OUTPUT = "path_output"
-    OBJECT_DETECTION_PATH = "object_detection_path"
-    SAFETY_FACTOR = "safety_factor"
+    GPU_IDS: str = "gpu_ids"
+    PATH_OUTPUT: str = "path_output"
+    OBJECT_DETECTION_PATH: str = "object_detection_path"
+    SAFETY_FACTOR: str = "safety_factor"
 
 
 @dataclass
 class UncertaintyKW:
-    ALEATORIC = 'aleatoric'
-    N_IT = "n_it"
+    ALEATORIC: str = 'aleatoric'
+    N_IT: str = "n_it"
 
 
 @dataclass
 class PostprocessingKW:
-    BINARIZE_PREDICTION = "binarize_prediction"
+    BINARIZE_PREDICTION: str = "binarize_prediction"
 
 
 @dataclass
 class BinarizeProdictionKW:
-    THR = "thr"
+    THR: str = "thr"
 
 
 @dataclass
 class SliceFilterParamsKW:
-    FILTER_EMPTY_MASK = "filter_empty_mask"
+    FILTER_EMPTY_MASK: str = "filter_empty_mask"
 
 
 @dataclass
 class IgnoredFolderKW:
-    MACOSX = "__MACOSX"
+    MACOSX: str = "__MACOSX"
 
 
 @dataclass
 class MetricsKW:
-    RECALL_SPECIFICITY = "recall_specificity"
-    DICE = "dice"
+    RECALL_SPECIFICITY: str = "recall_specificity"
+    DICE: str = "dice"
+
+@dataclass
+class MetadataParamsKW:
+    CONTRAST = "contrast"
+    BOUNDING_BOX = "bounding_box"
+
+@dataclass
+class MetadataChoiceKW:
+    MRI_PARAMS = "mri_params"
+    CONTRASTS = "contrasts"
