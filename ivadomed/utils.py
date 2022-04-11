@@ -303,7 +303,14 @@ def get_arguments(parser, args):
     return args
 
 
-def add_version_info(context):
+def add_version_info(context: dict) -> None:
+    """Add Ivadomed version and dataset version in config context.
+
+    Args:
+        context (dict): context dict.
+    Returns:
+        None.
+    """
     path_data = context.get(ConfigKW.LOADER_PARAMETERS).get(LoaderParamsKW.PATH_DATA)
 
     context[ConfigKW.IVADOMED_VERSION] = _version_string()
@@ -312,7 +319,7 @@ def add_version_info(context):
 
     path_data = format_path_data(path_data)
     for i_dataset in range(len(path_data)):
-        origin = get_origin(path_data[i_dataset])
+        origin = _get_origin(path_data[i_dataset])
         if origin != "?!?":
             datasets_dict[origin] = datasets_version[i_dataset]
         else:
@@ -321,7 +328,14 @@ def add_version_info(context):
     context[ConfigKW.DATASETS_VERSION] = datasets_dict
 
 
-def get_datasets_versions(context):
+def get_datasets_versions(context: dict) -> list:
+    """Get the commit SHA for dataset versions in context.
+
+    Args:
+        context (dict): context dict.
+    Returns:
+        datasets_version (list) - list of git commit SHA for input datasets
+    """
     path_data = context.get(ConfigKW.LOADER_PARAMETERS).get(LoaderParamsKW.PATH_DATA)
     datasets_version = []
 
@@ -334,7 +348,7 @@ def get_datasets_versions(context):
     return datasets_version
 
 
-def get_origin(path_to_git_folder):
+def _get_origin(path_to_git_folder: str) -> str:
     """Get GIT remote origin.
 
     Args:
