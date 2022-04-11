@@ -286,8 +286,11 @@ will be randomly chosen.
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "extensions",
-        "description": "Used to specify a list of file extensions to be selected for
-            training/testing. If not specified, then `.nii` and `.nii.gz` will be used by default.",
+        "$$description": [
+            "Used to specify a list of file extensions to be selected for training/testing.\n",
+            "Must include the file extensions of both the raw data and derivatives.\n",
+            "If not specified, then `.nii` and `.nii.gz` will be used by default.",
+            ],
         "type": "list, string"
     }
 
@@ -405,36 +408,35 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "slice_filter_params",
-        "description": "Discard a slice from the dataset if it meets a condition, see
-            below.",
+        "description": "Discard a slice from the dataset if it meets a condition, see below.",
         "type": "dict",
         "options": {
             "filter_empty_input": {
                 "type": "boolean",
-                "description": "Discard slices where all voxel
-                   intensities are zeros."
+                "description": "Discard slices where all voxel intensities are zeros. Default: ``True``."
             },
             "filter_empty_mask": {
                 "type": "boolean",
-                "description": "Discard slices where all voxel labels are zeros."
+                "description": "Discard slices where all voxel labels are zeros. Default: ``False``."
             },
             "filter_absent_class": {
                 "type": "boolean",
                 "$$description": [
                     "Discard slices where all voxel labels are zero for one or more classes\n",
-                    "(this is most relevant for multi-class models that need GT for all classes at train time)."
+                    "(this is most relevant for multi-class models that need GT for all classes at training time).\n",
+                    "Default: ``False``."
                 ]
             },
             "filter_classification": {
                 "type": "boolean",
                 "$$description": [
                     "Discard slices where all images fail a custom classifier filter. If used,\n",
-                    "``classifier_path`` must also be specified, pointing to a saved PyTorch classifier."
+                    "``classifier_path`` must also be specified, pointing to a saved PyTorch classifier.\n",
+                    "Default: ``False``."
                 ]
             }
         }
     }
-
 
 .. code-block:: JSON
 
@@ -446,6 +448,51 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
             }
         }
     }
+
+
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "patch_filter_params",
+        "$$description": [
+            "Discard a 2D patch from the dataset if it meets a condition at training time, defined below.\n",
+            "Contrary to the field ``slice_filter_params`` which applies at training and testing time, ",
+            "this parameter only applies during training time."
+        ],
+        "type": "dict",
+        "options": {
+            "filter_empty_input": {
+                "type": "boolean",
+                "description": "Discard 2D patches where all voxel intensities are zeros. Default: ``False``."
+            },
+            "filter_empty_mask": {
+                "type": "boolean",
+                "description": "Discard 2D patches where all voxel labels are zeros. Default: ``False``."
+            },
+            "filter_absent_class": {
+                "type": "boolean",
+                "$$description": [
+                    "Discard 2D patches where all voxel labels are zero for one or more classes\n",
+                    "(this is most relevant for multi-class models that need GT for all classes).\n",
+                    "Default: ``False``."
+                ]
+            }
+        }
+    }
+
+
+.. code-block:: JSON
+
+    {
+        "loader_parameters": {
+            "patch_filter_params": {
+                "filter_empty_mask": false,
+                "filter_empty_input": false
+            }
+        }
+    }
+
 
 .. jsonschema::
 
@@ -497,7 +544,8 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
         "$$description": [
             "Indicates if a soft mask will be used as ground-truth to train\n",
             "and / or evaluate a model. In particular, the masks are not binarized\n",
-            "after interpolations implied by preprocessing or data-augmentation operations."
+            "after interpolations implied by preprocessing or data-augmentation operations.\n",
+            "Approach inspired by the `SoftSeg <https://arxiv.org/ftp/arxiv/papers/2011/2011.09041.pdf>`__ paper."
         ],
         "type": "boolean"
     }
@@ -509,6 +557,14 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
             "soft_gt": true
         }
     }
+
+.. note::
+    To get the full advantage of the soft segmentations, in addition to setting 
+    ``soft_gt: true`` the following keys in the config file must also be changed: 
+    (i) ``final_activation: relu`` - to use the normalized ReLU activation function
+    (ii) ``loss: AdapWingLoss`` - a regression loss described in the 
+    paper. Note: It is also recommended to use the ``DiceLoss`` since convergence 
+    with ``AdapWingLoss`` is sometimes difficult to achieve.
 
 .. jsonschema::
 
@@ -591,9 +647,9 @@ Split Dataset
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "split_method",
         "$$description": [
-            "Metadata contained in a BIDS tabular file on which the files are shuffled, then split\n",
-            "between train/validation/test, according to ``train_fraction`` and ``test_fraction``.\n",
-            "For example, ``participant_id`` from the ``participants.tsv`` file will shuffle all participants,\n",
+            "Metadata contained in a BIDS tabular (TSV) file or a BIDS sidecar JSON file on which the files are shuffled\n",
+            "then split between train/validation/test, according to ``train_fraction`` and ``test_fraction``.\n",
+            "For examples, ``participant_id`` will shuffle all participants from the ``participants.tsv`` file\n",
             "then split between train/validation/test sets."
         ],
         "type": "string"

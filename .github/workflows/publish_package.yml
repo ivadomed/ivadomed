@@ -42,8 +42,6 @@ jobs:
         files: 'dist/*'
         fail_on_unmatched_files: true
         tag_name: ${{ github.event.inputs.version }} # in the workflow_dispatch case, make a new tag from the given input; in the published release case, this will be empty and will fall back to updating that release.
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         
     - name: Publish to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1

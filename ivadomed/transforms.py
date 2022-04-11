@@ -486,7 +486,7 @@ class ROICrop(Crop):
         # then we are here dealing with ROI data to determine crop params
         if self.__class__.__name__ not in metadata[MetadataKW.CROP_PARAMS]:
             # Compute center of mass of the ROI
-            h_roi, w_roi, d_roi = center_of_mass(sample.astype(np.int))
+            h_roi, w_roi, d_roi = center_of_mass(sample.astype(int))
             h_roi, w_roi, d_roi = int(round(h_roi)), int(round(w_roi)), int(round(d_roi))
             th, tw, td = self.size
             th_half, tw_half, td_half = int(round(th / 2.)), int(round(tw / 2.)), int(round(td / 2.))
