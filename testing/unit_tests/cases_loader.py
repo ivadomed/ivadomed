@@ -1,12 +1,12 @@
+from pathlib import Path
+
 import torch
 
-from pathlib import Path
 from testing.unit_tests.t_utils import __data_testing_dir__, path_repo_root
 from ivadomed.keywords import LoaderParamsKW, ModelParamsKW, TransformationKW
 
 
 def get_microscopy_loader_parameters():
-
     default_loader_parameters = {
         LoaderParamsKW.PATH_DATA: [str(Path(__data_testing_dir__, "microscopy_png"))],
         LoaderParamsKW.BIDS_CONFIG: f"{path_repo_root}/ivadomed/config/config_bids.json",
@@ -20,14 +20,12 @@ def get_microscopy_loader_parameters():
 
 
 def case_bids_df_microscopy_png():
-
     loader_parameters = get_microscopy_loader_parameters()
 
     return loader_parameters
 
 
 def case_bids_df_anat():
-
     loader_parameters = {
         LoaderParamsKW.PATH_DATA: [__data_testing_dir__],
         LoaderParamsKW.TARGET_SUFFIX: ["_lesion-manual"],
@@ -40,7 +38,6 @@ def case_bids_df_anat():
 
 
 def case_bids_df_multi():
-
     loader_parameters = get_microscopy_loader_parameters()
     loader_parameters.update({
         LoaderParamsKW.PATH_DATA: [__data_testing_dir__, str(Path(__data_testing_dir__, "microscopy_png"))],
@@ -53,7 +50,6 @@ def case_bids_df_multi():
 
 
 def case_bids_df_ctscan():
-
     loader_parameters = {
         LoaderParamsKW.PATH_DATA: [str(Path(__data_testing_dir__, "ct_scan"))],
         LoaderParamsKW.BIDS_CONFIG: f"{path_repo_root}/ivadomed/config/config_bids.json",
@@ -67,7 +63,6 @@ def case_bids_df_ctscan():
 
 
 def case_dropout_input_2_5_5():
-
     seg_pair = {"input": torch.rand((2, 5, 5))}
     return seg_pair
 
@@ -93,7 +88,6 @@ def case_dropout_input_7_7_4():
 
 
 def case_load_dataset_2d_png():
-
     loader_parameters = get_microscopy_loader_parameters()
     loader_parameters.update({
         LoaderParamsKW.TARGET_SUFFIX: ["_seg-myelin-manual"],
@@ -120,7 +114,6 @@ def case_load_dataset_2d_png():
 
 
 def case_2d_patches_and_resampling():
-
     loader_parameters = get_microscopy_loader_parameters()
     loader_parameters.update({
         LoaderParamsKW.TARGET_SUFFIX: ["_seg-myelin-manual"],
@@ -153,7 +146,6 @@ def case_2d_patches_and_resampling():
 
 
 def case_get_target_filename_list():
-
     loader_parameters = get_microscopy_loader_parameters()
     loader_parameters.update({
         LoaderParamsKW.TARGET_SUFFIX: ["_seg-myelin-manual", "_seg-axon-manual"],
@@ -179,10 +171,10 @@ def case_get_target_filename_list():
 
 
 def case_get_target_filename_list_multiple_raters():
-
     loader_parameters = get_microscopy_loader_parameters()
     loader_parameters.update({
-        LoaderParamsKW.TARGET_SUFFIX: [["_seg-myelin-manual", "_seg-axon-manual"], ["_seg-myelin-manual", "_seg-axon-manual"]],
+        LoaderParamsKW.TARGET_SUFFIX: [["_seg-myelin-manual", "_seg-axon-manual"],
+                                       ["_seg-myelin-manual", "_seg-axon-manual"]],
         LoaderParamsKW.CONTRAST_PARAMS: {"contrast_lst": [], "balance": {}},
         LoaderParamsKW.SLICE_AXIS: "axial",
         LoaderParamsKW.SLICE_FILTER_PARAMS: {"filter_empty_mask": False, "filter_empty_input": True},
@@ -205,7 +197,6 @@ def case_get_target_filename_list_multiple_raters():
 
 
 def case_microscopy_pixelsize():
-
     loader_parameters = get_microscopy_loader_parameters()
     loader_parameters.update({
         LoaderParamsKW.TARGET_SUFFIX: ["_seg-myelin-manual"],
@@ -222,6 +213,30 @@ def case_microscopy_pixelsize():
         ModelParamsKW.BN_MOMENTUM: 0.1,
         ModelParamsKW.FINAL_ACTIVATION: "sigmoid",
         ModelParamsKW.DEPTH: 3
+    }
+
+    return loader_parameters, model_parameters
+
+
+def case_read_png_tif():
+    loader_parameters = {
+        "path_data": [str(Path(__data_testing_dir__, "data_test_png_tif"))],
+        "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
+        "target_suffix": ["_seg-myelin-manual"],
+        "extensions": [".png", ".tif"],
+        "roi_params": {"suffix": None, "slice_filter_roi": None},
+        "contrast_params": {"contrast_lst": [], "balance": {}},
+        "slice_axis": "axial",
+        "slice_filter_params": {"filter_empty_mask": False, "filter_empty_input": True},
+        "patch_filter_params": {"filter_empty_mask": False, "filter_empty_input": False},
+        "multichannel": False
+    }
+    model_parameters = {
+        "name": "Unet",
+        "dropout_rate": 0.3,
+        "bn_momentum": 0.1,
+        "final_activation": "sigmoid",
+        "depth": 3
     }
 
     return loader_parameters, model_parameters

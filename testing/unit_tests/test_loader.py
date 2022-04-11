@@ -1,6 +1,4 @@
-import pytest
 import csv_diff
-import torch
 import numpy as np
 
 from ivadomed.loader.bids_dataframe import BidsDataframe
@@ -10,8 +8,6 @@ from ivadomed import utils as imed_utils
 from ivadomed.loader import loader as imed_loader
 import ivadomed.loader.utils as imed_loader_utils
 from ivadomed.loader import mri2d_segmentation_dataset as imed_loader_mri2dseg
-from ivadomed.keywords import LoaderParamsKW, MetadataKW, ModelParamsKW, TransformationKW
-from pathlib import Path
 from ivadomed.keywords import MetadataKW
 from pytest_cases import parametrize_with_cases
 from testing.unit_tests.cases_loader import *
@@ -24,14 +20,6 @@ def setup_function():
 @parametrize_with_cases("loader_parameters", cases=[
     case_bids_df_microscopy_png,
 ])
-@pytest.mark.parametrize('loader_parameters', [{
-    "path_data": [str(Path(__data_testing_dir__, "microscopy_png"))],
-    "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
-    "target_suffix": [["_seg-myelin-manual", "_seg-axon-manual"]],
-    "extensions": [".png"],
-    "roi_params": {"suffix": None, "slice_filter_roi": None},
-    "contrast_params": {"contrast_lst": []}
-}])
 def test_bids_df_microscopy_png(download_data_testing_test_files, loader_parameters):
     """
     Test for microscopy png file format
@@ -255,25 +243,9 @@ def test_microscopy_pixelsize(download_data_testing_test_files, loader_parameter
     assert ds[0]['input'].shape == (1, 758, 737)
 
 
-@pytest.mark.parametrize('loader_parameters', [{
-    "path_data": [str(Path(__data_testing_dir__, "data_test_png_tif"))],
-    "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
-    "target_suffix": ["_seg-myelin-manual"],
-    "extensions": [".png", ".tif"],
-    "roi_params": {"suffix": None, "slice_filter_roi": None},
-    "contrast_params": {"contrast_lst": [], "balance": {}},
-    "slice_axis": "axial",
-    "slice_filter_params": {"filter_empty_mask": False, "filter_empty_input": True},
-    "patch_filter_params": {"filter_empty_mask": False, "filter_empty_input": False},
-    "multichannel": False
-    }])
-@pytest.mark.parametrize('model_parameters', [{
-    "name": "Unet",
-    "dropout_rate": 0.3,
-    "bn_momentum": 0.1,
-    "final_activation": "sigmoid",
-    "depth": 3
-    }])
+@parametrize_with_cases("loader_parameters, model_parameters", cases=[
+    case_read_png_tif,
+])
 def test_read_png_tif(download_data_testing_test_files, loader_parameters, model_parameters):
     """
     Test to make sure all combinaitions of PNG/TIF, 8/16 bits, Grayscale/RGB/RGBA files
