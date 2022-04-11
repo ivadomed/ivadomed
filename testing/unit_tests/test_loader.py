@@ -1,31 +1,25 @@
-import pytest
 import csv_diff
-import torch
 import numpy as np
 
 from ivadomed.loader.bids_dataframe import BidsDataframe
-from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__, download_data_testing_test_files, path_repo_root
+from testing.unit_tests.t_utils import create_tmp_dir, __tmp_dir__, download_data_testing_test_files
 from testing.common_testing_util import remove_tmp_dir
 from ivadomed import utils as imed_utils
 from ivadomed.loader import loader as imed_loader
 import ivadomed.loader.utils as imed_loader_utils
 from ivadomed.loader import mri2d_segmentation_dataset as imed_loader_mri2dseg
-from ivadomed.keywords import LoaderParamsKW, MetadataKW, ModelParamsKW, TransformationKW
-from pathlib import Path
+from ivadomed.keywords import MetadataKW
+from pytest_cases import parametrize_with_cases
+from testing.unit_tests.cases_loader import *
 
 
 def setup_function():
     create_tmp_dir()
 
 
-@pytest.mark.parametrize('loader_parameters', [{
-    "path_data": [str(Path(__data_testing_dir__, "microscopy_png"))],
-    "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
-    "target_suffix": [["_seg-myelin-manual", "_seg-axon-manual"]],
-    "extensions": [".png"],
-    "roi_params": {"suffix": None, "slice_filter_roi": None},
-    "contrast_params": {"contrast_lst": []}
-}])
+@parametrize_with_cases("loader_parameters", cases=[
+    case_bids_df_microscopy_png,
+])
 def test_bids_df_microscopy_png(download_data_testing_test_files, loader_parameters):
     """
     Test for microscopy png file format
@@ -44,13 +38,9 @@ def test_bids_df_microscopy_png(download_data_testing_test_files, loader_paramet
     assert diff == {'added': [], 'removed': [], 'changed': [], 'columns_added': [], 'columns_removed': []}
 
 
-@pytest.mark.parametrize('loader_parameters', [{
-    "path_data": [__data_testing_dir__],
-    "target_suffix": ["_lesion-manual"],
-    "extensions": [],
-    "roi_params": {"suffix": "_seg-manual", "slice_filter_roi": None},
-    "contrast_params": {"contrast_lst": ["T1w", "T2w"]}
-    }])
+@parametrize_with_cases("loader_parameters", cases=[
+    case_bids_df_anat,
+])
 def test_bids_df_anat(download_data_testing_test_files, loader_parameters):
     """
     Test for MRI anat nii.gz file format
@@ -70,14 +60,9 @@ def test_bids_df_anat(download_data_testing_test_files, loader_parameters):
                     'columns_added': [], 'columns_removed': []}
 
 
-@pytest.mark.parametrize('loader_parameters', [{
-    "path_data": [__data_testing_dir__, str(Path(__data_testing_dir__, "microscopy_png"))],
-    "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
-    "target_suffix": ["_seg-manual", "seg-axon-manual"],
-    "extensions": [".nii.gz", ".png"],
-    "roi_params": {"suffix": None, "slice_filter_roi": None},
-    "contrast_params": {"contrast_lst": ["T1w", "T2w", "SEM"]}
-    }])
+@parametrize_with_cases("loader_parameters", cases=[
+    case_bids_df_multi
+])
 def test_bids_df_multi(download_data_testing_test_files, loader_parameters):
     """
     Test for multiple folders in path_data
@@ -94,14 +79,9 @@ def test_bids_df_multi(download_data_testing_test_files, loader_parameters):
                     'columns_added': [], 'columns_removed': []}
 
 
-@pytest.mark.parametrize('loader_parameters', [{
-    "path_data": [str(Path(__data_testing_dir__, "ct_scan"))],
-    "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
-    "target_suffix": ["_seg-manual"],
-    "extensions": [".nii.gz"],
-    "roi_params": {"suffix": None, "slice_filter_roi": None},
-    "contrast_params": {"contrast_lst": ["ct"]}
-    }])
+@parametrize_with_cases("loader_parameters", cases=[
+    case_bids_df_ctscan,
+])
 def test_bids_df_ctscan(download_data_testing_test_files, loader_parameters):
     """
     Test for ct-scan nii.gz file format
@@ -118,12 +98,12 @@ def test_bids_df_ctscan(download_data_testing_test_files, loader_parameters):
     assert diff == {'added': [], 'removed': [], 'changed': [], 'columns_added': [], 'columns_removed': []}
 
 
-@pytest.mark.parametrize('seg_pair', [
-    {"input": torch.rand((2, 5, 5))},
-    {"input": torch.rand((1, 5, 5))},
-    {"input": torch.rand((5, 5, 5, 5))},
-    {"input": (torch.rand((5, 5, 5, 3)) * torch.tensor([1, 0, 1], dtype=torch.float)).transpose(0, -1)},
-    {"input": (torch.rand((7, 7, 4)) * torch.tensor([1, 0, 0, 0], dtype=torch.float)).transpose(0, -1)}
+@parametrize_with_cases("seg_pair", cases=[
+    case_dropout_input_2_5_5,
+    case_dropout_input_1_5_5,
+    case_dropout_input_5_5_5_5,
+    case_dropout_input_5_5_5_3,
+    case_dropout_input_7_7_4
 ])
 def test_dropout_input(seg_pair):
     n_channels = seg_pair['input'].size(0)
@@ -138,28 +118,9 @@ def test_dropout_input(seg_pair):
         assert sum(empty_channels) == 0
 
 
-@pytest.mark.parametrize('loader_parameters', [{
-    "path_data": [str(Path(__data_testing_dir__, "microscopy_png"))],
-    "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
-    "target_suffix": ["_seg-myelin-manual"],
-    "extensions": [".png"],
-    "roi_params": {"suffix": None, "slice_filter_roi": None},
-    "contrast_params": {"contrast_lst": [], "balance": {}},
-    "slice_axis": "axial",
-    "slice_filter_params": {"filter_empty_mask": False, "filter_empty_input": True},
-    "patch_filter_params": {"filter_empty_mask": False, "filter_empty_input": False},
-    "multichannel": False
-    }])
-@pytest.mark.parametrize('model_parameters', [{
-    "name": "Unet",
-    "dropout_rate": 0.3,
-    "bn_momentum": 0.1,
-    "final_activation": "sigmoid",
-    "depth": 3
-    }])
-@pytest.mark.parametrize('transform_parameters', [{
-    "NumpyToTensor": {},
-    }])
+@parametrize_with_cases("loader_parameters, model_parameters, transform_parameters", cases=[
+    case_load_dataset_2d_png,
+])
 def test_load_dataset_2d_png(download_data_testing_test_files,
                              loader_parameters, model_parameters, transform_parameters):
     """
@@ -181,34 +142,9 @@ def test_load_dataset_2d_png(download_data_testing_test_files,
     assert np.unique(ds[0]['gt']).tolist() == [0, 1]
 
 
-@pytest.mark.parametrize('loader_parameters', [{
-    "path_data": [str(Path(__data_testing_dir__, "microscopy_png"))],
-    "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
-    "target_suffix": ["_seg-myelin-manual"],
-    "extensions": [".png"],
-    "roi_params": {"suffix": None, "slice_filter_roi": None},
-    "contrast_params": {"contrast_lst": [], "balance": {}},
-    "slice_axis": "axial",
-    "slice_filter_params": {"filter_empty_mask": False, "filter_empty_input": True},
-    "patch_filter_params": {"filter_empty_mask": False, "filter_empty_input": False},
-    "multichannel": False
-    }])
-@pytest.mark.parametrize('model_parameters', [{
-    "name": "Unet",
-    "dropout_rate": 0.3,
-    "bn_momentum": 0.1,
-    "final_activation": "sigmoid",
-    "depth": 3,
-    "length_2D": [256, 128],
-    "stride_2D": [244, 116]
-    }])
-@pytest.mark.parametrize('transform_parameters', [{
-    "Resample": {
-        "wspace": 0.0002,
-        "hspace": 0.0001
-    },
-    "NumpyToTensor": {},
-    }])
+@parametrize_with_cases("loader_parameters, model_parameters, transform_parameters", cases=[
+    case_2d_patches_and_resampling,
+])
 def test_2d_patches_and_resampling(download_data_testing_test_files,
                                    loader_parameters, model_parameters, transform_parameters):
     """
@@ -228,27 +164,9 @@ def test_2d_patches_and_resampling(download_data_testing_test_files,
     assert len(ds) == 28
 
 
-@pytest.mark.parametrize('loader_parameters', [{
-    "path_data": [str(Path(__data_testing_dir__, "microscopy_png"))],
-    "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
-    "target_suffix": ["_seg-myelin-manual", "_seg-axon-manual"],
-    "extensions": [".png"],
-    "roi_params": {"suffix": None, "slice_filter_roi": None},
-    "contrast_params": {"contrast_lst": [], "balance": {}},
-    "slice_axis": "axial",
-    "slice_filter_params": {"filter_empty_mask": False, "filter_empty_input": True},
-    "patch_filter_params": {"filter_empty_mask": False, "filter_empty_input": False},
-    "multichannel": False
-    }])
-@pytest.mark.parametrize('model_parameters', [{
-    "name": "Unet",
-    "dropout_rate": 0.3,
-    "bn_momentum": 0.1,
-    "depth": 2
-    }])
-@pytest.mark.parametrize('transform_parameters', [{
-    "NumpyToTensor": {},
-    }])
+@parametrize_with_cases("loader_parameters, model_parameters, transform_parameters", cases=[
+    case_get_target_filename_list,
+])
 def test_get_target_filename_list(loader_parameters, model_parameters, transform_parameters):
     """
     Test that all target_suffix are considered for target filename when list
@@ -265,27 +183,9 @@ def test_get_target_filename_list(loader_parameters, model_parameters, transform
     assert len(target_filename) == len(loader_parameters[LoaderParamsKW.TARGET_SUFFIX])
 
 
-@pytest.mark.parametrize('loader_parameters', [{
-    "path_data": [str(Path(__data_testing_dir__, "microscopy_png"))],
-    "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
-    "target_suffix": [["_seg-myelin-manual", "_seg-axon-manual"], ["_seg-myelin-manual", "_seg-axon-manual"]],
-    "extensions": [".png"],
-    "roi_params": {"suffix": None, "slice_filter_roi": None},
-    "contrast_params": {"contrast_lst": [], "balance": {}},
-    "slice_axis": "axial",
-    "slice_filter_params": {"filter_empty_mask": False, "filter_empty_input": True},
-    "patch_filter_params": {"filter_empty_mask": False, "filter_empty_input": False},
-    "multichannel": False
-    }])
-@pytest.mark.parametrize('model_parameters', [{
-    "name": "Unet",
-    "dropout_rate": 0.3,
-    "bn_momentum": 0.1,
-    "depth": 2
-    }])
-@pytest.mark.parametrize('transform_parameters', [{
-    "NumpyToTensor": {},
-    }])
+@parametrize_with_cases("loader_parameters, model_parameters, transform_parameters", cases=[
+    case_get_target_filename_list_multiple_raters,
+])
 def test_get_target_filename_list_multiple_raters(loader_parameters, model_parameters, transform_parameters):
     """
     Test that all target_suffix are considered for target filename when list
@@ -304,25 +204,9 @@ def test_get_target_filename_list_multiple_raters(loader_parameters, model_param
     assert len(target_filename[1]) == len(loader_parameters[LoaderParamsKW.TARGET_SUFFIX][1])
 
 
-@pytest.mark.parametrize('loader_parameters', [{
-    "path_data": [str(Path(__data_testing_dir__, "microscopy_png"))],
-    "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
-    "target_suffix": ["_seg-myelin-manual"],
-    "extensions": [".png"],
-    "roi_params": {"suffix": None, "slice_filter_roi": None},
-    "contrast_params": {"contrast_lst": [], "balance": {}},
-    "slice_axis": "axial",
-    "slice_filter_params": {"filter_empty_mask": False, "filter_empty_input": True},
-    "patch_filter_params": {"filter_empty_mask": False, "filter_empty_input": False},
-    "multichannel": False
-    }])
-@pytest.mark.parametrize('model_parameters', [{
-    "name": "Unet",
-    "dropout_rate": 0.3,
-    "bn_momentum": 0.1,
-    "final_activation": "sigmoid",
-    "depth": 3
-    }])
+@parametrize_with_cases("loader_parameters, model_parameters", cases=[
+    case_microscopy_pixelsize,
+])
 def test_microscopy_pixelsize(download_data_testing_test_files, loader_parameters, model_parameters):
     """
     Test that PixelSize and PixelSizeUnits microscopy metadata
@@ -359,25 +243,9 @@ def test_microscopy_pixelsize(download_data_testing_test_files, loader_parameter
     assert ds[0]['input'].shape == (1, 758, 737)
 
 
-@pytest.mark.parametrize('loader_parameters', [{
-    "path_data": [str(Path(__data_testing_dir__, "data_test_png_tif"))],
-    "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
-    "target_suffix": ["_seg-myelin-manual"],
-    "extensions": [".png", ".tif"],
-    "roi_params": {"suffix": None, "slice_filter_roi": None},
-    "contrast_params": {"contrast_lst": [], "balance": {}},
-    "slice_axis": "axial",
-    "slice_filter_params": {"filter_empty_mask": False, "filter_empty_input": True},
-    "patch_filter_params": {"filter_empty_mask": False, "filter_empty_input": False},
-    "multichannel": False
-    }])
-@pytest.mark.parametrize('model_parameters', [{
-    "name": "Unet",
-    "dropout_rate": 0.3,
-    "bn_momentum": 0.1,
-    "final_activation": "sigmoid",
-    "depth": 3
-    }])
+@parametrize_with_cases("loader_parameters, model_parameters", cases=[
+    case_read_png_tif,
+])
 def test_read_png_tif(download_data_testing_test_files, loader_parameters, model_parameters):
     """
     Test to make sure all combinaitions of PNG/TIF, 8/16 bits, Grayscale/RGB/RGBA files

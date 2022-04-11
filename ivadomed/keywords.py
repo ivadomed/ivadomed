@@ -43,6 +43,7 @@ class LoaderParamsKW:
     IS_INPUT_DROPOUT: str = "is_input_dropout"
     SLICE_FILTER_PARAMS: str = "slice_filter_params"
     SUBJECT_SELECTION: str = "subject_selection"
+    PATCH_FILTER_PARAMS: str = "patch_filter_params"
 
 
 @dataclass
@@ -73,6 +74,9 @@ class TransformationKW:
     ROICROP: str = "ROICrop"
     CENTERCROP: str = "CenterCrop"
     RESAMPLE: str = "Resample"
+    NUMPY_TO_TENSOR: str = "NumpyToTensor"
+    W_SPACE: str = "wspace"
+    H_SPACE: str = "hspace"
 
 
 @dataclass
@@ -113,6 +117,9 @@ class ModelParamsKW:
     DEPTH: str = "depth"
     MISSING_PROBABILITY: str = "missing_probability"
     MISSING_PROBABILITY_GROWTH: str = "missing_probability_growth"
+    DROPOUT_RATE: str = "dropout_rate"
+    BN_MOMENTUM: str = "bn_momentum"
+    FINAL_ACTIVATION: str = "final_activation"
 
 
 @dataclass
