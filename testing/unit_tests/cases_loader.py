@@ -220,23 +220,23 @@ def case_microscopy_pixelsize():
 
 def case_read_png_tif():
     loader_parameters = {
-        "path_data": [str(Path(__data_testing_dir__, "data_test_png_tif"))],
-        "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
-        "target_suffix": ["_seg-myelin-manual"],
-        "extensions": [".png", ".tif"],
-        "roi_params": {"suffix": None, "slice_filter_roi": None},
-        "contrast_params": {"contrast_lst": [], "balance": {}},
-        "slice_axis": "axial",
-        "slice_filter_params": {"filter_empty_mask": False, "filter_empty_input": True},
-        "patch_filter_params": {"filter_empty_mask": False, "filter_empty_input": False},
-        "multichannel": False
+        LoaderParamsKW.PATH_DATA: [str(Path(__data_testing_dir__, "data_test_png_tif"))],
+        LoaderParamsKW.BIDS_CONFIG: f"{path_repo_root}/ivadomed/config/config_bids.json",
+        LoaderParamsKW.TARGET_SUFFIX: ["_seg-myelin-manual"],
+        LoaderParamsKW.EXTENSIONS: [".png", ".tif"],
+        LoaderParamsKW.ROI_PARAMS: {"suffix": None, "slice_filter_roi": None},
+        LoaderParamsKW.CONTRAST_PARAMS: {"contrast_lst": [], "balance": {}},
+        LoaderParamsKW.SLICE_AXIS: "axial",
+        LoaderParamsKW.SLICE_FILTER_PARAMS: {"filter_empty_mask": False, "filter_empty_input": True},
+        LoaderParamsKW.PATCH_FILTER_PARAMS: {"filter_empty_mask": False, "filter_empty_input": False},
+        LoaderParamsKW.MULTICHANNEL: False
     }
     model_parameters = {
-        "name": "Unet",
-        "dropout_rate": 0.3,
-        "bn_momentum": 0.1,
-        "final_activation": "sigmoid",
-        "depth": 3
+        ModelParamsKW.NAME: "Unet",
+        ModelParamsKW.DROPOUT_RATE: 0.3,
+        ModelParamsKW.BN_MOMENTUM: 0.1,
+        ModelParamsKW.FINAL_ACTIVATION: "sigmoid",
+        ModelParamsKW.DEPTH: 3
     }
 
     return loader_parameters, model_parameters
