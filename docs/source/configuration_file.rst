@@ -153,6 +153,134 @@ When possible, the folder name will follow the following convention:
     }
 
 
+Weights and Biases (WandB)
+-----------------
+
+``ivadomed`` provides an additional option to track your ML experiments with the help of WandB. It provides a 
+feature-rich dashboard (accessible through any web-browser) to track and visualize the learning 
+curves, gradients, and media. It is recommended to setup a personal 
+WandB account to track experiments on WandB, however, you can still train models using ivadomed
+without an account, since the metrics are logged on Tensorboard by default. 
+
+
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "wandb_api_key",
+        "$$description": [
+            "This is a private key used to sync the local wandb folder with the wandb dashboard accessible through the browser.\n",
+            "The API key can be found from the browser in your WandB Account's Settings, under the section ``API Keys``.\n",
+            "Note that once it is successfully authorized for the first time, a message will be printed in the terminal notifying\n",
+            "that the API key is stored in the ``.netrc`` file in the ``/home`` folder. From here on, this key-value pair in the\n",
+            "config file can be left empty, like ``'wandb_api_key': ''``"
+        ],
+        "type": "string"
+    }
+
+.. code-block:: JSON
+
+    {
+        "wandb": {
+            "wandb_api_key": "<alphanumeric-key-here>"
+        }
+    }
+
+
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "project_name",
+        "$$description": [
+            "As the key suggests, this defines the name of the current project to which the groups and runs will be synced."
+        ],
+        "type": "string"
+    }
+
+.. code-block:: JSON
+
+    {
+        "wandb": {
+            "project_name": "my-temp-project"
+        }
+    }
+
+
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "group_name",
+        "$$description": [
+            "This defines the name of the group to which the runs will be synced. On the WandB Dashboard,\n",
+            "the groups can be found on clicking the ``Projects`` tab on the left."
+        ],
+        "type": "string"
+    }
+
+.. code-block:: JSON
+
+    {
+        "wandb": {
+            "group_name": "my-temp-group"
+        }
+    }
+
+
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "run_name",
+        "$$description": [
+            "This defines the name of the current run (or, experiment). All the previous and active runs\n",
+            "can be found under the corresponding group on the WandB Dashboard."
+        ],
+        "type": "string"
+    }
+
+.. code-block:: JSON
+
+    {
+        "wandb": {
+            "run_name": "run-1"
+        }
+    }
+
+
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "log_grads_every",
+        "$$description": [
+            "Defines the frequency (in number of steps) of the logging of gradients on to the Dashboard to track and visualize\n",
+            "their histograms as the model trains.\n"
+        ],
+        "type": "int"
+    }
+
+.. code-block:: JSON
+
+    {
+        "wandb": {
+            "log_grads_every": 100
+        }
+    }
+
+.. note::
+    There are two important points to be noted: 
+    (1) Gradients can be large so they can consume more storage space if ``log_grads_every`` is set to a small number, 
+    (2) ``log_grads_every`` also depends on the total duration of training, i.e. if the model is run for only
+    a few epochs, gradients might not be logged if ``log_grads_every`` is too large. Hence, the right frequency of
+    gradient logging depends on the training duration and model size.
+
+.. note::
+    If ``debug = True`` is specified in the config file, the training and validation input images, ground truth labels, and 
+    the model predictions are also periodically logged on WandB, which can be seen under ``Media`` on the WandB Dashboard.
+
+
 Loader Parameters
 -----------------
 
