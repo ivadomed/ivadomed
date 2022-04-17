@@ -2,6 +2,8 @@ import os
 import sys
 import subprocess
 import hashlib
+import datetime
+
 import numpy as np
 import wandb
 from enum import Enum
@@ -451,3 +453,12 @@ def print_stats(arr):
     logger.info(f"\tMean: {np.mean(arr)} %")
     logger.info(f"\tMedian: {np.median(arr)} %")
     logger.info(f"\tInter-quartile range: [{np.percentile(arr, 25)}, {np.percentile(arr, 75)}] %")
+
+def get_timestamp() -> str:
+    """
+    Return a datetime string in the format YYYY-MM-DDTHHMMSS.(sub-precision)
+    Returns:
+    """
+    timestamp = datetime.datetime.now().isoformat().replace(":", "")
+    return timestamp
+
