@@ -7,6 +7,7 @@ from typing import List
 import numpy as np
 import torch
 from torch.utils.data import Dataset
+from loguru import logger
 
 from ivadomed import transforms as imed_transforms, postprocessing as imed_postpro
 from ivadomed.loader import utils as imed_loader_utils
@@ -241,8 +242,12 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         size_roi_pair_in_bytes = get_obj_size(roi_pair)
 
         # Size limit: 4GB GPU RAM, keep in mind tranform etc might take MORE!
-        size_estimated_dataset = (size_seg_pair_in_bytes + size_roi_pair_in_bytes) * len(self.filename_pairs)
-        if size_estimated_dataset > 4 * 1024 * 1024 * 1024:
+        size_estimated_dataset_GB = (size_seg_pair_in_bytes + size_roi_pair_in_bytes) * len(self.filename_pairs) / 1024 ** 3
+        if size_estimated_dataset_GB > 4:
+            logger.info(f"Estimated dataset size is {size_estimated_dataset_GB} GB, which is larger than 4 GB. Auto "
+                        f"enabling cache.")
             self.cache = True
         else:
+            logger.info(f"Estimated dataset size is {size_estimated_dataset_GB} GB, which is smaller than 4 GB. File "
+                        f"cache will not be used")
             self.cache = False
