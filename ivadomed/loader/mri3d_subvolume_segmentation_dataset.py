@@ -1,5 +1,8 @@
 import copy
 import random
+from pathlib import Path
+import pickle
+from typing import List
 
 import numpy as np
 import torch
@@ -7,10 +10,11 @@ from torch.utils.data import Dataset
 
 from ivadomed import transforms as imed_transforms, postprocessing as imed_postpro
 from ivadomed.loader import utils as imed_loader_utils
-from ivadomed.loader.utils import dropout_input
+from ivadomed.loader.utils import dropout_input, create_temp_directory, get_obj_size
 from ivadomed.loader.segmentation_pair import SegmentationPair
 from ivadomed.object_detection import utils as imed_obj_detect
 from ivadomed.keywords import MetadataKW
+from ivadomed.utils import get_timestamp
 
 
 class MRI3DSubVolumeSegmentationDataset(Dataset):
@@ -35,24 +39,31 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
     """
 
     def __init__(self, filename_pairs, transform=None, length=(64, 64, 64), stride=(0, 0, 0), slice_axis=0,
-                 task="segmentation", soft_gt=False, is_input_dropout=False):
+                 task="segmentation", soft_gt=False, is_input_dropout=False, cache=None):
         self.filename_pairs = filename_pairs
-        self.handlers = []
-        self.indexes = []
+
+        # could be a list of tuple of objects OR path objects to the actual disk equivalent.
+        # behaves differently depend on if self.cache is set to true or not.
+        self.handlers: List[tuple] = []
+
+        self.indexes: list = []
         self.length = length
         self.stride = stride
         self.prepro_transforms, self.transform = transform
         self.slice_axis = slice_axis
-        self.has_bounding_box = True
+        self.has_bounding_box: bool = True
         self.task = task
         self.soft_gt = soft_gt
         self.is_input_dropout = is_input_dropout
+        self.cache: bool = cache
 
         self._load_filenames()
         self._prepare_indices()
 
     def _load_filenames(self):
         """Load preprocessed pair data (input and gt) in handler."""
+        path_cache: Path = Path(create_temp_directory())
+
         for input_filename, gt_filename, roi_filename, metadata in self.filename_pairs:
             segpair = SegmentationPair(input_filename, gt_filename, metadata=metadata, slice_axis=self.slice_axis,
                                        soft_gt=self.soft_gt)
@@ -75,13 +86,38 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
 
             for metadata in seg_pair[MetadataKW.INPUT_METADATA]:
                 metadata[MetadataKW.INDEX_SHAPE] = seg_pair['input'][0].shape
-            self.handlers.append((seg_pair, roi_pair))
+
+            # First time detemine cache automatically IF not specified. Otherwise, use the cache specified.
+            if self.cache is None:
+                self.determine_cache_need(seg_pair, roi_pair)
+
+            if self.cache:
+                # Write SegPair and ROIPair to disk cache with timestamp to avoid collisions
+                path_cache_seg_pair = path_cache / f'seg_pair_{get_timestamp()}.pkl'
+                with path_cache_seg_pair.open(mode='wb') as f:
+                    pickle.dump(seg_pair, f)
+
+                path_cache_roi_pair = path_cache / f'roi_pair_{get_timestamp()}.pkl'
+                with path_cache_roi_pair.open(mode='wb') as f:
+                    pickle.dump(roi_pair, f)
+                self.handlers.append((path_cache_seg_pair, path_cache_roi_pair))
+
+            else:
+                # self.handler is now a list of a FILES instead of actual data to prevent this list from taking up too much
+                # memory
+                self.handlers.append((seg_pair, roi_pair))
 
     def _prepare_indices(self):
         """Stores coordinates of subvolumes for training."""
         for i in range(0, len(self.handlers)):
-            segpair, _ = self.handlers[i]
-            input_img = self.handlers[i][0]['input']
+
+            if self.cache:
+                with self.handlers[i][0].open(mode='rb') as f:
+                    segpair = pickle.load(f)
+            else:
+                segpair = self.handlers[i][0]
+
+            input_img = segpair.get('input')
             shape = input_img[0].shape
 
             if ((shape[0] - self.length[0]) % self.stride[0]) != 0 or self.length[0] % 16 != 0 or shape[0] < \
@@ -120,7 +156,13 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         # to allow a different rater at each iteration of training, and to clean transforms params from previous
         # transforms i.e. remove params from previous iterations so that the coming transforms are different
         coord = self.indexes[index]
-        seg_pair, _ = copy.deepcopy(self.handlers[coord['handler_index']])
+
+        tuple_seg_roi_pair: tuple = self.handlers[coord['handler_index']]
+        if self.cache:
+            with tuple_seg_roi_pair[0].open(mode='rb') as f:
+                seg_pair = pickle.load(f)
+        else:
+            seg_pair, _ = copy.deepcopy(tuple_seg_roi_pair)
 
         # In case multiple raters
         if seg_pair['gt'] and isinstance(seg_pair['gt'][0], list):
@@ -184,3 +226,23 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
                                    coord['z_min']:coord['z_max']]
 
         return subvolumes
+
+    def determine_cache_need(self, seg_pair, roi_pair):
+        """
+        When Cache flag is not explicitly set, determine whether to cache the data or not
+        Args:
+            seg_pair: an EXAMPLE, typical seg_pair object
+            roi_pair: an EXAMPLE, typical seg_pair object
+
+        Returns:
+
+        """
+        size_seg_pair_in_bytes = get_obj_size(seg_pair)
+        size_roi_pair_in_bytes = get_obj_size(roi_pair)
+
+        # Size limit: 4GB GPU RAM, keep in mind tranform etc might take MORE!
+        size_estimated_dataset = (size_seg_pair_in_bytes + size_roi_pair_in_bytes) * len(self.filename_pairs)
+        if size_estimated_dataset > 4 * 1024 * 1024 * 1024:
+            self.cache = True
+        else:
+            self.cache = False
