@@ -104,7 +104,7 @@ def test_bounding_box(download_data_testing_test_files, train_lst, target_lst, c
     for index in range(len(handler)):
 
         if "Modified3DUNet" in config:
-            if ds.cache:
+            if ds.disk_cache:
                 path_seg_pair, _ = handler[index]
                 with path_seg_pair.open('rb') as f:
                     seg_pair = pickle.load(f)

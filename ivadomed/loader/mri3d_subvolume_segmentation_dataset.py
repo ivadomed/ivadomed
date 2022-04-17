@@ -40,7 +40,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
     """
 
     def __init__(self, filename_pairs, transform=None, length=(64, 64, 64), stride=(0, 0, 0), slice_axis=0,
-                 task="segmentation", soft_gt=False, is_input_dropout=False, cache=None):
+                 task="segmentation", soft_gt=False, is_input_dropout=False, disk_cache=None):
         self.filename_pairs = filename_pairs
 
         # could be a list of tuple of objects OR path objects to the actual disk equivalent.
@@ -56,7 +56,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         self.task = task
         self.soft_gt = soft_gt
         self.is_input_dropout = is_input_dropout
-        self.cache: bool = cache
+        self.disk_cache: bool = disk_cache
 
         self._load_filenames()
         self._prepare_indices()
@@ -89,10 +89,10 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
                 metadata[MetadataKW.INDEX_SHAPE] = seg_pair['input'][0].shape
 
             # First time detemine cache automatically IF not specified. Otherwise, use the cache specified.
-            if self.cache is None:
+            if self.disk_cache is None:
                 self.determine_cache_need(seg_pair, roi_pair)
 
-            if self.cache:
+            if self.disk_cache:
                 # Write SegPair and ROIPair to disk cache with timestamp to avoid collisions
                 path_cache_seg_pair = path_cache / f'seg_pair_{get_timestamp()}.pkl'
                 with path_cache_seg_pair.open(mode='wb') as f:
@@ -112,7 +112,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         """Stores coordinates of subvolumes for training."""
         for i in range(0, len(self.handlers)):
 
-            if self.cache:
+            if self.disk_cache:
                 with self.handlers[i][0].open(mode='rb') as f:
                     segpair = pickle.load(f)
             else:
@@ -159,7 +159,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         coord = self.indexes[index]
 
         tuple_seg_roi_pair: tuple = self.handlers[coord['handler_index']]
-        if self.cache:
+        if self.disk_cache:
             with tuple_seg_roi_pair[0].open(mode='rb') as f:
                 seg_pair = pickle.load(f)
         else:
@@ -244,10 +244,10 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         # Size limit: 4GB GPU RAM, keep in mind tranform etc might take MORE!
         size_estimated_dataset_GB = (size_seg_pair_in_bytes + size_roi_pair_in_bytes) * len(self.filename_pairs) / 1024 ** 3
         if size_estimated_dataset_GB > 4:
-            logger.info(f"Estimated dataset size is {size_estimated_dataset_GB} GB, which is larger than 4 GB. Auto "
+            logger.info(f"Estimated 3D dataset size is {size_estimated_dataset_GB} GB, which is larger than 4 GB. Auto "
                         f"enabling cache.")
-            self.cache = True
+            self.disk_cache = True
         else:
-            logger.info(f"Estimated dataset size is {size_estimated_dataset_GB} GB, which is smaller than 4 GB. File "
+            logger.info(f"Estimated 3D dataset size is {size_estimated_dataset_GB} GB, which is smaller than 4 GB. File "
                         f"cache will not be used")
-            self.cache = False
+            self.disk_cache = False
