@@ -5,7 +5,8 @@ from torch.nn import init
 from pathlib import Path
 
 #Modified from torchvision.models.resnet.Resnet
-from ivadomed.architecture.blocks import ConvBlock, SimpleBlock
+from ivadomed.architecture.block.conv_block import ConvBlock
+from ivadomed.architecture.block.simple_block import SimpleBlock
 
 
 class Countception(Module):
