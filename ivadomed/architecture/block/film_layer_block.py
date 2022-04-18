@@ -1,6 +1,6 @@
 import torch
 from torch.nn import Module
-from film_generator import FiLMgenerator
+from ivadomed.architecture.block.film_generator import FiLMgenerator
 
 
 class FiLMlayerBlock(Module):

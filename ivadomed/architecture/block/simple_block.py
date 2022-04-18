@@ -1,7 +1,7 @@
 import torch
 from torch import nn as nn
 from torch.nn import Module
-from conv_block import ConvBlock
+from ivadomed.architecture.block.conv_block import ConvBlock
 
 
 class SimpleBlock(Module):

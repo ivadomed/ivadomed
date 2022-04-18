@@ -1,7 +1,7 @@
 import torch
 from torch import nn as nn
 from torch.nn import Module
-from up_conv_block import UpConvBlock
+from ivadomed.architecture.block.up_conv_block import UpConvBlock
 from ivadomed.architecture.block.film_layer_block import FiLMlayerBlock
 
 

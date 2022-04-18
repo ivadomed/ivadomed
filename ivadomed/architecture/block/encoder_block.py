@@ -1,7 +1,7 @@
 from torch import nn as nn
 from torch.nn import Module
-from down_conv_block import DownConvBlock
-from film_layer_block import FiLMlayerBlock
+from ivadomed.architecture.block.down_conv_block import DownConvBlock
+from ivadomed.architecture.block.film_layer_block import FiLMlayerBlock
 
 
 class EncoderBlock(Module):
