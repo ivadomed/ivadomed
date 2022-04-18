@@ -112,7 +112,12 @@ def test_bounding_box(download_data_testing_test_files, train_lst, target_lst, c
                 seg_pair, _ = handler[index]
             assert seg_pair['input'][0].shape[-3:] == (mx2 - mx1, my2 - my1, mz2 - mz1)
         else:
-            seg_pair, _ = handler[index]
+            if ds.disk_cache:
+                path_seg_pair = handler[index]
+                with path_seg_pair.open('rb') as f:
+                    seg_pair, _ = pickle.load(f)
+            else:
+                seg_pair, _ = handler[index]
             assert seg_pair['input'][0].shape[-2:] == (mx2 - mx1, my2 - my1)
 
     shutil.rmtree(PATH_OUTPUT)
