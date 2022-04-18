@@ -174,7 +174,7 @@ def structurewise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
         # Loop across objects
         for i_obj in labels:
             # select the current structure, remaining voxels are set to zero
-            data_hard_labeled_class_obj = (np.array(data_hard_labeled_class) == i_obj).astype(np.int)
+            data_hard_labeled_class_obj = (np.array(data_hard_labeled_class) == i_obj).astype(int)
 
             # Get object coordinates
             xx_obj, yy_obj, zz_obj = np.where(data_hard_labeled_class_obj)
