@@ -71,7 +71,7 @@ class MRI2DSegmentationDataset(Dataset):
 
     def __init__(self, filename_pairs, length=None, stride=None, slice_axis=2, cache=True, transform=None,
                  slice_filter_fn=None, patch_filter_fn=None, task="segmentation", roi_params=None, soft_gt=False,
-                 is_input_dropout=False, disk_cache=True):
+                 is_input_dropout=False, disk_cache=None):
         if length is None:
             length = []
         if stride is None:
@@ -133,7 +133,7 @@ class MRI2DSegmentationDataset(Dataset):
                                                                       slice_roi_pair)
                 # Run once code to keep track if disk cache is used
                 if self.disk_cache is None:
-                    self.determine_cache_need(item, len(input_data_shape[-1]))
+                    self.determine_cache_need(item, input_data_shape[-1])
 
                 # If is_2d_patch, create handlers list for indexing patch
                 if self.is_2d_patch:
