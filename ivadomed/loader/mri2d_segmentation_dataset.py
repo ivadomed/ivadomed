@@ -1,16 +1,20 @@
 import copy
 import random
+from pathlib import Path
+import pickle
 
 import numpy as np
 import torch
 from torch.utils.data import Dataset
+from loguru import logger
 
 from ivadomed import transforms as imed_transforms, postprocessing as imed_postpro
 from ivadomed.loader import utils as imed_loader_utils
-from ivadomed.loader.utils import dropout_input
+from ivadomed.loader.utils import dropout_input, get_obj_size, create_temp_directory
 from ivadomed.loader.segmentation_pair import SegmentationPair
 from ivadomed.object_detection import utils as imed_obj_detect
 from ivadomed.keywords import ROIParamsKW, MetadataKW
+from ivadomed.utils import get_timestamp
 
 
 class MRI2DSegmentationDataset(Dataset):
@@ -44,7 +48,7 @@ class MRI2DSegmentationDataset(Dataset):
         is_2d_patch (bool): True if length in model params.
         prepro_transforms (Compose): Transformations to apply before training.
         transform (Compose): Transformations to apply during training.
-        cache (bool): Tf the data should be cached in memory or not.
+        cache (bool): determine the Nibable data object should be cached in memory or not.
         slice_axis (int): Indicates the axis used to extract 2D slices from 3D NifTI files:
             "axial": 2, "sagittal": 0, "coronal": 1. 2D PNG/TIF/JPG files use default "axial": 2.
         slice_filter_fn (SliceFilter): SliceFilter object containing Slice filter parameters.
@@ -59,18 +63,21 @@ class MRI2DSegmentationDataset(Dataset):
         roi_thr (int): If the ROI mask contains less than this number of non-zero voxels, the slice will be discarded
             from the dataset.
         is_input_dropout (bool): Return input with missing modalities.
+        disk_cache (bool): determines whether the items in the segmentation pairs for the entire dataset are cached on
+            disk (True) or in memory (False). Default to None to automatically determine based on guesstimated size of
+            the entire datasets naively assuming that first image in first volume is representative.
 
     """
 
     def __init__(self, filename_pairs, length=None, stride=None, slice_axis=2, cache=True, transform=None,
                  slice_filter_fn=None, patch_filter_fn=None, task="segmentation", roi_params=None, soft_gt=False,
-                 is_input_dropout=False):
+                 is_input_dropout=False, disk_cache=True):
         if length is None:
             length = []
         if stride is None:
             stride = []
-        self.indexes = []
-        self.handlers = []
+        self.indexes: list = []
+        self.handlers: list = []
         self.filename_pairs = filename_pairs
         self.length = length
         self.stride = stride
@@ -89,7 +96,7 @@ class MRI2DSegmentationDataset(Dataset):
         self.has_bounding_box = True
         self.task = task
         self.is_input_dropout = is_input_dropout
-
+        self.disk_cache: bool = disk_cache
 
     def load_filenames(self):
         """Load preprocessed pair data (input and gt) in handler."""
@@ -102,6 +109,8 @@ class MRI2DSegmentationDataset(Dataset):
                                         soft_gt=self.soft_gt)
 
             input_data_shape, _ = seg_pair.get_pair_shapes()
+
+            path_temp = Path(create_temp_directory())
 
             for idx_pair_slice in range(input_data_shape[-1]):
                 slice_seg_pair = seg_pair.get_pair_slice(idx_pair_slice, gt_type=self.task)
@@ -122,15 +131,31 @@ class MRI2DSegmentationDataset(Dataset):
                 item = imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
                                                                       slice_seg_pair,
                                                                       slice_roi_pair)
+                # Run once code to keep track if disk cache is used
+                if self.disk_cache is None:
+                    self.determine_cache_need(item, len(input_data_shape[-1]))
 
                 # If is_2d_patch, create handlers list for indexing patch
                 if self.is_2d_patch:
                     for metadata in item[0][MetadataKW.INPUT_METADATA]:
                         metadata[MetadataKW.INDEX_SHAPE] = item[0]['input'][0].shape
-                    self.handlers.append((item))
+                    if self.disk_cache:
+                        path_item = path_temp / f"item_{get_timestamp()}.pkl"
+                        with path_item.open(mode="wb") as f:
+                            pickle.dump(item, f)
+                        self.handlers.append((path_item))
+                    else:
+                        self.handlers.append((item))
                 # else, append the whole slice to self.indexes
                 else:
-                    self.indexes.append(item)
+
+                    if self.disk_cache:
+                        path_item = path_temp / f"item_{get_timestamp()}.pkl"
+                        with path_item.open(mode="wb") as f:
+                            pickle.dump(item, f)
+                        self.indexes.append(path_item)
+                    else:
+                        self.indexes.append(item)
 
         # If is_2d_patch, prepare indices of patches
         if self.is_2d_patch:
@@ -140,7 +165,19 @@ class MRI2DSegmentationDataset(Dataset):
         """Stores coordinates of 2d patches for training."""
         for i in range(0, len(self.handlers)):
 
-            input_img = self.handlers[i][0]['input']
+            if self.disk_cache:
+                with self.handlers[i].open(mode="rb") as f:
+                    item = pickle.load(f)
+                    primary_handle = item[0]
+
+            else:
+                primary_handle = self.handlers[i][0]
+
+            input_img = primary_handle.get('input')
+            gt_img = primary_handle.get('gt')
+            input_metadata = primary_handle.get('input_metadata')
+            gt_metadata = primary_handle.get('gt_metadata')
+
             shape = input_img[0].shape
 
             if len(self.length) != 2 or len(self.stride) != 2:
@@ -161,11 +198,11 @@ class MRI2DSegmentationDataset(Dataset):
                     y_max = y_min + self.length[1]
 
                     # Extract patch from handlers for patch filter
-                    patch = {'input': list(np.asarray(self.handlers[i][0]['input'])[:, x_min:x_max, y_min:y_max]),
-                             'gt': list(np.asarray(self.handlers[i][0]['gt'])[:, x_min:x_max, y_min:y_max]) \
-                                   if self.handlers[i][0]['gt'] else [],
-                             'input_metadata': self.handlers[i][0]['input_metadata'],
-                             'gt_metadata': self.handlers[i][0]['gt_metadata']}
+                    patch = {'input': list(np.asarray(input_img)[:, x_min:x_max, y_min:y_max]),
+                             'gt': list(np.asarray(gt_img)[:, x_min:x_max, y_min:y_max]) \
+                                   if gt_img else [],
+                             'input_metadata': input_metadata,
+                             'gt_metadata': gt_metadata}
                     if self.patch_filter_fn and not self.patch_filter_fn(patch):
                         continue
 
@@ -194,9 +231,17 @@ class MRI2DSegmentationDataset(Dataset):
         # transforms i.e. remove params from previous iterations so that the coming transforms are different
         if self.is_2d_patch:
             coord = self.indexes[index]
-            seg_pair_slice, roi_pair_slice = copy.deepcopy(self.handlers[coord['handler_index']])
+            if self.disk_cache:
+                with self.handlers[coord['handler_index']].open(mode="rb") as f:
+                    seg_pair_slice, roi_pair_slice = pickle.load(f)
+            else:
+                seg_pair_slice, roi_pair_slice = copy.deepcopy(self.handlers[coord['handler_index']])
         else:
-            seg_pair_slice, roi_pair_slice = copy.deepcopy(self.indexes[index])
+            if self.disk_cache:
+                with self.indexes[index].open(mode="rb") as f:
+                    seg_pair_slice, roi_pair_slice = pickle.load(f)
+            else:
+                seg_pair_slice, roi_pair_slice = copy.deepcopy(self.indexes[index])
 
         # In case multiple raters
         if seg_pair_slice['gt'] and isinstance(seg_pair_slice['gt'][0], list):
@@ -278,3 +323,26 @@ class MRI2DSegmentationDataset(Dataset):
             data_dict = dropout_input(data_dict)
 
         return data_dict
+
+    def determine_cache_need(self, item: tuple, n_slice: int):
+        """
+        When Cache flag is not explicitly set, determine whether to cache the data or not
+        Args:
+            item: an EXAMPLE, typical Tuple structure contain the main data.
+            n_slice: number of slice in one file_name_pairs.
+
+        Returns:
+
+        """
+        size_item_in_bytes = get_obj_size(item)
+
+        # Size limit: 4GB GPU RAM, keep in mind tranform etc might take MORE!
+        size_estimated_dataset_GB = (size_item_in_bytes) * len(self.filename_pairs) * n_slice / 1024 ** 3
+        if size_estimated_dataset_GB > 4:
+            logger.info(f"Estimated 2D dataset size is {size_estimated_dataset_GB} GB, which is larger than 4 GB. Auto "
+                        f"enabling cache.")
+            self.disk_cache = True
+        else:
+            logger.info(f"Estimated 2D dataset size is {size_estimated_dataset_GB} GB, which is smaller than 4 GB. File "
+                        f"cache will not be used")
+            self.disk_cache = False
