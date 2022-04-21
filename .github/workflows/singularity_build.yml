@@ -11,6 +11,17 @@ on:
 jobs:
   build-singularity-container:
     runs-on: ubuntu-latest
+    strategy:
+      # Keep going on other deployments if anything bloops
+      fail-fast: false
+      matrix:
+        singularity_version:
+          - '3.8.1'
+
+    container:
+      image: quay.io/singularity/singularity:v${{ matrix.singularity_version }}
+      options: --privileged
+
     steps:
       - name: Check out code for the container builds
         uses: actions/checkout@v2
