@@ -115,7 +115,9 @@ def plot_curve(data_list, y_label, fig_ax, subplot_title, y_lim=None):
 
     warnings.filterwarnings(
         'ignore',
-        '*',
+        'Attempting to set identical left==right results\\nin singular '
+        'transformations; automatically expanding.\\nleft=\d*\.\d*, '
+        'right=\d*\.\d*',
         UserWarning, module='matplotlib.axes')
     fig_ax.set_xlim([1, max_nb_epoch])
     fig_ax.title.set_text('\n'.join(wrap(subplot_title, 80)))
