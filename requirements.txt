@@ -20,3 +20,5 @@ tensorboard>=1.15.0
 tqdm>=4.30
 scipy
 torchio>=0.18.68
+onnxruntime==1.7.0
+wandb>=0.12.11

@@ -99,7 +99,6 @@ def get_torch_whls(backend):
 extra_requirements = {
     'cpu': [
         requirements,
-        'onnxruntime==1.7.0',
         get_torch_whls(backend='cpu')
     ],
     'gpu': [
@@ -118,6 +117,7 @@ extra_requirements = {
     ],
     'tests': [
         'pytest~=6.2',
+        'pytest-cases~=3.6.8',
         'pytest-cov',
         'pytest-ordering~=0.6',
         'pytest-console-scripts~=1.1',
