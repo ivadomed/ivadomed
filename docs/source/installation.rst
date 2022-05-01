@@ -100,23 +100,23 @@ Step 1: Setup dedicated python environment
             If you are using `Compute Canada <https://www.computecanada.ca/>`_, you can load modules as `mentioned here <https://intranet.neuro.polymtl.ca/computing-resources/compute-canada#modules>`_ and `also here <https://docs.computecanada.ca/wiki/Utiliser_des_modules/en#Loading_modules_automatically>`_.
 
 
-Step 2: Install ``ivadomed`` with CPU or GPU Support
+Step 2: Install ``ivadomed`` with GPU or CPU Support
 ++++++++++++++++++++++++++++++++++++++++++++++++++++
 
     .. tabs::
 
-        .. group-tab:: PyPI Installation
+        .. tab:: NVIDIA GPU Support
+
+            ``ivadomed`` requires CUDA 11 to execute properly. If you have an NVIDIA GPU, look up its Cuda Compute Score `here <https://developer.nvidia.com/cuda-gpus>`__, which needs to be > 3.5 to be compatible with CUDA 11. Also, make sure to upgrade your NVIDIA driver to at least the minimum required version as indicated `here <https://docs.nvidia.com/deploy/cuda-compatibility/index.html#minor-version-compatibility>`__.
+
+            To verify the CUDA version, simply run ``nvcc -V`` in both Linux and Windows. The release refers to your current CUDA version.
 
             .. tabs::
 
-                .. tab:: NVIDIA GPU Support
-
-                    ``ivadomed`` requires CUDA 11 to execute properly. If you have an NVIDIA GPU, try to look up its Cuda Compute Score `here <https://developer.nvidia.com/cuda-gpus>`__, which needs to be > 3.5 to be compatible with CUDA 11. Also, make sure to upgrade your NVIDIA driver to at least the minimum required version as indicated `here <https://docs.nvidia.com/deploy/cuda-compatibility/index.html#minor-version-compatibility>`__.
-
-                    To verify the CUDA version, simply run ``nvcc -V`` in both Linux and Windows and the release refers to your current CUDA version.
+                .. tab:: PyPI Installation
 
                     After verifying the CUDA 11 installation, install ``ivadomed`` from `PyPI <https://pypi.org/project/ivadomed/>`__:
-
+                    
                     ::
 
                         pip install --upgrade pip
@@ -124,25 +124,13 @@ Step 2: Install ``ivadomed`` with CPU or GPU Support
                         pip install ivadomed[gpu]
 
 
-                .. tab:: CPU Support
+                .. tab:: Source Installation
+
+                    Bleeding-edge developments are available on the project's master branch
+                    on Github. To install ``ivadomed`` from source:
 
                     ::
 
-                        pip install --upgrade pip
-
-                        pip install ivadomed[cpu]
-                        
-
-        .. group-tab:: Source Installation
-
-            Bleeding-edge developments are available on the project's master branch
-            on Github. To install ``ivadomed`` from source:
-
-            .. tabs:: 
-
-                .. tab:: NVIDIA GPU Support
-
-                    ::
                         git clone https://github.com/ivadomed/ivadomed.git
 
                         cd ivadomed
@@ -150,34 +138,58 @@ Step 2: Install ``ivadomed`` with CPU or GPU Support
                         pip install -e .[gpu]
 
 
-                .. tab:: CPU Support
+                .. tab:: Contributor or Developer Installation
+
+                    To install ``ivadomed`` with additional dependencies related to building documentation and testing:
 
                     ::
-                        git clone https://github.com/ivadomed/ivadomed.git
-
-                        cd ivadomed
-
-                        pip install -e .[cpu]
-
-        .. group-tab:: Contributor or Developer Installation
-
-            To install ``ivadomed`` with additional dependencies related to building documentation and testing:
-
-                .. tab:: NVIDIA GPU Support
-
-                    ::
+                        
                         git clone https://github.com/ivadomed/ivadomed.git
 
                         cd ivadomed
 
                         pip install -e .[dev_gpu]
 
+        .. tab:: CPU Support
 
-                .. tab:: CPU Support
+            .. tabs:: 
+                
+                .. tab:: PyPI Installation
+
+                    Install ``ivadomed`` from `PyPI <https://pypi.org/project/ivadomed/>`__:
+                    
+                    ::
+
+                        pip install --upgrade pip
+
+                        pip install ivadomed[cpu]
+
+
+                .. tab:: Source Installation
+
+                    Bleeding-edge developments are available on the project's master branch
+                    on Github. To install ``ivadomed`` from source:
 
                     ::
+
+                        git clone https://github.com/ivadomed/ivadomed.git
+
+                        cd ivadomed
+
+                        pip install -e .[cpu]
+
+
+                .. tab:: Contributor or Developer Installation
+
+                    To install ``ivadomed`` with additional dependencies related to building documentation and testing:
+
+                    ::
+                        
                         git clone https://github.com/ivadomed/ivadomed.git
 
                         cd ivadomed
 
                         pip install -e .[dev_cpu]
+
+
+ 
