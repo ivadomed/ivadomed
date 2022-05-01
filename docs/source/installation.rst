@@ -100,39 +100,8 @@ Step 1: Setup dedicated python environment
             If you are using `Compute Canada <https://www.computecanada.ca/>`_, you can load modules as `mentioned here <https://intranet.neuro.polymtl.ca/computing-resources/compute-canada#modules>`_ and `also here <https://docs.computecanada.ca/wiki/Utiliser_des_modules/en#Loading_modules_automatically>`_.
 
 
-Step 2: Install ``ivadomed``
-++++++++++++++++++++++++++++
-
-
-    .. tabs::
-
-        .. group-tab:: PyPI Installation
-
-            Install ``ivadomed`` and its requirements from
-            `PyPI <https://pypi.org/project/ivadomed/>`__:
-
-            ::
-
-                pip install --upgrade pip
-
-                pip install ivadomed
-
-        .. group-tab:: Repo Installation (Advanced or Developer)
-
-            Bleeding-edge developments are available on the project's master branch
-            on Github. Install ``ivadomed`` from source:
-
-            ::
-
-                git clone https://github.com/ivadomed/ivadomed.git
-
-                cd ivadomed
-
-                pip install -e .
-
-
-Step 3: Install ``torch`` and ``torchvision`` with CPU or GPU Support
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Step 2: Install ``ivadomed`` with CPU or GPU Support
+++++++++++++++++++++++++++++++++++++++++++++++++++++
 
     .. tabs::
 
@@ -140,58 +109,75 @@ Step 3: Install ``torch`` and ``torchvision`` with CPU or GPU Support
 
             .. tabs::
 
-                .. tab:: Nvidia GPU Support
+                .. tab:: NVIDIA GPU Support
 
-                    ``ivadomed`` requires CUDA11 to execute properly. If you have a nvidia GPU, try to look up its Cuda Compute Score `here <https://developer.nvidia.com/cuda-gpus>`__, which needs to be > 3.5 to support CUDA11. Then, make sure to upgrade to nvidia driver to be at least v450+ or newer.
+                    ``ivadomed`` requires CUDA 11 to execute properly. If you have an NVIDIA GPU, try to look up its Cuda Compute Score `here <https://developer.nvidia.com/cuda-gpus>`__, which needs to be > 3.5 to be compatible with CUDA 11. Also, make sure to upgrade your NVIDIA driver to at least the minimum required version as indicated `here <https://docs.nvidia.com/deploy/cuda-compatibility/index.html#minor-version-compatibility>`__.
 
-                    You can use ``nvidia-smi`` in both Linux and Windows to check for driver CUDA Version listed at the top right of the output console. On Linux, simply type in ``nvidia-smi`` in any console to see the output. On windows, you will need to locate the `nvidia-smi.exe` tool by following the instructions on `this page <https://stackoverflow.com/a/57100016>`__.
+                    To verify the CUDA version, simply run ``nvcc -V`` in both Linux and Windows and the release refers to your current CUDA version.
 
-                    If you have a compatible NVIDIA GPU that supports CUDA11, and you have a recent enough driver installed, then run the following command:
+                    After verifying the CUDA 11 installation, install ``ivadomed`` from `PyPI <https://pypi.org/project/ivadomed/>`__:
 
-                    .. code::
+                    ::
 
-                       pip install torch==1.8.1+cu111 torchvision==0.9.1+cu111 --find-links https://download.pytorch.org/whl/torch_stable.html
+                        pip install --upgrade pip
+
+                        pip install ivadomed[gpu]
+
 
                 .. tab:: CPU Support
 
-                    If you plan to run ``ivadomed`` on CPU only, install PyTorch per instructions provided below for your specific operating system:
+                    ::
 
-                    .. tabs::
+                        pip install --upgrade pip
 
-                        .. tab:: Windows/Linux
+                        pip install ivadomed[cpu]
+                        
 
-                            .. code::
+        .. group-tab:: Source Installation
 
-                               pip install torch==1.8.0+cpu torchvision==0.9.0+cpu --find-links https://download.pytorch.org/whl/torch_stable.html
+            Bleeding-edge developments are available on the project's master branch
+            on Github. To install ``ivadomed`` from source:
 
-                        .. tab:: Mac
+            .. tabs:: 
 
-                            .. code::
+                .. tab:: NVIDIA GPU Support
 
-                               pip install torch==1.8.0 torchvision==0.9.0 --find-links https://download.pytorch.org/whl/torch_stable.html
+                    ::
+                        git clone https://github.com/ivadomed/ivadomed.git
 
+                        cd ivadomed
 
-        .. group-tab:: Repo Installation (Advanced or Developer)
-
-            Run this only if you have already downloaded/cloned the repo with access to the ``requirement_gpu.txt`` file, then run the following command while at the repository root level:
-
-            .. code::
-
-               pip install -r requirements_gpu.txt
+                        pip install -e .[gpu]
 
 
+                .. tab:: CPU Support
+
+                    ::
+                        git clone https://github.com/ivadomed/ivadomed.git
+
+                        cd ivadomed
+
+                        pip install -e .[cpu]
+
+        .. group-tab:: Contributor or Developer Installation
+
+            To install ``ivadomed`` with additional dependencies related to building documentation and testing:
+
+                .. tab:: NVIDIA GPU Support
+
+                    ::
+                        git clone https://github.com/ivadomed/ivadomed.git
+
+                        cd ivadomed
+
+                        pip install -e .[dev_gpu]
 
 
-Developer-only Installation Steps
-+++++++++++++++++++++++++++++++++
+                .. tab:: CPU Support
 
-    The additional steps below are only necessary for contributors to the ``ivadomed`` project.
+                    ::
+                        git clone https://github.com/ivadomed/ivadomed.git
 
-    The ``pre-commit`` package is used to enforce a size limit on committed files. The ``requirements_dev.txt`` also contain additional dependencies related to documentation building and testing.
+                        cd ivadomed
 
-    After you've installed ``ivadomed``, install the ``pre-commit`` hooks by running:
-
-    .. code::
-
-        pip install -r requirements_dev.txt
-        pre-commit install
+                        pip install -e .[dev_cpu]
