@@ -503,10 +503,10 @@ def get_obj_size(obj) -> int:
     """
     marked = {id(obj)}
     obj_q = [obj]
-    sz = 0
+    object_size = 0
 
     while obj_q:
-        sz += sum(map(sys.getsizeof, obj_q))
+        object_size += sum(map(sys.getsizeof, obj_q))
 
         # Lookup all the object referred to by the object in obj_q.
         # See: https://docs.python.org/3.7/library/gc.html#gc.get_referents
@@ -522,4 +522,4 @@ def get_obj_size(obj) -> int:
         obj_q = new_refr.values()
         marked.update(new_refr.keys())
 
-    return sz
+    return object_size
