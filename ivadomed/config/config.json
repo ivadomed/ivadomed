@@ -10,8 +10,8 @@
     },
     "wandb": {
         "wandb_api_key": "",
-        "project_name": "ivado-wandb-testing",
-        "group_name": "temp",
+        "project_name": "my_project",
+        "group_name": "my_group",
         "run_name": "run-1",
         "log_grads_every": 100
     },
