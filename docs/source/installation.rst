@@ -107,15 +107,15 @@ Step 2: Install ``ivadomed`` with GPU or CPU Support
 
         .. tab:: NVIDIA GPU Support
 
-            ``ivadomed`` requires CUDA 11 to execute properly. If you have an NVIDIA GPU, look up its Cuda Compute Score `here <https://developer.nvidia.com/cuda-gpus>`__, which needs to be > 3.5 to be compatible with CUDA 11. Also, make sure to upgrade your NVIDIA driver to at least the minimum required version as indicated `here <https://docs.nvidia.com/deploy/cuda-compatibility/index.html#minor-version-compatibility>`__.
+            ``ivadomed`` requires CUDA 11.1 to execute properly. If you have an NVIDIA GPU, look up its Cuda Compute Score `here <https://developer.nvidia.com/cuda-gpus>`__, which needs to be > 3.5 to be compatible with CUDA 11.1. Also, make sure to upgrade your NVIDIA driver to at least the minimum required version as indicated `here <https://docs.nvidia.com/deploy/cuda-compatibility/index.html#minor-version-compatibility>`__.
 
             To verify the CUDA version, simply run ``nvcc -V`` in both Linux and Windows. The release refers to your current CUDA version.
 
             .. tabs::
 
-                .. tab:: PyPI Installation
+                .. tab:: Package Installation (Recommended)
 
-                    After verifying the CUDA 11 installation, install ``ivadomed`` from `PyPI <https://pypi.org/project/ivadomed/>`__:
+                    After verifying CUDA 11.1 installation, install ``ivadomed`` from `PyPI <https://pypi.org/project/ivadomed/>`__:
                     
                     ::
 
@@ -126,7 +126,7 @@ Step 2: Install ``ivadomed`` with GPU or CPU Support
 
                 .. tab:: Source Installation
 
-                    Bleeding-edge developments are available on the project's master branch
+                    Bleeding-edge developments are available on the master branch of the project
                     on Github. To install ``ivadomed`` from source:
 
                     ::
@@ -140,7 +140,7 @@ Step 2: Install ``ivadomed`` with GPU or CPU Support
 
                 .. tab:: Contributor or Developer Installation
 
-                    To install ``ivadomed`` with additional dependencies related to building documentation and testing:
+                    To contribute to the project, we recommend installing ``ivadomed`` from source along with additional dependencies related to building documentation and testing:
 
                     ::
                         
@@ -154,7 +154,7 @@ Step 2: Install ``ivadomed`` with GPU or CPU Support
 
             .. tabs:: 
                 
-                .. tab:: PyPI Installation
+                .. tab:: Package Installation (Recommended)
 
                     Install ``ivadomed`` from `PyPI <https://pypi.org/project/ivadomed/>`__:
                     
@@ -181,7 +181,7 @@ Step 2: Install ``ivadomed`` with GPU or CPU Support
 
                 .. tab:: Contributor or Developer Installation
 
-                    To install ``ivadomed`` with additional dependencies related to building documentation and testing:
+                    To contribute to the project, we recommend installing ``ivadomed`` from source along with additional dependencies related to building documentation and testing:
 
                     ::
                         
