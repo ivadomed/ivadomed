@@ -206,6 +206,7 @@ def plot_transformed_sample(before, after, list_title=None, fname_out="", cmap="
         list_title = ['Sample before transform', 'Sample after transform']
 
     plt.interactive(False)
+    plt.rcParams.update({'figure.max_open_warning': 0})
     plt.figure(figsize=(20, 10))
 
     plt.subplot(1, 2, 1)
