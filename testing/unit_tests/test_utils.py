@@ -1,6 +1,10 @@
 import string
-from ivadomed.utils import get_timestamp
+from ivadomed.utils import get_timestamp, get_win_system_memory, get_linux_system_memory, get_mac_system_memory
 from loguru import logger
+import platform
+import pytest
+
+current_platform = platform.system()
 
 
 def test_timestamp():
@@ -19,3 +23,32 @@ def test_timestamp():
             assert output.count(I) == 0
     for i in string.ascii_lowercase:
         assert output.count(i) == 0
+
+@pytest.mark.skipif(current_platform != "Windows", reason="Function only works for Windows, skip on all other OS")
+def test_get_win_system_memory():
+    """
+    Get Windows memory size
+    Returns:
+
+    """
+    # Most computers/clusters should have memory of at least 100mb and no more than 256GB RAM
+    assert 0.1 < get_win_system_memory() < 256
+
+@pytest.mark.skipif(current_platform != "Linux", reason="Function only works for Linux, skip on all other OS")
+def test_get_linux_system_memory():
+    """
+    Get Windows memory size
+    Returns:
+
+    """
+    # Most computers/clusters should have memory of at least 100mb and no more than 256GB RAM
+    assert 0.1 < get_linux_system_memory() < 256
+@pytest.mark.skipif(current_platform != "Darwin", reason="Function only works for Mac, skip on all other OS")
+def test_get_mac_system_memory():
+    """
+    Get Windows memory size
+    Returns:
+
+    """
+    # Most computers/clusters should have memory of at least 100mb and no more than 256GB RAM
+    assert 0.1 < get_mac_system_memory() < 256
