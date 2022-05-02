@@ -77,7 +77,8 @@ microscopy segmentation training.
 
      "target_suffix": ["_seg-axon-manual", "_seg-myelin-manual"]
 
-- ``loader_parameters:extensions``: File extensions of the microscopy raw data.
+- ``loader_parameters:extensions``: List of file extensions of the microscopy data. In our case, both the raw data and
+  derivatives are ".png" files.
 
   .. code-block:: xml
 

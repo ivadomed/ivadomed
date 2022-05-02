@@ -22,7 +22,7 @@ def test_tensorboard_save():
     dpath = Path(__tmp_dir__, "test_tensorboard_save")
     dpath.mkdir(parents=True, exist_ok=True)
     writer = SummaryWriter(log_dir=str(dpath))
-    imed_visualize.save_tensorboard_img(writer, 1, "Training", inp, pred, gt)
+    imed_visualize.save_img(writer, 1, "Training", inp, pred, gt)
     writer.flush()
 
     summary_iterators = [EventAccumulator(str(dname)).Reload() for dname in dpath.iterdir()]

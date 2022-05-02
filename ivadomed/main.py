@@ -227,10 +227,12 @@ def update_film_model_params(context, ds_test, model_params, path_output):
 def run_segment_command(context, model_params):
     # BIDSDataframe of all image files
     # Indexing of derivatives is False for command segment
+    # split_method is unused for command segment
     bids_df = BidsDataframe(
         context.get(ConfigKW.LOADER_PARAMETERS),
         context.get(ConfigKW.PATH_OUTPUT),
-        derivatives=False
+        derivatives=False,
+        split_method=None
     )
 
     # Append subjects filenames into a list
@@ -374,8 +376,10 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         return
 
     # BIDSDataframe of all image files
-    # Indexing of derivatives is True for command train and test
-    bids_df = BidsDataframe(loader_params, path_output, derivatives=True)
+    # Indexing of derivatives is True for commands train and test
+    # split_method is used for removing unused subject files in bids_df for commands train and test
+    bids_df = BidsDataframe(loader_params, path_output, derivatives=True,
+        split_method=context.get(ConfigKW.SPLIT_DATASET).get(SplitDatasetKW.SPLIT_METHOD))
 
     # Get subject filenames lists. "segment" command uses all participants of data path, hence no need to split
     train_lst, valid_lst, test_lst = imed_loader_utils.get_subdatasets_subject_files_list(context[ConfigKW.SPLIT_DATASET],
@@ -438,6 +442,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
             dataset_train=ds_train,
             dataset_val=ds_valid,
             training_params=context[ConfigKW.TRAINING_PARAMETERS],
+            wandb_params=context.get(ConfigKW.WANDB),
             path_output=path_output,
             device=device,
             cuda_available=cuda_available,

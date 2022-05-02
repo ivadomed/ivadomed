@@ -1,3 +1,21 @@
+## v2.9.5 (2022-04-06)
+[View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.9.4...release)
+
+**BUG**
+
+- Fix TSV metadata indexation and remove unused lines from bids_dataframe based on split_method.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1112)
+- Fix loading of TIF 16bits grayscale files.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1107)
+- Fix loading when names of multiple target_suffix overlap.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1100)
+
+**ENHANCEMENT**
+
+- Add type hintings to fields inside all keywords(KW) dataclasses.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1109)
+
+**DOCUMENTATION**
+
+- Clarify data and loading documentation.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1103)
+
+
 ## v2.9.4 (2022-03-09)
 [View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.9.3...release)
 
