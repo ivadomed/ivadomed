@@ -30,6 +30,15 @@ class ConfigKW:
 
 
 @dataclass
+class WandbKW:
+    WANDB_API_KEY = "wandb_api_key"
+    PROJECT_NAME = "project_name"
+    GROUP_NAME = "group_name"
+    RUN_NAME = "run_name"
+    LOG_GRADS_EVERY = "log_grads_every"
+
+
+@dataclass
 class LoaderParamsKW:
     PATH_DATA: str = "path_data"
     BIDS_CONFIG: str = "bids_config"
