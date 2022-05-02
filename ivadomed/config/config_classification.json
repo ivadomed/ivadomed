@@ -1,6 +1,6 @@
 {
     "command": "train",
-    "gpu_ids": [6],
+    "gpu_ids": [0],
     "path_output": "classification_lesion_ax",
     "model_name": "label_lesion_t2_t2star",
     "debugging": false,

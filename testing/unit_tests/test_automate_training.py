@@ -125,7 +125,7 @@ expected_config_list_all_combin = [
             "dropout_rate": 0.3,
             "depth": 2
         },
-        "gpu_ids": [2],
+        "gpu_ids": [0],
         "path_output": "./tmp/-batch_size-2-loss-name-DiceLoss-depth-2-gpu_ids-2"
     },
     {
@@ -139,7 +139,7 @@ expected_config_list_all_combin = [
             "dropout_rate": 0.3,
             "depth": 3
         },
-        "gpu_ids": [2],
+        "gpu_ids": [0],
         "path_output": "./tmp/-batch_size-2-loss-name-DiceLoss-depth-3-gpu_ids-2"
     },
     {
@@ -153,7 +153,7 @@ expected_config_list_all_combin = [
             "dropout_rate": 0.3,
             "depth": 4
         },
-        "gpu_ids": [2],
+        "gpu_ids": [0],
         "path_output": "./tmp/-batch_size-2-loss-name-DiceLoss-depth-4-gpu_ids-2"
     },
     {
@@ -167,7 +167,7 @@ expected_config_list_all_combin = [
             "dropout_rate": 0.3,
             "depth": 2
         },
-        "gpu_ids": [2],
+        "gpu_ids": [0],
         "path_output": "./tmp/-batch_size-2-loss-name-FocalLoss-gamma-0.2-alpha-0.5-depth-2-gpu_ids-2"
     },
     {
@@ -181,7 +181,7 @@ expected_config_list_all_combin = [
             "dropout_rate": 0.3,
             "depth": 3
         },
-        "gpu_ids": [2],
+        "gpu_ids": [0],
         "path_output": "./tmp/-batch_size-2-loss-name-FocalLoss-gamma-0.2-alpha-0.5-depth-3-gpu_ids-2"
     },
     {
@@ -195,7 +195,7 @@ expected_config_list_all_combin = [
             "dropout_rate": 0.3,
             "depth": 4
         },
-        "gpu_ids": [2],
+        "gpu_ids": [0],
         "path_output": "./tmp/-batch_size-2-loss-name-FocalLoss-gamma-0.2-alpha-0.5-depth-4-gpu_ids-2"
     },
     {
@@ -209,7 +209,7 @@ expected_config_list_all_combin = [
             "dropout_rate": 0.3,
             "depth": 2
         },
-        "gpu_ids": [2],
+        "gpu_ids": [0],
         "path_output": "./tmp/-batch_size-64-loss-name-DiceLoss-depth-2-gpu_ids-2"
     },
     {
@@ -223,7 +223,7 @@ expected_config_list_all_combin = [
             "dropout_rate": 0.3,
             "depth": 3
         },
-        "gpu_ids": [2],
+        "gpu_ids": [0],
         "path_output": "./tmp/-batch_size-64-loss-name-DiceLoss-depth-3-gpu_ids-2"
     },
     {
@@ -237,7 +237,7 @@ expected_config_list_all_combin = [
             "dropout_rate": 0.3,
             "depth": 4
         },
-        "gpu_ids": [2],
+        "gpu_ids": [0],
         "path_output": "./tmp/-batch_size-64-loss-name-DiceLoss-depth-4-gpu_ids-2"
     },
     {
@@ -251,7 +251,7 @@ expected_config_list_all_combin = [
             "dropout_rate": 0.3,
             "depth": 2
         },
-        "gpu_ids": [2],
+        "gpu_ids": [0],
         "path_output": "./tmp/-batch_size-64-loss-name-FocalLoss-gamma-0.2-alpha-0.5-depth-2-gpu_ids-2"
     },
     {
@@ -265,7 +265,7 @@ expected_config_list_all_combin = [
             "dropout_rate": 0.3,
             "depth": 3
         },
-        "gpu_ids": [2],
+        "gpu_ids": [0],
         "path_output": "./tmp/-batch_size-64-loss-name-FocalLoss-gamma-0.2-alpha-0.5-depth-3-gpu_ids-2"
     },
     {
@@ -279,7 +279,7 @@ expected_config_list_all_combin = [
             "dropout_rate": 0.3,
             "depth": 4
         },
-        "gpu_ids": [2],
+        "gpu_ids": [0],
         "path_output": "./tmp/-batch_size-64-loss-name-FocalLoss-gamma-0.2-alpha-0.5-depth-4-gpu_ids-2"
     },
     {
@@ -293,7 +293,7 @@ expected_config_list_all_combin = [
             "dropout_rate": 0.3,
             "depth": 2
         },
-        "gpu_ids": [5],
+        "gpu_ids": [0],
         "path_output": "./tmp/-batch_size-2-loss-name-DiceLoss-depth-2-gpu_ids-5"
     },
     {
@@ -307,7 +307,7 @@ expected_config_list_all_combin = [
             "dropout_rate": 0.3,
             "depth": 3
         },
-        "gpu_ids": [5],
+        "gpu_ids": [0],
         "path_output": "./tmp/-batch_size-2-loss-name-DiceLoss-depth-3-gpu_ids-5"
     },
     {
@@ -321,7 +321,7 @@ expected_config_list_all_combin = [
             "dropout_rate": 0.3,
             "depth": 4
         },
-        "gpu_ids": [5],
+        "gpu_ids": [0],
         "path_output": "./tmp/-batch_size-2-loss-name-DiceLoss-depth-4-gpu_ids-5"
     },
     {
@@ -335,7 +335,7 @@ expected_config_list_all_combin = [
             "dropout_rate": 0.3,
             "depth": 2
         },
-        "gpu_ids": [5],
+        "gpu_ids": [0],
         "path_output": "./tmp/-batch_size-2-loss-name-FocalLoss-gamma-0.2-alpha-0.5-depth-2-gpu_ids-5"
     },
     {
@@ -349,7 +349,7 @@ expected_config_list_all_combin = [
             "dropout_rate": 0.3,
             "depth": 3
         },
-        "gpu_ids": [5],
+        "gpu_ids": [0],
         "path_output": "./tmp/-batch_size-2-loss-name-FocalLoss-gamma-0.2-alpha-0.5-depth-3-gpu_ids-5"
     },
     {
@@ -363,7 +363,7 @@ expected_config_list_all_combin = [
             "dropout_rate": 0.3,
             "depth": 4
         },
-        "gpu_ids": [5],
+        "gpu_ids": [0],
         "path_output": "./tmp/-batch_size-2-loss-name-FocalLoss-gamma-0.2-alpha-0.5-depth-4-gpu_ids-5"
     },
     {
@@ -377,7 +377,7 @@ expected_config_list_all_combin = [
             "dropout_rate": 0.3,
             "depth": 2
         },
-        "gpu_ids": [5],
+        "gpu_ids": [0],
         "path_output": "./tmp/-batch_size-64-loss-name-DiceLoss-depth-2-gpu_ids-5"
     },
     {
@@ -391,7 +391,7 @@ expected_config_list_all_combin = [
             "dropout_rate": 0.3,
             "depth": 3
         },
-        "gpu_ids": [5],
+        "gpu_ids": [0],
         "path_output": "./tmp/-batch_size-64-loss-name-DiceLoss-depth-3-gpu_ids-5"
     },
     {
@@ -405,7 +405,7 @@ expected_config_list_all_combin = [
             "dropout_rate": 0.3,
             "depth": 4
         },
-        "gpu_ids": [5],
+        "gpu_ids": [0],
         "path_output": "./tmp/-batch_size-64-loss-name-DiceLoss-depth-4-gpu_ids-5"
     },
     {
@@ -419,7 +419,7 @@ expected_config_list_all_combin = [
             "dropout_rate": 0.3,
             "depth": 2
         },
-        "gpu_ids": [5],
+        "gpu_ids": [0],
         "path_output": "./tmp/-batch_size-64-loss-name-FocalLoss-gamma-0.2-alpha-0.5-depth-2-gpu_ids-5"
     },
     {
@@ -433,7 +433,7 @@ expected_config_list_all_combin = [
             "dropout_rate": 0.3,
             "depth": 3
         },
-        "gpu_ids": [5],
+        "gpu_ids": [0],
         "path_output": "./tmp/-batch_size-64-loss-name-FocalLoss-gamma-0.2-alpha-0.5-depth-3-gpu_ids-5"
     },
     {
@@ -447,7 +447,7 @@ expected_config_list_all_combin = [
             "dropout_rate": 0.3,
             "depth": 4
         },
-        "gpu_ids": [5],
+        "gpu_ids": [0],
         "path_output": "./tmp/-batch_size-64-loss-name-FocalLoss-gamma-0.2-alpha-0.5-depth-4-gpu_ids-5"
     }
 ]
