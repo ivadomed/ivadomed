@@ -110,7 +110,7 @@ initial_config = {
         "depth": 3
     },
     "path_output": "./tmp/",
-    "gpu_ids": [1]
+    "gpu_ids": [0]
 }
 
 expected_config_list_all_combin = [
@@ -466,7 +466,7 @@ expected_config_list_neither = [
             "depth": 3
         },
         "path_output": "./tmp/-batch_size-2",
-        "gpu_ids": [1]
+        "gpu_ids": [0]
     },
     {
         "training_parameters": {
@@ -480,7 +480,7 @@ expected_config_list_neither = [
             "depth": 3
         },
         "path_output": "./tmp/-batch_size-64",
-        "gpu_ids": [1]
+        "gpu_ids": [0]
     },
 
     {
@@ -495,7 +495,7 @@ expected_config_list_neither = [
             "depth": 3
         },
         "path_output": "./tmp/-loss-name-DiceLoss",
-        "gpu_ids": [1]
+        "gpu_ids": [0]
     },
     {
         "training_parameters": {
@@ -509,7 +509,7 @@ expected_config_list_neither = [
             "depth": 3
         },
         "path_output": "./tmp/-loss-name-FocalLoss-gamma-0.2-alpha-0.5",
-        "gpu_ids": [1]
+        "gpu_ids": [0]
      },
     {
         "training_parameters": {
@@ -523,7 +523,7 @@ expected_config_list_neither = [
             "depth": 2
         },
         "path_output": "./tmp/-depth-2",
-        "gpu_ids": [1]
+        "gpu_ids": [0]
     },
     {
         "training_parameters": {
@@ -537,7 +537,7 @@ expected_config_list_neither = [
             "depth": 3
         },
         "path_output": "./tmp/-depth-3",
-        "gpu_ids": [1]
+        "gpu_ids": [0]
     },
     {
         "training_parameters": {
@@ -551,7 +551,7 @@ expected_config_list_neither = [
             "depth": 4
         },
         "path_output": "./tmp/-depth-4",
-        "gpu_ids": [1]
+        "gpu_ids": [0]
     },
     {
         "training_parameters": {
@@ -565,7 +565,7 @@ expected_config_list_neither = [
             "depth": 3
         },
         "path_output": "./tmp/-gpu_ids-2",
-        "gpu_ids": [2]
+        "gpu_ids": [0]
     },
     {
         "training_parameters": {
@@ -579,7 +579,7 @@ expected_config_list_neither = [
             "depth": 3
         },
         "path_output": "./tmp/-gpu_ids-5",
-        "gpu_ids": [5]
+        "gpu_ids": [0]
     }
 ]
 
@@ -596,7 +596,7 @@ expected_config_list_multi_params = [
             "depth": 2
         },
         "path_output": "./tmp/-batch_size-2-loss-name-DiceLoss-depth-2-gpu_ids-2",
-        "gpu_ids": [2]
+        "gpu_ids": [0]
     },
     {
         "training_parameters": {
@@ -610,7 +610,7 @@ expected_config_list_multi_params = [
             "depth": 3
         },
         "path_output": "./tmp/-batch_size-64-loss-name-FocalLoss-gamma-0.2-alpha-0.5-depth-3-gpu_ids-5",
-        "gpu_ids": [5]
+        "gpu_ids": [0]
     }
 ]
 
@@ -625,8 +625,8 @@ expected_param_list = [
     HyperparameterOption("depth", {"default_model": {"depth": 2}}, 2),
     HyperparameterOption("depth", {"default_model": {"depth": 3}}, 3),
     HyperparameterOption("depth", {"default_model": {"depth": 4}}, 4),
-    HyperparameterOption("gpu_ids", {"gpu_ids": [2]}, [2]),
-    HyperparameterOption("gpu_ids", {"gpu_ids": [5]}, [5])
+    HyperparameterOption("gpu_ids", {"gpu_ids": [0]}, [2]),
+    HyperparameterOption("gpu_ids", {"gpu_ids": [0]}, [5])
 ]
 
 
@@ -646,7 +646,7 @@ def setup_function():
         "default_model": {
             "depth": [2, 3, 4]
         },
-        "gpu_ids": [[2], [5]]
+        "gpu_ids": [[0], [0]]
     }
 ])
 @pytest.mark.parametrize(

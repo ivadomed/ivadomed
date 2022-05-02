@@ -34,3 +34,4 @@ data_multi_testing/
 
 # venv
 venv/
+wandb/
