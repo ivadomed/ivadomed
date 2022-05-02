@@ -14,7 +14,7 @@ from ivadomed.loader.utils import dropout_input, get_obj_size, create_temp_direc
 from ivadomed.loader.segmentation_pair import SegmentationPair
 from ivadomed.object_detection import utils as imed_obj_detect
 from ivadomed.keywords import ROIParamsKW, MetadataKW
-from ivadomed.utils import get_timestamp
+from ivadomed.utils import get_timestamp, get_system_memory
 
 
 class MRI2DSegmentationDataset(Dataset):
@@ -48,7 +48,7 @@ class MRI2DSegmentationDataset(Dataset):
         is_2d_patch (bool): True if length in model params.
         prepro_transforms (Compose): Transformations to apply before training.
         transform (Compose): Transformations to apply during training.
-        cache (bool): determine the Nibable data object should be cached in memory or not.
+        cache (bool): determine the nibabel data object should be cached in memory or not.
         slice_axis (int): Indicates the axis used to extract 2D slices from 3D NifTI files:
             "axial": 2, "sagittal": 0, "coronal": 1. 2D PNG/TIF/JPG files use default "axial": 2.
         slice_filter_fn (SliceFilter): SliceFilter object containing Slice filter parameters.
@@ -336,13 +336,15 @@ class MRI2DSegmentationDataset(Dataset):
         """
         size_item_in_bytes = get_obj_size(item)
 
+        optimal_ram_limit = get_system_memory() * 0.75
+
         # Size limit: 4GB GPU RAM, keep in mind tranform etc might take MORE!
         size_estimated_dataset_GB = (size_item_in_bytes) * len(self.filename_pairs) * n_slice / 1024 ** 3
-        if size_estimated_dataset_GB > 4:
-            logger.info(f"Estimated 2D dataset size is {size_estimated_dataset_GB} GB, which is larger than 4 GB. Auto "
-                        f"enabling cache.")
+        if size_estimated_dataset_GB > optimal_ram_limit:
+            logger.info(f"Estimated 2D dataset size is {size_estimated_dataset_GB} GB, which is larger than {optimal_ram_limit} GB. Auto "
+                        f"enabling disk cache.")
             self.disk_cache = True
         else:
-            logger.info(f"Estimated 2D dataset size is {size_estimated_dataset_GB} GB, which is smaller than 4 GB. File "
+            logger.info(f"Estimated 2D dataset size is {size_estimated_dataset_GB} GB, which is smaller than {optimal_ram_limit} GB. File "
                         f"cache will not be used")
             self.disk_cache = False
