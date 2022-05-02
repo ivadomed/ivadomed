@@ -350,8 +350,14 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     logger.add(str(path_log))
     logger.add(sys.stdout)
 
-    set_seed(context[ConfigKW.SPLIT_DATASET][SplitDatasetKW.RANDOM_SEED])
-   
+    # Optional seeding for reproducibility, check for key and ensure the seed is a number
+    if context.get(ConfigKW.RANDOM_SEED) and context.get(ConfigKW.RANDOM_SEED).isnumeric():
+        # Then check for deterministic flag.
+        if context.get(ConfigKW.RANDOM_SEED_DETERMINISTIC):
+            set_seed(context[ConfigKW.RANDOM_SEED], deterministic=True)
+        else:
+            set_seed(context[ConfigKW.RANDOM_SEED], deterministic=False)
+
     # Create a log with the version of the Ivadomed software and the version of the Annexed dataset (if present)
     create_dataset_and_ivadomed_version_log(context)
 

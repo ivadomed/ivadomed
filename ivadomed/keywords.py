@@ -25,6 +25,8 @@ class ConfigKW:
     HEMIS_UNET = "HeMISUnet"
     SPLIT_PATH = "split_path"
     TRAINING_SHA256 = "training_sha256"
+    RANDOM_SEED = "random_seed"
+    RANDOM_SEED_DETERMINISTIC = "random_seed_deterministic"
 
 
 @dataclass
