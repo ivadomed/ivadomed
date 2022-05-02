@@ -491,7 +491,7 @@ def create_temp_directory() -> str:
 
 def get_obj_size(obj) -> int:
     """
-    Returns the size of an object in bytes. Used to gauge whether caching is required vs write to disk.
+    Returns the size of an object in bytes. Used to gauge whether storing object in memory vs write to disk.
 
     Source: https://stackoverflow.com/a/53705610
 
