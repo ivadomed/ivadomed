@@ -63,7 +63,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
 
     def _load_filenames(self):
         """Load preprocessed pair data (input and gt) in handler."""
-        path_cache: Path = Path(create_temp_directory())
+        path_temp: Path = Path(create_temp_directory())
 
         for input_filename, gt_filename, roi_filename, metadata in self.filename_pairs:
             segpair = SegmentationPair(input_filename, gt_filename, metadata=metadata, slice_axis=self.slice_axis,
@@ -94,11 +94,11 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
 
             if self.disk_cache:
                 # Write SegPair and ROIPair to disk cache with timestamp to avoid collisions
-                path_cache_seg_pair = path_cache / f'seg_pair_{get_timestamp()}.pkl'
+                path_cache_seg_pair = path_temp / f'seg_pair_{get_timestamp()}.pkl'
                 with path_cache_seg_pair.open(mode='wb') as f:
                     pickle.dump(seg_pair, f)
 
-                path_cache_roi_pair = path_cache / f'roi_pair_{get_timestamp()}.pkl'
+                path_cache_roi_pair = path_temp / f'roi_pair_{get_timestamp()}.pkl'
                 with path_cache_roi_pair.open(mode='wb') as f:
                     pickle.dump(roi_pair, f)
                 self.handlers.append((path_cache_seg_pair, path_cache_roi_pair))
