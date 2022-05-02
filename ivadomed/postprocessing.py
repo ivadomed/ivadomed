@@ -5,8 +5,7 @@ import functools
 import nibabel as nib
 import numpy as np
 from loguru import logger
-from scipy.ndimage import label, generate_binary_structure
-from scipy.ndimage.morphology import binary_fill_holes
+from scipy.ndimage import label, generate_binary_structure, binary_fill_holes
 from skimage.feature import peak_local_max
 from pathlib import Path
 
@@ -94,7 +93,7 @@ def threshold_predictions(predictions, thr=0.5):
     thresholded_preds[low_values_indices] = 0
     low_values_indices = thresholded_preds >= thr
     thresholded_preds[low_values_indices] = 1
-    return thresholded_preds.astype(np.int)
+    return thresholded_preds.astype(int)
 
 
 @nifti_capable
@@ -155,7 +154,7 @@ def fill_holes(predictions, structure=(3, 3, 3)):
     """
     assert np.array_equal(predictions, predictions.astype(bool))
     assert len(structure) == len(predictions.shape)
-    return binary_fill_holes(predictions, structure=np.ones(structure)).astype(np.int)
+    return binary_fill_holes(predictions, structure=np.ones(structure)).astype(int)
 
 
 @nifti_capable
@@ -237,7 +236,7 @@ def remove_small_objects(data, bin_structure, size_min):
     data_label, n = label(data, structure=bin_structure)
 
     for idx in range(1, n + 1):
-        data_idx = (data_label == idx).astype(np.int)
+        data_idx = (data_label == idx).astype(int)
         n_nonzero = np.count_nonzero(data_idx)
 
         if n_nonzero < size_min:
