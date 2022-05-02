@@ -24,7 +24,7 @@ def get_bounding_boxes(mask):
     """
 
     # Label the different objects in the mask
-    labeled_mask, _ = ndimage.measurements.label(mask)
+    labeled_mask, _ = ndimage.label(mask)
     object_labels = np.unique(labeled_mask)
     bounding_boxes = []
     for label in object_labels[1:]:
