@@ -207,9 +207,10 @@ def test_inference_2d_microscopy(download_data_testing_test_files, transforms_di
                                                    ofolder=str(__output_dir__),
                                                    cuda_available=cuda_available)
 
-    assert len([x for x in __output_dir__.iterdir() if x.name.endswith(".nii.gz")]) == len(test_lst)
+    assert len([x for x in __output_dir__.iterdir() if x.name.endswith(".nii.gz")]) == len(test_lst) + 1
     assert len([x for x in __output_dir__.iterdir() if x.name.endswith(".png")]) == 2*len(test_lst)
 
 
 def teardown_function():
-    remove_tmp_dir()
+    pass
+    #remove_tmp_dir()
