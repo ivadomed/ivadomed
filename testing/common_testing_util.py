@@ -11,6 +11,7 @@ from ivadomed.keywords import BidsDataFrameKW, LoaderParamsKW, ContrastParamsKW,
 from ivadomed.loader.bids_dataframe import BidsDataframe
 from ivadomed.scripts import download_data as ivadomed_download_data
 from ivadomed.main import set_loader_params
+import time
 import shutil
 import sys
 
@@ -22,18 +23,25 @@ FOLDER_LEVELS_FROM_ROOT = 1
 
 path_repo_root: Path = Path(__file__).parents[FOLDER_LEVELS_FROM_ROOT].absolute()
 
-path_temp: str = str(path_repo_root / "tmp")
+if not sys.platform.startswith('win'):
+    path_temp: Path = Path("/tmp")
+else:
+    path_temp: Path = Path(Path.home().parts[0], 'temp')
+
+timestr = time.strftime("%Y%m%d-%H%M%S")
+tmptimestr = "tmp" + timestr
+new_path_temp = path_temp / tmptimestr
 
 path_unit_tests: str = str(path_repo_root / "testing" / "unit_tests")
 path_data_testing_source: str = str(path_repo_root / "data_testing")
-path_data_testing_tmp: str = str(path_repo_root / "tmp" / Path(path_data_testing_source).name)
+path_data_testing_tmp: str = str(path_temp / tmptimestr / Path(path_data_testing_source).name)
 
 path_functional_tests: str = str(path_repo_root / "testing" / "functional_tests")
 path_data_functional_source: str = str(path_repo_root / "data_functional_testing")
-path_data_functional_tmp: str = str(path_repo_root / "tmp" / Path(path_data_functional_source).name)
+path_data_functional_tmp: str = str(path_temp / tmptimestr / Path(path_data_functional_source).name)
 
 path_data_multi_sessions_contrasts_source: Path = path_repo_root / "data_multi_testing"
-path_data_multi_sessions_contrasts_tmp: Path = path_repo_root / "tmp" / Path(
+path_data_multi_sessions_contrasts_tmp: Path = path_temp / tmptimestr / Path(
     path_data_multi_sessions_contrasts_source).name
 
 
@@ -76,4 +84,17 @@ def remove_dataset(dataset: str = 'data_testing'):
 
 def remove_tmp_dir():
     """Recursively remove the ``tmp`` directory if it exists."""
-    shutil.rmtree(path_temp, ignore_errors=True)
+    count = 0
+    for element in list(path_temp.iterdir()):
+        if element.is_dir() and element.name.startswith("tmp"):
+            count += 1
+
+    if count > 100:
+        num_to_delete = count - 100
+        lst = sorted(path_temp.iterdir(), key=os.path.getctime)
+        i = 0
+        while num_to_delete:
+            if lst[i].is_dir() and lst[i].stem.startswith("tmp"):
+                shutil.rmtree(lst[i], ignore_errors=True)
+                num_to_delete -= 1
+            i += 1

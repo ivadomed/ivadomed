@@ -171,7 +171,7 @@ def test_inference_2d_microscopy(download_data_testing_test_files, transforms_di
     }
     loader_params.update({"model_params": model_params})
 
-    bids_df = BidsDataframe(loader_params, __tmp_dir__, derivatives=True)
+    bids_df = BidsDataframe(loader_params, str(__tmp_dir__), derivatives=True)
 
     # Get Testing dataset
     ds_test = imed_loader.load_dataset(bids_df, **loader_params)
