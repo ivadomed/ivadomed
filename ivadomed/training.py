@@ -66,6 +66,9 @@ def train(rank, model_params, dataset_train, dataset_val, training_params, path_
     # set the local rank to be the rank    
     local_rank = rank
 
+    # variable for ddp
+    no_ddp = local_rank == -1 and torch.cuda.device_count() <= 1
+
     # initialize default process group
     if local_rank == -1:
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -75,7 +78,7 @@ def train(rank, model_params, dataset_train, dataset_val, training_params, path_
         # Use NCCL for GPU training, process must have exclusive access to GPUs
         torch.distributed.init_process_group(backend='nccl', init_method='env://', rank=rank, world_size=world_size)
 
-    if local_rank == -1 and torch.cuda.device_count() <= 1:
+    if no_ddp:
         sampler_train, shuffle_train = get_sampler(dataset_train, conditions, training_params['balance_samples']['type'])
         train_loader = DataLoader(dataset_train, batch_size=training_params["batch_size"],
                                 shuffle=shuffle_train, pin_memory=True, sampler=sampler_train,
@@ -91,7 +94,7 @@ def train(rank, model_params, dataset_train, dataset_val, training_params, path_
 
     gif_dict = {"image_path": [], "slice_id": [], "gif": []}
     if dataset_val:
-        if local_rank == -1 and torch.cuda.device_count() <= 1:
+        if no_ddp:
             sampler_val, shuffle_val = get_sampler(dataset_val, conditions, training_params['balance_samples']['type'])
             val_loader = DataLoader(dataset_val, batch_size=training_params["batch_size"],
                                     shuffle=shuffle_val, pin_memory=True, sampler=sampler_val,
@@ -135,7 +138,7 @@ def train(rank, model_params, dataset_train, dataset_val, training_params, path_
     if cuda_available:
         model.cuda()
 
-    if local_rank == -1 and torch.cuda.device_count() <= 1:
+    if no_ddp:
         model.to(device)
     else:
         logger.info("Using Distributed Data Parallel (DDP).")
@@ -360,13 +363,13 @@ def train(rank, model_params, dataset_train, dataset_val, training_params, path_
     # Save best model in output path
     if resume_path.is_file():
         # loading state changes based on CPU or DDP
-        if local_rank == -1 and torch.cuda.device_count() <= 1:
+        if no_ddp:
             state = torch.load(resume_path, map_location=torch.device('cpu'))
         else:
             state = torch.load(resume_path, map_location='cuda:0')
         model_path = Path(path_output, "best_model.pt")
         model.load_state_dict(state['state_dict'])
-        if local_rank == -1 and torch.cuda.device_count() <= 1:  # if DDP is used, save the module of the DDP object
+        if no_ddp:  # if DDP is used, save the module of the DDP object
             torch.save(model, model_path)
         else:
             torch.save(model.module, model_path)

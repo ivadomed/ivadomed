@@ -412,7 +412,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         if n_gpus > 1:
             logger.info(f"Using {n_gpus} GPUs")
 
-            os.environ['MASTER_ADDR'] = context["master_addr"] if "master_addr" in context else "localhost"
+            os.environ['MASTER_ADDR'] = context.get("master_addr", "localhost")
             os.environ['MASTER_PORT'] = context["master_port"] if "master_port" in context else "29500"
             
             logger.info(f"Spawning workers")
