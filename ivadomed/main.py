@@ -500,7 +500,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         save_config_file(context, path_output)
 
     if command == 'train':
-        ddp = None  # place here for now, you need to add the conditions for DDP above
+        ddp = True if n_gpus > 1 else False
         # if DDP is used, load the scores file
         if ddp:
             best_scores_path = Path(path_output, model_params[ModelParamsKW.FOLDER_NAME],
