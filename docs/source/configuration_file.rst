@@ -153,6 +153,134 @@ When possible, the folder name will follow the following convention:
     }
 
 
+Weights & Biases (WandB)
+------------------------
+
+WandB is an additional option to track your DL experiments. It provides a 
+feature-rich dashboard (accessible through any web-browser) to track and visualize the learning 
+curves, gradients, and media. It is recommended to setup a personal 
+WandB account to track experiments on WandB, however, you can still train ivadomed models 
+without an account, since the metrics are logged on Tensorboard by default. 
+
+
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "wandb_api_key",
+        "$$description": [
+            "A private key used to sync the local wandb folder with the wandb dashboard accessible through the browser.\n",
+            "The API key can be found from the browser in your WandB Account's Settings, under the section ``API Keys``.\n",
+            "Note that once it is successfully authenticated, a message would be printed in the terminal notifying\n",
+            "that the API key is stored in the ``.netrc`` file in the ``/home`` folder. From then on, the value in this key-value\n", 
+            pair in the config file could be omitted, like ``'wandb_api_key': ''``"
+        ],
+        "type": "string"
+    }
+
+.. code-block:: JSON
+
+    {
+        "wandb": {
+            "wandb_api_key": "<alphanumeric-key-here>"
+        }
+    }
+
+
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "project_name",
+        "$$description": [
+            "Defines the name of the current project to which the groups and runs will be synced."
+        ],
+        "type": "string"
+    }
+
+.. code-block:: JSON
+
+    {
+        "wandb": {
+            "project_name": "my-temp-project"
+        }
+    }
+
+
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "group_name",
+        "$$description": [
+            "Defines the name of the group to which the runs will be synced. On the WandB Dashboard,\n",
+            "the groups can be found on clicking the ``Projects`` tab on the left."
+        ],
+        "type": "string"
+    }
+
+.. code-block:: JSON
+
+    {
+        "wandb": {
+            "group_name": "my-temp-group"
+        }
+    }
+
+
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "run_name",
+        "$$description": [
+            "Defines the name of the current run (or, experiment). All the previous and active runs\n",
+            "can be found under the corresponding group on the WandB Dashboard."
+        ],
+        "type": "string"
+    }
+
+.. code-block:: JSON
+
+    {
+        "wandb": {
+            "run_name": "run-1"
+        }
+    }
+
+
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "log_grads_every",
+        "$$description": [
+            "Defines the frequency (in number of steps) of the logging of gradients on to the Dashboard to track and visualize\n",
+            "their histograms as the model trains.\n"
+        ],
+        "type": "int"
+    }
+
+.. code-block:: JSON
+
+    {
+        "wandb": {
+            "log_grads_every": 100
+        }
+    }
+
+.. note::
+    There are two important points to be noted: 
+    (1) Gradients can be large so they can consume more storage space if ``log_grads_every`` is set to a small number, 
+    (2) ``log_grads_every`` also depends on the total duration of training, i.e. if the model is run for only
+    a few epochs, gradients might not be logged if ``log_grads_every`` is too large. Hence, the right frequency of
+    gradient logging depends on the training duration and model size.
+
+.. note::
+    If ``debugging = True`` is specified in the config file, the training and validation input images, ground truth labels, and 
+    the model predictions are also periodically logged on WandB, which can be seen under ``Media`` on the WandB Dashboard.
+
+
 Loader Parameters
 -----------------
 
@@ -286,8 +414,11 @@ will be randomly chosen.
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "extensions",
-        "description": "Used to specify a list of file extensions to be selected for
-            training/testing. If not specified, then `.nii` and `.nii.gz` will be used by default.",
+        "$$description": [
+            "Used to specify a list of file extensions to be selected for training/testing.\n",
+            "Must include the file extensions of both the raw data and derivatives.\n",
+            "If not specified, then `.nii` and `.nii.gz` will be used by default.",
+            ],
         "type": "list, string"
     }
 
@@ -405,36 +536,35 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "slice_filter_params",
-        "description": "Discard a slice from the dataset if it meets a condition, see
-            below.",
+        "description": "Discard a slice from the dataset if it meets a condition, see below.",
         "type": "dict",
         "options": {
             "filter_empty_input": {
                 "type": "boolean",
-                "description": "Discard slices where all voxel
-                   intensities are zeros."
+                "description": "Discard slices where all voxel intensities are zeros. Default: ``True``."
             },
             "filter_empty_mask": {
                 "type": "boolean",
-                "description": "Discard slices where all voxel labels are zeros."
+                "description": "Discard slices where all voxel labels are zeros. Default: ``False``."
             },
             "filter_absent_class": {
                 "type": "boolean",
                 "$$description": [
                     "Discard slices where all voxel labels are zero for one or more classes\n",
-                    "(this is most relevant for multi-class models that need GT for all classes at train time)."
+                    "(this is most relevant for multi-class models that need GT for all classes at training time).\n",
+                    "Default: ``False``."
                 ]
             },
             "filter_classification": {
                 "type": "boolean",
                 "$$description": [
                     "Discard slices where all images fail a custom classifier filter. If used,\n",
-                    "``classifier_path`` must also be specified, pointing to a saved PyTorch classifier."
+                    "``classifier_path`` must also be specified, pointing to a saved PyTorch classifier.\n",
+                    "Default: ``False``."
                 ]
             }
         }
     }
-
 
 .. code-block:: JSON
 
@@ -446,6 +576,51 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
             }
         }
     }
+
+
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "patch_filter_params",
+        "$$description": [
+            "Discard a 2D patch from the dataset if it meets a condition at training time, defined below.\n",
+            "Contrary to the field ``slice_filter_params`` which applies at training and testing time, ",
+            "this parameter only applies during training time."
+        ],
+        "type": "dict",
+        "options": {
+            "filter_empty_input": {
+                "type": "boolean",
+                "description": "Discard 2D patches where all voxel intensities are zeros. Default: ``False``."
+            },
+            "filter_empty_mask": {
+                "type": "boolean",
+                "description": "Discard 2D patches where all voxel labels are zeros. Default: ``False``."
+            },
+            "filter_absent_class": {
+                "type": "boolean",
+                "$$description": [
+                    "Discard 2D patches where all voxel labels are zero for one or more classes\n",
+                    "(this is most relevant for multi-class models that need GT for all classes).\n",
+                    "Default: ``False``."
+                ]
+            }
+        }
+    }
+
+
+.. code-block:: JSON
+
+    {
+        "loader_parameters": {
+            "patch_filter_params": {
+                "filter_empty_mask": false,
+                "filter_empty_input": false
+            }
+        }
+    }
+
 
 .. jsonschema::
 
@@ -497,7 +672,8 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
         "$$description": [
             "Indicates if a soft mask will be used as ground-truth to train\n",
             "and / or evaluate a model. In particular, the masks are not binarized\n",
-            "after interpolations implied by preprocessing or data-augmentation operations."
+            "after interpolations implied by preprocessing or data-augmentation operations.\n",
+            "Approach inspired by the `SoftSeg <https://arxiv.org/ftp/arxiv/papers/2011/2011.09041.pdf>`__ paper."
         ],
         "type": "boolean"
     }
@@ -509,6 +685,14 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
             "soft_gt": true
         }
     }
+
+.. note::
+    To get the full advantage of the soft segmentations, in addition to setting 
+    ``soft_gt: true`` the following keys in the config file must also be changed: 
+    (i) ``final_activation: relu`` - to use the normalized ReLU activation function
+    (ii) ``loss: AdapWingLoss`` - a regression loss described in the 
+    paper. Note: It is also recommended to use the ``DiceLoss`` since convergence 
+    with ``AdapWingLoss`` is sometimes difficult to achieve.
 
 .. jsonschema::
 
@@ -591,9 +775,9 @@ Split Dataset
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "split_method",
         "$$description": [
-            "Metadata contained in a BIDS tabular file on which the files are shuffled, then split\n",
-            "between train/validation/test, according to ``train_fraction`` and ``test_fraction``.\n",
-            "For example, ``participant_id`` from the ``participants.tsv`` file will shuffle all participants,\n",
+            "Metadata contained in a BIDS tabular (TSV) file or a BIDS sidecar JSON file on which the files are shuffled\n",
+            "then split between train/validation/test, according to ``train_fraction`` and ``test_fraction``.\n",
+            "For examples, ``participant_id`` will shuffle all participants from the ``participants.tsv`` file\n",
             "then split between train/validation/test sets."
         ],
         "type": "string"
@@ -1231,8 +1415,6 @@ Transformations applied during data augmentation. Transformations are sorted in 
 - ``applied_to``: list between ``"im", "gt", "roi"``. If not specified, then the transformation is applied to all loaded samples. Otherwise, only applied to the specified types: Example: ``["gt"]`` implies that this transformation is only applied to the ground-truth data.
 - ``dataset_type``: list between ``"training", "validation", "testing"``. If not specified, then the transformation is applied to the three sub-datasets. Otherwise, only applied to the specified subdatasets. Example: ``["testing"]`` implies that this transformation is only applied to the testing sub-dataset.
 
-Available Transformations:
-^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. jsonschema::
 
@@ -1625,6 +1807,109 @@ Available Transformations:
         }
     }
 
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "RandomGamma",
+        "type": "dict",
+        "$$description": [
+            "Randomly changes the contrast of an image by gamma exponential."
+        ],
+        "options": {
+            "log_gamma_range": {
+                "type": "(float, float)",
+                "description": "Log gamma range for changing contrast."
+            },
+            "p": {
+                "type": "float"
+            }
+        }
+    }
+
+.. code-block:: JSON
+
+    {
+        "transformation": {
+            "RandomGamma": {
+                "log_gamma_range": [-3.0, 3.0],
+                "p": 0.5,
+                "applied_to": ["im"],
+                "dataset_type": ["training"]
+            }
+        }
+    }
+
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "RandomBiasField",
+        "type": "dict",
+        "$$description": [
+            "Applies a random MRI bias field artifact to the image via `torchio.RandomBiasField()`"
+        ],
+        "options": {
+            "coefficients": {
+                "type": "float",
+                "description": "Maximum magnitude of polynomial coefficients."
+            },
+            "order": {
+                "type": "int",
+                "description": "Order of the basis polynomial functions."
+            },
+            "p": {
+                "type": "float"
+            }
+        }
+    }
+
+.. code-block:: JSON
+
+    {
+        "transformation": {
+            "RandomBiasField": {
+                "coefficients": 0.5,
+                "order": 3,
+                "p": 0.5,
+                "applied_to": ["im"],
+                "dataset_type": ["training"]
+            }
+        }
+    }
+
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "RandomBlur",
+        "type": "dict",
+        "$$description": [
+            "Applies a random blur to the image."
+        ],
+        "options": {
+            "sigma_range": {
+                "type": "(float, float)",
+                "description": "Standard deviation range for the gaussian filter."
+            },
+            "p": {
+                "type": "float"
+            }
+        }
+    }
+
+.. code-block:: JSON
+
+    {
+        "transformation": {
+            "RandomBlur": {
+                "sigma_range": [0.0, 2.0],
+                "p": 0.5,
+                "applied_to": ["im"],
+                "dataset_type": ["training"]
+            }
+        }
+    }
 
 .. _Uncertainty:
 

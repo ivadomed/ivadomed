@@ -98,10 +98,12 @@ def evaluate(bids_df, path_output, target_suffix, eval_params):
         # For Microscopy PNG/TIF files (TODO: implement OMETIFF behavior)
         if "nii" not in extension:
             painted_list = imed_inference.split_classes(nib_painted)
+            # Reformat target list to include class index and be compatible with multiple raters
+            target_list = ["_class-%d" % i for i in range(len(target_suffix))]
             imed_inference.pred_to_png(painted_list,
-                                       target_suffix,
+                                       target_list,
                                        str(path_preds.joinpath(subj_acq)),
-                                       suffix="_painted")
+                                       suffix="_pred_painted.png")
 
         # SAVE RESULTS FOR THIS PRED
         results_pred['image_id'] = subj_acq
@@ -262,14 +264,14 @@ class Evaluation3DMetrics(object):
         data_out = np.zeros(data.shape)
 
         for idx in range(1, n + 1):
-            data_idx = (data_label == idx).astype(np.int)
+            data_idx = (data_label == idx).astype(int)
             n_nonzero = np.count_nonzero(data_idx)
 
             for idx_size, rng in enumerate(self.size_rng_lst):
                 if n_nonzero >= rng[0] and n_nonzero <= rng[1]:
                     data_out[np.nonzero(data_idx)] = idx_size + 1
 
-        return data_out.astype(np.int)
+        return data_out.astype(int)
 
     def get_vol(self, data):
         """Get volume."""
@@ -319,8 +321,8 @@ class Evaluation3DMetrics(object):
         ltp, lfn, n_obj = 0, 0, 0
 
         for idx in range(1, self.n_gt[class_idx] + 1):
-            data_gt_idx = (self.data_gt_label[..., class_idx] == idx).astype(np.int)
-            overlap = (data_gt_idx * self.data_pred).astype(np.int)
+            data_gt_idx = (self.data_gt_label[..., class_idx] == idx).astype(int)
+            overlap = (data_gt_idx * self.data_pred).astype(int)
 
             # if label_size is None, then we look at all object sizes
             # we check if the currrent object belongs to the current size range
@@ -354,11 +356,11 @@ class Evaluation3DMetrics(object):
         """
         lfp = 0
         for idx in range(1, self.n_pred[class_idx] + 1):
-            data_pred_idx = (self.data_pred_label[..., class_idx] == idx).astype(np.int)
-            overlap = (data_pred_idx * self.data_gt).astype(np.int)
+            data_pred_idx = (self.data_pred_label[..., class_idx] == idx).astype(int)
+            overlap = (data_pred_idx * self.data_gt).astype(int)
 
             label_gt = np.max(data_pred_idx * self.data_gt_label[..., class_idx])
-            data_gt_idx = (self.data_gt_label[..., class_idx] == label_gt).astype(np.int)
+            data_gt_idx = (self.data_gt_label[..., class_idx] == label_gt).astype(int)
             # if label_size is None, then we look at all object sizes
             # we check if the current object belongs to the current size range
 

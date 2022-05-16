@@ -6,6 +6,7 @@ import os
 import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
+import wandb
 from loguru import logger
 from torch import optim
 import torch.nn as nn
@@ -14,6 +15,7 @@ from torch.utils.data.distributed import DistributedSampler
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 from pathlib import Path
+import json
 
 from ivadomed import losses as imed_losses
 from ivadomed import mixup as imed_mixup
@@ -23,11 +25,12 @@ from ivadomed import utils as imed_utils
 from ivadomed import visualize as imed_visualize
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.loader.balanced_sampler import BalancedSampler
+from ivadomed.keywords import ModelParamsKW, ConfigKW, BalanceSamplesKW, TrainingParamsKW, MetadataKW, WandbKW
 
 cudnn.benchmark = True
 
 
-def train(rank, model_params, dataset_train, dataset_val, training_params, path_output, device,
+def train(rank, model_params, dataset_train, dataset_val, training_params, path_output, device, wandb_params=None,
           cuda_available=True, metric_fns=None, n_gif=0, resume_training=False, debugging=False,
           world_size=1):
     """Main command to train the network.
@@ -60,8 +63,27 @@ def train(rank, model_params, dataset_train, dataset_val, training_params, path_
     # Write the metrics, images, etc to TensorBoard format
     writer = SummaryWriter(log_dir=path_output)
 
+    # Enable wandb tracking  if the required params are found in the config file and the api key is correct
+    wandb_tracking = imed_utils.initialize_wandb(wandb_params)
+
+    if wandb_tracking:
+        # Collect all hyperparameters into a dictionary
+        cfg = { **training_params, **model_params}
+
+        # Get the actual project, group, and run names if they exist, else choose the temporary names as default
+        project_name = wandb_params.get(WandbKW.PROJECT_NAME, "temp_project")
+        group_name = wandb_params.get(WandbKW.GROUP_NAME, "temp_group")
+        run_name = wandb_params.get(WandbKW.RUN_NAME, "temp_run")
+
+        if project_name == "temp_project" or group_name == "temp_group" or run_name == "temp_run":     
+            logger.info("{PROJECT/GROUP/RUN} name not found, initializing as {'temp_project'/'temp_group'/'temp_run'}")
+
+        # Initialize WandB with metrics and hyperparameters
+        wandb.init(project=project_name, group=group_name, name=run_name, config=cfg)
+
     # BALANCE SAMPLES AND PYTORCH LOADER
-    conditions = all([training_params["balance_samples"]["applied"], model_params["name"] != "HeMIS"])
+    conditions = all([training_params[TrainingParamsKW.BALANCE_SAMPLES][BalanceSamplesKW.APPLIED],
+                      model_params[ModelParamsKW.NAME] != "HeMIS"])
 
     # set the local rank to be the rank    
     local_rank = rank
@@ -79,14 +101,14 @@ def train(rank, model_params, dataset_train, dataset_val, training_params, path_
         torch.distributed.init_process_group(backend='nccl', init_method='env://', rank=rank, world_size=world_size)
 
     if no_ddp:
-        sampler_train, shuffle_train = get_sampler(dataset_train, conditions, training_params['balance_samples']['type'])
-        train_loader = DataLoader(dataset_train, batch_size=training_params["batch_size"],
+        sampler_train, shuffle_train = get_sampler(dataset_train, conditions, training_params[TrainingParamsKW.BALANCE_SAMPLES][BalanceSamplesKW.TYPE])
+        train_loader = DataLoader(dataset_train, batch_size=training_params[TrainingParamsKW.BATCH_SIZE],
                                 shuffle=shuffle_train, pin_memory=True, sampler=sampler_train,
                                 collate_fn=imed_loader_utils.imed_collate,
                                 num_workers=0)
     else:
         sampler_train = DistributedSampler(dataset=dataset_train, rank=rank, num_replicas=world_size)
-        train_loader = DataLoader(dataset_train, batch_size=training_params["batch_size"],
+        train_loader = DataLoader(dataset_train, batch_size=training_params[TrainingParamsKW.BATCH_SIZE],
                             shuffle=False, pin_memory=True, sampler=sampler_train,
                             collate_fn=imed_loader_utils.imed_collate,
                             num_workers=0)
@@ -95,14 +117,14 @@ def train(rank, model_params, dataset_train, dataset_val, training_params, path_
     gif_dict = {"image_path": [], "slice_id": [], "gif": []}
     if dataset_val:
         if no_ddp:
-            sampler_val, shuffle_val = get_sampler(dataset_val, conditions, training_params['balance_samples']['type'])
-            val_loader = DataLoader(dataset_val, batch_size=training_params["batch_size"],
+            sampler_val, shuffle_val = get_sampler(dataset_val, conditions, training_params[TrainingParamsKW.BALANCE_SAMPLES][BalanceSamplesKW.TYPE])
+            val_loader = DataLoader(dataset_val, batch_size=training_params[TrainingParamsKW.BATCH_SIZE],
                                     shuffle=shuffle_val, pin_memory=True, sampler=sampler_val,
                                     collate_fn=imed_loader_utils.imed_collate,
                                     num_workers=0)
         else:
             sampler_val = DistributedSampler(dataset=dataset_val, rank=rank, num_replicas=world_size)
-            val_loader = DataLoader(dataset_val, batch_size=training_params["batch_size"],
+            val_loader = DataLoader(dataset_val, batch_size=training_params[TrainingParamsKW.BATCH_SIZE],
                                 shuffle=False, pin_memory=True, sampler=sampler_val,
                                 collate_fn=imed_loader_utils.imed_collate,
                                 num_workers=0)
@@ -111,9 +133,9 @@ def train(rank, model_params, dataset_train, dataset_val, training_params, path_
         if n_gif > 0:
             indexes_gif = random.sample(range(len(dataset_val)), n_gif)
         for i_gif in range(n_gif):
-            random_metadata = dict(dataset_val[indexes_gif[i_gif]]["input_metadata"][0])
-            gif_dict["image_path"].append(random_metadata['input_filenames'])
-            gif_dict["slice_id"].append(random_metadata['slice_index'])
+            random_metadata = dict(dataset_val[indexes_gif[i_gif]][MetadataKW.INPUT_METADATA][0])
+            gif_dict["image_path"].append(random_metadata[MetadataKW.INPUT_FILENAMES])
+            gif_dict["slice_id"].append(random_metadata[MetadataKW.SLICE_INDEX])
             gif_obj = imed_visualize.AnimatedGif(size=dataset_val[indexes_gif[i_gif]]["input"].numpy()[0].shape)
             gif_dict["gif"].append(copy.copy(gif_obj))
 
@@ -133,7 +155,7 @@ def train(rank, model_params, dataset_train, dataset_val, training_params, path_
                                                   reset=reset)
     else:
         logger.info("Initialising model's weights from scratch.")
-        model_class = getattr(imed_models, model_params["name"])
+        model_class = getattr(imed_models, model_params[ModelParamsKW.NAME])
         model = model_class(**model_params)
     if cuda_available:
         model.cuda()
@@ -158,6 +180,11 @@ def train(rank, model_params, dataset_train, dataset_val, training_params, path_
     scheduler, step_scheduler_batch = get_scheduler(copy.copy(training_params["scheduler"]["lr_scheduler"]), optimizer,
                                                     num_epochs)
     logger.info("Scheduler parameters: {}".format(training_params["scheduler"]["lr_scheduler"]))
+
+    # Only call wandb methods if required params are found in the config file
+    if wandb_tracking:
+        # Logs gradients (at every log_freq steps) to the dashboard.
+        wandb.watch(model, log="gradients", log_freq=wandb_params["log_grads_every"])
 
     # Resume
     start_epoch = 1
@@ -196,6 +223,8 @@ def train(rank, model_params, dataset_train, dataset_val, training_params, path_
 
         lr = scheduler.get_last_lr()[0]
         writer.add_scalar('learning_rate', lr, epoch)
+        if wandb_tracking:
+            wandb.log({"learning_rate": lr})
 
         # Training loop -----------------------------------------------------------
         model.train()
@@ -203,7 +232,7 @@ def train(rank, model_params, dataset_train, dataset_val, training_params, path_
         num_steps = 0
         for i, batch in enumerate(train_loader):
             # GET SAMPLES
-            if model_params["name"] == "HeMISUnet":
+            if model_params[ModelParamsKW.NAME] == ConfigKW.HEMIS_UNET:
                 input_samples = imed_utils.cuda(imed_utils.unstack_tensors(batch["input"]), cuda_available)
             else:
                 input_samples = imed_utils.cuda(batch["input"], cuda_available)
@@ -215,9 +244,9 @@ def train(rank, model_params, dataset_train, dataset_val, training_params, path_
                                                              debugging and epoch == 1, path_output)
 
             # RUN MODEL
-            if model_params["name"] == "HeMISUnet" or \
-                    ('film_layers' in model_params and any(model_params['film_layers'])):
-                metadata = get_metadata(batch["input_metadata"], model_params)
+            if model_params[ModelParamsKW.NAME] == ConfigKW.HEMIS_UNET or \
+                    (ModelParamsKW.FILM_LAYERS in model_params and any(model_params[ModelParamsKW.FILM_LAYERS])):
+                metadata = get_metadata(batch[MetadataKW.INPUT_METADATA], model_params)
                 preds = model(input_samples, metadata)
             else:
                 preds = model(input_samples)
@@ -235,9 +264,11 @@ def train(rank, model_params, dataset_train, dataset_val, training_params, path_
                 scheduler.step()
             num_steps += 1
 
-            if i == 0 and debugging:
-                imed_visualize.save_tensorboard_img(writer, epoch, "Train", input_samples, gt_samples, preds,
-                                                    is_three_dim=not model_params["is_2d"])
+            # Save image at every 50th step if debugging is true
+            if i%50 == 0 and debugging:
+                imed_visualize.save_img(writer, epoch, "Train", input_samples, gt_samples, preds,
+                                                wandb_tracking=wandb_tracking,
+                                                is_three_dim=not model_params[ModelParamsKW.IS_2D])
 
         if not step_scheduler_batch:
             scheduler.step()
@@ -252,10 +283,10 @@ def train(rank, model_params, dataset_train, dataset_val, training_params, path_
         tqdm.write(msg)
 
         # CURRICULUM LEARNING
-        if model_params["name"] == "HeMISUnet":
+        if model_params[ModelParamsKW.NAME] == ConfigKW.HEMIS_UNET:
             # Increase the probability of a missing modality
-            model_params["missing_probability"] **= model_params["missing_probability_growth"]
-            dataset_train.update(p=model_params["missing_probability"])
+            model_params[ModelParamsKW.MISSING_PROBABILITY] **= model_params[ModelParamsKW.MISSING_PROBABILITY_GROWTH]
+            dataset_train.update(p=model_params[ModelParamsKW.MISSING_PROBABILITY])
 
         # Validation loop -----------------------------------------------------
         model.eval()
@@ -266,16 +297,16 @@ def train(rank, model_params, dataset_train, dataset_val, training_params, path_
             for i, batch in enumerate(val_loader):
                 with torch.no_grad():
                     # GET SAMPLES
-                    if model_params["name"] == "HeMISUnet":
+                    if model_params[ModelParamsKW.NAME] == ConfigKW.HEMIS_UNET:
                         input_samples = imed_utils.cuda(imed_utils.unstack_tensors(batch["input"]), cuda_available)
                     else:
                         input_samples = imed_utils.cuda(batch["input"], cuda_available)
                     gt_samples = imed_utils.cuda(batch["gt"], cuda_available, non_blocking=True)
 
                     # RUN MODEL
-                    if model_params["name"] == "HeMISUnet" or \
-                            ('film_layers' in model_params and any(model_params['film_layers'])):
-                        metadata = get_metadata(batch["input_metadata"], model_params)
+                    if model_params[ModelParamsKW.NAME] == ConfigKW.HEMIS_UNET or \
+                            (ModelParamsKW.FILM_LAYERS in model_params and any(model_params[ModelParamsKW.FILM_LAYERS])):
+                        metadata = get_metadata(batch[MetadataKW.INPUT_METADATA], model_params)
                         preds = model(input_samples, metadata)
                     else:
                         preds = model(input_samples)
@@ -288,7 +319,7 @@ def train(rank, model_params, dataset_train, dataset_val, training_params, path_
                     # Add frame to GIF
                     for i_ in range(len(input_samples)):
                         im, pr, met = input_samples[i_].cpu().numpy()[0], preds[i_].cpu().numpy()[0], \
-                                      batch["input_metadata"][i_][0]
+                                      batch[MetadataKW.INPUT_METADATA][i_][0]
                         for i_gif in range(n_gif):
                             if gif_dict["image_path"][i_gif] == met.__getitem__('input_filenames') and \
                                     gif_dict["slice_id"][i_gif] == met.__getitem__('slice_index'):
@@ -302,20 +333,30 @@ def train(rank, model_params, dataset_train, dataset_val, training_params, path_
                 preds_npy = preds.data.cpu().numpy()
                 metric_mgr(preds_npy, gt_npy)
 
-                if i == 0 and debugging:
-                    imed_visualize.save_tensorboard_img(writer, epoch, "Validation", input_samples, gt_samples, preds,
-                                                        is_three_dim=not model_params['is_2d'])
+                # Save image at every 10th step if debugging is true
+                if i%50 == 0 and debugging:
+                    imed_visualize.save_img(writer, epoch, "Validation", input_samples, gt_samples, preds,
+                                            wandb_tracking=wandb_tracking, 
+                                            is_three_dim=not model_params[ModelParamsKW.IS_2D])
 
             # METRICS COMPUTATION FOR CURRENT EPOCH
             val_loss_total_avg_old = val_loss_total_avg if epoch > 1 else None
             metrics_dict = metric_mgr.get_results()
             metric_mgr.reset()
-            writer.add_scalars('Validation/Metrics', metrics_dict, epoch)
             val_loss_total_avg = val_loss_total / num_steps
+            # log losses on Tensorboard by default
+            writer.add_scalars('Validation/Metrics', metrics_dict, epoch)
             writer.add_scalars('losses', {
                 'train_loss': train_loss_total_avg,
                 'val_loss': val_loss_total_avg,
             }, epoch)
+            # log on wandb if the corresponding dictionary is provided
+            if wandb_tracking:
+                wandb.log({"validation-metrics": metrics_dict})
+                wandb.log({"losses": {
+                    'train_loss': train_loss_total_avg,
+                    'val_loss': val_loss_total_avg,
+                }})
             msg = "Epoch {} validation loss: {:.4f}.".format(epoch, val_loss_total_avg)
             val_dice_loss_total_avg = val_dice_loss_total / num_steps
             if training_params["loss"]["name"] != "DiceLoss":
@@ -376,15 +417,18 @@ def train(rank, model_params, dataset_train, dataset_val, training_params, path_
         # Save best model as ONNX in the model directory
         try:
             # Convert best model to ONNX and save it in model directory
-            best_model_path = Path(path_output, model_params["folder_name"],
-                                           model_params["folder_name"] + ".onnx")
+            best_model_path = Path(path_output, model_params[ModelParamsKW.FOLDER_NAME],
+                                   model_params[ModelParamsKW.FOLDER_NAME] + ".onnx")
             imed_utils.save_onnx_model(model, input_samples, str(best_model_path))
-        except:
-            # Save best model in model directory
-            best_model_path = Path(path_output, model_params["folder_name"],
-                                           model_params["folder_name"] + ".pt")
-            torch.save(model, best_model_path)
-            logger.warning("Failed to save the model as '.onnx', saved it as '.pt': {}".format(best_model_path))
+            logger.info(f"Model saved as '.onnx': {best_model_path}")
+        except Exception as e:
+            logger.warning(f"Failed to save the model as '.onnx': {e}")
+
+        # Save best model as PT in the model directory
+        best_model_path = Path(path_output, model_params[ModelParamsKW.FOLDER_NAME],
+                               model_params[ModelParamsKW.FOLDER_NAME] + ".pt")
+        torch.save(model, best_model_path)
+        logger.info(f"Model saved as '.pt': {best_model_path}")
 
     # Save GIFs
     gif_folder = Path(path_output, "gifs")
@@ -399,6 +443,7 @@ def train(rank, model_params, dataset_train, dataset_val, training_params, path_
         gif_dict["gif"][i_gif].save(str(path_gif_out))
 
     writer.close()
+    wandb.finish()
     final_time = time.time()
     duration_time = final_time - begin_time
     logger.info('begin ' + time.strftime('%H:%M:%S', time.localtime(begin_time)) + "| End " +
@@ -408,6 +453,20 @@ def train(rank, model_params, dataset_train, dataset_val, training_params, path_
     # Cleanup DDP if applicable
     if local_rank != -1:
         torch.distributed.destroy_process_group()
+
+    # if DDP is used, store values in JSON file located with the best model
+    if not no_ddp and rank == 1:
+        best_scores = dict(best_training_dice=best_training_dice,
+                           best_training_loss=best_training_loss,
+                           best_validation_dice=best_validation_dice,
+                           best_validation_loss=best_validation_loss)
+        
+        best_scores_path = Path(path_output, model_params[ModelParamsKW.FOLDER_NAME],
+                               model_params[ModelParamsKW.FOLDER_NAME] + "_scores.json")
+        with open(best_scores_path, 'w') as outfile:
+            json.dump(best_scores, outfile)
+
+        return
 
     return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
 
@@ -495,10 +554,10 @@ def get_metadata(metadata, model_params):
         If FiLMedUnet, Returns a list of metadata, that have been transformed by the One Hot Encoder.
         If HeMISUnet, Returns a numpy array where each row represents a sample and each column represents a contrast.
     """
-    if model_params["name"] == "HeMISUnet":
+    if model_params[ModelParamsKW.NAME] == ConfigKW.HEMIS_UNET:
         return np.array([m[0]["missing_mod"] for m in metadata])
     else:
-        return [model_params["film_onehotencoder"].transform([metadata[k][0]['film_input']]).tolist()[0]
+        return [model_params[ModelParamsKW.FILM_ONEHOTENCODER].transform([metadata[k][0]['film_input']]).tolist()[0]
                 for k in range(len(metadata))]
 
 

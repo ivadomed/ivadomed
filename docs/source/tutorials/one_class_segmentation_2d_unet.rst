@@ -7,6 +7,11 @@ One-class segmentation with 2D U-Net
     - Testing of a trained model and computation of 3D evaluation metrics.
     - Visualization of the outputs of a trained model.
 
+    An interactive Colab version of this tutorial is directly accessible here: |image_badge|
+
+.. |image_badge| image:: https://colab.research.google.com/assets/colab-badge.png
+    :target: https://colab.research.google.com/github/ivadomed/ivadomed/blob/master/testing/tutorials/tutorial_1_2d_segmentation_unet.ipynb
+
 .. _Download dataset:
 
 Download dataset
@@ -22,137 +27,374 @@ Download dataset
 
     To download the dataset (~490MB), run the following commands in your terminal:
 
-    .. code-block:: bash
+    .. tabs::
 
-       # Download data
-       ivadomed_download_data -d data_example_spinegeneric
+        .. tab:: Command Line Interface
+
+            .. code-block:: bash
+
+               # Download data
+               ivadomed_download_data -d data_example_spinegeneric
 
 Configuration file
 ------------------
 
-    In ``ivadomed``, training is orchestrated by a configuration file. Examples of configuration files are available in
-    the ``ivadomed/config/`` and the documentation is available in :doc:`../configuration_file`.
+    In ``ivadomed``, **training** is orchestrated by a configuration file. Examples of configuration files are available in
+    the ``ivadomed/config/`` folder and the documentation is available in :doc:`../configuration_file`.
 
-    In this tutorial we will use the configuration file: ``ivadomed/config/config.json``.
-    First off, copy this configuration file in your local directory (to avoid modifying the source file):
+    In this tutorial we will use the configuration file: ``ivadomed/config/config.json``. First off, copy this configuration
+    file in your local directory (to avoid modifying the source file):
 
-    .. code-block:: bash
+    .. tabs::
 
-       cp <PATH_TO_IVADOMED>/ivadomed/config/config.json .
+        .. tab:: Command Line Interface
 
-    Then, open it with a text editor. Below we will discuss some of the key parameters to perform a one-class 2D
-    segmentation training.
+            .. code-block:: bash
 
-    - ``command``: Action to perform. Here, we want to train a model, so we set the fields as follows:
+               cp <PATH_TO_IVADOMED>/ivadomed/config/config.json .
 
-      .. code-block:: json
+    Then, open it with a text editor. Which you can `view directly here: <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json>`_ or you can see it in the collapsed JSON code block below.
 
-         "command": "train"
+        .. collapse:: Reveal the embedded `config.json`.
 
-    Note that you can also pass this argument via CLI (see `Usage <../usage.html>`__)
+            .. code-block:: json
+                :linenos:
 
-      .. code-block:: bash
+                {
+                    "command": "train",
+                    "gpu_ids": [0],
+                    "path_output": "spineGeneric",
+                    "model_name": "my_model",
+                    "debugging": false,
+                    "object_detection_params": {
+                        "object_detection_path": null,
+                        "safety_factor": [1.0, 1.0, 1.0]
+                    },
+                    "loader_parameters": {
+                        "path_data": ["data_example_spinegeneric"],
+                        "subject_selection": {"n": [], "metadata": [], "value": []},
+                        "target_suffix": ["_seg-manual"],
+                        "extensions": [".nii.gz"],
+                        "roi_params": {
+                            "suffix": null,
+                            "slice_filter_roi": null
+                        },
+                        "contrast_params": {
+                            "training_validation": ["T1w", "T2w", "T2star"],
+                            "testing": ["T1w", "T2w", "T2star"],
+                            "balance": {}
+                        },
+                        "slice_filter_params": {
+                            "filter_empty_mask": false,
+                            "filter_empty_input": true
+                        },
+                        "slice_axis": "axial",
+                        "multichannel": false,
+                        "soft_gt": false
+                    },
+                    "split_dataset": {
+                        "fname_split": null,
+                        "random_seed": 6,
+                        "split_method" : "participant_id",
+                        "data_testing": {"data_type": null, "data_value":[]},
+                        "balance": null,
+                        "train_fraction": 0.6,
+                        "test_fraction": 0.2
+                    },
+                    "training_parameters": {
+                        "batch_size": 18,
+                        "loss": {
+                            "name": "DiceLoss"
+                        },
+                        "training_time": {
+                            "num_epochs": 100,
+                            "early_stopping_patience": 50,
+                            "early_stopping_epsilon": 0.001
+                        },
+                        "scheduler": {
+                            "initial_lr": 0.001,
+                            "lr_scheduler": {
+                                "name": "CosineAnnealingLR",
+                                "base_lr": 1e-5,
+                                "max_lr": 1e-2
+                            }
+                        },
+                        "balance_samples": {
+                            "applied": false,
+                            "type": "gt"
+                        },
+                        "mixup_alpha": null,
+                        "transfer_learning": {
+                            "retrain_model": null,
+                            "retrain_fraction": 1.0,
+                            "reset": true
+                        }
+                    },
+                    "default_model": {
+                        "name": "Unet",
+                        "dropout_rate": 0.3,
+                        "bn_momentum": 0.1,
+                        "final_activation": "sigmoid",
+                        "depth": 3
+                    },
+                    "FiLMedUnet": {
+                        "applied": false,
+                        "metadata": "contrasts",
+                        "film_layers": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+                    },
+                    "Modified3DUNet": {
+                        "applied": false,
+                        "length_3D": [128, 128, 16],
+                        "stride_3D": [128, 128, 16],
+                        "attention": false,
+                        "n_filters": 8
+                    },
+                    "uncertainty": {
+                        "epistemic": false,
+                        "aleatoric": false,
+                        "n_it": 0
+                    },
+                    "postprocessing": {
+                        "remove_noise": {"thr": -1},
+                        "keep_largest": {},
+                        "binarize_prediction": {"thr": 0.5},
+                        "uncertainty": {"thr": -1, "suffix": "_unc-vox.nii.gz"},
+                        "fill_holes": {},
+                        "remove_small": {"unit": "vox", "thr": 3}
+                    },
+                    "evaluation_parameters": {
+                        "target_size": {"unit": "vox", "thr": [20, 100]},
+                        "overlap": {"unit": "vox", "thr": 3}
+                    },
+                    "transformation": {
+                        "Resample":
+                        {
+                            "hspace": 0.75,
+                            "wspace": 0.75,
+                            "dspace": 1
+                        },
+                        "CenterCrop": {
+                            "size": [128, 128]},
+                        "RandomAffine": {
+                            "degrees": 5,
+                            "scale": [0.1, 0.1],
+                            "translate": [0.03, 0.03],
+                            "applied_to": ["im", "gt"],
+                            "dataset_type": ["training"]
+                        },
+                        "ElasticTransform": {
+                            "alpha_range": [28.0, 30.0],
+                            "sigma_range":  [3.5, 4.5],
+                            "p": 0.1,
+                            "applied_to": ["im", "gt"],
+                            "dataset_type": ["training"]
+                        },
+                      "NormalizeInstance": {"applied_to": ["im"]}
+                    }
+                }
 
-        ivadomed --train -c path/to/config
+
+    From this point onward, we will discuss some of the key parameters to perform a one-class 2D
+    segmentation training. Most parameters are configurable only via modification of the configuration ``JSON file``.
+    For those that supports command line run time configuration, we included the respective command versions under the ``Command Line Interface`` tab
+
+
+    - ``command``: Action to perform. Here, we want to **train** a model:
+
+        .. tabs::
+
+            .. group-tab:: JSON File
+
+                We can set the field within the newly copied ``config.json`` file as follow, at `this line <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L2>`__:
+
+                .. code-block:: json
+
+                    "command": "train"
+
+
+            .. group-tab:: Command Line Interface
+
+                Note that you can also pass this argument via CLI (see `Usage <../usage.html>`__)
+
+                .. code-block:: bash
+
+                        ivadomed --train -c path/to/config
+
 
     - ``path_output``: Folder name that will contain the output files (e.g., trained model, predictions, results).
 
-      .. code-block:: json
+        .. tabs::
 
-         "path_output": "spineGeneric"
+            .. group-tab:: JSON File
 
-    Note that you can also pass this argument via CLI (see `Usage <../usage.html>`__)
+                At `this line <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L4>`__ in the ``config.json`` is where you can update the ``path_output``.
 
-      .. code-block:: bash
+                .. code-block:: json
 
-        ivadomed -c path/to/config --path-output path/to/output/directory
+                    "path_output": "spineGeneric"
+
+            .. group-tab:: Command Line Interface
+
+                Note that you can also pass this argument via CLI (see `Usage <../usage.html>`__)
+
+                .. code-block:: bash
+
+                    ivadomed -c path/to/config --path-output path/to/output/directory
 
     - ``loader_parameters:path_data``: Location of the dataset. As discussed in `Data <../data.html>`__, the dataset
       should conform to the BIDS standard. Modify the path so it points to the location of the downloaded dataset.
 
-      .. code-block:: json
+        .. tabs::
 
-         "path_data": "data_example_spinegeneric"
+            .. group-tab:: JSON File
 
-    Note that you can also pass this argument via CLI (see `Usage <../usage.html>`__)
+                At `this line <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L12>`__ in the ``config.json`` is where you can update the ``path_data`` within the ``loader_parameters`` sub-dictionary.
 
-      .. code-block:: bash
+                .. code-block:: json
 
-        ivadomed -c path/to/config --path-data path/to/bids/data
+                    "path_data": "data_example_spinegeneric"
+
+            .. group-tab:: Command Line Interface
+
+                Note that you can also pass this argument via CLI (see `Usage <../usage.html>`__)
+
+                  .. code-block:: bash
+
+                    ivadomed -c path/to/config --path-data path/to/bids/data
 
     - ``loader_parameters:target_suffix``: Suffix of the ground truth segmentation. The ground truth is located
       under the ``DATASET/derivatives/labels`` folder. In our case, the suffix is ``_seg-manual``:
 
-      .. code-block:: json
+        .. tabs::
 
-         "target_suffix": ["_seg-manual"]
+            .. group-tab:: JSON File
+
+                At `this line <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L14>`__ in the ``config.json`` is where you can update the ``target_suffix`` within the ``loader_parameters`` sub-dictionary.
+
+                .. code-block:: json
+
+                    "target_suffix": ["_seg-manual"]
 
     - ``loader_parameters:contrast_params``: Contrast(s) of interest
 
-      .. code-block:: json
+        .. tabs::
 
-         "contrast_params": {
-             "training_validation": ["T1w", "T2w", "T2star"],
-             "testing": ["T1w", "T2w", "T2star"],
-             "balance": {}
-         }
+            .. group-tab:: JSON File
+
+                At `this line <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L20>`__ in the ``config.json`` is where you can update the ``contrast_params`` sub-dictionary within the ``loader_parameters`` sub-dictionary.
+
+                .. code-block:: json
+
+                    "contrast_params": {
+                         "training_validation": ["T1w", "T2w", "T2star"],
+                         "testing": ["T1w", "T2w", "T2star"],
+                         "balance": {}
+                    }
 
     - ``loader_parameters:slice_axis``: Orientation of the 2D slice to use with the model.
 
-      .. code-block:: json
+        .. tabs::
 
-         "slice_axis": "axial"
+            .. group-tab:: JSON File
+
+                At `this line <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L29>`__ in the ``config.json`` is where you can update the ``slice_axis`` subkey within the ``loader_parameters`` sub-dictionary.
+
+                .. code-block:: json
+
+                    "slice_axis": "axial"
 
     - ``loader_parameters:multichannel``: Turn on/off multi-channel training. If ``true``, each sample has several
       channels, where each channel is an image contrast. If ``false``, only one image contrast is used per sample.
 
-      .. code-block:: json
+        .. tabs::
 
-         "multichannel": false
+            .. group-tab:: JSON File
 
-      .. note::
+                At `this line <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L30>`__ in the ``config.json`` is where you can update the ``multichannel`` subkey within the ``loader_parameters`` sub-dictionary.
 
-         The multichannel approach requires that for each subject, the image contrasts are co-registered. This implies that
-         a ground truth segmentation is aligned with all contrasts, for a given subject. In this tutorial, only one channel
-         will be used.
+                .. code-block:: json
 
-    - ``training_time:num_epochs``: the maximum number of epochs that will be run during training. Each epoch is composed
+                    "multichannel": false
+
+                .. note::
+
+                    The multichannel approach requires that for each subject, the image contrasts are co-registered. This implies that
+                    a ground truth segmentation is aligned with all contrasts, for a given subject. In this tutorial, only one channel
+                    will be used.
+
+    - ``training_parameters:training_time:num_epochs``: the maximum number of epochs that will be run during training. Each epoch is composed
       of a training part and an evaluation part. It should be a strictly positive integer.
 
-      .. code-block:: json
+        .. tabs::
 
-         "num_epochs": 100
+            .. group-tab:: JSON File
+
+                At `this line <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L48>`__ in the ``config.json`` is where you can update the ``num_epochs`` subkey within the ``training_parameters:training_time`` sub-dictionary.
+
+                .. code-block:: json
+
+                    "num_epochs": 100
 
 Train model
 -----------
 
     Once the configuration file is ready, run the training:
 
-    .. code-block:: bash
+    .. tabs::
 
-       ivadomed --train -c config.json --path-data path/to/bids/data --path-output path/to/output/directory
+        .. group-tab:: Command Line Interface
 
-    - We can pass other flags to execute different commands (training, testing, segmentation), see `Usage <../usage.html>`__.
+            .. code-block:: bash
+
+               ivadomed --train -c config.json --path-data path/to/bids/data --path-output path/to/output/directory
+
+            - In the above command, we execute the ``--train`` command and manually specified ``--path-data`` and ``--path-output`` and overwrote/replace the specification in ``config.json``
+
+            - ``--train``: We can pass other flags to execute different commands (training, testing, segmentation), see `Usage <../usage.html>`__.
+
+            - ``--path-output``: Folder name that will contain the output files (e.g., trained model, predictions, results).
+
+            - ``--path-data``: Location of the dataset. As discussed in `Data <../data.html>`__, the dataset
+              should conform to the BIDS standard. Modify the path so it points to the location of the downloaded dataset.
+
+        .. group-tab:: JSON File
+
+            If you set the ``command``, ``path_output``, and ``path_data`` arguments in your config file, you do not need to pass the above the specific CLI flags.
+
+            Instead, make the following changes to the JSON file at the specific lines:
+
+            * Command parameter located `here <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L2>`__
+
+                .. code-block:: json
+
+                    "command": "train"
+
+            * Path output parameter located `here <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L4>`__
+
+                .. code-block:: json
+
+                    "path_output": "spineGeneric"
+
+                ``path-output``: Folder name that will contain the output files (e.g., trained model, predictions, results).
+
+            * Path Data located `here <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L12>`__
+
+                .. code-block:: json
+
+                    "path_data": "data_example_spinegeneric"
+
+                ``path-data``: Location of the dataset. As discussed in `Data <../data.html>`__, the dataset should conform to the BIDS standard. Modify the path so it points to the location of the downloaded dataset.
 
 
-    - ``--path-output``: Folder name that will contain the output files (e.g., trained model, predictions, results).
+            Then execute the following simplified command:
 
-      .. code-block:: bash
+                .. tabs::
 
-         --path-output path/to/output/directory
+                    .. tab:: Command Line Interface
 
-    - ``--path-data``: Location of the dataset. As discussed in `Data <../data.html>`__, the dataset
-      should conform to the BIDS standard. Modify the path so it points to the location of the downloaded dataset.
+                        .. code-block:: bash
 
-      .. code-block:: bash
-
-         --path-data path/to/bids/data
-
-    - If you set the ``command``, ``path_output``, and ``path_data`` arguments in your config file, you do not need to pass the CLI flags:
-
-    .. code-block:: bash
-
-       ivadomed -c config.json
+                            ivadomed -c config.json
 
     .. note::
 
@@ -220,23 +462,33 @@ Evaluate model
 
     To test the trained model on the testing sub-dataset and compute evaluation metrics, run:
 
-    .. code-block:: bash
+    .. tabs::
 
-       ivadomed --test -c config.json --path-data path/to/bids/data --path-output path/to/output/directory
+        .. tab:: Command Line Interface
 
-    If you prefer to use config files over CLI flags, set ``command`` to the following in you config file:
+            .. code-block:: bash
 
-    .. code-block:: json
+               ivadomed --test -c config.json --path-data path/to/bids/data --path-output path/to/output/directory
 
-       "command": "test"
+        .. tab:: JSON File
 
-    You can also set ``path_output``, and ``path_data`` arguments in your config file.
+            If you prefer to use config files over CLI flags, set ``command`` to ``test`` in the `following line <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/config/config.json#L2>`__ in you config file:
 
-    Then run:
+                .. code-block:: json
 
-    .. code-block:: bash
+                   "command": "test"
 
-       ivadomed -c config.json
+            You can also set ``path_output``, and ``path_data`` arguments in the ``config.json`` respectively.
+
+            Then run:
+
+                .. tabs::
+
+                    .. tab:: Command Line Interface
+
+                        .. code-block:: bash
+
+                            ivadomed -c config.json
 
     The model's parameters will be displayed in the terminal, followed by a preview of the results for each image.
     The resulting segmentation is saved for each image in the ``<PATH_TO_OUT_DIR>/pred_masks`` while a csv file,
@@ -293,9 +545,13 @@ Evaluate model
     For `FSLeyes <https://open.win.ox.ac.uk/pages/fsl/fsleyes/fsleyes/userdoc/>`_ users, this command will open the
     input image with the overlaid prediction (segmentation) for one of the test subject:
 
-    .. code-block:: bash
+    .. tabs::
 
-       fsleyes <PATH_TO_BIDS_DATA>/sub-mpicbs06/anat/sub-mpicbs06_T2w.nii.gz <PATH_TO_OUT_DIR>/pred_masks/sub-mpicbs06_T2w_pred.nii.gz -cm red
+        .. tab:: Command Line Interface
+
+            .. code-block:: bash
+
+               fsleyes <PATH_TO_BIDS_DATA>/sub-mpicbs06/anat/sub-mpicbs06_T2w.nii.gz <PATH_TO_OUT_DIR>/pred_masks/sub-mpicbs06_T2w_pred.nii.gz -cm red
 
     After the training for 100 epochs, the segmentations should be similar to the one presented in the following image.
     The output and ground truth segmentations of the spinal cord are presented in red (subject ``sub-mpicbs06`` with
