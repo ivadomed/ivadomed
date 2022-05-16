@@ -37,10 +37,12 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
         truths are thresholded (0.5) after the data augmentation operations.
         is_input_dropout (bool): Return input with missing modalities.
+        disk_cache (bool): set whether all input data should be cached in local folders to allow faster subsequent
+        reloading and bypass memory cap.
     """
 
     def __init__(self, filename_pairs, transform=None, length=(64, 64, 64), stride=(0, 0, 0), slice_axis=0,
-                 task="segmentation", soft_gt=False, is_input_dropout=False, disk_cache=None):
+                 task="segmentation", soft_gt=False, is_input_dropout=False, disk_cache=True):
         self.filename_pairs = filename_pairs
 
         # could be a list of tuple of objects OR path objects to the actual disk equivalent.
@@ -90,7 +92,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
 
             # First time detemine cache automatically IF not specified. Otherwise, use the cache specified.
             if self.disk_cache is None:
-                self.determine_cache_need(seg_pair, roi_pair)
+                self.disk_cache = self.determine_cache_need(seg_pair, roi_pair)
 
             if self.disk_cache:
                 # Write SegPair and ROIPair to disk cache with timestamp to avoid collisions
@@ -247,7 +249,9 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
             logger.info(f"Estimated 3D dataset size is {size_estimated_dataset_GB} GB, which is larger than 4 GB. Auto "
                         f"enabling cache.")
             self.disk_cache = True
+            return True
         else:
             logger.info(f"Estimated 3D dataset size is {size_estimated_dataset_GB} GB, which is smaller than 4 GB. File "
                         f"cache will not be used")
             self.disk_cache = False
+            return False

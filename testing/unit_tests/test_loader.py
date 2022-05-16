@@ -398,7 +398,7 @@ def test_read_png_tif(download_data_testing_test_files, loader_parameters, model
     slice_axis = imed_utils.AXIS_DCT[loader_parameters[LoaderParamsKW.SLICE_AXIS]]
     ds = imed_loader_mri2dseg.MRI2DSegmentationDataset(filename_pairs,
                                                        slice_axis=slice_axis,
-                                                       cache=True,
+                                                       nibabel_cache=True,
                                                        transform=[None, None],
                                                        slice_filter_fn=None)
     ds.load_filenames()

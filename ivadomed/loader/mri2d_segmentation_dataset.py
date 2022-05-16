@@ -27,7 +27,7 @@ class MRI2DSegmentationDataset(Dataset):
         stride (list): Size of the pixels' shift between patches, length equals 0 (no patching) or 2 (2d patching).
         slice_axis (int): Indicates the axis used to extract 2D slices from 3D NifTI files:
             "axial": 2, "sagittal": 0, "coronal": 1. 2D PNG/TIF/JPG files use default "axial": 2.
-        cache (bool): if the data should be cached in memory or not.
+        nibabel_cache (bool): if the data should be cached in memory or not.
         transform (torchvision.Compose): transformations to apply.
         slice_filter_fn (SliceFilter): SliceFilter object containing Slice filter parameters.
         patch_filter_fn (PatchFilter): PatchFilter object containing Patch filter parameters.
@@ -48,7 +48,8 @@ class MRI2DSegmentationDataset(Dataset):
         is_2d_patch (bool): True if length in model params.
         prepro_transforms (Compose): Transformations to apply before training.
         transform (Compose): Transformations to apply during training.
-        cache (bool): determine the nibabel data object should be cached in memory or not.
+        nibabel_cache (bool): determine if the nibabel data object should be cached in memory or not to avoid repetitive
+        disk loading
         slice_axis (int): Indicates the axis used to extract 2D slices from 3D NifTI files:
             "axial": 2, "sagittal": 0, "coronal": 1. 2D PNG/TIF/JPG files use default "axial": 2.
         slice_filter_fn (SliceFilter): SliceFilter object containing Slice filter parameters.
@@ -69,7 +70,7 @@ class MRI2DSegmentationDataset(Dataset):
 
     """
 
-    def __init__(self, filename_pairs, length=None, stride=None, slice_axis=2, cache=True, transform=None,
+    def __init__(self, filename_pairs, length=None, stride=None, slice_axis=2, nibabel_cache=True, transform=None,
                  slice_filter_fn=None, patch_filter_fn=None, task="segmentation", roi_params=None, soft_gt=False,
                  is_input_dropout=False, disk_cache=None):
         if length is None:
@@ -83,7 +84,7 @@ class MRI2DSegmentationDataset(Dataset):
         self.stride = stride
         self.is_2d_patch = True if self.length else False
         self.prepro_transforms, self.transform = transform
-        self.cache = cache
+        self.cache = nibabel_cache
         self.slice_axis = slice_axis
         self.slice_filter_fn = slice_filter_fn
         self.patch_filter_fn = patch_filter_fn
