@@ -1,11 +1,10 @@
 import torch
-from torch import nn as nn
-from torch.nn import Module
+from torch.nn import Module, LeakyReLU, MaxPool2d
 from ivadomed.architecture.block.conv_block import ConvBlock
 
 
 class SimpleBlock(Module):
-    def __init__(self, in_chan, out_chan_1x1, out_chan_3x3, activation=nn.LeakyReLU()):
+    def __init__(self, in_chan, out_chan_1x1, out_chan_3x3, activation=LeakyReLU()):
         """
         Inception module with 3 convolutions with different kernel size with separate activation.
         The 3 outputs are then concatenated. Max pooling performed on concatenation.
@@ -19,7 +18,7 @@ class SimpleBlock(Module):
         self.conv1 = ConvBlock(in_chan, out_chan_1x1, ksize=3, pad=0, activation=activation)
         self.conv2 = ConvBlock(in_chan, out_chan_3x3, ksize=5, pad=1, activation=activation)
         self.conv3 = ConvBlock(in_chan, out_chan_3x3, ksize=9, pad=3, activation=activation)
-        self.MP = nn.MaxPool2d(1)
+        self.MP = MaxPool2d(1)
 
     def forward(self, x):
         conv1_out = self.conv1(x)

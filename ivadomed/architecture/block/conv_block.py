@@ -1,9 +1,8 @@
-from torch import nn as nn
-from torch.nn import Module
+from torch.nn import Module, Conv2d, BatchNorm2d, LeakyReLU
 
 
 class ConvBlock(Module):
-    def __init__(self, in_chan, out_chan, ksize=3, stride=1, pad=0, activation=nn.LeakyReLU()):
+    def __init__(self, in_chan, out_chan, ksize=3, stride=1, pad=0, activation=LeakyReLU()):
         """
         Perform convolution, activation and batch normalization.
         Args:
@@ -15,9 +14,9 @@ class ConvBlock(Module):
             activation (nn.layers): activation layer. default Leaky ReLu
         """
         super(ConvBlock, self).__init__()
-        self.conv1 = nn.Conv2d(in_chan, out_chan, kernel_size=ksize, stride=stride, padding=pad)
+        self.conv1 = Conv2d(in_chan, out_chan, kernel_size=ksize, stride=stride, padding=pad)
         self.activation = activation
-        self.batch_norm = nn.BatchNorm2d(out_chan)
+        self.batch_norm = BatchNorm2d(out_chan)
 
     def forward(self, x):
         return self.activation(self.batch_norm(self.conv1(x)))

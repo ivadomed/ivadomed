@@ -2,9 +2,7 @@ from collections import OrderedDict
 
 import torch
 import torchvision.models
-from torch import nn as nn
-from torch.nn import functional as F
-from torch.nn import Module
+from torch.nn import functional, Module, Sequential, Conv2d, BatchNorm2d, ReLU, MaxPool2d, Conv2d, Linear, init, BatchNorm2d
 
 
 class DenseNet(Module):
@@ -29,12 +27,12 @@ class DenseNet(Module):
         super(DenseNet, self).__init__()
 
         # First convolution
-        self.features = nn.Sequential(OrderedDict([
-            ('conv0', nn.Conv2d(1, num_init_features, kernel_size=7, stride=2,
+        self.features = Sequential(OrderedDict([
+            ('conv0', Conv2d(1, num_init_features, kernel_size=7, stride=2,
                                 padding=3, bias=False)),
-            ('norm0', nn.BatchNorm2d(num_init_features)),
-            ('relu0', nn.ReLU(inplace=True)),
-            ('pool0', nn.MaxPool2d(kernel_size=3, stride=2, padding=1)),
+            ('norm0', BatchNorm2d(num_init_features)),
+            ('relu0', ReLU(inplace=True)),
+            ('pool0', MaxPool2d(kernel_size=3, stride=2, padding=1)),
         ]))
 
         # Each denseblock
@@ -57,28 +55,28 @@ class DenseNet(Module):
                 num_features = num_features // 2
 
         # Final batch norm
-        self.features.add_module('norm5', nn.BatchNorm2d(num_features))
+        self.features.add_module('norm5', BatchNorm2d(num_features))
 
         # Linear layer
-        self.classifier = nn.Linear(num_features, num_classes)
+        self.classifier = Linear(num_features, num_classes)
 
         # Official init from torch repo.
         for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight)
-            elif isinstance(m, nn.BatchNorm2d):
-                nn.init.constant_(m.weight, 1)
-                nn.init.constant_(m.bias, 0)
-            elif isinstance(m, nn.Linear):
-                nn.init.constant_(m.bias, 0)
+            if isinstance(m, Conv2d):
+                init.kaiming_normal_(m.weight)
+            elif isinstance(m, BatchNorm2d):
+                init.constant_(m.weight, 1)
+                init.constant_(m.bias, 0)
+            elif isinstance(m, Linear):
+                init.constant_(m.bias, 0)
 
     def forward(self, x):
         features = self.features(x)
-        out = F.relu(features, inplace=True)
-        out = F.adaptive_avg_pool2d(out, (1, 1))
+        out = functional.relu(features, inplace=True)
+        out = functional.adaptive_avg_pool2d(out, (1, 1))
         out = torch.flatten(out, 1)
         out = self.classifier(out)
-        preds = F.softmax(out, dim=1)
+        preds = functional.softmax(out, dim=1)
         # Remove background class
         preds = preds[:, 1:]
         return preds

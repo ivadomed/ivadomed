@@ -1,5 +1,4 @@
-from torch import nn as nn
-from torch.nn import Module
+from torch.nn import Module, Linear, Sigmoid
 
 
 class FiLMgenerator(Module):
@@ -22,10 +21,10 @@ class FiLMgenerator(Module):
 
     def __init__(self, n_features, n_channels, n_hid=64):
         super(FiLMgenerator, self).__init__()
-        self.linear1 = nn.Linear(n_features, n_hid)
-        self.sig = nn.Sigmoid()
-        self.linear2 = nn.Linear(n_hid, n_hid // 4)
-        self.linear3 = nn.Linear(n_hid // 4, n_channels * 2)
+        self.linear1 = Linear(n_features, n_hid)
+        self.sig = Sigmoid()
+        self.linear2 = Linear(n_hid, n_hid // 4)
+        self.linear3 = Linear(n_hid // 4, n_channels * 2)
 
     def forward(self, x, shared_weights=None):
         if shared_weights is not None:  # weight sharing

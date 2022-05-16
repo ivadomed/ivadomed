@@ -1,6 +1,5 @@
 import torch
-from torch import nn as nn
-from torch.nn import Module
+from torch.nn import Module, ModuleDict
 from ivadomed.architecture.block.encoder_block import EncoderBlock
 from ivadomed.architecture.block.decoder_block import DecoderBlock
 
@@ -43,7 +42,7 @@ class HeMISUnet(Module):
         self.contrasts = contrasts
 
         # Encoder path
-        self.Encoder_mod = nn.ModuleDict(
+        self.Encoder_mod = ModuleDict(
             [['Encoder_{}'.format(Mod), EncoderBlock(in_channel=1, depth=depth, dropout_rate=dropout_rate,
                                                      bn_momentum=bn_momentum)] for Mod in self.contrasts])
 

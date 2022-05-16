@@ -1,6 +1,5 @@
 import torch
-from torch import nn
-from torch.nn import Module
+from torch.nn import Module, LeakyReLU, Dropout3d, Upsample, Softmax, Conv3d, InstanceNorm3d, Sequential, ReLU
 from ivadomed.architecture.block.film_layer_block import FiLMlayerBlock
 from ivadomed.architecture.block.unit_grid_gating_signal_3d_block import UnetGridGatingSignal3DBlock
 from ivadomed.architecture.block.grid_attention_block import GridAttentionBlock
@@ -47,57 +46,57 @@ class Modified3DUNet(Module):
         self.momentum = bn_momentum
         self.final_activation = final_activation
 
-        self.lrelu = nn.LeakyReLU()
-        self.dropout3d = nn.Dropout3d(p=dropout_rate)
-        self.upsacle = nn.Upsample(scale_factor=2, mode='nearest')
-        self.softmax = nn.Softmax(dim=1)
+        self.lrelu = LeakyReLU()
+        self.dropout3d = Dropout3d(p=dropout_rate)
+        self.upsacle = Upsample(scale_factor=2, mode='nearest')
+        self.softmax = Softmax(dim=1)
 
         # Level 1 context pathway
-        self.conv3d_c1_1 = nn.Conv3d(
+        self.conv3d_c1_1 = Conv3d(
             self.in_channels, self.base_n_filter,
             kernel_size=3, stride=1, padding=1, bias=False
         )
         self.film_layer1 = FiLMlayerBlock(n_metadata, self.base_n_filter) if film_layers and film_layers[0] else None
-        self.conv3d_c1_2 = nn.Conv3d(
+        self.conv3d_c1_2 = Conv3d(
             self.base_n_filter, self.base_n_filter,
             kernel_size=3, stride=1, padding=1, bias=False
         )
         self.lrelu_conv_c1 = self.lrelu_conv(
             self.base_n_filter, self.base_n_filter)
-        self.inorm3d_c1 = nn.InstanceNorm3d(self.base_n_filter, momentum=self.momentum)
+        self.inorm3d_c1 = InstanceNorm3d(self.base_n_filter, momentum=self.momentum)
 
         # Level 2 context pathway
-        self.conv3d_c2 = nn.Conv3d(
+        self.conv3d_c2 = Conv3d(
             self.base_n_filter, self.base_n_filter * 2,
             kernel_size=3, stride=2, padding=1, bias=False
         )
         self.film_layer2 = FiLMlayerBlock(n_metadata, self.base_n_filter * 2) if film_layers and film_layers[1] else None
         self.norm_lrelu_conv_c2 = self.norm_lrelu_conv(
             self.base_n_filter * 2, self.base_n_filter * 2)
-        self.inorm3d_c2 = nn.InstanceNorm3d(self.base_n_filter * 2, momentum=self.momentum)
+        self.inorm3d_c2 = InstanceNorm3d(self.base_n_filter * 2, momentum=self.momentum)
 
         # Level 3 context pathway
-        self.conv3d_c3 = nn.Conv3d(
+        self.conv3d_c3 = Conv3d(
             self.base_n_filter * 2, self.base_n_filter * 4,
             kernel_size=3, stride=2, padding=1, bias=False
         )
         self.film_layer3 = FiLMlayerBlock(n_metadata, self.base_n_filter * 4) if film_layers and film_layers[2] else None
         self.norm_lrelu_conv_c3 = self.norm_lrelu_conv(
             self.base_n_filter * 4, self.base_n_filter * 4)
-        self.inorm3d_c3 = nn.InstanceNorm3d(self.base_n_filter * 4, momentum=self.momentum)
+        self.inorm3d_c3 = InstanceNorm3d(self.base_n_filter * 4, momentum=self.momentum)
 
         # Level 4 context pathway
-        self.conv3d_c4 = nn.Conv3d(
+        self.conv3d_c4 = Conv3d(
             self.base_n_filter * 4, self.base_n_filter * 8,
             kernel_size=3, stride=2, padding=1, bias=False
         )
         self.film_layer4 = FiLMlayerBlock(n_metadata, self.base_n_filter * 8) if film_layers and film_layers[3] else None
         self.norm_lrelu_conv_c4 = self.norm_lrelu_conv(
             self.base_n_filter * 8, self.base_n_filter * 8)
-        self.inorm3d_c4 = nn.InstanceNorm3d(self.base_n_filter * 8, momentum=self.momentum)
+        self.inorm3d_c4 = InstanceNorm3d(self.base_n_filter * 8, momentum=self.momentum)
 
         # Level 5 context pathway, level 0 localization pathway
-        self.conv3d_c5 = nn.Conv3d(
+        self.conv3d_c5 = Conv3d(
             self.base_n_filter * 8, self.base_n_filter * 16,
             kernel_size=3, stride=2, padding=1, bias=False
         )
@@ -115,12 +114,12 @@ class Modified3DUNet(Module):
                 self.norm_lrelu_upscale_conv_norm_lrelu(
                     self.base_n_filter * 16, self.base_n_filter * 8)
 
-        self.conv3d_l0 = nn.Conv3d(
+        self.conv3d_l0 = Conv3d(
             self.base_n_filter * 8, self.base_n_filter * 8,
             kernel_size=1, stride=1, padding=0, bias=False
         )
         self.film_layer6 = FiLMlayerBlock(n_metadata, self.base_n_filter * 8) if film_layers and film_layers[5] else None
-        self.inorm3d_l0 = nn.InstanceNorm3d(self.base_n_filter * 8, momentum=self.momentum)
+        self.inorm3d_l0 = InstanceNorm3d(self.base_n_filter * 8, momentum=self.momentum)
 
         # Attention UNet
         if self.attention:
@@ -143,12 +142,12 @@ class Modified3DUNet(Module):
                                                       inter_channels=self.base_n_filter * 8,
                                                       sub_sample_factor=(2, 2, 2),
                                                       )
-            self.inorm3d_l0 = nn.InstanceNorm3d(self.base_n_filter * 16, momentum=self.momentum)
+            self.inorm3d_l0 = InstanceNorm3d(self.base_n_filter * 16, momentum=self.momentum)
 
         # Level 1 localization pathway
         self.conv_norm_lrelu_l1 = self.conv_norm_lrelu(
             self.base_n_filter * 16, self.base_n_filter * 16)
-        self.conv3d_l1 = nn.Conv3d(
+        self.conv3d_l1 = Conv3d(
             self.base_n_filter * 16, self.base_n_filter * 8,
             kernel_size=1, stride=1, padding=0, bias=False
         )
@@ -160,7 +159,7 @@ class Modified3DUNet(Module):
         # Level 2 localization pathway
         self.conv_norm_lrelu_l2 = self.conv_norm_lrelu(
             self.base_n_filter * 8, self.base_n_filter * 8)
-        self.conv3d_l2 = nn.Conv3d(
+        self.conv3d_l2 = Conv3d(
             self.base_n_filter * 8, self.base_n_filter * 4,
             kernel_size=1, stride=1, padding=0, bias=False
         )
@@ -172,7 +171,7 @@ class Modified3DUNet(Module):
         # Level 3 localization pathway
         self.conv_norm_lrelu_l3 = self.conv_norm_lrelu(
             self.base_n_filter * 4, self.base_n_filter * 4)
-        self.conv3d_l3 = nn.Conv3d(
+        self.conv3d_l3 = Conv3d(
             self.base_n_filter * 4, self.base_n_filter * 2,
             kernel_size=1, stride=1, padding=0, bias=False
         )
@@ -184,66 +183,66 @@ class Modified3DUNet(Module):
         # Level 4 localization pathway
         self.conv_norm_lrelu_l4 = self.conv_norm_lrelu(
             self.base_n_filter * 2, self.base_n_filter * 2)
-        self.conv3d_l4 = nn.Conv3d(
+        self.conv3d_l4 = Conv3d(
             self.base_n_filter * 2, self.n_classes,
             kernel_size=1, stride=1, padding=0, bias=False
         )
         # self.film_layer10 = FiLMlayer(n_metadata, ) if film_layers and film_layers[9] else None
 
-        self.ds2_1x1_conv3d = nn.Conv3d(
+        self.ds2_1x1_conv3d = Conv3d(
             self.base_n_filter * 8, self.n_classes,
             kernel_size=1, stride=1, padding=0, bias=False
         )
-        self.ds3_1x1_conv3d = nn.Conv3d(
+        self.ds3_1x1_conv3d = Conv3d(
             self.base_n_filter * 4, self.n_classes,
             kernel_size=1, stride=1, padding=0, bias=False
         )
         self.film_layer10 = FiLMlayerBlock(n_metadata, self.n_classes) if film_layers and film_layers[9] else None
 
     def conv_norm_lrelu(self, feat_in, feat_out):
-        return nn.Sequential(
-            nn.Conv3d(feat_in, feat_out, kernel_size=3,
+        return Sequential(
+            Conv3d(feat_in, feat_out, kernel_size=3,
                       stride=1, padding=1, bias=False),
-            nn.InstanceNorm3d(feat_out, momentum=self.momentum),
-            nn.LeakyReLU())
+            InstanceNorm3d(feat_out, momentum=self.momentum),
+            LeakyReLU())
 
     def norm_lrelu_conv(self, feat_in, feat_out):
-        return nn.Sequential(
-            nn.InstanceNorm3d(feat_in, momentum=self.momentum),
-            nn.LeakyReLU(),
-            nn.Conv3d(feat_in, feat_out,
+        return Sequential(
+            InstanceNorm3d(feat_in, momentum=self.momentum),
+            LeakyReLU(),
+            Conv3d(feat_in, feat_out,
                       kernel_size=3, stride=1, padding=1, bias=False))
 
     def lrelu_conv(self, feat_in, feat_out):
-        return nn.Sequential(
-            nn.LeakyReLU(),
-            nn.Conv3d(feat_in, feat_out,
+        return Sequential(
+            LeakyReLU(),
+            Conv3d(feat_in, feat_out,
                       kernel_size=3, stride=1, padding=1, bias=False))
 
     def norm_lrelu_upscale_conv_norm_lrelu(self, feat_in, feat_out):
-        return nn.Sequential(
-            nn.InstanceNorm3d(feat_in, momentum=self.momentum),
-            nn.LeakyReLU(),
-            nn.Upsample(scale_factor=2, mode='nearest'),
+        return Sequential(
+            InstanceNorm3d(feat_in, momentum=self.momentum),
+            LeakyReLU(),
+            Upsample(scale_factor=2, mode='nearest'),
             # should be feat_in*2 or feat_in
-            nn.Conv3d(feat_in, feat_out, kernel_size=3,
+            Conv3d(feat_in, feat_out, kernel_size=3,
                       stride=1, padding=1, bias=False),
-            nn.InstanceNorm3d(feat_out, momentum=self.momentum),
-            nn.LeakyReLU())
+            InstanceNorm3d(feat_out, momentum=self.momentum),
+            LeakyReLU())
 
     def norm_lrelu(self, feat_in):
-        return nn.Sequential(
-            nn.InstanceNorm3d(feat_in, momentum=self.momentum),
-            nn.LeakyReLU())
+        return Sequential(
+            InstanceNorm3d(feat_in, momentum=self.momentum),
+            LeakyReLU())
 
     def upscale_conv_norm_lrelu(self, feat_in, feat_out):
-        return nn.Sequential(
-            nn.Upsample(scale_factor=2, mode='nearest'),
+        return Sequential(
+            Upsample(scale_factor=2, mode='nearest'),
             # should be feat_in*2 or feat_in
-            nn.Conv3d(feat_in, feat_out, kernel_size=3,
+            Conv3d(feat_in, feat_out, kernel_size=3,
                       stride=1, padding=1, bias=False),
-            nn.InstanceNorm3d(feat_out, momentum=self.momentum),
-            nn.LeakyReLU())
+            InstanceNorm3d(feat_out, momentum=self.momentum),
+            LeakyReLU())
 
     def forward(self, x, context=None, w_film=None):
         #  Level 1 context pathway
@@ -383,8 +382,8 @@ class Modified3DUNet(Module):
         elif hasattr(self, "final_activation") and self.final_activation == "softmax":
             out = self.softmax(out)
         elif hasattr(self, "final_activation") and self.final_activation == "relu":
-            out = nn.ReLU()(seg_layer) / nn.ReLU()(seg_layer).max() if bool(nn.ReLU()(seg_layer).max()) \
-                else nn.ReLU()(seg_layer)
+            out = ReLU()(seg_layer) / ReLU()(seg_layer).max() if bool(ReLU()(seg_layer).max()) \
+                else ReLU()(seg_layer)
         else:
             out = torch.sigmoid(out)
 

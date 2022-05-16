@@ -1,5 +1,5 @@
 import torch
-from torch.nn import Module, functional as F
+from torch.nn import Module, functional
 from ivadomed.architecture.block.down_conv_block import DownConvBlock
 
 
@@ -29,7 +29,7 @@ class UpConvBlock(Module):
             self.is_2d = True
         mode = 'bilinear' if self.is_2d else 'trilinear'
         dims = -2 if self.is_2d else -3
-        x = F.interpolate(x, size=y.size()[dims:], mode=mode, align_corners=True)
+        x = functional.interpolate(x, size=y.size()[dims:], mode=mode, align_corners=True)
         x = torch.cat([x, y], dim=1)
         x = self.downconv(x)
         return x

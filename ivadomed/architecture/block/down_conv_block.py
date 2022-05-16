@@ -1,5 +1,4 @@
-from torch import nn as nn
-from torch.nn import Module, functional as F
+from torch.nn import Module, Conv2d, BatchNorm2d, Dropout2d, Conv3d, Dropout3d, InstanceNorm3d, functional
 
 
 class DownConvBlock(Module):
@@ -25,13 +24,13 @@ class DownConvBlock(Module):
     def __init__(self, in_feat, out_feat, dropout_rate=0.3, bn_momentum=0.1, is_2d=True):
         super(DownConvBlock, self).__init__()
         if is_2d:
-            conv = nn.Conv2d
-            bn = nn.BatchNorm2d
-            dropout = nn.Dropout2d
+            conv = Conv2d
+            bn = BatchNorm2d
+            dropout = Dropout2d
         else:
-            conv = nn.Conv3d
-            bn = nn.InstanceNorm3d
-            dropout = nn.Dropout3d
+            conv = Conv3d
+            bn = InstanceNorm3d
+            dropout = Dropout3d
 
         self.conv1 = conv(in_feat, out_feat, kernel_size=3, padding=1)
         self.conv1_bn = bn(out_feat, momentum=bn_momentum)
@@ -42,11 +41,11 @@ class DownConvBlock(Module):
         self.conv2_drop = dropout(dropout_rate)
 
     def forward(self, x):
-        x = F.relu(self.conv1(x))
+        x = functional.relu(self.conv1(x))
         x = self.conv1_bn(x)
         x = self.conv1_drop(x)
 
-        x = F.relu(self.conv2(x))
+        x = functional.relu(self.conv2(x))
         x = self.conv2_bn(x)
         x = self.conv2_drop(x)
         return x

@@ -11,7 +11,7 @@ from ivadomed.architecture.block.simple_block import SimpleBlock
 
 class Countception(Module):
     """Countception model.
-    Fully convolutional model using inception module and used for keypoints detection.
+    Fully convolutional model using inception module and used for key points detection.
     The inception model extracts several patches within each image. Every pixel is therefore processed by the
     network several times, allowing to average multiple predictions and minimize false negatives.
 

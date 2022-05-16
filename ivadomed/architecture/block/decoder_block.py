@@ -1,6 +1,5 @@
 import torch
-from torch import nn as nn
-from torch.nn import Module
+from torch.nn import Module, ModuleList, ReLU, Conv2d, Conv3d, Softmax
 from ivadomed.architecture.block.up_conv_block import UpConvBlock
 from ivadomed.architecture.block.film_layer_block import FiLMlayerBlock
 
@@ -36,7 +35,7 @@ class DecoderBlock(Module):
         self.out_channel = out_channel
         self.final_activation = final_activation
         # Up-Sampling path
-        self.up_path = nn.ModuleList()
+        self.up_path = ModuleList()
         if hemis:
             in_channel = n_filters * 2 ** self.depth
             self.up_path.append(
@@ -70,10 +69,10 @@ class DecoderBlock(Module):
                 self.up_path.append(None)
 
         # Last Convolution
-        conv = nn.Conv2d if is_2d else nn.Conv3d
+        conv = Conv2d if is_2d else Conv3d
         self.last_conv = conv(in_channel // 2, out_channel, kernel_size=3, padding=1)
         self.last_film = FiLMlayerBlock(n_metadata, self.out_channel) if film_layers and film_layers[-1] else None
-        self.softmax = nn.Softmax(dim=1)
+        self.softmax = Softmax(dim=1)
 
     def forward(self, features, context=None, w_film=None):
         x = features[-1]
@@ -93,7 +92,7 @@ class DecoderBlock(Module):
         elif hasattr(self, "final_activation") and self.final_activation == "softmax":
             preds = self.softmax(x)
         elif hasattr(self, "final_activation") and self.final_activation == "relu":
-            preds = nn.ReLU()(x) / nn.ReLU()(x).max()
+            preds = ReLU()(x) / ReLU()(x).max()
             # If nn.ReLU()(x).max()==0, then nn.ReLU()(x) will also ==0. So, here any zero division will always be 0/0.
             # For float values, 0/0=nan. So, we can handle zero division (without checking data!) by setting nans to 0.
             preds[torch.isnan(preds)] = 0.

@@ -1,5 +1,4 @@
-from torch import nn as nn
-from torch.nn import Module
+from torch.nn import Module,  Sequential, Conv3d, BatchNorm3d, ReLU
 from ivadomed.architecture.layers_common import weights_init_kaiming
 
 
@@ -21,13 +20,13 @@ class UnetGridGatingSignal3DBlock(Module):
         super(UnetGridGatingSignal3DBlock, self).__init__()
 
         if is_batchnorm:
-            self.conv1 = nn.Sequential(nn.Conv3d(in_size, out_size, kernel_size, (1, 1, 1), (0, 0, 0)),
-                                       nn.BatchNorm3d(out_size),
-                                       nn.ReLU(inplace=True),
+            self.conv1 = Sequential(Conv3d(in_size, out_size, kernel_size, (1, 1, 1), (0, 0, 0)),
+                                       BatchNorm3d(out_size),
+                                       ReLU(inplace=True),
                                        )
         else:
-            self.conv1 = nn.Sequential(nn.Conv3d(in_size, out_size, kernel_size, (1, 1, 1), (0, 0, 0)),
-                                       nn.ReLU(inplace=True),
+            self.conv1 = Sequential(Conv3d(in_size, out_size, kernel_size, (1, 1, 1), (0, 0, 0)),
+                                       ReLU(inplace=True),
                                        )
 
         # initialise the blocks

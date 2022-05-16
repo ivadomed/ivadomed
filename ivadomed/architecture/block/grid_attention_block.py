@@ -1,6 +1,5 @@
 import torch
-from torch import nn as nn
-from torch.nn import Module, functional as F
+from torch.nn import Module, functional, Conv2d, Conv3d, BatchNorm2d, BatchNorm3d, Sequential
 from ivadomed.architecture.layers_common import weights_init_kaiming
 
 
@@ -62,18 +61,18 @@ class GridAttentionBlock(Module):
                 self.inter_channels = 1
 
         if dimension == 3:
-            conv_nd = nn.Conv3d
-            bn = nn.BatchNorm3d
+            conv_nd = Conv3d
+            bn = BatchNorm3d
             self.upsample_mode = 'trilinear'
         elif dimension == 2:
-            conv_nd = nn.Conv2d
-            bn = nn.BatchNorm2d
+            conv_nd = Conv2d
+            bn = BatchNorm2d
             self.upsample_mode = 'bilinear'
         else:
             raise NotImplementedError
 
         # Output transform
-        self.W = nn.Sequential(
+        self.W = Sequential(
             conv_nd(in_channels=self.in_channels, out_channels=self.in_channels, kernel_size=1, stride=1, padding=0),
             bn(self.in_channels),
         )
@@ -110,14 +109,14 @@ class GridAttentionBlock(Module):
 
         # g (b, c, t', h', w') -> phi_g (b, i_c, t', h', w')
         #  Relu(theta_x + phi_g + bias) -> f = (b, i_c, thw) -> (b, i_c, t/s1, h/s2, w/s3)
-        phi_g = F.interpolate(self.phi(g), size=theta_x_size[2:], mode=self.upsample_mode, align_corners=True)
-        f = F.relu(theta_x + phi_g, inplace=True)
+        phi_g = functional.interpolate(self.phi(g), size=theta_x_size[2:], mode=self.upsample_mode, align_corners=True)
+        f = functional.relu(theta_x + phi_g, inplace=True)
 
         #  psi^T * f -> (b, psi_i_c, t/s1, h/s2, w/s3)
         sigm_psi_f = torch.sigmoid(self.psi(f))
 
         # upsample the attentions and multiply
-        sigm_psi_f = F.interpolate(sigm_psi_f, size=input_size[2:], mode=self.upsample_mode, align_corners=True)
+        sigm_psi_f = functional.interpolate(sigm_psi_f, size=input_size[2:], mode=self.upsample_mode, align_corners=True)
         y = sigm_psi_f.expand_as(x) * x
         W_y = self.W(y)
 
