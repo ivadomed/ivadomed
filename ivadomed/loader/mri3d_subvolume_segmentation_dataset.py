@@ -11,7 +11,7 @@ from loguru import logger
 
 from ivadomed import transforms as imed_transforms, postprocessing as imed_postpro
 from ivadomed.loader import utils as imed_loader_utils
-from ivadomed.loader.utils import dropout_input, create_temp_directory, get_obj_size
+from ivadomed.loader.utils import dropout_input, create_temp_directory, get_obj_size, hash_pair_via_parts_size
 from ivadomed.loader.segmentation_pair import SegmentationPair
 from ivadomed.object_detection import utils as imed_obj_detect
 from ivadomed.keywords import MetadataKW
@@ -90,19 +90,23 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
             for metadata in seg_pair[MetadataKW.INPUT_METADATA]:
                 metadata[MetadataKW.INDEX_SHAPE] = seg_pair['input'][0].shape
 
-            # First time detemine cache automatically IF not specified. Otherwise, use the cache specified.
+            # First time determine cache automatically IF not specified. Otherwise, use the cache specified.
             if self.disk_cache is None:
                 self.disk_cache = self.determine_cache_need(seg_pair, roi_pair)
 
             if self.disk_cache:
                 # Write SegPair and ROIPair to disk cache with timestamp to avoid collisions
-                path_cache_seg_pair = path_temp / f'seg_pair_{get_timestamp()}.pkl'
-                with path_cache_seg_pair.open(mode='wb') as f:
-                    pickle.dump(seg_pair, f)
+                path_cache_seg_pair = path_temp / f'seg_pair_{hash_pair_via_parts_size(seg_pair)}.pkl'
+                # Only write file if it doesn't exist already.
+                if not path_cache_seg_pair.exists():
+                    with path_cache_seg_pair.open(mode='wb') as f:
+                        pickle.dump(seg_pair, f)
 
-                path_cache_roi_pair = path_temp / f'roi_pair_{get_timestamp()}.pkl'
-                with path_cache_roi_pair.open(mode='wb') as f:
-                    pickle.dump(roi_pair, f)
+                path_cache_roi_pair = path_temp / f'roi_pair_{hash_pair_via_parts_size(roi_pair)}.pkl'
+                # Only write file if it doesn't exist already.
+                if not path_cache_roi_pair.exists():
+                    with path_cache_roi_pair.open(mode='wb') as f:
+                        pickle.dump(roi_pair, f)
                 self.handlers.append((path_cache_seg_pair, path_cache_roi_pair))
 
             else:
@@ -201,8 +205,9 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
 
         # add coordinates to metadata to reconstruct volume
         for metadata in metadata_input:
-            metadata[MetadataKW.COORD] = [coord["x_min"], coord["x_max"], coord["y_min"], coord["y_max"], coord["z_min"],
-                                 coord["z_max"]]
+            metadata[MetadataKW.COORD] = [coord["x_min"], coord["x_max"], coord["y_min"], coord["y_max"],
+                                          coord["z_min"],
+                                          coord["z_max"]]
 
         subvolumes = {
             'input': torch.zeros(stack_input.shape[0], shape_x, shape_y, shape_z),
@@ -244,14 +249,16 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         size_roi_pair_in_bytes = get_obj_size(roi_pair)
 
         # Size limit: 4GB GPU RAM, keep in mind tranform etc might take MORE!
-        size_estimated_dataset_GB = (size_seg_pair_in_bytes + size_roi_pair_in_bytes) * len(self.filename_pairs) / 1024 ** 3
+        size_estimated_dataset_GB = (size_seg_pair_in_bytes + size_roi_pair_in_bytes) * len(
+            self.filename_pairs) / 1024 ** 3
         if size_estimated_dataset_GB > 4:
             logger.info(f"Estimated 3D dataset size is {size_estimated_dataset_GB} GB, which is larger than 4 GB. Auto "
                         f"enabling cache.")
             self.disk_cache = True
             return True
         else:
-            logger.info(f"Estimated 3D dataset size is {size_estimated_dataset_GB} GB, which is smaller than 4 GB. File "
-                        f"cache will not be used")
+            logger.info(
+                f"Estimated 3D dataset size is {size_estimated_dataset_GB} GB, which is smaller than 4 GB. File "
+                f"cache will not be used")
             self.disk_cache = False
             return False
