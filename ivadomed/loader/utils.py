@@ -1,12 +1,10 @@
 import collections.abc
-import hashlib
 import re
 import sys
 import os
 import joblib
 import gc
 from pathlib import Path
-from typing import Tuple
 
 import numpy as np
 import pandas as pd
@@ -15,7 +13,7 @@ from loguru import logger
 from sklearn.model_selection import train_test_split
 from torch._six import string_classes
 from ivadomed import utils as imed_utils
-from ivadomed.keywords import SplitDatasetKW, LoaderParamsKW, ROIParamsKW, ContrastParamsKW, MetadataKW
+from ivadomed.keywords import SplitDatasetKW, LoaderParamsKW, ROIParamsKW, ContrastParamsKW
 import nibabel as nib
 import random
 
@@ -82,8 +80,8 @@ def split_dataset(df, split_method, data_testing, random_seed, train_frac=0.8, t
     if len(data_value) != 0:
         for value in data_value:
             if value not in df[data_type].values:
-                logger.warning("No data_value '{}' was found in '{}'. Not taken into account "
-                               "to split the dataset.".format(value, data_type))
+                    logger.warning("No data_value '{}' was found in '{}'. Not taken into account "
+                                   "to split the dataset.".format(value, data_type))
     X_test = df[df[data_type].isin(data_value)]['filename'].unique().tolist()
     X_remain = df[~df[data_type].isin(data_value)][split_method].unique().tolist()
 
@@ -99,12 +97,12 @@ def split_dataset(df, split_method, data_testing, random_seed, train_frac=0.8, t
     X_train, X_val = train_test_split(X_remain, train_size=train_frac_update, random_state=random_seed)
 
     # Print the real train, validation and test fractions after splitting
-    real_train_frac = len(X_train) / len(data)
-    real_valid_frac = len(X_val) / len(data)
+    real_train_frac = len(X_train)/len(data)
+    real_valid_frac = len(X_val)/len(data)
     real_test_frac = 1 - real_train_frac - real_valid_frac
     logger.warning("After splitting: train, validation and test fractions are respectively {}, {} and {}"
                    " of {}.".format(round(real_train_frac, 3), round(real_valid_frac, 3),
-                                    round(real_test_frac, 3), split_method))
+                   round(real_test_frac, 3), split_method))
 
     # Convert train and valid sets from list of "split_method" to list of "filename"
     X_train = df[df[split_method].isin(X_train)]['filename'].unique().tolist()
@@ -222,16 +220,11 @@ def get_subdatasets_subject_files_list(split_params, df, path_output, subject_se
             test_lst = sorted(df_test['filename'].to_list())
     else:
         train_lst, valid_lst, test_lst = get_new_subject_file_split(df=df,
-                                                                    split_method=split_params[
-                                                                        SplitDatasetKW.SPLIT_METHOD],
-                                                                    data_testing=split_params[
-                                                                        SplitDatasetKW.DATA_TESTING],
-                                                                    random_seed=split_params[
-                                                                        SplitDatasetKW.RANDOM_SEED],
-                                                                    train_frac=split_params[
-                                                                        SplitDatasetKW.TRAIN_FRACTION],
-                                                                    test_frac=split_params[
-                                                                        SplitDatasetKW.TEST_FRACTION],
+                                                                    split_method=split_params[SplitDatasetKW.SPLIT_METHOD],
+                                                                    data_testing=split_params[SplitDatasetKW.DATA_TESTING],
+                                                                    random_seed=split_params[SplitDatasetKW.RANDOM_SEED],
+                                                                    train_frac=split_params[SplitDatasetKW.TRAIN_FRACTION],
+                                                                    test_frac=split_params[SplitDatasetKW.TEST_FRACTION],
                                                                     path_output=path_output,
                                                                     balance=split_params[SplitDatasetKW.BALANCE]
                                                                     if SplitDatasetKW.BALANCE in split_params else None,
@@ -496,7 +489,6 @@ def create_temp_directory() -> str:
     os.makedirs(temp_folder_location, exist_ok=True)
     return temp_folder_location
 
-
 def get_obj_size(obj) -> int:
     """
     Returns the size of an object in bytes. Used to gauge whether storing object in memory vs write to disk.
@@ -531,49 +523,3 @@ def get_obj_size(obj) -> int:
         marked.update(new_refr.keys())
 
     return object_size
-
-
-def hash_pair_via_parts_size(seg_roi_pair_dict: dict) -> str:
-    """
-    A specific hash function to try to come up with the unique signature of each seg/roi pair
-    Args:
-        seg_roi_pair_dict:
-
-    Returns:
-
-    """
-    # Obtain the size of all four component:
-    a = get_obj_size(seg_roi_pair_dict.get("input"))
-    b = get_obj_size(seg_roi_pair_dict.get("gt"))
-    c = get_obj_size(seg_roi_pair_dict.get(MetadataKW.INPUT_METADATA))
-    d = get_obj_size(seg_roi_pair_dict.get(MetadataKW.GT_METADATA))
-    sum = a + b + c + d
-    dhash = hashlib.md5()
-    dhash.update(str(sum).encode())
-    return dhash.hexdigest()
-
-
-def hash_tupled_pair(tuple_of_dict: Tuple[dict]) -> str:
-    """
-    Hash function for tuple of seg/roi pairs.
-    Args:
-        tuple_of_dict:
-
-    Returns:
-
-    """
-    # Obtain the size of all four component:
-    a = get_obj_size(tuple_of_dict[0].get("input"))
-    b = get_obj_size(tuple_of_dict[0].get("gt"))
-    c = get_obj_size(tuple_of_dict[0].get(MetadataKW.INPUT_METADATA))
-    d = get_obj_size(tuple_of_dict[0].get(MetadataKW.GT_METADATA))
-    sum1 = a + b + c + d
-    # Obtain the size of all four component:
-    e = get_obj_size(tuple_of_dict[1].get("input"))
-    f = get_obj_size(tuple_of_dict[1].get("gt"))
-    g = get_obj_size(tuple_of_dict[1].get(MetadataKW.INPUT_METADATA))
-    h = get_obj_size(tuple_of_dict[1].get(MetadataKW.GT_METADATA))
-    sum2 = e + f + g + h
-    dhash = hashlib.md5()
-    dhash.update(str(sum1 + sum2).encode())
-    return dhash.hexdigest()

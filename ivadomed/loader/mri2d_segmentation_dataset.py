@@ -10,7 +10,7 @@ from loguru import logger
 
 from ivadomed import transforms as imed_transforms, postprocessing as imed_postpro
 from ivadomed.loader import utils as imed_loader_utils
-from ivadomed.loader.utils import dropout_input, get_obj_size, create_temp_directory, hash_tupled_pair
+from ivadomed.loader.utils import dropout_input, get_obj_size, create_temp_directory
 from ivadomed.loader.segmentation_pair import SegmentationPair
 from ivadomed.object_detection import utils as imed_obj_detect
 from ivadomed.keywords import ROIParamsKW, MetadataKW
@@ -72,7 +72,7 @@ class MRI2DSegmentationDataset(Dataset):
 
     def __init__(self, filename_pairs, length=None, stride=None, slice_axis=2, nibabel_cache=True, transform=None,
                  slice_filter_fn=None, patch_filter_fn=None, task="segmentation", roi_params=None, soft_gt=False,
-                 is_input_dropout=False, disk_cache=True):
+                 is_input_dropout=False, disk_cache=None):
         if length is None:
             length = []
         if stride is None:
@@ -141,11 +141,9 @@ class MRI2DSegmentationDataset(Dataset):
                     for metadata in item[0][MetadataKW.INPUT_METADATA]:
                         metadata[MetadataKW.INDEX_SHAPE] = item[0]['input'][0].shape
                     if self.disk_cache:
-                        path_item = path_temp / f"seq_{hash_tupled_pair(item)}.pkl"
-                        # Only cache when it doesn't already exist.
-                        if not path_item.exists():
-                            with path_item.open(mode="wb") as f:
-                                pickle.dump(item, f)
+                        path_item = path_temp / f"item_{get_timestamp()}.pkl"
+                        with path_item.open(mode="wb") as f:
+                            pickle.dump(item, f)
                         self.handlers.append((path_item))
                     else:
                         self.handlers.append((item))
@@ -153,11 +151,9 @@ class MRI2DSegmentationDataset(Dataset):
                 else:
 
                     if self.disk_cache:
-                        path_item = path_temp / f"roi_{hash_tupled_pair(item)}.pkl"
-                        # Only cache when it doesn't already exist.
-                        if not path_item.exists():
-                            with path_item.open(mode="wb") as f:
-                                pickle.dump(item, f)
+                        path_item = path_temp / f"item_{get_timestamp()}.pkl"
+                        with path_item.open(mode="wb") as f:
+                            pickle.dump(item, f)
                         self.indexes.append(path_item)
                     else:
                         self.indexes.append(item)
