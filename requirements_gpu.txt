@@ -1,5 +1,8 @@
 # Use torch CUDA 11-compatible GPU Version, from https://pytorch.org/get-started/locally/
---extra-index-url https://download.pytorch.org/whl/cu113
+# NB: the 'cu111' tag needs to be kept in sync with the version of torch in requirements.txt,
+#     because they're only publishing some combinations of torch/CUDA; if mismatched the
+#     install will fall back to using torch from PyPI (which might be okay, depending)
+--extra-index-url https://download.pytorch.org/whl/cu111
 
 # Common Requirements
 -r requirements.txt
