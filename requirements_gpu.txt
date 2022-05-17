@@ -2,4 +2,4 @@
 --extra-index-url https://download.pytorch.org/whl/cu113
 
 # Common Requirements
--r requirements_common.txt
+-r requirements.txt
