@@ -1,7 +1,5 @@
+# Use torch CUDA 11-compatible GPU Version, from https://pytorch.org/get-started/locally/
+--extra-index-url https://download.pytorch.org/whl/cu113
+
 # Common Requirements
 -r requirements_common.txt
-
-# Torch CUDA 11-compatible GPU Version, from https://pytorch.org/get-started/locally/
---extra-index-url https://download.pytorch.org/whl/cu113
-torch==1.8.1
-torchvision==0.9.1
