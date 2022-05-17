@@ -4,7 +4,7 @@ from os import path
 
 # Manually specified, more generic version of the software.
 # See: https://stackoverflow.com/a/49684835
-with open('requirements_common.txt') as f:
+with open('requirements.txt') as f:
     requirements = f.readlines()
 
 # Get README
