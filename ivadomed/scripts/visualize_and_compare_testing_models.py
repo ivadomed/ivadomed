@@ -9,6 +9,7 @@
 ###########################################################################################################
 
 import matplotlib
+from matplotlib import pyplot as plt
 import pandas as pd
 import numpy as np
 import itertools
@@ -21,21 +22,7 @@ import argparse
 
 matplotlib.rcParams['toolbar'] = 'None'  # Remove buttons
 
-gui_env = ['TKAgg', 'GTKAgg', 'Qt4Agg', 'WXAgg']
-selected_gui_env = []
-for gui in gui_env:
-    try:
-        matplotlib.use(gui)
-        from matplotlib import pyplot as plt
-
-        selected_gui_env = gui
-        break
-    except:
-        continue
-# If none works
-if selected_gui_env == []:
-    from matplotlib import pyplot as plt
-
+if matplotlib.get_backend() == "agg":
     logger.warning("No backend can be used - Visualization will fail")
 else:
     logger.info(f"Using: {matplotlib.get_backend()}  gui")

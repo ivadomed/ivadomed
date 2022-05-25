@@ -225,7 +225,6 @@ def plot_transformed_sample(before, after, list_title=None, fname_out="", cmap="
     if fname_out:
         plt.savefig(fname_out)
     else:
-        matplotlib.use('TkAgg')
         plt.show()
 
 
