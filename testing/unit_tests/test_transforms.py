@@ -7,8 +7,7 @@ from math import isclose
 import numpy as np
 import pytest
 import torch
-from scipy.ndimage.measurements import center_of_mass
-from scipy.ndimage.measurements import label
+from scipy.ndimage import center_of_mass, label
 from ivadomed import maths as imed_maths
 
 from ivadomed.loader.sample_meta_data import SampleMetadata
@@ -72,7 +71,7 @@ def create_test_image(width, height, depth=0, num_contrasts=1, noise_max=10.0, n
     seg = np.ceil(image).astype(np.int32)
 
     if depth == 0:
-        _, _, z_slice = center_of_mass(seg.astype(np.int))
+        _, _, z_slice = center_of_mass(seg.astype(int))
         z_slice = int(round(z_slice))
         seg = seg[:, :, z_slice]
 
@@ -393,9 +392,9 @@ def test_DilateGT(im_seg, dilate_transform):
     # Check data augmentation
     for idx, i in enumerate(seg):
         # data aug
-        assert np.sum((do_seg[idx] > 0).astype(np.int)) >= np.sum(i)
+        assert np.sum((do_seg[idx] > 0).astype(int)) >= np.sum(i)
         # same number of objects
-        assert label((do_seg[idx] > 0).astype(np.int))[1] == label(i)[1]
+        assert label((do_seg[idx] > 0).astype(int))[1] == label(i)[1]
 
 
 @pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 0, 1, rad_max=10),
