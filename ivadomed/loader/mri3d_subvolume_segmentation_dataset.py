@@ -15,7 +15,7 @@ from ivadomed.loader.utils import dropout_input, create_temp_directory, get_obj_
 from ivadomed.loader.segmentation_pair import SegmentationPair
 from ivadomed.object_detection import utils as imed_obj_detect
 from ivadomed.keywords import MetadataKW
-from ivadomed.utils import get_timestamp
+from ivadomed.utils import get_timestamp, get_system_memory
 
 
 class MRI3DSubVolumeSegmentationDataset(Dataset):
@@ -230,7 +230,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
 
         return subvolumes
 
-    def determine_cache_need(self, seg_pair, roi_pair):
+    def determine_cache_need(self, seg_pair: dict, roi_pair: dict):
         """
         When Cache flag is not explicitly set, determine whether to cache the data or not
         Args:
@@ -243,15 +243,17 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         size_seg_pair_in_bytes = get_obj_size(seg_pair)
         size_roi_pair_in_bytes = get_obj_size(roi_pair)
 
+        optimal_ram_limit = get_system_memory() * 0.5
+
         # Size limit: 4GB GPU RAM, keep in mind tranform etc might take MORE!
         size_estimated_dataset_GB = (size_seg_pair_in_bytes + size_roi_pair_in_bytes) * len(self.filename_pairs) / 1024 ** 3
-        if size_estimated_dataset_GB > 4:
-            logger.info(f"Estimated 3D dataset size is {size_estimated_dataset_GB} GB, which is larger than 4 GB. Auto "
+        if size_estimated_dataset_GB > optimal_ram_limit:
+            logger.info(f"Estimated 3D dataset size is {size_estimated_dataset_GB} GB, which is larger than {optimal_ram_limit} GB. Auto "
                         f"enabling cache.")
             self.disk_cache = True
             return True
         else:
-            logger.info(f"Estimated 3D dataset size is {size_estimated_dataset_GB} GB, which is smaller than 4 GB. File "
+            logger.info(f"Estimated 3D dataset size is {size_estimated_dataset_GB} GB, which is smaller than {optimal_ram_limit} GB. File "
                         f"cache will not be used")
             self.disk_cache = False
             return False

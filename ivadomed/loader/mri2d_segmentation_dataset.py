@@ -338,7 +338,7 @@ class MRI2DSegmentationDataset(Dataset):
         """
         size_item_in_bytes = get_obj_size(item)
 
-        optimal_ram_limit = get_system_memory() * 0.75
+        optimal_ram_limit = get_system_memory() * 0.5
 
         # Size limit: 4GB GPU RAM, keep in mind tranform etc might take MORE!
         size_estimated_dataset_GB = (size_item_in_bytes) * len(self.filename_pairs) * n_slice / 1024 ** 3
