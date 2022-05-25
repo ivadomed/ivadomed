@@ -5,6 +5,7 @@ import os
 import joblib
 import gc
 from pathlib import Path
+from tempfile import mkdtemp
 
 import numpy as np
 import pandas as pd
@@ -472,21 +473,14 @@ def dropout_input(seg_pair):
 
 def create_temp_directory() -> str:
     """Creates a temporary directory and returns its path.
-    This temporary directory is only deleted when explicitly called.
+    This temporary directory is only deleted when explicitly requested.
 
     Returns:
         str: Path of the temporary directory.
     """
-    temp_folder_location = os.path.join(".ivadomed", "cache")
-
-    # OS specific prefix
-    homeVar = 'HOME'  # default for all *nix variants
-    if sys.platform == 'win32':
-        homeVar = 'APPDATA'
-
-    # Final return combination
-    temp_folder_location = os.path.join(os.environ[homeVar], temp_folder_location)
-    os.makedirs(temp_folder_location, exist_ok=True)
+    import datetime
+    time_stamp = datetime.datetime.now().isoformat().replace(":", "")
+    temp_folder_location = mkdtemp(prefix="ivadomed_", suffix=f"_{time_stamp}")
     return temp_folder_location
 
 def get_obj_size(obj) -> int:
