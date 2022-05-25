@@ -3,6 +3,8 @@ import random
 from pathlib import Path
 import pickle
 
+from typing import Tuple
+
 import numpy as np
 import torch
 from torch.utils.data import Dataset
@@ -129,7 +131,7 @@ class MRI2DSegmentationDataset(Dataset):
                 if self.slice_filter_roi and imed_loader_utils.filter_roi(slice_roi_pair['gt'], self.roi_thr):
                     continue
 
-                item = imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
+                item: Tuple[dict, dict] = imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
                                                                       slice_seg_pair,
                                                                       slice_roi_pair)
                 # Run once code to keep track if disk cache is used
@@ -170,7 +172,6 @@ class MRI2DSegmentationDataset(Dataset):
                 with self.handlers[i].open(mode="rb") as f:
                     item = pickle.load(f)
                     primary_handle = item[0]
-
             else:
                 primary_handle = self.handlers[i][0]
 

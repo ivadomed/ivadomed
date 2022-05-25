@@ -409,6 +409,7 @@ def test_create_cache_folder():
     NOTE: this means this test cannot be parallelized with other tests that utilize this folder!
     """
     path_cache = imed_loader_utils.create_temp_directory()
+    print(path_cache)
     assert(os.path.exists(path_cache))
     shutil.rmtree(path_cache)
 
