@@ -150,15 +150,25 @@ Step 3: Install ``torch`` and ``torchvision`` with CPU or GPU Support
 
                     .. code::
 
-                       pip install --extra-index-url https://download.pytorch.org/whl/cu111 ivadomed
+                       pip install torch==1.8.1+cu111 torchvision==0.9.1+cu111 --find-links https://download.pytorch.org/whl/torch_stable.html
 
                 .. tab:: CPU Support
 
                     If you plan to run ``ivadomed`` on CPU only, install PyTorch per instructions provided below for your specific operating system:
 
-                    .. code::
+                    .. tabs::
 
-                       pip install --extra-index-url https://download.pytorch.org/whl/cpu ivadomed
+                        .. tab:: Windows/Linux
+
+                            .. code::
+
+                               pip install torch==1.8.0+cpu torchvision==0.9.0+cpu --find-links https://download.pytorch.org/whl/torch_stable.html
+
+                        .. tab:: Mac
+
+                            .. code::
+
+                               pip install torch==1.8.0 torchvision==0.9.0 --find-links https://download.pytorch.org/whl/torch_stable.html
 
 
         .. group-tab:: Repo Installation (Advanced or Developer)
