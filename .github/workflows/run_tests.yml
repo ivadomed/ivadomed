@@ -1,7 +1,7 @@
 # This workflow will install Python dependencies, run tests and lint with a variety of Python versions
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
-name: Run tests on all platforms
+name: CI/CD
 
 on:
   # Trigger the workflow on push but only for the master branch
@@ -19,15 +19,10 @@ env:
   # (TravisCI quietly defined this on all their platforms, but we have to give it manually on GithubCI.)
   DEBIAN_FRONTEND: 'noninteractive'
   HDF5_USE_FILE_LOCKING: 'FALSE'
-  # Skip to the headless matplotlib renderer, which is less
-  # bug-prone in the constrained environment of CI
-  # Tip from a matplotlib dev: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3388#issuecomment-846091012
-  # Ref: https://matplotlib.org/stable/users/explain/backends.html
-  MPLBACKEND: 'Agg'
 
 jobs:
   ultra_matrix_test:
-    name: Matrix Test of Python ${{ matrix.python-version }} on ${{ matrix.os }}
+    name: Matrix Test (${{ matrix.os }}, ${{ matrix.python-version }})
 
     # Matrix driven OS
     runs-on: ${{ matrix.os }}
@@ -44,7 +39,7 @@ jobs:
       fail-fast: false
 
       matrix:
-        os: [ "macos-latest", "windows-latest", "ubuntu-18.04", "ubuntu-20.04",  "macos-10.15" ]
+        os: [ "macos-latest", "windows-latest", "ubuntu-20.04", "macos-10.15", "ubuntu-18.04", ]
         python-version: [ 3.6, 3.7, 3.8, 3.9 ]
         test-name:
           - integration-test
@@ -60,16 +55,15 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      # Step 2: Install requirement dependencies.
-      - name: Install dependencies
-        uses: py-actions/py-dependency-install@v2
-        with:
-          path: "requirements_dev.txt"
-
-      # Step 3: install additional pytest/dev related dependencies
-      - name: Install IvadoMed Main Modules
+      # Step 2: Install dependencies
+      - name: Install ivadomed
         run: |
-          pip install -e .
+          pip install -e .[dev_cpu]
+
+      # Step 3: List installed packages
+      - name: List installed packages
+        run: |
+          pip list
 
       # Step 4: Lint.
       - name: Lint with flake8
