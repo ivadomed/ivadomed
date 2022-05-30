@@ -212,5 +212,4 @@ def test_inference_2d_microscopy(download_data_testing_test_files, transforms_di
 
 
 def teardown_function():
-    pass
-    #remove_tmp_dir()
+    remove_tmp_dir()

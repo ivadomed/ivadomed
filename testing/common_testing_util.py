@@ -83,18 +83,29 @@ def remove_dataset(dataset: str = 'data_testing'):
 
 
 def remove_tmp_dir():
-    """Recursively remove the ``tmp`` directory if it exists."""
-    count = 0
+    """Recursively remove the tmp_XXXXX time stamped unit test directory if it exists."""
+
+    tests_count = 0
     for element in list(path_temp.iterdir()):
         if element.is_dir() and element.name.startswith("tmp"):
-            count += 1
+            tests_count += 1
 
-    if count > 100:
-        num_to_delete = count - 100
-        lst = sorted(path_temp.iterdir(), key=os.path.getctime)
-        i = 0
-        while num_to_delete:
-            if lst[i].is_dir() and lst[i].stem.startswith("tmp"):
-                shutil.rmtree(lst[i], ignore_errors=True)
-                num_to_delete -= 1
-            i += 1
+    # Default Keeping past 21000 unit tests (keep in mind we run about 209 tests per entire pytest run, x 100 runs)
+    tests_per_run = 210  # as of 2022-05-30T132815EST we run 209 tests per unit test run.
+    runs_to_keep = 100
+    max_runs = tests_per_run * runs_to_keep
+
+    if tests_count > max_runs:
+        num_to_delete = tests_count - max_runs
+
+        if num_to_delete < 1:
+            return
+
+        # Sort lists by runs
+        list_test_folder_name = sorted(path_temp.iterdir(), key=os.path.getctime)
+
+        list_delete_folder_name = list_test_folder_name[101:]
+
+        for folder_name in list_delete_folder_name:
+            if folder_name.is_dir() and folder_name.stem.startswith("tmp"):
+                shutil.rmtree(folder_name, ignore_errors=True)
