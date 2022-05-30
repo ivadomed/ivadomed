@@ -7,6 +7,8 @@ from os import path
 with open('requirements.txt') as f:
     requirements = f.readlines()
 
+requirements = [r for r in requirements if not r.startswith('-')] # drop --find-links, --extra-index-url etc
+
 # Get README
 this_directory = path.abspath(path.dirname(__file__))
 with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
@@ -64,7 +66,7 @@ setup(
         'Intended Audience :: Developers',
         'Programming Language :: Python :: 3',
     ],
-    python_requires='>=3.7,<3.10',
+    python_requires='>=3.7,<3.11',
     packages=find_packages(exclude=['docs', 'tests']),
     include_package_data=True,
     install_requires=requirements,
