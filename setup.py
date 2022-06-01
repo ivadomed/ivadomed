@@ -32,7 +32,7 @@ setup(
         'Intended Audience :: Developers',
         'Programming Language :: Python :: 3',
     ],
-    python_requires='>=3.6,<3.10',
+    python_requires='>=3.7,<3.10',
     packages=find_packages(exclude=['docs', 'tests']),
     include_package_data=True,
     install_requires=requirements,
