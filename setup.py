@@ -4,7 +4,7 @@ from os import path
 
 # Manually specified, more generic version of the software.
 # See: https://stackoverflow.com/a/49684835
-with open('requirements_common.txt') as f:
+with open('requirements.txt') as f:
     requirements = f.readlines()
 
 # Get README
@@ -17,6 +17,38 @@ path_version = path.join(this_directory, 'ivadomed', 'version.txt')
 with open(path_version) as f:
     version = f.read().strip()
 
+extra_requirements = {
+    'docs': [
+        # pin sphinx to match what RTD uses:
+        # https://github.com/readthedocs/readthedocs.org/blob/ecac31de54bbb2c100f933e86eb22b0f4389ba84/requirements/pip.txt#L16
+        'sphinx',
+        'sphinx_rtd_theme',
+        'sphinx-tabs==3.2.0',
+        'sphinx-toolbox==2.15.2',
+        'sphinx-jsonschema~=1.16',
+        'pypandoc',
+    ],
+    'tests': [
+        'pytest~=6.2',
+        'pytest-cases~=3.6.8',
+        'pytest-cov',
+        'pytest-ordering~=0.6',
+        'pytest-console-scripts~=1.1',
+        'coverage',
+        'coveralls',
+    ],
+    'contrib': [
+        'pre-commit>=2.10.1',
+        'flake8',
+    ]
+}
+
+extra_requirements['dev'] = [
+    requirements,
+    extra_requirements['docs'],
+    extra_requirements['tests'],
+    extra_requirements['contrib'],
+    ]
 
 setup(
     name='ivadomed',
@@ -36,14 +68,7 @@ setup(
     packages=find_packages(exclude=['docs', 'tests']),
     include_package_data=True,
     install_requires=requirements,
-    extras_require={
-        'docs': [  # pin sphinx to match what RTD uses:
-            # https://github.com/readthedocs/readthedocs.org/blob/ecac31de54bbb2c100f933e86eb22b0f4389ba84/requirements/pip.txt#L16
-            'sphinx==4.2.0',
-            'sphinx-rtd-theme<0.5',
-        ],
-        'dev': ["pre-commit>=2.10.0"]
-    },
+    extras_require=extra_requirements,
     entry_points={
         'console_scripts': [
             'ivadomed=ivadomed.main:run_main',
