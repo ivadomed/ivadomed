@@ -1,3 +1,22 @@
+## v2.9.6 (2022-06-02)
+[View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.9.5...release)
+
+**Installation**
+
+ - unify installation (attempt #2).  [View pull request](https://github.com/ivadomed/ivadomed/pull/1129)
+
+**DOCUMENTATION**
+
+ - Update documentation and config files to add WandB details.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1120)
+
+**ENHANCEMENT**
+
+ - Support for WandB Experimental Tracking .  [View pull request](https://github.com/ivadomed/ivadomed/pull/1069)
+
+**CONTINUOUS INTEGRATION**
+ 
+ - Adds various CI and testing improvement not impacting end users. 
+
 ## v2.9.5 (2022-04-06)
 [View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.9.4...release)
 
