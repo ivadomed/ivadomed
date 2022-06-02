@@ -22,7 +22,7 @@ env:
 
 jobs:
   ultra_matrix_test:
-    name: Matrix Test (${{ matrix.os }}, ${{ matrix.python-version }})
+    name: Matrix Test of Python ${{ matrix.python-version }} on ${{ matrix.os }}
 
     # Matrix driven OS
     runs-on: ${{ matrix.os }}
