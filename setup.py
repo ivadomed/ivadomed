@@ -12,11 +12,6 @@ this_directory = path.abspath(path.dirname(__file__))
 with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
-# Get Release version
-path_version = path.join(this_directory, 'ivadomed', 'version.txt')
-with open(path_version) as f:
-    version = f.read().strip()
-
 extra_requirements = {
     'docs': [
         # pin sphinx to match what RTD uses:
@@ -52,7 +47,6 @@ extra_requirements['dev'] = [
 
 setup(
     name='ivadomed',
-    version=version,
     description='Feature conditioning for IVADO medical imaging project.',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -64,6 +58,8 @@ setup(
         'Intended Audience :: Developers',
         'Programming Language :: Python :: 3',
     ],
+    setup_requires=['setuptools_scm'],
+    use_scm_version=True, # read version from git tags
     python_requires='>=3.7,<3.10',
     packages=find_packages(exclude=['docs', 'tests']),
     include_package_data=True,

@@ -2,6 +2,12 @@ import os
 import sys
 import subprocess
 import hashlib
+
+if sys.version_info < (3, 8):
+    import importlib_metadata
+else:
+    import importlib.metadata as importlib_metadata
+
 import numpy as np
 import wandb
 from enum import Enum
@@ -225,35 +231,6 @@ def plot_transformed_sample(before, after, list_title=None, fname_out="", cmap="
         plt.show()
 
 
-def _git_info(commit_env='IVADOMED_COMMIT', branch_env='IVADOMED_BRANCH'):
-    """Get ivadomed version info from GIT.
-
-    This functions retrieves the ivadomed version, commit, branch and installation type.
-
-    Args:
-        commit_env (str):
-        branch_env (str):
-    Returns:
-        str, str, str, str: installation type, commit, branch, version.
-    """
-    ivadomed_commit = os.getenv(commit_env, "unknown")
-    ivadomed_branch = os.getenv(branch_env, "unknown")
-    if check_exe("git") and Path(__ivadomed_dir__, ".git").is_dir():
-        ivadomed_commit = __get_commit() or ivadomed_commit
-        ivadomed_branch = __get_branch() or ivadomed_branch
-
-    if ivadomed_commit != 'unknown':
-        install_type = 'git'
-    else:
-        install_type = 'package'
-
-    path_version = Path(__ivadomed_dir__, 'ivadomed', 'version.txt')
-    with path_version.open() as f:
-        version_ivadomed = f.read().strip()
-
-    return install_type, ivadomed_commit, ivadomed_branch, version_ivadomed
-
-
 def check_exe(name):
     """Ensure that a program exists.
 
@@ -303,18 +280,15 @@ def get_arguments(parser, args):
     return args
 
 
-def __get_commit(path_to_git_folder=None):
-    """Get GIT ivadomed commit.
+def __get_commit(path_to_git_folder):
+    """Get a git commit.
 
     Args:
         path_to_git_folder (str): Path to GIT folder.
     Returns:
         str: git commit ID, with trailing '*' if modified.
     """
-    if path_to_git_folder is None:
-        path_to_git_folder = __ivadomed_dir__
-    else:
-        path_to_git_folder = Path(path_to_git_folder).expanduser().absolute()
+    path_to_git_folder = Path(path_to_git_folder).expanduser().absolute()
 
     p = subprocess.Popen(["git", "rev-parse", "HEAD"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                          cwd=path_to_git_folder)
@@ -344,33 +318,8 @@ def __get_commit(path_to_git_folder=None):
     return commit
 
 
-def __get_branch():
-    """Get ivadomed branch.
-
-    Args:
-
-    Returns:
-        str: ivadomed branch.
-    """
-    p = subprocess.Popen(["git", "rev-parse", "--abbrev-ref", "HEAD"], stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE, cwd=__ivadomed_dir__)
-    output, _ = p.communicate()
-    status = p.returncode
-
-    if status == 0:
-        return output.decode().strip()
-
-
-def _version_string():
-    install_type, ivadomed_commit, ivadomed_branch, version_ivadomed = _git_info()
-    if install_type == "package":
-        return version_ivadomed
-    else:
-        return "{install_type}-{ivadomed_branch}-{ivadomed_commit}".format(**locals())
-
-
 __ivadomed_dir__ = Path(__file__).resolve().parent.parent
-__version__ = _version_string()
+__version__ = importlib_metadata.version("ivadomed")
 
 
 def get_command(args, context):

@@ -1,2 +1,0 @@
-include ivadomed/config/*.json
-include ivadomed/version.txt
