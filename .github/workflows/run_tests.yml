@@ -19,6 +19,11 @@ env:
   # (TravisCI quietly defined this on all their platforms, but we have to give it manually on GithubCI.)
   DEBIAN_FRONTEND: 'noninteractive'
   HDF5_USE_FILE_LOCKING: 'FALSE'
+  # Skip to the headless matplotlib renderer, which is less
+  # bug-prone in the constrained environment of CI
+  # Tip from a matplotlib dev: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3388#issuecomment-846091012
+  # Ref: https://matplotlib.org/stable/users/explain/backends.html
+  MPLBACKEND: 'Agg'
 
 jobs:
   ultra_matrix_test:
