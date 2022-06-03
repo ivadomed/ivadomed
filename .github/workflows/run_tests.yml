@@ -29,9 +29,6 @@ jobs:
   ultra_matrix_test:
     name: Matrix Test of Python ${{ matrix.python-version }} on ${{ matrix.os }}
 
-    # Matrix driven OS
-    runs-on: ${{ matrix.os }}
-
     # Default shell for ALL subsequent steps.
     defaults:
       run:
@@ -48,6 +45,9 @@ jobs:
         python-version: [3.7, 3.8, 3.9 ]
         test-name:
           - integration-test
+
+    # Matrix driven OS
+    runs-on: ${{ matrix.os }}
 
     # Main steps for the test to be reproduced across OS x Python
     steps:
