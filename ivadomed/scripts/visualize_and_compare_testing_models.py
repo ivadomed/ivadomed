@@ -35,7 +35,7 @@ def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--ofolders", required=True, nargs="*", dest="ofolders",
                         help="List of log folders from different models.")
-    parser.add_argument("--metric", default='dice_class0', nargs=1, type=str, dest="metric",
+    parser.add_argument("--metric", default='dice_class0', nargs='?', type=str, dest="metric",
                         help="Metric from evaluation_3Dmetrics.csv to base the plots on.")
     parser.add_argument("--metadata", required=False, nargs=2, type=str, dest="metadata",
                         help="Selection based on metadata from participants.tsv:"
@@ -118,9 +118,11 @@ def visualize_and_compare_models(ofolders, metric="dice_class0", metadata=None):
     # access CLI options
     logger.debug(f"ofolders: {ofolders}")
     logger.debug(f"metric: {metric}")
-    if metadata is None:
-        metadata = []
+
     if metadata:
+        logger.debug(f"metadata: {metadata}")
+    else:
+        metadata = []
         logger.debug(f"metadata: {metadata}")
 
     # Do a quick check that all the required files are present
@@ -161,7 +163,7 @@ def visualize_and_compare_models(ofolders, metric="dice_class0", metadata=None):
 
             folders = [Path(folder).resolve().name] * len(scores)
             subject_id = result["image_id"]
-            combined = np.column_stack((folders, scores.astype(np.object, folders), subject_id)).T
+            combined = np.column_stack((folders, scores.astype(object, folders), subject_id)).T
             singleFolderDF = pd.DataFrame(combined, columnNames).T
             df = df.append(singleFolderDF, ignore_index=True)
 
@@ -184,7 +186,7 @@ def visualize_and_compare_models(ofolders, metric="dice_class0", metadata=None):
         for i in range(len(ofolders)):
             # This will be used to plot the mean value on top of each individual violinplot
             temp = df[metric][df['EvaluationModel'] == Path(ofolders[i]).resolve().name]
-            plt.text(i, df[metric].max() + 0.07, str((100 * temp.mean()).round() / 100), ha='center', va='top',
+            plt.text(i, df[metric].max() + 0.07, str(round((100 * temp.mean())) / 100), ha='center', va='top',
                      color='r', picker=True)
 
         if len(ofolders) > 1 and len(ofolders) < 5:
