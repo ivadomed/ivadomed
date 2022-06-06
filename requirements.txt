@@ -25,6 +25,6 @@ tensorboard>=1.15.0
 tqdm>=4.30
 scipy
 torchio>=0.18.68
-torch~=1.10.0
+torch~=1.11.0
 torchvision
 wandb>=0.12.11
