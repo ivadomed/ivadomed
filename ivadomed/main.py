@@ -522,7 +522,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
 def create_dataset_and_ivadomed_version_log(context):
     path_data = context.get(ConfigKW.LOADER_PARAMETERS).get(LoaderParamsKW.PATH_DATA)
 
-    ivadomed_version = imed_utils._version_string()
+    ivadomed_version = imed_utils.__version__
     datasets_version = []
 
     if isinstance(path_data, str):

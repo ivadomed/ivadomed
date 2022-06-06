@@ -26,7 +26,7 @@ jobs:
         
     - name: Build
       run: |
-          python -m build --wheel --sdist
+          python -m build
           
     - name: Publish to Github
       uses: softprops/action-gh-release@v1
