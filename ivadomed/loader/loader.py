@@ -1,17 +1,13 @@
-from __future__ import annotations
 import copy
 from loguru import logger
 from typing import List
-
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
+from ivadomed.loader.bids3d_dataset import Bids3DDataset
 from ivadomed.loader.bids_dataset import BidsDataset
 from ivadomed.keywords import ROIParamsKW, TransformationKW, ModelParamsKW, ConfigKW
 from ivadomed.loader.slice_filter import SliceFilter
 from ivadomed.loader.patch_filter import PatchFilter
-import typing
-if typing.TYPE_CHECKING:
-    from ivadomed.loader.bids3d_dataset import Bids3DDataset
 
 
 def load_dataset(bids_df: any, data_list: list, transforms_params: dict, model_params: dict, target_suffix: List[str],
