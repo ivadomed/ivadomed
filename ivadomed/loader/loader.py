@@ -1,19 +1,24 @@
+from __future__ import annotations
 import copy
 from loguru import logger
+from typing import List
+
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
-from ivadomed.loader.bids3d_dataset import Bids3DDataset
 from ivadomed.loader.bids_dataset import BidsDataset
 from ivadomed.keywords import ROIParamsKW, TransformationKW, ModelParamsKW, ConfigKW
 from ivadomed.loader.slice_filter import SliceFilter
 from ivadomed.loader.patch_filter import PatchFilter
+import typing
+if typing.TYPE_CHECKING:
+    from ivadomed.loader.bids3d_dataset import Bids3DDataset
 
 
-def load_dataset(bids_df, data_list, transforms_params, model_params, target_suffix, roi_params,
-                 contrast_params, slice_filter_params, patch_filter_params, slice_axis, multichannel,
-                 dataset_type="training", requires_undo=False, metadata_type=None,
-                 object_detection_params=None, soft_gt=False, device=None,
-                 cuda_available=None, is_input_dropout=False, **kwargs):
+def load_dataset(bids_df: any, data_list: list, transforms_params: dict, model_params: dict, target_suffix: List[str],
+                 roi_params: dict, contrast_params: dict, slice_filter_params: dict, patch_filter_params: dict, slice_axis: str,
+                 multichannel: bool, dataset_type: str = "training", requires_undo: bool = False, metadata_type: str = None,
+                 object_detection_params: dict = None, soft_gt: bool = False, device: any = None,
+                 cuda_available: any = None, is_input_dropout: bool = False, **kwargs) -> Bids3DDataset:
     """Get loader appropriate loader according to model type. Available loaders are Bids3DDataset for 3D data,
     BidsDataset for 2D data and HDF5Dataset for HeMIS.
 
