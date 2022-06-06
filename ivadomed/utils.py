@@ -444,7 +444,7 @@ def similarity_score(a: str, b: str) -> float:
 def init_ivadomed():
     """Initialize the ivadomed for typical terminal usage."""
     # Display ivadomed version
-    logger.info('\nivadomed ({})\n'.format(__version__))
+    logger.info(f'ivadomed ({__version__})')
 
 
 def print_stats(arr):

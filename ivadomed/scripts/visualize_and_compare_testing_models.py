@@ -49,7 +49,8 @@ def onclick(event, df):
     #          If that's the case, all will be displayed
     clicked_index = event.ind
 
-    fig = plt.gca()
+    ax = plt.gca()
+
     # clicking outside the plot area produces a coordinate of None, so we filter those out.
     if None not in clicked_index:
         output_folders = df["EvaluationModel"].unique()
@@ -57,9 +58,9 @@ def onclick(event, df):
 
         # Remove the previously displayed subject(s)
         # This also takes care of the case where more than one subjects are displayed
-        while len(fig.texts) > nfolders + np.math.factorial(nfolders) / (
+        while len(ax.texts) > nfolders + np.math.factorial(nfolders) / (
                 np.math.factorial(2) * np.math.factorial(nfolders - 2)):
-            fig.texts.pop()
+            ax.texts.pop()
 
         # This is a hack to find the index of the Violinplot - There should be another way to get this from the
         # figure object
@@ -69,15 +70,14 @@ def onclick(event, df):
         selected_output_folder = df[df["EvaluationModel"] == output_folders[i_output_folder]]
 
         for iSubject in range(0, len(clicked_index.tolist())):
-            frame = plt.text(event.mouseevent.xdata, -0.08 - 0.08 * iSubject + event.mouseevent.ydata,
+            frame = plt.text(event.mouseevent.xdata, -0.004 + event.mouseevent.ydata,
                              selected_output_folder["subject"][clicked_index[iSubject]], size=10,
                              ha="center", va="center",
                              bbox=dict(facecolor='red', alpha=0.5)
                              )
             # To show the artist
             matplotlib.artist.Artist.set_visible(frame, True)
-
-        plt.show()
+        plt.gcf().canvas.draw()
 
 
 def visualize_and_compare_models(ofolders, metric="dice_class0", metadata=None):
@@ -185,8 +185,11 @@ def visualize_and_compare_models(ofolders, metric="dice_class0", metadata=None):
         # Display the mean performance on top of every violinplot
         for i in range(len(ofolders)):
             # This will be used to plot the mean value on top of each individual violinplot
+
             temp = df[metric][df['EvaluationModel'] == Path(ofolders[i]).resolve().name]
-            plt.text(i, df[metric].max() + 0.07, str(round((100 * temp.mean())) / 100), ha='center', va='top',
+            
+            # mean values superimposed on the top of each violin plot: df[metric].max() + 0.07
+            plt.gca().text(i, 0.99, str(round(temp.mean(),2)), ha='center', va='top',
                      color='r', picker=True)
 
         if len(ofolders) > 1 and len(ofolders) < 5:
