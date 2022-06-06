@@ -15,7 +15,7 @@ The technical documentation is available [here](https://ivadomed.org).  The more
 
 ## Installation
 
-``ivadomed`` requires Python >= 3.6 and < 3.10 as well as PyTorch == 1.8. We recommend working under a virtual environment, which could be set as follows:
+``ivadomed`` requires Python >= 3.7 and < 3.10 as well as PyTorch == 1.8. We recommend working under a virtual environment, which could be set as follows:
 
 ```bash
 python -m venv ivadomed_env
