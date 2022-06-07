@@ -17,7 +17,7 @@ Step 1: Setup dedicated python environment
 
             1. Setup Python Venv Virtual Environment.
 
-                ``ivadomed`` requires Python >= 3.6 and <3.10.
+                ``ivadomed`` requires Python >= 3.7 and <3.10.
 
                 First, make sure that a compatible version of Python 3 is installed on your system by running:
 
@@ -35,7 +35,7 @@ Step 1: Setup dedicated python environment
 
                             python --version
 
-                If your system's Python is not 3.6, 3.7, 3.8, or 3.9 (or if you don't have Python 3 installed at all), please `install Python <https://wiki.python.org/moin/BeginnersGuide/Download/>`_ before continuing.
+                If your system's Python is not 3.7, 3.8, or 3.9 (or if you don't have Python 3 installed at all), please `install Python <https://wiki.python.org/moin/BeginnersGuide/Download/>`_ before continuing.
 
                 Once you have a supported version of Python installed, run the following command:
 

@@ -29,9 +29,6 @@ jobs:
   ultra_matrix_test:
     name: Matrix Test of Python ${{ matrix.python-version }} on ${{ matrix.os }}
 
-    # Matrix driven OS
-    runs-on: ${{ matrix.os }}
-
     # Default shell for ALL subsequent steps.
     defaults:
       run:
@@ -44,32 +41,34 @@ jobs:
       fail-fast: false
 
       matrix:
-        os: [ "macos-latest", "windows-latest", "ubuntu-18.04", "ubuntu-20.04",  "macos-10.15" ]
-        python-version: [ 3.6, 3.7, 3.8, 3.9 ]
+        os: [ "macos-latest", "windows-latest", "ubuntu-20.04", "ubuntu-18.04", "macos-10.15" ]
+        python-version: [3.7, 3.8, 3.9 ]
         test-name:
           - integration-test
+
+    # Matrix driven OS
+    runs-on: ${{ matrix.os }}
 
     # Main steps for the test to be reproduced across OS x Python
     steps:
       # Step 0: Checkout code.
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       # Step 1: Setup python version
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
 
-      # Step 2: Install requirement dependencies.
-      - name: Install dependencies
-        uses: py-actions/py-dependency-install@v2
-        with:
-          path: "requirements_dev.txt"
-
-      # Step 3: install additional pytest/dev related dependencies
-      - name: Install IvadoMed Main Modules
+      # Step 2: Install dependencies
+      - name: Install ivadomed
         run: |
-          pip install -e .
+          pip install -e .[dev]
+
+      # Step 3: List installed packages
+      - name: List installed packages
+        run: |
+          pip list
 
       # Step 4: Lint.
       - name: Lint with flake8
