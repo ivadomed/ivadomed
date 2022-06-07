@@ -6,7 +6,7 @@ from torch.nn import Module
 from torch.nn import init
 from pathlib import Path
 import torchvision.models
-from monai.networks.nets import BasicUNet
+from monai.networks.nets import basic_unet, unetr
 
 
 #Modified from torchvision.models.resnet.Resnet
@@ -1457,7 +1457,7 @@ class MONAIUNet(Module):
         monai_model_keys = ['features', 'act', 'norm', 'bias', 'upsample']
         monai_params = ivadomed_params_to_monai_params(ivadomed_params, monai_model_keys)
 
-        self.model = BasicUNet(**monai_params)
+        self.model = basic_unet.BasicUNet(**monai_params)
 
     def forward(self, x):
         out = self.model(x)
@@ -1478,8 +1478,8 @@ class UNETR(Module):
     """MONAI'S UNETR model (<https://arxiv.org/abs/2103.10504>) adopted in ivadomed"""
 
     def __init__(self, in_channel, out_channel, feature_size=16, hidden_size=768, mlp_dim=3072,
-                 num_heads=12, pos_embed="conv", dropout_rate=0.3, final_activation="sigmoid",
-                 **kwargs):
+                 num_heads=12, pos_embed="conv", norm_name="instance", dropout_rate=0.3, 
+                 final_activation="sigmoid", **kwargs):
         super(UNETR, self).__init__()
         self.in_channel = in_channel
         self.out_channel = out_channel
@@ -1489,13 +1489,14 @@ class UNETR(Module):
         self.mlp_dim = mlp_dim
         self.num_heads = num_heads
         self.pos_embed = pos_embed
+        self.norm_name = norm_name
         self.dropout_rate = dropout_rate
         self.final_activation = final_activation
 
         ivadomed_params = {**self.__dict__, **kwargs}
-        monai_model_keys = ['img_size', 'feature_size', 'hidden_size', 'mlp_dim', 'num_heads', 'pos_embed']
+        monai_model_keys = ['img_size', 'feature_size', 'hidden_size', 'mlp_dim', 'num_heads', 'pos_embed', 'norm_name']
         monai_params = ivadomed_params_to_monai_params(ivadomed_params, monai_model_keys)
-        self.model = BasicUNet(**monai_params)
+        self.model = unetr.UNETR(**monai_params)
 
     def forward(self, x):
         out = self.model(x)
@@ -1616,10 +1617,8 @@ def ivadomed_params_to_monai_params(ivadomed_params, monai_model_keys):
         'out_channels': ivadomed_params['out_channel'],
         'dropout': ivadomed_params['dropout_rate']
     }
-
     # Grab parameters that are not conventionally used in ivadomed, tailored for the specific model
     for key, value in ivadomed_params.items():
         if key in monai_model_keys:
             monai_params[key] = value
-
     return monai_params
