@@ -1,6 +1,8 @@
+from __future__ import annotations
 import json
 from pathlib import Path
 from copy import deepcopy
+from typing import List
 
 import numpy as np
 from loguru import logger
@@ -9,6 +11,11 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.neighbors import KernelDensity
 from sklearn.preprocessing import OneHotEncoder
 from ivadomed.keywords import MetadataKW
+import typing
+if typing.TYPE_CHECKING:
+    from ivadomed.loader.bids_dataset import BidsDataset
+    from ivadomed.loader.mri2d_segmentation_dataset import MRI2DSegmentationDataset
+    import torch.nn as nn
 
 from ivadomed import __path__
 
@@ -19,7 +26,8 @@ CONTRAST_CATEGORY = {"T1w": 0, "T2w": 1, "T2star": 2,
                      "acq-MToff_MTS": 3, "acq-MTon_MTS": 4, "acq-T1w_MTS": 5}
 
 
-def normalize_metadata(ds_in, clustering_models, debugging, metadata_type, train_set=False):
+def normalize_metadata(ds_in: BidsDataset, clustering_models: any, debugging: bool, metadata_type: str, train_set: bool = False)\
+        -> (list, OneHotEncoder) | list:
     """Categorize each metadata value using a KDE clustering method, then apply a one-hot-encoding.
 
     Args:
@@ -105,11 +113,11 @@ class Kde_model():
         kde (sklearn.neighbors.KernelDensity):
         minima (float): Local minima.
     """
-    def __init__(self):
+    def __init__(self) -> None:
         self.kde = KernelDensity()
         self.minima = None
 
-    def train(self, data, value_range, gridsearch_bandwidth_range):
+    def train(self, data: any, value_range: any, gridsearch_bandwidth_range: any) -> None:
         # reshape data to fit sklearn
         data = np.array(data).reshape(-1, 1)
 
@@ -130,13 +138,13 @@ class Kde_model():
         # find local minima
         self.minima = s[argrelextrema(e, np.less)[0]]
 
-    def predict(self, data):
+    def predict(self, data: any) -> int:
         x = [i for i, m in enumerate(self.minima) if data < m]
         pred = min(x) if len(x) else len(self.minima)
         return pred
 
 
-def clustering_fit(dataset, key_lst):
+def clustering_fit(dataset: list, key_lst: List[str]) -> dict:
     """This function creates clustering models for each metadata type,
     using Kernel Density Estimation algorithm.
 
@@ -192,7 +200,7 @@ def check_isMRIparam(mri_param_type: str, mri_param: dict, subject: str, metadat
         return True
 
 
-def get_film_metadata_models(ds_train, metadata_type, debugging=False):
+def get_film_metadata_models(ds_train: MRI2DSegmentationDataset, metadata_type: str, debugging: bool = False):
     """Get FiLM models.
 
     This function pulls the clustering and one-hot encoder models that are used by FiLMedUnet.
@@ -221,7 +229,8 @@ def get_film_metadata_models(ds_train, metadata_type, debugging=False):
     return ds_train, train_onehotencoder, metadata_clustering_models
 
 
-def store_film_params(gammas, betas, metadata_values, metadata, model, film_layers, depth, film_metadata):
+def store_film_params(gammas: dict, betas: dict, metadata_values: list, metadata: list, model: nn.Module,
+                      film_layers: list, depth: int, film_metadata: str) -> (dict, dict):
     """Store FiLM params.
 
     Args:
@@ -255,7 +264,7 @@ def store_film_params(gammas, betas, metadata_values, metadata, model, film_laye
     return gammas, betas, metadata_values
 
 
-def save_film_params(gammas, betas, metadata_values, depth, ofolder):
+def save_film_params(gammas: dict, betas: dict, metadata_values: list, depth: int, ofolder: str) -> None:
     """Save FiLM params as npy files.
 
     These parameters can be further used for visualisation purposes. They are saved in the `ofolder` with `.npy` format.
