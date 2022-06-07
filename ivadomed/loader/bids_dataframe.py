@@ -31,7 +31,7 @@ class BidsDataframe:
         df (pd.DataFrame): Dataframe containing dataset information
     """
 
-    def __init__(self, loader_params: dict, path_output: str, derivatives: bool, split_method: str = None):
+    def __init__(self, loader_params: dict, path_output: str, derivatives: bool, split_method: str = None) -> None:
 
         # paths_data from loader parameters
         self.paths_data = loader_params['path_data']
@@ -72,7 +72,7 @@ class BidsDataframe:
         # Save dataframe as csv file
         self.save(str(Path(path_output, "bids_dataframe.csv")))
 
-    def create_bids_dataframe(self):
+    def create_bids_dataframe(self) -> None:
         """Generate the dataframe."""
 
         for path_data in self.paths_data:
@@ -192,7 +192,7 @@ class BidsDataframe:
         # Drop columns with all null values
         self.df.dropna(axis=1, inplace=True, how='all')
 
-    def add_tsv_metadata(self, df: pd.DataFrame, path_data: str, layout: pybids.BIDSLayout):
+    def add_tsv_metadata(self, df: pd.DataFrame, path_data: str, layout: pybids.BIDSLayout) -> pd.DataFrame:
         """Add tsv files metadata to dataframe.
 
         Args:
@@ -251,7 +251,7 @@ class BidsDataframe:
 
         return df
 
-    def get_subjects_with_derivatives(self):
+    def get_subjects_with_derivatives(self) -> (list, list):
         """Get lists of subject filenames with available derivatives.
 
         Returns:
@@ -282,7 +282,7 @@ class BidsDataframe:
 
         return has_deriv, deriv
 
-    def get_subject_fnames(self):
+    def get_subject_fnames(self) -> list:
         """Get the list of subject filenames in dataframe.
 
         Returns:
@@ -290,7 +290,7 @@ class BidsDataframe:
         """
         return self.df[~self.df['path'].str.contains('derivatives')]['filename'].to_list()
 
-    def get_deriv_fnames(self):
+    def get_deriv_fnames(self) -> list:
         """Get the list of derivative filenames in dataframe.
 
         Returns:
@@ -298,7 +298,7 @@ class BidsDataframe:
         """
         return self.df[self.df['path'].str.contains('derivatives')]['filename'].tolist()
 
-    def get_derivatives(self, subject_fname: str, deriv_fnames: list):
+    def get_derivatives(self, subject_fname: str, deriv_fnames: list) -> list:
         """Return list of available derivative filenames for a subject filename.
 
         Args:
@@ -311,7 +311,7 @@ class BidsDataframe:
         prefix_fname = subject_fname.split('.')[0]
         return [d for d in deriv_fnames if prefix_fname in d]
 
-    def save(self, path: str):
+    def save(self, path: str) -> None:
         """Save the dataframe into a csv file.
 
         Args:
@@ -323,7 +323,7 @@ class BidsDataframe:
         except FileNotFoundError:
             logger.error(f"Wrong path, bids_dataframe.csv could not be saved in {path}.")
 
-    def write_derivatives_dataset_description(self, path_data: str):
+    def write_derivatives_dataset_description(self, path_data: str) -> None:
         """Writes default dataset_description.json file if not found in path_data/derivatives folder
 
         Args:
