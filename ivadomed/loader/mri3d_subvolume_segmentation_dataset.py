@@ -3,6 +3,7 @@ import random
 
 import numpy as np
 import torch
+import torchvision.transforms
 from torch.utils.data import Dataset
 
 from ivadomed import transforms as imed_transforms, postprocessing as imed_postpro
@@ -34,8 +35,9 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         is_input_dropout (bool): Return input with missing modalities.
     """
 
-    def __init__(self, filename_pairs, transform=None, length=(64, 64, 64), stride=(0, 0, 0), slice_axis=0,
-                 task="segmentation", soft_gt=False, is_input_dropout=False):
+    def __init__(self, filename_pairs: list, transform: torchvision.transforms.Compose = None,
+                 length: tuple = (64, 64, 64), stride: tuple = (0, 0, 0), slice_axis: int = 0,
+                 task: str = "segmentation", soft_gt: bool = False, is_input_dropout: bool = False) -> None:
         self.filename_pairs = filename_pairs
         self.handlers = []
         self.indexes = []
@@ -51,7 +53,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         self._load_filenames()
         self._prepare_indices()
 
-    def _load_filenames(self):
+    def _load_filenames(self) -> None:
         """Load preprocessed pair data (input and gt) in handler."""
         for input_filename, gt_filename, roi_filename, metadata in self.filename_pairs:
             segpair = SegmentationPair(input_filename, gt_filename, metadata=metadata, slice_axis=self.slice_axis,
@@ -77,7 +79,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
                 metadata[MetadataKW.INDEX_SHAPE] = seg_pair['input'][0].shape
             self.handlers.append((seg_pair, roi_pair))
 
-    def _prepare_indices(self):
+    def _prepare_indices(self) -> None:
         """Stores coordinates of subvolumes for training."""
         for i in range(0, len(self.handlers)):
             segpair, _ = self.handlers[i]
@@ -105,11 +107,11 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
                             'z_max': z + self.length[2],
                             'handler_index': i})
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Return the dataset size. The number of subvolumes."""
         return len(self.indexes)
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int) -> dict:
         """Return the specific index pair subvolume (input, ground truth).
 
         Args:
