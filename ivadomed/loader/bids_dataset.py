@@ -1,6 +1,4 @@
 from __future__ import annotations
-
-import pandas as pd
 from tqdm import tqdm
 
 from ivadomed.loader import film as imed_film
@@ -12,6 +10,7 @@ if typing.TYPE_CHECKING:
     from ivadomed.loader.bids_dataframe import BidsDataframe
     from ivadomed.loader.slice_filter import SliceFilter
     from ivadomed.loader.patch_filter import PatchFilter
+    import pandas as pd
 
 
 class BidsDataset(MRI2DSegmentationDataset):
