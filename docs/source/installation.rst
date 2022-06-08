@@ -122,13 +122,13 @@ Step 2: Install ``ivadomed`` with GPU or CPU Support
             driver version, just run the command `nvidia-smi` and you'll find 
             your current driver version on the top.
             
-            ..tabs::
+            .. tabs::
                 
                 .. tab:: Package Installation (Recommended)
 
-                    ..tabs::
+                    .. tabs::
 
-                        ..tab:: Linux 
+                        .. tab:: Linux 
 
                         To install ``ivadomed`` from `PyPI <https://pypi.org/project/ivadomed/>`__ 
                         with CUDA 10.2:
@@ -144,7 +144,7 @@ Step 2: Install ``ivadomed`` with GPU or CPU Support
 
                             pip install ivadomed --extra-index-url https://download.pytorch.org/whl/cu111 
 
-                        ..tab:: Windows 
+                        .. tab:: Windows 
 
                         To install ``ivadomed`` from `PyPI <https://pypi.org/project/ivadomed/>`__ 
                         with CUDA 10.2:
@@ -166,9 +166,9 @@ Step 2: Install ``ivadomed`` with GPU or CPU Support
                     Bleeding-edge developments are available on the master branch of the project
                     on Github. To install ``ivadomed`` from source:
 
-                    ..tabs::
+                    .. tabs::
 
-                        ..tab:: Linux 
+                        .. tab:: Linux 
 
                         To install ``ivadomed`` from `PyPI <https://pypi.org/project/ivadomed/>`__ 
                         with CUDA 10.2:
@@ -192,7 +192,7 @@ Step 2: Install ``ivadomed`` with GPU or CPU Support
 
                             pip install -e . --extra-index-url https://download.pytorch.org/whl/cu111
 
-                        ..tab:: Windows 
+                        .. tab:: Windows 
 
                         To install ``ivadomed`` from `PyPI <https://pypi.org/project/ivadomed/>`__ 
                         with CUDA 10.2:
@@ -224,9 +224,9 @@ Step 2: Install ``ivadomed`` with GPU or CPU Support
                     from source along with additional dependencies related to building
                     documentation and testing:
 
-                    ..tabs::
+                    .. tabs::
 
-                        ..tab:: Linux 
+                        .. tab:: Linux 
 
                         To install ``ivadomed`` from `PyPI <https://pypi.org/project/ivadomed/>`__ 
                         with CUDA 10.2:
@@ -250,7 +250,7 @@ Step 2: Install ``ivadomed`` with GPU or CPU Support
 
                             pip install -e .[dev] --extra-index-url https://download.pytorch.org/whl/cu111
 
-                        ..tab:: Windows 
+                        .. tab:: Windows 
 
                         To install ``ivadomed`` from `PyPI <https://pypi.org/project/ivadomed/>`__ 
                         with CUDA 10.2:
@@ -282,21 +282,21 @@ Step 2: Install ``ivadomed`` with GPU or CPU Support
                 
                 .. tab:: Package Installation (Recommended)
 
-                    ..tabs::
+                    .. tabs::
 
-                        ..tab:: Linux 
+                        .. tab:: Linux 
 
                         ::
 
                             pip install ivadomed --extra-index-url https://download.pytorch.org/whl/cpu
 
-                        ..tab:: Windows 
+                        .. tab:: Windows 
 
                         ::
 
                             pip install ivadomed
 
-                        ..tab:: Mac 
+                        .. tab:: Mac 
 
                         ::
 
@@ -309,9 +309,9 @@ Step 2: Install ``ivadomed`` with GPU or CPU Support
 
                     ::
 
-                    ..tabs::
+                    .. tabs::
 
-                        ..tab:: Linux 
+                        .. tab:: Linux 
 
                         ::
 
@@ -321,7 +321,7 @@ Step 2: Install ``ivadomed`` with GPU or CPU Support
 
                             pip install -e . --extra-index-url https://download.pytorch.org/whl/cpu
 
-                        ..tab:: Windows 
+                        .. tab:: Windows 
 
                         ::
 
@@ -332,7 +332,7 @@ Step 2: Install ``ivadomed`` with GPU or CPU Support
                             pip install -e .
 
 
-                        ..tab:: Mac
+                        .. tab:: Mac
 
                             ::
 
@@ -346,9 +346,9 @@ Step 2: Install ``ivadomed`` with GPU or CPU Support
 
                     To contribute to the project, we recommend installing ``ivadomed`` from source along with additional dependencies related to building documentation and testing:
 
-                    ..tabs::
+                    .. tabs::
 
-                        ..tab:: Linux 
+                        .. tab:: Linux 
 
                         ::
 
@@ -358,7 +358,7 @@ Step 2: Install ``ivadomed`` with GPU or CPU Support
 
                             pip install -e .[dev] --extra-index-url https://download.pytorch.org/whl/cpu
 
-                        ..tab:: Windows 
+                        .. tab:: Windows 
 
                         ::
 
@@ -369,7 +369,7 @@ Step 2: Install ``ivadomed`` with GPU or CPU Support
                             pip install -e .[dev]
 
 
-                        ..tab:: Mac
+                        .. tab:: Mac
 
                             ::
 
