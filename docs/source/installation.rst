@@ -123,42 +123,40 @@ Step 2: Install ``ivadomed`` with GPU or CPU Support
             your current driver version on the top.
             
             .. tabs::
-                
+
                 .. tab:: Package Installation (Recommended)
+
+                    To install ``ivadomed`` from `PyPI <https://pypi.org/project/ivadomed/>`__ 
 
                     .. tabs::
 
-                        .. tab:: Linux 
+                        .. tab:: Linux
 
-                        To install ``ivadomed`` from `PyPI <https://pypi.org/project/ivadomed/>`__ 
-                        with CUDA 10.2:
+                            with CUDA 10.2:
 
-                        ::
+                            ::
+                                
+                                pip install ivadomed
 
-                            pip install ivadomed
+                            and, with CUDA 11.1:
 
-                        And, to install ``ivadomed`` from `PyPI <https://pypi.org/project/ivadomed/>`__ 
-                        with CUDA 11.1:
+                            ::
 
-                        ::
+                                pip install ivadomed --extra-index-url https://download.pytorch.org/whl/cu111 
 
-                            pip install ivadomed --extra-index-url https://download.pytorch.org/whl/cu111 
+                        .. tab:: Windows
 
-                        .. tab:: Windows 
+                            with CUDA 10.2:
 
-                        To install ``ivadomed`` from `PyPI <https://pypi.org/project/ivadomed/>`__ 
-                        with CUDA 10.2:
+                            ::
+                                
+                                pip install ivadomed --extra-index-url https://download.pytorch.org/whl/cu102
 
-                        ::
+                            and, with CUDA 11.1:
 
-                            pip install ivadomed --extra-index-url https://download.pytorch.org/whl/cu102
+                            ::
 
-                        And, to install ``ivadomed`` from `PyPI <https://pypi.org/project/ivadomed/>`__ 
-                        with CUDA 11.1:
-
-                        ::
-
-                            pip install ivadomed --extra-index-url https://download.pytorch.org/whl/cu111
+                                pip install ivadomed --extra-index-url https://download.pytorch.org/whl/cu111
 
 
                 .. tab:: Source Installation
@@ -168,54 +166,49 @@ Step 2: Install ``ivadomed`` with GPU or CPU Support
 
                     .. tabs::
 
-                        .. tab:: Linux 
+                        .. tab:: Linux
 
-                        To install ``ivadomed`` from `PyPI <https://pypi.org/project/ivadomed/>`__ 
-                        with CUDA 10.2:
-
-                        ::
+                            with CUDA 10.2:
                             
-                            git clone https://github.com/ivadomed/ivadomed.git
+                            ::
+                   
+                                git clone https://github.com/ivadomed/ivadomed.git
 
-                            cd ivadomed
+                                cd ivadomed
 
-                            pip install -e .
+                                pip install -e .
 
-                        And, to install ``ivadomed`` from `PyPI <https://pypi.org/project/ivadomed/>`__ 
-                        with CUDA 11.1:
+                            and, with CUDA 11.1:
 
-                        ::
+                            ::
 
-                            git clone https://github.com/ivadomed/ivadomed.git
+                                git clone https://github.com/ivadomed/ivadomed.git
 
-                            cd ivadomed
+                                cd ivadomed
 
-                            pip install -e . --extra-index-url https://download.pytorch.org/whl/cu111
+                                pip install -e . --extra-index-url https://download.pytorch.org/whl/cu111
 
                         .. tab:: Windows 
 
-                        To install ``ivadomed`` from `PyPI <https://pypi.org/project/ivadomed/>`__ 
-                        with CUDA 10.2:
+                            with CUDA 10.2:
 
-                        ::
+                            ::
 
-                            git clone https://github.com/ivadomed/ivadomed.git
+                                git clone https://github.com/ivadomed/ivadomed.git
 
-                            cd ivadomed
+                                cd ivadomed
 
-                            pip install -e . --extra-index-url https://download.pytorch.org/whl/cu102
+                                pip install -e . --extra-index-url https://download.pytorch.org/whl/cu102
 
-                        
-                        And, to install ``ivadomed`` from `PyPI <https://pypi.org/project/ivadomed/>`__ 
-                        with CUDA 11.1:
+                            with CUDA 11.1:
 
-                        ::
+                            ::
 
-                            git clone https://github.com/ivadomed/ivadomed.git
+                                git clone https://github.com/ivadomed/ivadomed.git
 
-                            cd ivadomed
+                                cd ivadomed
 
-                            pip install -e . --extra-index-url https://download.pytorch.org/whl/cu111
+                                pip install -e . --extra-index-url https://download.pytorch.org/whl/cu111
 
 
                 .. tab:: Contributor or Developer Installation
@@ -228,27 +221,25 @@ Step 2: Install ``ivadomed`` with GPU or CPU Support
 
                         .. tab:: Linux 
 
-                        To install ``ivadomed`` from `PyPI <https://pypi.org/project/ivadomed/>`__ 
-                        with CUDA 10.2:
+                            with CUDA 10.2:
 
-                        ::
-                            
-                            git clone https://github.com/ivadomed/ivadomed.git
+                            ::
 
-                            cd ivadomed
+                                git clone https://github.com/ivadomed/ivadomed.git
 
-                            pip install -e .[dev]
+                                cd ivadomed
 
-                        And, to install ``ivadomed`` from `PyPI <https://pypi.org/project/ivadomed/>`__ 
-                        with CUDA 11.1:
+                                pip install -e .[dev]
 
-                        ::
+                            with CUDA 11.1:
 
-                            git clone https://github.com/ivadomed/ivadomed.git
+                            ::
 
-                            cd ivadomed
+                                git clone https://github.com/ivadomed/ivadomed.git
 
-                            pip install -e .[dev] --extra-index-url https://download.pytorch.org/whl/cu111
+                                cd ivadomed
+
+                                pip install -e .[dev] --extra-index-url https://download.pytorch.org/whl/cu111
 
                         .. tab:: Windows 
 
@@ -284,23 +275,23 @@ Step 2: Install ``ivadomed`` with GPU or CPU Support
 
                     .. tabs::
 
-                        .. tab:: Linux 
+                        .. tab:: Linux
 
-                        ::
+                            ::
 
-                            pip install ivadomed --extra-index-url https://download.pytorch.org/whl/cpu
+                                pip install ivadomed --extra-index-url https://download.pytorch.org/whl/cpu
 
                         .. tab:: Windows 
 
-                        ::
+                            ::
 
-                            pip install ivadomed
+                                pip install ivadomed
 
                         .. tab:: Mac 
 
-                        ::
+                            ::
 
-                            pip install ivadomed
+                                pip install ivadomed
                     
                 .. tab:: Source Installation
 
@@ -313,23 +304,23 @@ Step 2: Install ``ivadomed`` with GPU or CPU Support
 
                         .. tab:: Linux 
 
-                        ::
+                            ::
 
-                            git clone https://github.com/ivadomed/ivadomed.git
+                                git clone https://github.com/ivadomed/ivadomed.git
 
-                            cd ivadomed
+                                cd ivadomed
 
-                            pip install -e . --extra-index-url https://download.pytorch.org/whl/cpu
+                                pip install -e . --extra-index-url https://download.pytorch.org/whl/cpu
 
                         .. tab:: Windows 
 
-                        ::
+                            ::
 
-                            git clone https://github.com/ivadomed/ivadomed.git
+                                git clone https://github.com/ivadomed/ivadomed.git
 
-                            cd ivadomed
-
-                            pip install -e .
+                                cd ivadomed
+                                
+                                pip install -e .
 
 
                         .. tab:: Mac
@@ -348,26 +339,25 @@ Step 2: Install ``ivadomed`` with GPU or CPU Support
 
                     .. tabs::
 
-                        .. tab:: Linux 
+                        .. tab:: Linux
+                            
+                            ::
 
-                        ::
+                                git clone https://github.com/ivadomed/ivadomed.git
 
-                            git clone https://github.com/ivadomed/ivadomed.git
+                                cd ivadomed
 
-                            cd ivadomed
-
-                            pip install -e .[dev] --extra-index-url https://download.pytorch.org/whl/cpu
+                                pip install -e .[dev] --extra-index-url https://download.pytorch.org/whl/cpu
 
                         .. tab:: Windows 
 
-                        ::
+                            ::
 
-                            git clone https://github.com/ivadomed/ivadomed.git
+                                git clone https://github.com/ivadomed/ivadomed.git
 
-                            cd ivadomed
+                                cd ivadomed
 
-                            pip install -e .[dev]
-
+                                pip install -e .[dev]
 
                         .. tab:: Mac
 
