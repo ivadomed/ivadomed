@@ -1,8 +1,10 @@
+from __future__ import annotations
 import copy
 import random
 
 import numpy as np
 import torch
+import torchvision.transforms
 from torch.utils.data import Dataset
 
 from ivadomed import transforms as imed_transforms, postprocessing as imed_postpro
@@ -11,6 +13,12 @@ from ivadomed.loader.utils import dropout_input
 from ivadomed.loader.segmentation_pair import SegmentationPair
 from ivadomed.object_detection import utils as imed_obj_detect
 from ivadomed.keywords import ROIParamsKW, MetadataKW
+import typing
+if typing.TYPE_CHECKING:
+    from ivadomed.loader.slice_filter import SliceFilter
+    from ivadomed.loader.patch_filter import PatchFilter
+    from typing import Dict
+    from typing import Optional
 
 
 class MRI2DSegmentationDataset(Dataset):
@@ -62,9 +70,10 @@ class MRI2DSegmentationDataset(Dataset):
 
     """
 
-    def __init__(self, filename_pairs, length=None, stride=None, slice_axis=2, cache=True, transform=None,
-                 slice_filter_fn=None, patch_filter_fn=None, task="segmentation", roi_params=None, soft_gt=False,
-                 is_input_dropout=False):
+    def __init__(self, filename_pairs: list, length: list = None, stride: list = None, slice_axis: int = 2,
+                 cache: bool = True, transform: torchvision.transforms.Compose = None,
+                 slice_filter_fn: SliceFilter = None, patch_filter_fn: PatchFilter = None, task: str = "segmentation",
+                 roi_params: dict = None, soft_gt: bool = False, is_input_dropout: bool = False) -> None:
         if length is None:
             length = []
         if stride is None:
@@ -91,7 +100,7 @@ class MRI2DSegmentationDataset(Dataset):
         self.is_input_dropout = is_input_dropout
 
 
-    def load_filenames(self):
+    def load_filenames(self) -> None:
         """Load preprocessed pair data (input and gt) in handler."""
         for input_filenames, gt_filenames, roi_filename, metadata in self.filename_pairs:
             roi_pair = SegmentationPair(input_filenames, roi_filename, metadata=metadata, slice_axis=self.slice_axis,
@@ -136,7 +145,7 @@ class MRI2DSegmentationDataset(Dataset):
         if self.is_2d_patch:
             self.prepare_indices()
 
-    def prepare_indices(self):
+    def prepare_indices(self) -> None:
         """Stores coordinates of 2d patches for training."""
         for i in range(0, len(self.handlers)):
 
@@ -176,13 +185,13 @@ class MRI2DSegmentationDataset(Dataset):
                         'y_max': y_max,
                         'handler_index': i})
 
-    def set_transform(self, transform):
+    def set_transform(self, transform: torchvision.transforms.Compose) -> None:
         self.transform = transform
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.indexes)
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int) -> Dict[str, Optional[list]]:
         """Return the specific processed data corresponding to index (input, ground truth, roi and metadata).
 
         Args:
