@@ -120,7 +120,7 @@ Step 2: Install ``ivadomed`` with GPU or CPU Support
             Please make sure to upgrade to the minimum NVIDIA driver version 
             requirements for the respective CUDA builds. To verify the NVIDIA
             driver version, just run the command `nvidia-smi` and you'll find 
-            your current driver version on the top. 
+            your current driver version on the top.
             
             ..tabs::
                 
@@ -296,8 +296,7 @@ Step 2: Install ``ivadomed`` with GPU or CPU Support
 
                             pip install ivadomed
 
-                        And, to install ``ivadomed`` from `PyPI <https://pypi.org/project/ivadomed/>`__ 
-                        with CUDA 11.1:
+                        ..tab:: Mac 
 
                         ::
 
