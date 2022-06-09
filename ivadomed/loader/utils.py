@@ -1,3 +1,4 @@
+from __future__ import annotations
 import collections.abc
 import re
 import numpy as np
@@ -13,6 +14,10 @@ from ivadomed import utils as imed_utils
 from ivadomed.keywords import SplitDatasetKW, LoaderParamsKW, ROIParamsKW, ContrastParamsKW
 import nibabel as nib
 import random
+import typing
+if typing.TYPE_CHECKING:
+    from typing import Union
+    from typing import Optional
 
 __numpy_type_map = {
     'float64': torch.DoubleTensor,
@@ -36,7 +41,8 @@ EXT_LST = [".nii", ".nii.gz", ".ome.tif", ".ome.tiff", ".ome.tf2", ".ome.tf8", "
            ".tiff", ".png", ".jpg", ".jpeg"]
 
 
-def split_dataset(df, split_method, data_testing, random_seed, train_frac=0.8, test_frac=0.1):
+def split_dataset(df: pd.DataFrame, split_method: str, data_testing: dict, random_seed: int, train_frac: float = 0.8,
+                  test_frac: float = 0.1) -> (list, list, Union[list, object]):
     """Splits dataset into training, validation and testing sets by applying train, test and validation fractions
     according to the split_method.
     The "data_testing" parameter can be used to specify the data_type and data_value to include in the testing set,
@@ -113,8 +119,9 @@ def split_dataset(df, split_method, data_testing, random_seed, train_frac=0.8, t
     return X_train, X_val, X_test
 
 
-def get_new_subject_file_split(df, split_method, data_testing, random_seed,
-                               train_frac, test_frac, path_output, balance, subject_selection=None):
+def get_new_subject_file_split(df: pd.DataFrame, split_method: str, data_testing: dict, random_seed: int,
+                               train_frac: float, test_frac: float, path_output: str, balance: str,
+                               subject_selection: dict = None) -> (list, list, list):
     """Randomly split dataset between training / validation / testing.
 
     Randomly split dataset between training / validation / testing\
@@ -183,7 +190,8 @@ def get_new_subject_file_split(df, split_method, data_testing, random_seed,
     return train_lst, valid_lst, test_lst
 
 
-def get_subdatasets_subject_files_list(split_params, df, path_output, subject_selection=None):
+def get_subdatasets_subject_files_list(split_params: dict, df: pd.DataFrame, path_output: str,
+                                       subject_selection: dict = None) -> (list, list, list):
     """Get lists of subject filenames for each sub-dataset between training / validation / testing.
 
     Args:
@@ -229,7 +237,7 @@ def get_subdatasets_subject_files_list(split_params, df, path_output, subject_se
     return train_lst, valid_lst, test_lst
 
 
-def imed_collate(batch):
+def imed_collate(batch: dict) -> dict | list | str | torch.Tensor:
     """Collates data to create batches
 
     Args:
@@ -268,7 +276,7 @@ def imed_collate(batch):
     return batch
 
 
-def filter_roi(roi_data, nb_nonzero_thr):
+def filter_roi(roi_data: np.ndarray, nb_nonzero_thr: int) -> bool:
     """Filter slices from dataset using ROI data.
 
     This function filters slices (roi_data) where the number of non-zero voxels within the
@@ -286,7 +294,7 @@ def filter_roi(roi_data, nb_nonzero_thr):
     return not np.any(roi_data) or np.count_nonzero(roi_data) <= nb_nonzero_thr
 
 
-def orient_img_hwd(data, slice_axis):
+def orient_img_hwd(data: np.ndarray, slice_axis: int) -> np.ndarray:
     """Orient a given RAS image to height, width, depth according to slice axis.
 
     Args:
@@ -305,7 +313,7 @@ def orient_img_hwd(data, slice_axis):
         return data
 
 
-def orient_img_ras(data, slice_axis):
+def orient_img_ras(data: np.ndarray, slice_axis: int) -> np.ndarray:
     """Orient a given array with dimensions (height, width, depth) to RAS orientation.
 
     Args:
@@ -325,7 +333,7 @@ def orient_img_ras(data, slice_axis):
         return data
 
 
-def orient_shapes_hwd(data, slice_axis):
+def orient_shapes_hwd(data: list | tuple, slice_axis: int) -> np.ndarray:
     """Swap dimensions according to match the height, width, depth orientation.
 
     Args:
@@ -345,7 +353,7 @@ def orient_shapes_hwd(data, slice_axis):
         return np.array(data)
 
 
-def update_metadata(metadata_src_lst, metadata_dest_lst):
+def update_metadata(metadata_src_lst: list, metadata_dest_lst: list) -> list:
     """Update metadata keys with a reference metadata.
 
     A given list of metadata keys will be changed and given the values of the reference metadata.
@@ -367,7 +375,7 @@ def update_metadata(metadata_src_lst, metadata_dest_lst):
     return metadata_dest_lst
 
 
-def reorient_image(arr, slice_axis, nib_ref, nib_ref_canonical):
+def reorient_image(arr: np.ndarray, slice_axis: int, nib_ref: nib, nib_ref_canonical: nib) -> any:
     """Reorient an image to match a reference image orientation.
 
     It reorients a array to a given orientation and convert it to a nibabel object using the
@@ -392,7 +400,7 @@ def reorient_image(arr, slice_axis, nib_ref, nib_ref_canonical):
     return nib.orientations.apply_orientation(arr_ras, trans_orient)
 
 
-def get_file_extension(filename):
+def get_file_extension(filename: str) -> Optional[str]:
     """ Get file extension if it is supported
     Args:
         filename (str): Path of the file.
@@ -405,7 +413,7 @@ def get_file_extension(filename):
     return extension
 
 
-def update_filename_to_nifti(filename):
+def update_filename_to_nifti(filename: str) -> str:
     """ 
     Update filename extension to 'nii.gz' if not a NifTI file.
     
@@ -426,7 +434,7 @@ def update_filename_to_nifti(filename):
     return filename
 
 
-def dropout_input(seg_pair):
+def dropout_input(seg_pair: dict) -> dict:
     """Applies input-level dropout: zero to all channels minus one will be randomly set to zeros. This function verifies
     if some channels are already empty. Always at least one input channel will be kept.
 
