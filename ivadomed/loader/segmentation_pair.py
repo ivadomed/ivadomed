@@ -2,7 +2,6 @@ from __future__ import annotations
 from pathlib import Path
 import imageio
 import nibabel as nib
-import nibabel.nifti1
 import numpy as np
 
 from ivadomed.loader import utils as imed_loader_utils
@@ -12,6 +11,7 @@ from ivadomed.keywords import MetadataKW
 import typing
 if typing.TYPE_CHECKING:
     from typing import List
+    import nibabel.nifti1
 
 
 class SegmentationPair(object):
