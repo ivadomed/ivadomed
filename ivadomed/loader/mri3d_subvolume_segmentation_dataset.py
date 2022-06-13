@@ -29,13 +29,15 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         length (tuple): Size of each dimensions of the subvolumes, length equals 3.
         stride (tuple): Size of the overlapping per subvolume and dimensions, length equals 3.
         slice_axis (int): Indicates the axis used to extract slices: "axial": 2, "sagittal": 0, "coronal": 1.
+        subvolume_filter_fn (SubvolumeFilter): SubvolumeFilter object containing subvolume filter parameters.
         soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
         truths are thresholded (0.5) after the data augmentation operations.
         is_input_dropout (bool): Return input with missing modalities.
     """
 
-    def __init__(self, filename_pairs, transform=None, length=(64, 64, 64), stride=(0, 0, 0), slice_axis=0,
-                 task="segmentation", soft_gt=False, is_input_dropout=False):
+    def __init__(self, filename_pairs, length=(64, 64, 64), stride=(0, 0, 0), slice_axis=0,
+                 transform=None, subvolume_filter_fn=None, task="segmentation",
+                 soft_gt=False, is_input_dropout=False):
         self.filename_pairs = filename_pairs
         self.handlers = []
         self.indexes = []
@@ -43,6 +45,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         self.stride = stride
         self.prepro_transforms, self.transform = transform
         self.slice_axis = slice_axis
+        self.subvolume_filter_fn = subvolume_filter_fn
         self.has_bounding_box = True
         self.task = task
         self.soft_gt = soft_gt
@@ -67,9 +70,11 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
 
             self.has_bounding_box = imed_obj_detect.verify_metadata(seg_pair, self.has_bounding_box)
             if self.has_bounding_box:
-                self.prepro_transforms = imed_obj_detect.adjust_transforms(self.prepro_transforms, seg_pair,
+                self.prepro_transforms = imed_obj_detect.adjust_transforms(self.prepro_transforms,
+                                                                           seg_pair,
                                                                            length=self.length,
                                                                            stride=self.stride)
+
             seg_pair, roi_pair = imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
                                                                                 seg_pair=seg_pair)
 
@@ -81,7 +86,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         """Stores coordinates of subvolumes for training."""
         for i in range(0, len(self.handlers)):
             segpair, _ = self.handlers[i]
-            input_img = self.handlers[i][0]['input']
+            input_img, gt = self.handlers[i][0]['input'], self.handlers[i][0]['gt']
             shape = input_img[0].shape
 
             if ((shape[0] - self.length[0]) % self.stride[0]) != 0 or self.length[0] % 16 != 0 or shape[0] < \
@@ -96,14 +101,21 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
             for x in range(0, (shape[0] - self.length[0]) + 1, self.stride[0]):
                 for y in range(0, (shape[1] - self.length[1]) + 1, self.stride[1]):
                     for z in range(0, (shape[2] - self.length[2]) + 1, self.stride[2]):
-                        self.indexes.append({
-                            'x_min': x,
-                            'x_max': x + self.length[0],
-                            'y_min': y,
-                            'y_max': y + self.length[1],
-                            'z_min': z,
-                            'z_max': z + self.length[2],
-                            'handler_index': i})
+                        x_min, x_max = x, x + self.length[0]
+                        y_min, y_max = y, y + self.length[1]
+                        z_min, z_max = z, z + self.length[2]
+
+                        subvolume = {
+                            'input': list(np.asarray(input_img)[:, x_min: x_max, y_min: y_max, z_min: z_max]),
+                            'gt': list(np.asarray(gt)[:, x_min: x_max, y_min: y_max, z_min: z_max] if gt else []),
+                        }
+
+                        if self.subvolume_filter_fn and not self.subvolume_filter_fn(subvolume):
+                            continue
+
+                        self.indexes.append({'x_min': x_min, 'x_max': x_max, 'y_min': y,
+                                             'y_max': y_max, 'z_min': z, 'z_max': z_max,
+                                             'handler_index': i})
 
     def __len__(self):
         """Return the dataset size. The number of subvolumes."""
