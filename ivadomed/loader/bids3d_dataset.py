@@ -20,12 +20,13 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
         roi_params (dict): Dictionary containing parameters related to ROI image processing.
         multichannel (bool): If True, the input contrasts are combined as input channels for the model. Otherwise, each
             contrast is processed individually (ie different sample / tensor).
+        subvolume_filter_fn (PatchFilter): Class that filters subvolumes according to their content.
         object_detection_params (dict): Object dection parameters.
         is_input_dropout (bool): Return input with missing modalities.
     """
 
     def __init__(self, bids_df, subject_file_lst, target_suffix, model_params, contrast_params, slice_axis=2,
-                 cache=True, transform=None, metadata_choice=False, roi_params=None,
+                 cache=True, transform=None, metadata_choice=False, roi_params=None, subvolume_filter_fn=None,
                  multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False,
                  is_input_dropout=False):
         dataset = BidsDataset(bids_df=bids_df,
@@ -34,6 +35,7 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
                               roi_params=roi_params,
                               contrast_params=contrast_params,
                               model_params=model_params,
+                              patch_filter_fn=subvolume_filter_fn,
                               metadata_choice=metadata_choice,
                               slice_axis=slice_axis,
                               transform=transform,
@@ -41,7 +43,12 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
                               object_detection_params=object_detection_params,
                               is_input_dropout=is_input_dropout)
 
-        super().__init__(dataset.filename_pairs, length=model_params[ModelParamsKW.LENGTH_3D],
+        super().__init__(dataset.filename_pairs,
+                         length=model_params[ModelParamsKW.LENGTH_3D],
                          stride=model_params[ModelParamsKW.STRIDE_3D],
-                         transform=transform, slice_axis=slice_axis, task=task, soft_gt=soft_gt,
+                         transform=transform,
+                         slice_axis=slice_axis,
+                         subvolume_filter_fn=subvolume_filter_fn,
+                         task=task,
+                         soft_gt=soft_gt,
                          is_input_dropout=is_input_dropout)
