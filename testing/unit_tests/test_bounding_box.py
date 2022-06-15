@@ -1,9 +1,11 @@
-import numpy as np
-import pytest
 import json
 import shutil
-
+import pickle
 from pathlib import Path
+
+import numpy as np
+import pytest
+
 from ivadomed.loader.bids_dataframe import BidsDataframe
 from ivadomed.loader import loader as imed_loader
 from ivadomed.object_detection import utils as imed_obj_detect
@@ -99,11 +101,23 @@ def test_bounding_box(download_data_testing_test_files, train_lst, target_lst, c
     ds = imed_loader.load_dataset(bids_df, **loader_params)
 
     handler = ds.handlers if "Modified3DUNet" in config else ds.indexes
-    for index in handler:
-        seg_pair, _ = index
+    for index in range(len(handler)):
+
         if "Modified3DUNet" in config:
+            if ds.disk_cache:
+                path_seg_pair, _ = handler[index]
+                with path_seg_pair.open('rb') as f:
+                    seg_pair = pickle.load(f)
+            else:
+                seg_pair, _ = handler[index]
             assert seg_pair['input'][0].shape[-3:] == (mx2 - mx1, my2 - my1, mz2 - mz1)
         else:
+            if ds.disk_cache:
+                path_seg_pair = handler[index]
+                with path_seg_pair.open('rb') as f:
+                    seg_pair, _ = pickle.load(f)
+            else:
+                seg_pair, _ = handler[index]
             assert seg_pair['input'][0].shape[-2:] == (mx2 - mx1, my2 - my1)
 
     shutil.rmtree(PATH_OUTPUT)
