@@ -52,7 +52,7 @@ class BidsDataframe:
         if self.roi_suffix is not None:
             self.target_suffix.append(self.roi_suffix)
 
-        if 'validate_BIDS' not in loader_params:
+        if 'bids_validate' not in loader_params:
             self.bids_validate = True
         else:
             self.bids_validate = loader_params['bids_validate']
