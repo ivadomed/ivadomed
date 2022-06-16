@@ -82,7 +82,7 @@ def test_bids_df_anat(download_data_testing_test_files, loader_parameters):
     "extensions": [".nii.gz"],
     "roi_params": {"suffix": None, "slice_filter_roi": None},
     "contrast_params": {"contrast_lst": ["ct"]},
-    "validate_BIDS": False
+    "bids_validate": False
     }])
 def test_bids_df_no_validate(download_data_testing_test_files, loader_parameters):
     """

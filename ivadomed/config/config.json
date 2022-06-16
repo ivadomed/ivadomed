@@ -36,7 +36,7 @@
         "slice_axis": "axial",
         "multichannel": false,
         "soft_gt": false,
-        "validate_BIDS": true
+        "bids_validate": true
     },
     "split_dataset": {
         "fname_split": null,

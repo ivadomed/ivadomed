@@ -511,8 +511,8 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
 
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
-        "title": "validate_BIDS",
-        "description": "Indicated if loader should validate BIDS info",
+        "title": "bids_validate",
+        "description": "Indicated if the loader should validate the dataset for compliance with BIDS",
         "type": "boolean"
     }
 
@@ -522,7 +522,7 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
 
     {
         "loader_parameters": {
-            "validate_BIDS": true
+            "bids_validate": true
         }
     }
 
