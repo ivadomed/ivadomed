@@ -180,15 +180,34 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         metadata_input = seg_pair['input_metadata'] if seg_pair['input_metadata'] is not None else []
         metadata_gt = seg_pair['gt_metadata'] if seg_pair['gt_metadata'] is not None else []
 
-        # Run transforms on images
-        stack_input, metadata_input = self.transform(sample=seg_pair['input'],
+        coord = {}
+        coord['x_min'], coord['x_max'] = 0, seg_pair["input"][0].shape[0]
+        coord['y_min'], coord['y_max'] = 0, seg_pair["input"][0].shape[1]
+        coord['z_min'], coord['z_max'] = 0, seg_pair["input"][0].shape[2]
+
+        # Extract image and gt slices or patches from coordinates
+        stack_input = np.asarray(seg_pair["input"])[:,
+                      coord['x_min']:coord['x_max'],
+                      coord['y_min']:coord['y_max'],
+                      coord['z_min']:coord['z_max']]
+
+        if seg_pair["gt"]:
+            stack_gt = np.asarray(seg_pair["gt"])[:,
+                       coord['x_min']:coord['x_max'],
+                       coord['y_min']:coord['y_max'],
+                       coord['z_min']:coord['z_max']]
+        else:
+            stack_gt = []
+
+        # Run transforms on image slices
+        stack_input, metadata_input = self.transform(sample=list(stack_input),
                                                      metadata=metadata_input,
                                                      data_type="im")
         # Update metadata_gt with metadata_input
         metadata_gt = imed_loader_utils.update_metadata(metadata_input, metadata_gt)
 
-        # Run transforms on images
-        stack_gt, metadata_gt = self.transform(sample=seg_pair['gt'],
+        # Run transforms on gt slices
+        stack_gt, metadata_gt = self.transform(sample=list(stack_gt),
                                                metadata=metadata_gt,
                                                data_type="gt")
         # Make sure stack_gt is binarized
@@ -205,28 +224,15 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
                                  coord["z_max"]]
 
         subvolumes = {
-            'input': torch.zeros(stack_input.shape[0], shape_x, shape_y, shape_z),
-            'gt': torch.zeros(stack_gt.shape[0], shape_x, shape_y, shape_z) if stack_gt is not None else None,
+            'input': stack_input,
+            'gt': stack_gt,
             MetadataKW.INPUT_METADATA: metadata_input,
             MetadataKW.GT_METADATA: metadata_gt
         }
 
-        for _ in range(len(stack_input)):
-            subvolumes['input'] = stack_input[:,
-                                  coord['x_min']:coord['x_max'],
-                                  coord['y_min']:coord['y_max'],
-                                  coord['z_min']:coord['z_max']]
-
         # Input-level dropout to train with missing modalities
         if self.is_input_dropout:
             subvolumes = dropout_input(subvolumes)
-
-        if stack_gt is not None:
-            for _ in range(len(stack_gt)):
-                subvolumes['gt'] = stack_gt[:,
-                                   coord['x_min']:coord['x_max'],
-                                   coord['y_min']:coord['y_max'],
-                                   coord['z_min']:coord['z_max']]
 
         return subvolumes
 
