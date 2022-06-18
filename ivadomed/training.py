@@ -407,13 +407,14 @@ def train(rank, model_params, dataset_train, dataset_val, training_params, path_
         if no_ddp:
             state = torch.load(resume_path, map_location=torch.device('cpu'))
         else:
-            state = torch.load(resume_path, map_location='cuda:0')
+            location = f"cuda:{rank}"
+            state = torch.load(resume_path, map_location=location)
         model_path = Path(path_output, "best_model.pt")
         model.load_state_dict(state['state_dict'])
         if no_ddp:  # if DDP is used, save the module of the DDP object
             torch.save(model, model_path)
         else:
-            torch.save(model.module, model_path)
+            torch.save(model.module.state_dict(), model_path)
         # Save best model as ONNX in the model directory
         try:
             # Convert best model to ONNX and save it in model directory
@@ -561,7 +562,7 @@ def get_metadata(metadata, model_params):
                 for k in range(len(metadata))]
 
 
-def load_checkpoint(model, optimizer, gif_dict, scheduler, fname):
+def load_checkpoint(model, optimizer, gif_dict, scheduler, fname, gpu=-1):
     """Load checkpoint.
 
     This function check if a checkpoint is available. If so, it updates the state of the input objects.
@@ -581,7 +582,11 @@ def load_checkpoint(model, optimizer, gif_dict, scheduler, fname):
     patience_count = 0
     try:
         logger.info("Loading checkpoint: {}".format(fname))
-        checkpoint = torch.load(fname)
+        if gpu < 0:
+            checkpoint = torch.load(fname)
+        else:
+            # map model to the specified gpu
+            checkpoint = torch.load(fname, map_location=f"cuda:{gpu}")
         start_epoch = checkpoint['epoch']
         model.load_state_dict(checkpoint['state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer'])
