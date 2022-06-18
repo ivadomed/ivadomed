@@ -1,7 +1,12 @@
+import os
+from pathlib import Path
+import shutil
+
 import pytest
 import csv_diff
 import torch
 import numpy as np
+from loguru import logger
 
 from ivadomed.loader.bids_dataframe import BidsDataframe
 from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__, download_data_testing_test_files, path_repo_root
@@ -11,7 +16,7 @@ from ivadomed.loader import loader as imed_loader
 import ivadomed.loader.utils as imed_loader_utils
 from ivadomed.loader import mri2d_segmentation_dataset as imed_loader_mri2dseg
 from ivadomed.keywords import LoaderParamsKW, MetadataKW, ModelParamsKW, TransformationKW
-from pathlib import Path
+
 
 
 def setup_function():
@@ -393,11 +398,20 @@ def test_read_png_tif(download_data_testing_test_files, loader_parameters, model
     slice_axis = imed_utils.AXIS_DCT[loader_parameters[LoaderParamsKW.SLICE_AXIS]]
     ds = imed_loader_mri2dseg.MRI2DSegmentationDataset(filename_pairs,
                                                        slice_axis=slice_axis,
-                                                       cache=True,
+                                                       nibabel_cache=True,
                                                        transform=[None, None],
                                                        slice_filter_fn=None)
     ds.load_filenames()
 
+def test_create_cache_folder():
+    """
+    Test to make sure the cache folder is created when it doesn't exist, remove it afterwards.
+    NOTE: this means this test cannot be parallelized with other tests that utilize this folder!
+    """
+    path_cache = imed_loader_utils.create_temp_directory()
+    print(path_cache)
+    assert(os.path.exists(path_cache))
+    shutil.rmtree(path_cache)
 
 def teardown_function():
     remove_tmp_dir()

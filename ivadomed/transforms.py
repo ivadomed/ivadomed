@@ -4,6 +4,8 @@ import math
 import numbers
 import random
 
+from typing import Tuple
+
 import numpy as np
 import torch
 from loguru import logger
@@ -13,6 +15,7 @@ from scipy.ndimage import gaussian_filter, map_coordinates, affine_transform, la
 from skimage.exposure import equalize_adapthist
 from torchvision import transforms as torchvision_transforms
 import torchio as tio
+
 
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.keywords import TransformationKW, MetadataKW
@@ -1184,7 +1187,7 @@ def get_preprocessing_transforms(transforms):
     return preprocessing_transforms
 
 
-def apply_preprocessing_transforms(transforms, seg_pair, roi_pair=None):
+def apply_preprocessing_transforms(transforms, seg_pair, roi_pair=None) -> Tuple[dict, dict]:
     """
     Applies preprocessing transforms to segmentation pair (input, gt and metadata).
 
