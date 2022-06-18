@@ -447,7 +447,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
             logger.info(f"Spawning workers")
             mp.spawn(imed_training.train, nprocs=n_gpus, args=(model_params, ds_train, ds_valid, 
                                                                 context["training_parameters"], path_output,
-                                                                device, cuda_available, metric_fns, n_gif,
+                                                                device, context.get(ConfigKW.WANDB), cuda_available, metric_fns, n_gif,
                                                                 resume_training, context["debugging"],n_gpus, ))
         else:
             logger.info(f"Training without Distributed Data Processing (DDP)")
@@ -459,6 +459,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                 training_params=context["training_parameters"],
                 path_output=path_output,
                 device=device,
+                wandb_params=context.get(ConfigKW.WANDB),
                 cuda_available=cuda_available,
                 metric_fns=metric_fns,
                 n_gif=n_gif,
