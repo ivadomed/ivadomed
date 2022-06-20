@@ -247,6 +247,10 @@ without an account, since the metrics are logged on Tensorboard by default.
             "run_name": "run-1"
         }
     }
+    
+.. note::
+    Using the same ``run_name`` does not replace the previous run but does create multiple entries of the same name. If left empty then the
+    default is a random string assigned by WandB. 
 
 
 .. jsonschema::
@@ -280,9 +284,6 @@ without an account, since the metrics are logged on Tensorboard by default.
     If ``debugging = True`` is specified in the config file, the training and validation input images, ground truth labels, and 
     the model predictions are also periodically logged on WandB, which can be seen under ``Media`` on the WandB Dashboard.
 
-.. note::
-    Using the same ``run_name`` does not replace the previous run but does create multiple entries of the same name. If left empty then the
-    default is a random string assigned by WandB. 
 
 
 
