@@ -7,13 +7,14 @@ import random
 import torch
 
 from pathlib import Path
+from loguru import logger
 from ivadomed import config_manager as imed_config_manager
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.loader.sample_meta_data import SampleMetadata
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
 from ivadomed import maths as imed_maths
-from ivadomed.keywords import ConfigKW, TransformationKW, LoaderParamsKW
+from ivadomed.keywords import ConfigKW, TransformationKW, LoaderParamsKW, MetadataKW
 
 
 def get_parser():
@@ -141,12 +142,12 @@ def run_visualization(input, config, number, output, roi):
         for i in indexes:
             data = [input_data[:, :, i]]
             # Init metadata
-            metadata = SampleMetadata({"zooms": zooms, "data_type": "gt" if is_mask else "im"})
+            metadata = SampleMetadata({MetadataKW.ZOOMS: zooms, MetadataKW.DATA_TYPE: "gt" if is_mask else "im"})
 
             # Apply transformations to ROI
             if TransformationKW.CENTERCROP in training_transforms or \
                     (TransformationKW.ROICROP in training_transforms and Path(roi).is_file()):
-                metadata.__setitem__('crop_params', {})
+                metadata.__setitem__(MetadataKW.CROP_PARAMS, {})
 
             # Apply transformations to image
             stack_im, _ = composed_transforms(sample=data,
@@ -155,8 +156,8 @@ def run_visualization(input, config, number, output, roi):
 
             # Plot before / after transformation
             fname_out = str(Path(output, stg_transforms + "slice" + str(i) + ".png"))
-            print(f"Fname out: {fname_out}.")
-            print(f"\t{dict(metadata)}")
+            logger.debug(f"Fname out: {fname_out}.")
+            logger.debug(f"\t{dict(metadata)}")
             # rescale intensities
             if len(stg_transforms[:-1].split("_")) == 1:
                 before = np.rot90(imed_maths.rescale_values_array(data[0], 0.0, 1.0))

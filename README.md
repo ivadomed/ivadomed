@@ -11,15 +11,15 @@
 
 `ivadomed` is an integrated framework for medical image analysis with deep learning.
 
-The technical documentation is available [here](https://ivadomed.org).
+The technical documentation is available [here](https://ivadomed.org).  The more detailed installation instruction is available [there](https://ivadomed.org/installation.html)
 
 ## Installation
 
-``ivadomed`` requires Python >= 3.6 and < 3.9 as well as PyTorch == 1.5.0. We recommend working under a virtual environment, which could be set as follows:
+``ivadomed`` requires Python >= 3.7 and < 3.10 as well as PyTorch == 1.8. We recommend working under a virtual environment, which could be set as follows:
 
 ```bash
-virtualenv venv-ivadomed
-source venv-ivadomed/bin/activate
+python -m venv ivadomed_env
+source ivadomed_env/bin/activate
 ```
 
 ### Install from release (recommended)
@@ -33,14 +33,18 @@ pip install ivadomed
 
 ### Install from source
 
-Bleeding-edge developments are available on the project's master branch
-on Github. Installation procedure is the following:
+Bleeding-edge developments builds are available on the project's master branch on Github. Installation procedure is the following:
 
 ```bash
 git clone https://github.com/neuropoly/ivadomed.git
 cd ivadomed
 pip install -e .
 ```
+
+### Install from source
+
+Make sure to install Torch1.8 following commands [here](https://pytorch.org/get-started/previous-versions/#v180) as pip is not able to auto infer GPU/CPU support on your behalf.
+Again, the more comprehensive installation instruction is available [there](https://ivadomed.org/installation.html).
 
 ## Contributors
 <p float="left">
