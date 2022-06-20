@@ -443,7 +443,7 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
                                       length=length_2D,
                                       stride=stride_2D,
                                       slice_axis=slice_axis,
-                                      cache=True,
+                                      nibabel_cache=True,
                                       transform=tranform_lst,
                                       slice_filter_fn=SliceFilter(
                                           **loader_params[LoaderParamsKW.SLICE_FILTER_PARAMS]))
