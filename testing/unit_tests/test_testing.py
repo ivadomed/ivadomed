@@ -264,8 +264,7 @@ def test_inference_2d_microscopy_target_suffix(download_data_testing_test_files,
       dst_filename = '_'.join(str(src_filename).rsplit('-', 1))
       src_filename.rename(Path(dst_filename))
 
-    # bids_df = BidsDataframe(loader_params, __tmp_dir__, derivatives=True)
-    bids_df = BidsDataframe(loader_params, '/content/', derivatives=True)
+    bids_df = BidsDataframe(loader_params, __tmp_dir__, derivatives=True)
 
     ds_test = imed_loader.load_dataset(bids_df, **loader_params)
     test_loader = DataLoader(ds_test, batch_size=BATCH_SIZE,
