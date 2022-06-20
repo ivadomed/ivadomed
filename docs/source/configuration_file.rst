@@ -162,6 +162,10 @@ curves, gradients, and media. It is recommended to setup a personal
 WandB account to track experiments on WandB, however, you can still train ivadomed models 
 without an account, since the metrics are logged on Tensorboard by default. 
 
+We recommend defining the project/group/run names such that hierarchy is easily understandable. For instance, ``project_name`` could be the name of the dataset or the problem you are working (i.e. brain tumor segmentation/spinal cord lesion segmentation etc.), the ``group_name`` could be the various models you are willing to train, and the ``run_name`` could be the various experiments within a particular model (i.e. typically with different hyperparameters).
+
+
+
 
 .. jsonschema::
 
