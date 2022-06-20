@@ -100,7 +100,10 @@ def test_bids_df_no_validate(download_data_testing_test_files, loader_parameters
     csv_ref = Path(loader_parameters[LoaderParamsKW.PATH_DATA][0], "df_ref.csv")
     csv_test = Path(loader_parameters[LoaderParamsKW.PATH_DATA][0], "df_test.csv")
     df_test.to_csv(csv_test, index=False)
-    diff = csv_diff.compare(csv_diff.load_csv(open(csv_ref)), csv_diff.load_csv(open(csv_test)))
+    diff = csv_diff.compare(
+        csv_diff.load_csv(open(csv_ref)),
+        csv_diff.load_csv(open(csv_test))
+    )
 
     Path(loader_parameters[LoaderParamsKW.PATH_DATA][0], "ssub-spleen2").rename(
          Path(loader_parameters[LoaderParamsKW.PATH_DATA][0], "sub-spleen2"))
