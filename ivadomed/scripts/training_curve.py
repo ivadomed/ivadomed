@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
+import warnings
 import numpy as np
 from collections import defaultdict
 import pandas as pd
@@ -111,6 +112,8 @@ def plot_curve(data_list, y_label, fig_ax, subplot_title, y_lim=None):
     fig_ax.set_ylabel(y_label)
     if y_lim is not None:
         fig_ax.set_ylim(y_lim)
+
+    warnings.filterwarnings("ignore", category=UserWarning)
     fig_ax.set_xlim([1, max_nb_epoch])
     fig_ax.title.set_text('\n'.join(wrap(subplot_title, 80)))
 
