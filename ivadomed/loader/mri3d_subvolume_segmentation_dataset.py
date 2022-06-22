@@ -106,8 +106,8 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
                         z_min, z_max = z, z + self.length[2]
 
                         subvolume = {
-                            'input': list(np.asarray(input_img)[:, x_min: x_max, y_min: y_max, z_min: z_max]),
-                            'gt': list(np.asarray(gt)[:, x_min: x_max, y_min: y_max, z_min: z_max] if gt else []),
+                            'input': list(np.asarray(input_img)[:, x_min:x_max, y_min:y_max, z_min:z_max]),
+                            'gt': list(np.asarray(gt)[:, x_min:x_max, y_min:y_max, z_min:z_max] if gt else []),
                         }
 
                         if self.subvolume_filter_fn and not self.subvolume_filter_fn(subvolume):
