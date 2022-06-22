@@ -25,11 +25,11 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
 
     Args:
         filename_pairs (list): A list of tuples in the format (input filename, ground truth filename).
-        transform (Compose): Transformations to apply.
         length (tuple): Size of each dimensions of the subvolumes, length equals 3.
         stride (tuple): Size of the overlapping per subvolume and dimensions, length equals 3.
         slice_axis (int): Indicates the axis used to extract slices: "axial": 2, "sagittal": 0, "coronal": 1.
-        subvolume_filter_fn (SubvolumeFilter): SubvolumeFilter object containing subvolume filter parameters.
+        transform (Compose): Transformations to apply.
+        subvolume_filter_fn (PatchFilter): PatchFilter object containing subvolume filter parameters.
         soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
         truths are thresholded (0.5) after the data augmentation operations.
         is_input_dropout (bool): Return input with missing modalities.
