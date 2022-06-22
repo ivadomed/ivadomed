@@ -113,9 +113,15 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
                         if self.subvolume_filter_fn and not self.subvolume_filter_fn(subvolume):
                             continue
 
-                        self.indexes.append({'x_min': x_min, 'x_max': x_max, 'y_min': y,
-                                             'y_max': y_max, 'z_min': z, 'z_max': z_max,
-                                             'handler_index': i})
+                        self.indexes.append({
+                            'x_min': x_min, 
+                            'x_max': x_max, 
+                            'y_min': y,
+                            'y_max': y_max, 
+                            'z_min': z, 
+                            'z_max': z_max,
+                            'handler_index': i,
+                        })
 
     def __len__(self):
         """Return the dataset size. The number of subvolumes."""
