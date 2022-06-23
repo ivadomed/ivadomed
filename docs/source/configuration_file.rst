@@ -163,6 +163,7 @@ WandB account to track experiments on WandB, however, you can still train ivadom
 without an account, since the metrics are logged on Tensorboard by default. 
 
 
+
 .. jsonschema::
 
     {
@@ -247,7 +248,12 @@ without an account, since the metrics are logged on Tensorboard by default.
             "run_name": "run-1"
         }
     }
+    
+.. note::
+    Using the same ``run_name`` does not replace the previous run but does create multiple entries of the same name. If left empty then the default is a random string assigned by WandB. 
 
+.. note::
+    We recommend defining the project/group/run names such that hierarchy is easily understandable. For instance, ``project_name`` could be the name of the dataset or the problem you are working (i.e. brain tumor segmentation/spinal cord lesion segmentation etc.), the ``group_name`` could be the various models you are willing to train, and the ``run_name`` could be the various experiments within a particular model (i.e. typically with different hyperparameters).
 
 .. jsonschema::
 
@@ -279,6 +285,8 @@ without an account, since the metrics are logged on Tensorboard by default.
 .. note::
     If ``debugging = True`` is specified in the config file, the training and validation input images, ground truth labels, and 
     the model predictions are also periodically logged on WandB, which can be seen under ``Media`` on the WandB Dashboard.
+
+
 
 
 Loader Parameters
