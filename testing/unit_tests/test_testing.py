@@ -232,8 +232,9 @@ def test_inference_2d_microscopy(download_data_testing_test_files, transforms_di
 def test_inference_2d_microscopy_target_suffix(download_data_testing_test_files, transforms_dict, test_lst, target_lst, roi_params,
         testing_params):
     """
-    This test checks if the filenames of the predictions in the pred_masks conform to the target_suffix and
-    are independent of _. As a result, _seg-axon-manual or _seg-axon_manual should yield same outputs
+    This test checks if the filename(s) of the prediction(s) saved as NifTI file(s) in the pred_masks
+    dir conform to the target_suffix or not. Thus, independent of underscore(s) in the target_suffix. As a result,
+    _seg-axon-manual or _seg-axon_manual should yield the same filename(s).
     (c.f: https://github.com/ivadomed/ivadomed/issues/1135)
     """
     cuda_available, device = imed_utils.define_device(GPU_ID)
@@ -301,7 +302,9 @@ def test_inference_2d_microscopy_target_suffix(download_data_testing_test_files,
 
     for x in __output_dir__.iterdir():
       if x.name.endswith('_pred.nii.gz'):
-        assert x.name.rsplit('_', 1)[0].endswith(loader_params['contrast_params']['contrast_lst'][-1])
+        assert x.name.rsplit('_', 1)[0].endswith(loader_params['contrast_params']['contrast_lst'][-1]), ( 
+            'Incompatible filename(s) of the prediction(s) saved as NifTI file(s)!'
+        )
 
 def teardown_function():
     remove_tmp_dir()
