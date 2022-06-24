@@ -76,6 +76,41 @@ def test_bids_df_anat(download_data_testing_test_files, loader_parameters):
 
 
 @pytest.mark.parametrize('loader_parameters', [{
+    "path_data": [str(Path(__data_testing_dir__, "ct_scan"))],
+    "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
+    "target_suffix": ["_seg-manual"],
+    "extensions": [".nii.gz"],
+    "roi_params": {"suffix": None, "slice_filter_roi": None},
+    "contrast_params": {"contrast_lst": ["ct"]},
+    "bids_validate": False
+    }])
+def test_bids_df_no_validate(download_data_testing_test_files, loader_parameters):
+    """
+    Test for ct-scan nii.gz file format
+    Test for when validate_BIDS is set to False for the loader
+    """
+
+    # Rename files so the loader won't pick them up if validate_BIDS is true
+    Path(loader_parameters[LoaderParamsKW.PATH_DATA][0], "sub-spleen2").rename(
+         Path(loader_parameters[LoaderParamsKW.PATH_DATA][0], "ssub-spleen2"))
+
+    bids_df = BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
+    df_test = bids_df.df.drop(columns=['path'])
+    df_test = df_test.sort_values(by=['filename']).reset_index(drop=True)
+    csv_ref = Path(loader_parameters[LoaderParamsKW.PATH_DATA][0], "df_ref.csv")
+    csv_test = Path(loader_parameters[LoaderParamsKW.PATH_DATA][0], "df_test.csv")
+    df_test.to_csv(csv_test, index=False)
+    diff = csv_diff.compare(
+        csv_diff.load_csv(open(csv_ref)),
+        csv_diff.load_csv(open(csv_test))
+    )
+
+    Path(loader_parameters[LoaderParamsKW.PATH_DATA][0], "ssub-spleen2").rename(
+         Path(loader_parameters[LoaderParamsKW.PATH_DATA][0], "sub-spleen2"))
+    assert diff == {'added': [], 'removed': [], 'changed': [], 'columns_added': [], 'columns_removed': []}
+
+
+@pytest.mark.parametrize('loader_parameters', [{
     "path_data": [__data_testing_dir__, str(Path(__data_testing_dir__, "microscopy_png"))],
     "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
     "target_suffix": ["_seg-manual", "seg-axon-manual"],
