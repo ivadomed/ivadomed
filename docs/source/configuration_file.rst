@@ -521,7 +521,7 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "bids_validate",
-        "description": "Indicates if the loader should validate the dataset for compliance with BIDS",
+        "description": "Indicates if the loader should validate the dataset for compliance with BIDS. Default: ``True``.",
         "type": "boolean"
     }
 
@@ -653,7 +653,7 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "roi_params",
-        "description": "Parameters for the region of interest",
+        "description": "Parameters for the region of interest.",
         "type": "dict",
         "options": {
             "suffix": {
@@ -1014,6 +1014,7 @@ Training Parameters
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "scheduler",
         "type": "dict",
+        "description": "A predefined framework that adjusts the learning rate between epochs or iterations as the training progresses.",
         "options": {
             "initial_lr": {
                 "type": "float",
@@ -1115,34 +1116,38 @@ Training Parameters
 
 .. jsonschema::
 
-   {
-       "$schema": "http://json-schema.org/draft-04/schema#",
-       "title": "transfer_learning",
-       "type": "dict",
-       "options": {
-           "retrain_model": {
-               "type": "string",
-               "$$description": [
-                   "Filename of the pretrained model (``path/to/pretrained-model``). If ``null``,\n",
-                   "no transfer learning is performed and the network is trained from scratch. Default: ``null``."
-               ]
-           },
-           "retrain_fraction": {
-               "type": "float",
-               "range": "[0, 1]",
-               "$$description": [
-                   "Controls the fraction of the pre-trained model that will be fine-tuned. For\n",
-                   "instance, if set to 0.5, the second half of the model will be fine-tuned while\n",
-                   "the first layers will be frozen. Default: ``1.0``."
-               ]
-           },
-           "reset": {
-               "type": "boolean",
-               "description": "If true, the weights of the layers that are not frozen
-                  are reset. If false, they are kept as loaded. Default: ``True``."
-           }
-       }
-   }
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "transfer_learning",
+        "type": "dict",
+        "$$description": ["A learning method where a model pretrained for a task is reused as the starting point",
+            "for a model on a second task."
+        ],
+        "options": {
+            "retrain_model": {
+                "type": "string",
+                "$$description": [
+                    "Filename of the pretrained model (``path/to/pretrained-model``). If ``null``,\n",
+                    "no transfer learning is performed and the network is trained from scratch. Default: ``null``."
+                ]
+            },
+            "retrain_fraction": {
+                "type": "float",
+                "range": "[0, 1]",
+                "$$description": [
+                    "Controls the fraction of the pre-trained model that will be fine-tuned. For\n",
+                    "instance, if set to 0.5, the second half of the model will be fine-tuned while\n",
+                    "the first layers will be frozen. Default: ``1.0``."
+                ]
+            },
+            "reset": {
+                "type": "boolean",
+                "$$description": ["If true, the weights of the layers that are not frozen are reset.",
+                    "If false, they are kept as loaded. Default: ``True``."
+                ]
+            }
+        }
+    }
 
 .. code-block:: JSON
 
@@ -1177,9 +1182,9 @@ being used for the segmentation task).
        "required": "true",
        "type": "dict",
        "$$description": [
-           "Define the default model (``Unet``) and mandatory parameters that are common to all\n",
-           "available :ref:`architectures`. For custom architectures (see below), the default\n",
-           "parameters are merged with the parameters that are specific to the tailored architecture."
+           "Define the default model (``Unet``) and mandatory parameters that are common to all available :ref:`architectures`.\n",
+           "For custom architectures (see below), the default parameters are merged with the parameters that are specific\n",
+           "to the tailored architecture."
        ],
        "options": {
            "name": {
@@ -1260,6 +1265,7 @@ being used for the segmentation task).
         "title": "FiLMedUnet",
         "type": "dict",
         "required": "false",
+        "description": "U-Net network containing FiLM layers to condition the model with another data type (i.e. not an image).",
         "options": {
             "applied": {
                 "type": "boolean",
@@ -1306,6 +1312,7 @@ being used for the segmentation task).
         "title": "HeMISUnet",
         "type": "dict",
         "required": "false",
+        "description": "A U-Net model inspired by HeMIS to deal with missing contrasts.",
         "options": {
             "applied": {
                 "type": "boolean",
@@ -1355,6 +1362,10 @@ being used for the segmentation task).
         "title": "Modified3DUNet",
         "type": "dict",
         "required": "false",
+        "$$description": [
+            "The main differences with the original UNet resides in the use of LeakyReLU instead of ReLU, InstanceNormalisation\n",
+            "instead of BatchNorm due to small batch size in 3D and the addition of segmentation layers in the decoder."
+        ],
         "options": {
             "applied": {
                 "type": "boolean",
@@ -1570,6 +1581,7 @@ Transformations applied during data augmentation. Transformations are sorted in 
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "RandomAffine",
         "type": "dict",
+        "description": "Apply Random Affine transformation.",
         "options": {
             "degrees": {
                 "type": "float or tuple(float)",
@@ -1620,6 +1632,7 @@ Transformations applied during data augmentation. Transformations are sorted in 
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "RandomShiftIntensity",
         "type": "dict",
+        "description": "Add a random intensity offset.",
         "options": {
             "shift_range": {
                 "type": "(float, float)",
@@ -1687,6 +1700,7 @@ Transformations applied during data augmentation. Transformations are sorted in 
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "Resample",
         "type": "dict",
+        "description": "Resample image to a given resolution.",
         "options": {
             "hspace": {
                 "type": "float",
@@ -1725,6 +1739,7 @@ Transformations applied during data augmentation. Transformations are sorted in 
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "AdditiveGaussianNoise",
         "type": "dict",
+        "description": "Adds Gaussian Noise to images.",
         "options": {
             "mean": {
                 "type": "float",
@@ -1755,6 +1770,7 @@ Transformations applied during data augmentation. Transformations are sorted in 
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "DilateGT",
         "type": "dict",
+        "description": "Randomly dilate a ground-truth tensor.",
         "options": {
             "dilation_factor": {
                 "type": "float",
@@ -1817,6 +1833,7 @@ Transformations applied during data augmentation. Transformations are sorted in 
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "Clahe",
         "type": "dict",
+        "description": "Applies Contrast Limited Adaptive Histogram Equalization for enhancing the local image contrast.",
         "options": {
             "clip_limit": {
                 "type": "float",
@@ -1904,7 +1921,7 @@ Transformations applied during data augmentation. Transformations are sorted in 
         "title": "RandomBiasField",
         "type": "dict",
         "$$description": [
-            "Applies a random MRI bias field artifact to the image via `torchio.RandomBiasField()`"
+            "Applies a random MRI bias field artifact to the image via ``torchio.RandomBiasField()``"
         ],
         "options": {
             "coefficients": {
