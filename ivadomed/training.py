@@ -207,8 +207,12 @@ def train(rank, model_params, dataset_train, dataset_val, training_params, path_
     logger.info("Selected Loss: {}".format(training_params["loss"]["name"]))
     logger.info("\twith the parameters: {}".format(
         [training_params["loss"][k] for k in training_params["loss"] if k != "name"]))
-    loss_fct = get_loss_function(copy.copy(training_params["loss"]))
-    loss_dice_fct = imed_losses.DiceLoss()  # For comparison when another loss is used
+    if no_ddp:
+        loss_fct = get_loss_function(copy.copy(training_params["loss"]))
+        loss_dice_fct = imed_losses.DiceLoss()  # For comparison when another loss is used
+    else:
+        loss_fct = get_loss_function(copy.copy(training_params["loss"])).cuda(device)
+        loss_dice_fct = imed_losses.DiceLoss().cuda(device)  # For comparison when another loss is used
 
     # INIT TRAINING VARIABLES
     best_training_dice, best_training_loss = float("inf"), float("inf")
