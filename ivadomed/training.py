@@ -63,8 +63,11 @@ def train(rank, model_params, dataset_train, dataset_val, training_params, path_
     # Write the metrics, images, etc to TensorBoard format
     writer = SummaryWriter(log_dir=path_output)
 
+    # variable for ddp
+    no_ddp = rank == -1 and torch.cuda.device_count() <= 1
+    
     # Enable wandb tracking  if the required params are found in the config file and the api key is correct
-    wandb_tracking = imed_utils.initialize_wandb(wandb_params)
+    wandb_tracking = imed_utils.initialize_wandb(wandb_params) if no_ddp or rank == 0 else False
 
     if wandb_tracking:
         # Collect all hyperparameters into a dictionary
@@ -87,9 +90,6 @@ def train(rank, model_params, dataset_train, dataset_val, training_params, path_
 
     # set the local rank to be the rank    
     local_rank = rank
-
-    # variable for ddp
-    no_ddp = local_rank == -1 and torch.cuda.device_count() <= 1
 
     # initialize default process group
     if local_rank == -1:
