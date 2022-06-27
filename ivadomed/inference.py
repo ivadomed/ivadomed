@@ -10,7 +10,6 @@ from pathlib import Path
 from loguru import logger
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
-from torch import tensor
 
 from ivadomed.loader.mri3d_subvolume_segmentation_dataset import MRI3DSubVolumeSegmentationDataset
 from ivadomed.loader.mri2d_segmentation_dataset import MRI2DSegmentationDataset
@@ -28,24 +27,24 @@ from ivadomed.keywords import ConfigKW, ModelParamsKW, ObjectDetectionParamsKW, 
     ROIParamsKW, SliceFilterParamsKW, TrainingParamsKW, MetadataKW, OptionKW
 
 
-def onnx_inference(model_path: str, inputs: tensor) -> tensor:
+def onnx_inference(model_path: str, inputs: torch.Tensor) -> torch.Tensor:
     """Run ONNX inference
 
     Args:
         model_path (str): Path to the ONNX model.
-        inputs (Tensor): Batch of input image.
+        inputs (torch.Tensor): Batch of input image.
 
     Returns:
-        Tensor: Network output.
+        torch.Tensor: Network output.
     """
-    inputs = np.array(inputs.cpu())
+    inputs = inputs.cpu().numpy()
     ort_session = onnxruntime.InferenceSession(model_path)
     ort_inputs = {ort_session.get_inputs()[0].name: inputs}
     ort_outs = ort_session.run(None, ort_inputs)
-    return torch.tensor(ort_outs[0])
+    return torch.Tensor(ort_outs[0])
 
 
-def get_preds(context: dict, fname_model: str, model_params: dict, gpu_id: int, batch: dict) -> tensor:
+def get_preds(context: dict, fname_model: str, model_params: dict, gpu_id: int, batch: dict) -> torch.Tensor:
     """Returns the predictions from the given model.
 
     Args:
@@ -56,7 +55,7 @@ def get_preds(context: dict, fname_model: str, model_params: dict, gpu_id: int, 
         batch (dict): dictionary containing input, gt and metadata
 
     Returns:
-        tensor: predictions from the model.
+        torch.Tensor: predictions from the model.
     """
     # Define device
     cuda_available, device = imed_utils.define_device(gpu_id)
@@ -503,18 +502,18 @@ def split_classes(nib_prediction):
     return pred_list
 
 
-def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompose, preds: torch.tensor,
+def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompose, preds: torch.Tensor,
                           preds_list: list, kernel_3D: bool, is_2d_patch: bool, slice_axis: int, slice_idx_list: list,
                           data_loader: DataLoader, fname_images: list, i_batch: int, last_sample_bool: bool,
-                          weight_matrix: tensor, volume: tensor, image: tensor):
+                          weight_matrix: torch.Tensor, volume: torch.Tensor, image: torch.Tensor):
     """Reconstructs the 3D object from the current batch, and returns the list of predictions and targets.
 
     Args:
         context (dict): configuration dict.
         batch (dict): Dictionary containing input, gt and metadata
         undo_transforms (UndoCompose): Undo transforms so prediction match original image resolution and shape
-        preds (tensor): Subvolume predictions
-        preds_list (list of tensor): list of subvolume predictions.
+        preds (torch.Tensor): Subvolume predictions
+        preds_list (list of torch.Tensor): list of subvolume predictions.
         kernel_3D (bool): true when using 3D kernel.
         is_2d_patch (bool): True if length in default model params.
         slice_axis (int): Indicates the axis used for the 2D slice extraction: Sagittal: 0, Coronal: 1, Axial: 2.
@@ -523,19 +522,19 @@ def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompo
         fname_images (list): list of image filenames (e.g. .nii.gz) to segment.
         i_batch (int): index of current batch.
         last_sample_bool (bool) : flag to indicate whether this is the last sample in the 3D volume
-        weight_matrix (tensor): the weight matrix
-        volume (tensor): the volume tensor that is being partially reconstructed through the loop
-        image (tensor): the image tensor that is being partially reconstructed through the loop
+        weight_matrix (torch.Tensor): the weight matrix
+        volume (torch.Tensor): the volume torch.Tensor that is being partially reconstructed through the loop
+        image (torch.Tensor): the image torch.Tensor that is being partially reconstructed through the loop
 
     Returns:
         pred_list (list): list of predictions
         target_list (list): list of targets
         last_sample_bool (bool): flag to indicate whether this is the last sample in the 3D volume
-        weight_matrix (tensor): the weight matrix. Must be returned as passing tensor by reference is NOT reliable.
-        volume (tensor): the volume tensor that is being partially reconstructed through the loop. Must be returned \
-            as passing tensor by reference is NOT reliable.
-        image (tensor): the vimage tensor that is being partially reconstructed through the loop. Must be returned \
-            as passing tensor by reference is NOT reliable.
+        weight_matrix (torch.Tensor): the weight matrix. Must be returned as passing torch.Tensor by reference is NOT reliable.
+        volume (torch.Tensor): the volume torch.Tensor that is being partially reconstructed through the loop. Must be returned \
+            as passing torch.Tensor by reference is NOT reliable.
+        image (torch.Tensor): the vimage torch.Tensor that is being partially reconstructed through the loop. Must be returned \
+            as passing torch.Tensor by reference is NOT reliable.
     """
     pred_list = []
     target_list = []
@@ -588,24 +587,24 @@ def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompo
     return pred_list, target_list, last_sample_bool, weight_matrix, volume, image
 
 
-def volume_reconstruction(batch: dict, pred: tensor, undo_transforms: UndoCompose, smp_idx: int,
-                          volume: tensor = None, weight_matrix: tensor = None):
+def volume_reconstruction(batch: dict, pred: torch.Tensor, undo_transforms: UndoCompose, smp_idx: int,
+                          volume: torch.Tensor = None, weight_matrix: torch.Tensor = None):
     """
     Reconstructs volume prediction from subvolumes used during training
     Args:
         batch (dict): Dictionary containing input, gt and metadata
-        pred (tensor): Subvolume prediction
+        pred (torch.Tensor): Subvolume prediction
         undo_transforms (UndoCompose): Undo transforms so prediction match original image resolution and shap
         smp_idx (int): Batch index
-        volume (tensor): Reconstructed volume
-        weight_matrix (tensor): Weights containing the number of predictions for each voxel
+        volume (torch.Tensor): Reconstructed volume
+        weight_matrix (torch.Tensor): Weights containing the number of predictions for each voxel
 
     Returns:
-        pred_undo (tensor): undone subvolume,
+        pred_undo (torch.Tensor): undone subvolume,
         metadata (dict): metadata,
         last_sample_bool (bool): boolean representing if its the last sample of the volume
-        volume (tensor): representing the volume reconstructed
-        weight_matrix (tensor): weight matrix
+        volume (torch.Tensor): representing the volume reconstructed
+        weight_matrix (torch.Tensor): weight matrix
     """
     pred_undo, metadata = None, None
     x_min, x_max, y_min, y_max, z_min, z_max = batch[MetadataKW.INPUT_METADATA][smp_idx][0]['coord']
@@ -618,7 +617,7 @@ def volume_reconstruction(batch: dict, pred: tensor, undo_transforms: UndoCompos
     # Get the Dimension
     x, y, z = batch[MetadataKW.INPUT_METADATA][smp_idx][0]['index_shape']
 
-    # If this is the first sample, instantiate a ZERO tensor based on the dimension
+    # If this is the first sample, instantiate a ZERO torch.Tensor based on the dimension
     if first_sample:
         volume = torch.zeros((num_pred, x, y, z))
         weight_matrix = torch.zeros((num_pred, x, y, z))
@@ -637,24 +636,24 @@ def volume_reconstruction(batch: dict, pred: tensor, undo_transforms: UndoCompos
     return pred_undo, metadata, last_sample_bool, volume, weight_matrix
 
 
-def image_reconstruction(batch: dict, pred: tensor, undo_transforms: UndoCompose, smp_idx: int,
-                        image: tensor = None, weight_matrix: tensor = None):
+def image_reconstruction(batch: dict, pred: torch.Tensor, undo_transforms: UndoCompose, smp_idx: int,
+                        image: torch.Tensor = None, weight_matrix: torch.Tensor = None):
     """
     Reconstructs image prediction from patches used during training
     Args:
         batch (dict): Dictionary containing input, gt and metadata
-        pred (tensor): Patch prediction
+        pred (torch.Tensor): Patch prediction
         undo_transforms (UndoCompose): Undo transforms so prediction match original image resolution and shape
         smp_idx (int): Batch index
-        image (tensor): Reconstructed image
-        weight_matrix (tensor): Weights containing the number of predictions for each pixel
+        image (torch.Tensor): Reconstructed image
+        weight_matrix (torch.Tensor): Weights containing the number of predictions for each pixel
 
     Returns:
-        pred_undo (tensor): undone image
+        pred_undo (torch.Tensor): undone image
         metadata (dict): metadata
         last_patch_bool (bool): boolean representing if its the last patch of the image
-        image (tensor): representing the image reconstructed
-        weight_matrix (tensor): weight matrix
+        image (torch.Tensor): representing the image reconstructed
+        weight_matrix (torch.Tensor): weight matrix
     """
     pred_undo, metadata = None, None
     x_min, x_max, y_min, y_max = batch[MetadataKW.INPUT_METADATA][smp_idx][0]['coord']
@@ -667,7 +666,7 @@ def image_reconstruction(batch: dict, pred: tensor, undo_transforms: UndoCompose
     # Get the Dimension
     x, y = batch[MetadataKW.INPUT_METADATA][smp_idx][0]['index_shape']
 
-    # If this is the first sample, instantiate a ZERO tensor based on the dimension
+    # If this is the first sample, instantiate a ZERO torch.Tensor based on the dimension
     if first_patch:
         image = torch.zeros((num_pred, x, y))
         weight_matrix = torch.zeros((num_pred, x, y))
