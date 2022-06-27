@@ -566,7 +566,7 @@ def get_metadata(metadata, model_params):
                 for k in range(len(metadata))]
 
 
-def load_checkpoint(model, optimizer, gif_dict, scheduler, fname, gpu=-1):
+def load_checkpoint(model, optimizer, gif_dict, scheduler, fname, gpu=None):
     """Load checkpoint.
 
     This function check if a checkpoint is available. If so, it updates the state of the input objects.
@@ -577,6 +577,7 @@ def load_checkpoint(model, optimizer, gif_dict, scheduler, fname, gpu=-1):
         gif_dict (dict): Dictionary containing a GIF of the training.
         scheduler (_LRScheduler): Learning rate scheduler.
         fname (str): Checkpoint filename.
+        gpu (int): Integer indication GPU being used
 
     Return:
         nn.Module, torch, dict, int, float, _LRScheduler, int
@@ -586,11 +587,11 @@ def load_checkpoint(model, optimizer, gif_dict, scheduler, fname, gpu=-1):
     patience_count = 0
     try:
         logger.info("Loading checkpoint: {}".format(fname))
-        if gpu < 0:
-            checkpoint = torch.load(fname)
+        if gpu is not None:
+            checkpoint = torch.load(fname, map_location=f"cuda:{gpu}")
         else:
             # map model to the specified gpu
-            checkpoint = torch.load(fname, map_location=f"cuda:{gpu}")
+            checkpoint = torch.load(fname)
         start_epoch = checkpoint['epoch']
         model.load_state_dict(checkpoint['state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer'])
