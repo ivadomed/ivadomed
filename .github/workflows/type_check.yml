@@ -1,6 +1,5 @@
 name: Static Type Checking with mypy
 
-# TODO: update to include on just files changed
 on:
   push:
     branches:
