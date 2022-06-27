@@ -507,11 +507,12 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
             best_scores_path = Path(path_output, model_params[ModelParamsKW.FOLDER_NAME],
                                model_params[ModelParamsKW.FOLDER_NAME] + "_scores.json")
             if os.path.isfile(best_scores_path):
-                best_scores = json.load(str(best_scores_path))
-                best_training_dice = best_scores["best_training_dice"]
-                best_training_loss = best_scores["best_training_loss"]
-                best_validation_dice = best_scores["best_validation_dice"]
-                best_validation_loss = best_scores["best_validation_loss"]
+                with open(str(best_scores_path)) as best_scores:
+                    best_scores = json.load(best_scores)
+                    best_training_dice = best_scores["best_training_dice"]
+                    best_training_loss = best_scores["best_training_loss"]
+                    best_validation_dice = best_scores["best_validation_dice"]
+                    best_validation_loss = best_scores["best_validation_loss"]
 
         return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
 
