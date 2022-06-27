@@ -381,7 +381,7 @@ def train(rank, model_params, dataset_train, dataset_val, training_params, path_
                          'scheduler': scheduler,
                          'patience_count': patience_count,
                          'validation_loss': val_loss_total_avg}
-                if local_rank < 1:  # save state to cuda:0 if DDP, or the usual way if 1 GPU/CPU
+                if no_ddp or rank == 0:  # save state to cuda:0 if DDP, or the usual way if 1 GPU/CPU
                     torch.save(state, resume_path)
 
                 # Save best model file
@@ -406,7 +406,7 @@ def train(rank, model_params, dataset_train, dataset_val, training_params, path_
     torch.save(model, final_model_path)
 
     # Save best model in output path
-    if resume_path.is_file():
+    if resume_path.is_file() and (no_ddp or local_rank == 0):
         # loading state changes based on CPU or DDP
         if no_ddp:
             state = torch.load(resume_path, map_location=torch.device('cpu'))
@@ -456,11 +456,11 @@ def train(rank, model_params, dataset_train, dataset_val, training_params, path_
           "| duration " + str(datetime.timedelta(seconds=duration_time)))
 
     # Cleanup DDP if applicable
-    if local_rank != -1:
+    if not no_ddp:
         torch.distributed.destroy_process_group()
 
     # if DDP is used, store values in JSON file located with the best model
-    if not no_ddp and rank == 1:
+    if not no_ddp and rank == 0:
         best_scores = dict(best_training_dice=best_training_dice,
                            best_training_loss=best_training_loss,
                            best_validation_dice=best_validation_dice,
