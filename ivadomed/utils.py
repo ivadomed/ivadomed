@@ -504,7 +504,6 @@ def get_linux_system_memory() -> float:
     Returns: memory in GB
     Source: https://stackoverflow.com/a/28161352
     """
-    import os
     mem_bytes = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')  # e.g. 4015976448
     mem_gib = mem_bytes / (1024. ** 3)  # e.g. 3.74
     return mem_gib
@@ -517,7 +516,6 @@ def get_mac_system_memory() -> float:
     Source: https://apple.stackexchange.com/a/4296
     """
 
-    import subprocess
     import re
 
     # Get process info
@@ -526,7 +524,7 @@ def get_mac_system_memory() -> float:
     # Iterate processes
     processLines = ps.split('\n')
     sep = re.compile('[\s]+')
-    rssTotal = 0  # kB
+    rssTotal = 0.0  # kB
     for row in range(1, len(processLines)):
         rowText = processLines[row].strip()
         rowElements = sep.split(rowText)

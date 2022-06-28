@@ -331,7 +331,7 @@ class BidsDataframe:
         Args:
             path_data (str): Path to the BIDS dataset.
         """
-        path_data = Path(path_data).absolute()
+        path_data = Path(path_data).absolute().as_posix()
 
         filename = 'dataset_description'
         path_deriv_desc_file = Path(f'{path_data}/derivatives/{filename}.json')

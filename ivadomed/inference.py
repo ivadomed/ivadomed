@@ -4,7 +4,7 @@ import onnxruntime
 import torch
 import imageio
 import joblib
-from typing import List
+from typing import List, Optional
 from pathlib import Path
 
 from loguru import logger
@@ -121,7 +121,7 @@ def get_onehotencoder(context: dict, folder_model: str, options: dict, ds: Datas
     return joblib.load(Path(folder_model, 'one_hot_encoder.joblib'))
 
 
-def pred_to_nib(data_lst: List[np.ndarray], z_lst: List[int], fname_ref: str, fname_out: str, slice_axis: int,
+def pred_to_nib(data_lst: List[np.ndarray], z_lst: List[int], fname_ref: str, fname_out: Optional[str], slice_axis: int,
                 debug: bool = False, kernel_dim: str='2d', bin_thr: float=0.5, discard_noise: bool = True,
                 postprocessing: dict = None) -> nib.Nifti1Image:
     """Save the network predictions as nibabel object.
@@ -317,7 +317,7 @@ def set_postprocessing_options(options: dict, context: dict):
     context[ConfigKW.POSTPROCESSING].update(postpro)
 
 
-def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, options: dict = None):
+def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, options: dict = {}):
     """Segment an image.
 
     Segment an image (`fname_image`) using a pre-trained model (`folder_model`). If provided, a region of interest
@@ -378,7 +378,7 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
     # LOADER
     loader_params = context[ConfigKW.LOADER_PARAMETERS]
     slice_axis = imed_utils.AXIS_DCT[loader_params[LoaderParamsKW.SLICE_AXIS]]
-    metadata = {}
+    metadata: dict = {}
     fname_roi = None
 
     if (options is not None) and (OptionKW.FNAME_PRIOR in options):
@@ -465,7 +465,9 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
                              num_workers=0)
 
     # Loop across batches
-    preds_list, slice_idx_list = [], []
+    preds_list: list[int] = []
+    slice_idx_list: list[int] = []
+    
     last_sample_bool, weight_matrix, volume, image = False, None, None, None
     for i_batch, batch in enumerate(data_loader):
         preds = get_preds(context, fname_model, model_params, gpu_id, batch)
@@ -503,7 +505,7 @@ def split_classes(nib_prediction):
 
 
 def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompose, preds: torch.Tensor,
-                          preds_list: list, kernel_3D: bool, is_2d_patch: bool, slice_axis: int, slice_idx_list: list,
+                          preds_list: list, kernel_3D: bool, is_2d_patch: bool, slice_axis: int, slice_idx_list: list[int],
                           data_loader: DataLoader, fname_images: list, i_batch: int, last_sample_bool: bool,
                           weight_matrix: torch.Tensor, volume: torch.Tensor, image: torch.Tensor):
     """Reconstructs the 3D object from the current batch, and returns the list of predictions and targets.
@@ -588,7 +590,7 @@ def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompo
 
 
 def volume_reconstruction(batch: dict, pred: torch.Tensor, undo_transforms: UndoCompose, smp_idx: int,
-                          volume: torch.Tensor = None, weight_matrix: torch.Tensor = None):
+                          volume: torch.Tensor, weight_matrix: torch.Tensor):
     """
     Reconstructs volume prediction from subvolumes used during training
     Args:
@@ -637,7 +639,7 @@ def volume_reconstruction(batch: dict, pred: torch.Tensor, undo_transforms: Undo
 
 
 def image_reconstruction(batch: dict, pred: torch.Tensor, undo_transforms: UndoCompose, smp_idx: int,
-                        image: torch.Tensor = None, weight_matrix: torch.Tensor = None):
+                        image: torch.Tensor, weight_matrix: torch.Tensor):
     """
     Reconstructs image prediction from patches used during training
     Args:
