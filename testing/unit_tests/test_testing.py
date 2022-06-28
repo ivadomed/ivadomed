@@ -229,7 +229,7 @@ def test_inference_2d_microscopy(download_data_testing_test_files, transforms_di
         "aleatoric": False,
         "n_it": 0
     }}])
-def test_inference_2d_microscopy_target_suffix(download_data_testing_test_files, transforms_dict, test_lst, target_lst, roi_params,
+def test_inference_target_suffix(download_data_testing_test_files, transforms_dict, test_lst, target_lst, roi_params,
         testing_params):
     """
     This test checks if the filename(s) of the prediction(s) saved as NifTI file(s) in the pred_masks
