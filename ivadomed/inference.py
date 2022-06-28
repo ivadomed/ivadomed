@@ -1,3 +1,4 @@
+from typing_extensions import reveal_type
 import nibabel as nib
 import numpy as np
 import onnxruntime
@@ -260,7 +261,7 @@ def process_transformations(context: dict, fname_roi: str, fname_prior: str, met
             context[ConfigKW.OBJECT_DETECTION_PARAMS][ObjectDetectionParamsKW.OBJECT_DETECTION_PATH] is not None:
         imed_obj_detect.bounding_box_prior(fname_prior, metadata, slice_axis,
                                            context[ConfigKW.OBJECT_DETECTION_PARAMS][ObjectDetectionParamsKW.SAFETY_FACTOR])
-        metadata = [metadata] * len(fname_images)
+        metadata = [metadata] * len(fname_images)  # type: ignore[assignment] 
 
     return metadata
 
@@ -389,8 +390,8 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
     if fname_prior is not None:
         if LoaderParamsKW.ROI_PARAMS in loader_params and loader_params[LoaderParamsKW.ROI_PARAMS][ROIParamsKW.SUFFIX] is not None:
             fname_roi = fname_prior
-        # TRANSFORMATIONS
-        metadata = process_transformations(context, fname_roi, fname_prior, metadata, slice_axis, fname_images)
+            # TRANSFORMATIONS
+            metadata = process_transformations(context, fname_roi, fname_prior, metadata, slice_axis, fname_images)
 
     # Compose transforms
     _, _, transform_test_params = imed_transforms.get_subdatasets_transforms(context[ConfigKW.TRANSFORMATION])
@@ -402,7 +403,7 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
         logger.warning("fname_roi has not been specified, then the entire volume is processed.")
         loader_params[LoaderParamsKW.SLICE_FILTER_PARAMS][SliceFilterParamsKW.FILTER_EMPTY_MASK] = False
 
-    kernel_3D = bool(ConfigKW.MODIFIED_3D_UNET in context and context[ConfigKW.MODIFIED_3D_UNET][ModelParamsKW.APPLIED]) or \
+    kernel_3D: bool = bool(ConfigKW.MODIFIED_3D_UNET in context and context[ConfigKW.MODIFIED_3D_UNET][ModelParamsKW.APPLIED]) or \
                 not context[ConfigKW.DEFAULT_MODEL][ModelParamsKW.IS_2D]
 
     # Assign length_2D and stride_2D for 2D patching
@@ -413,12 +414,12 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
     is_2d_patch = bool(length_2D)
 
     if is_2d_patch and (options is not None) and (OptionKW.OVERLAP_2D in options):
-        overlap_2D = options.get(OptionKW.OVERLAP_2D)
+        overlap_2D: List[int] = options.get(OptionKW.OVERLAP_2D) # type: ignore[assignment]
         # Swap OverlapX and OverlapY resulting in an array in order [OverlapY, OverlapX]
         # to match length_2D and stride_2D in [Height, Width] orientation.
         overlap_2D[1], overlap_2D[0] = overlap_2D[0], overlap_2D[1]
         # Adjust stride_2D with overlap_2D
-        stride_2D = [x1 - x2 for (x1, x2) in zip(length_2D, overlap_2D)]
+        stride_2D = [x1 - x2 for (x1, x2) in zip(length_2D, overlap_2D)] 
 
     # Add microscopy pixel size and pixel size units from options to metadata for filenames_pairs
     if (options is not None) and (OptionKW.PIXEL_SIZE in options):
@@ -437,7 +438,7 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
         logger.info(f"Loaded {len(ds)} {loader_params[LoaderParamsKW.SLICE_AXIS]} volumes of shape "
                     f"{context[ConfigKW.MODIFIED_3D_UNET][ModelParamsKW.LENGTH_3D]}.")
     else:
-        ds = MRI2DSegmentationDataset(filename_pairs,
+        ds = MRI2DSegmentationDataset(filename_pairs, # type: ignore[assignment]
                                       length=length_2D,
                                       stride=stride_2D,
                                       slice_axis=slice_axis,
@@ -476,12 +477,12 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
         for b in batch[MetadataKW.INPUT_METADATA]:
             for modality in b:
                 modality['data_type'] = 'gt'
-
+                
         # Reconstruct 3D object
         pred_list, target_list, last_sample_bool, weight_matrix, volume, image = reconstruct_3d_object(
-            context, batch, undo_transforms, preds, preds_list, kernel_3D, is_2d_patch, slice_axis,
-            slice_idx_list, data_loader, fname_images, i_batch, last_sample_bool, weight_matrix,
-            volume, image
+            context, batch, undo_transforms, preds, preds_list, kernel_3D, is_2d_patch, 
+            slice_axis, slice_idx_list, data_loader, fname_images, i_batch, last_sample_bool, 
+            weight_matrix, volume, image # type: ignore[arg-type]
         )
 
     return pred_list, target_list
