@@ -3,7 +3,8 @@ Installation
 
 Supported OS
 ++++++++++++
-
+    
+    (TODO: update GPU acceleration)
     Currently, ``ivadomed`` supports GPU/CPU on ``Linux`` and ``Windows``, and CPU only on ``macOS`` and `Windows Subsystem for Linux <https://docs.microsoft.com/en-us/windows/wsl/>`_.
 
 Step 1: Setup dedicated python environment
@@ -107,109 +108,54 @@ Step 2: Install ``ivadomed``
         
         .. tab:: NVIDIA GPU Support
 
-            ``ivadomed`` requires a minimum PyTorch version of either
-            1.8.1 or 1.8.2 which supports CUDA 10.2 and CUDA 11.1 builds
-            by default. 
-            
-            Ampere-based GPUs (with a Compute Capability of 8.x) only work
-            CUDA>=11.1. Although CUDA 11.1 is backward compatible with older 
-            hardware, CUDA 10.2 is preferred if available.
+            PyTorch is an integral part of ``ivadomed`` which ships 
+            CUDA 10.2 and CUDA 11.1 runtime by default.
 
-            CUDA 10.2 and CUDA 11.1 require an NVIDIA driver version >=440.33 
-            and >=450 respectively as indicated `here <https://docs.nvidia.com/deploy/cuda-compatibility/index.html#minor-version-compatibility>`__.
-            Please make sure to upgrade to the minimum NVIDIA driver version 
-            requirements for the respective CUDA builds. To verify the NVIDIA
-            driver version, just run the command `nvidia-smi` and you'll find 
-            your current driver version on the top.
+            Ampere-based GPUs (with a `Compute Capability <https://developer.nvidia.com/cuda-gpus>`
+            of 8.x) only work with CUDA>=11.1. Although CUDA 11.1 is
+            backward compatible with older hardware, CUDA 10.2 is
+            preferred if available.
+
+            To accelerate `ivadomed` with CUDA 10.2 on a Linux system, you'd
+            need to have GPUs installed with an `NVIDIA driver version >=440.33
+            <https://docs.nvidia.com/deploy/cuda-compatibility/index.html#minor-version-compatibility>`__.
+            And, for CUDA 11.1 you'd need an NVIDIA driver version >=450.
+            
+            To verify the NVIDIA driver version, just look in ``/sys`` by 
+            executing the command `cat /sys/module/nvidia/version` and you'll find 
+            your current driver version.
             
             .. tabs::
 
                 .. tab:: Package Installation (Recommended)
 
-                    To install ``ivadomed`` 
+                    To install ``ivadomed`` with CUDA 10.2:
 
-                    .. tabs::
+                    ::
+                        
+                        pip install ivadomed
 
-                        .. tab:: Linux
+                    or, with CUDA 11.1:
 
-                            with CUDA 10.2:
+                    ::
 
-                            ::
-                                
-                                pip install ivadomed
-
-                            and, with CUDA 11.1:
-
-                            ::
-
-                                pip install ivadomed --extra-index-url https://download.pytorch.org/whl/cu111 
-
-                        .. tab:: Windows
-
-                            with CUDA 10.2:
-
-                            ::
-                                
-                                pip install ivadomed --extra-index-url https://download.pytorch.org/whl/cu102
-
-                            and, with CUDA 11.1:
-
-                            ::
-
-                                pip install ivadomed --extra-index-url https://download.pytorch.org/whl/cu111
-
+                        pip install ivadomed --extra-index-url https://download.pytorch.org/whl/cu111 
 
                 .. tab:: Source Installation
 
                     Bleeding-edge developments are available on the master branch of the project
-                    on Github. To install ``ivadomed`` from source
+                    on Github. To install ``ivadomed`` from source with CUDA 10.2:
+                    
+                    ::
+            
+                        pip install git+https://github.com/ivadomed/ivadomed.git
 
-                    .. tabs::
+                    or, with CUDA 11.1:
 
-                        .. tab:: Linux
+                    ::
 
-                            with CUDA 10.2:
-                            
-                            ::
-                   
-                                git clone https://github.com/ivadomed/ivadomed.git
-
-                                cd ivadomed
-
-                                pip install -e .
-
-                            and, with CUDA 11.1:
-
-                            ::
-
-                                git clone https://github.com/ivadomed/ivadomed.git
-
-                                cd ivadomed
-
-                                pip install -e . --extra-index-url https://download.pytorch.org/whl/cu111
-
-                        .. tab:: Windows 
-
-                            with CUDA 10.2:
-
-                            ::
-
-                                git clone https://github.com/ivadomed/ivadomed.git
-
-                                cd ivadomed
-
-                                pip install -e . --extra-index-url https://download.pytorch.org/whl/cu102
-
-                            and, with CUDA 11.1:
-
-                            ::
-
-                                git clone https://github.com/ivadomed/ivadomed.git
-
-                                cd ivadomed
-
-                                pip install -e . --extra-index-url https://download.pytorch.org/whl/cu111
-
+                        pip install git+https://github.com/ivadomed/ivadomed.git \
+                        --extra-index-url https://download.pytorch.org/whl/cu111
 
         .. tab:: CPU Support
 
@@ -225,13 +171,7 @@ Step 2: Install ``ivadomed``
 
                                 pip install ivadomed --extra-index-url https://download.pytorch.org/whl/cpu
 
-                        .. tab:: Windows 
-
-                            ::
-
-                                pip install ivadomed
-
-                        .. tab:: Mac 
+                        .. tab:: Windows/Mac
 
                             ::
 
@@ -248,31 +188,11 @@ Step 2: Install ``ivadomed``
 
                             ::
 
-                                git clone https://github.com/ivadomed/ivadomed.git
+                                pip install git+https://github.com/ivadomed/ivadomed.git \
+                                --extra-index-url https://download.pytorch.org/whl/cpu
 
-                                cd ivadomed
-
-                                pip install -e . --extra-index-url https://download.pytorch.org/whl/cpu
-
-                        .. tab:: Windows 
+                        .. tab:: Windows/Mac 
 
                             ::
 
-                                git clone https://github.com/ivadomed/ivadomed.git
-
-                                cd ivadomed
-                                
-                                pip install -e .
-
-                        .. tab:: Mac
-
-                            ::
-
-                                git clone https://github.com/ivadomed/ivadomed.git
-
-                                cd ivadomed
-
-                                pip install -e .
-
-
- 
+                                pip install git+https://github.com/ivadomed/ivadomed.git
