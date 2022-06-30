@@ -48,7 +48,7 @@ General Parameters
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "gpu_ids",
-        "description": "List of IDs of one or more GPUs to use. Default: ``[0]``",
+        "description": "List of IDs of one or more GPUs to use. Default: ``[0]``.",
         "type": "list[int]"
     }
 
@@ -88,7 +88,7 @@ General Parameters
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "model_name",
         "description": "Folder name containing the trained model (ONNX format) and its configuration
-            file, located within ``log_directory/``",
+            file, located within ``log_directory/``.",
         "type": "string"
     }
 
@@ -122,7 +122,7 @@ When possible, the folder name will follow the following convention:
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "debugging",
-        "description": "Extended verbosity and intermediate outputs. Default: ``False``",
+        "description": "Extended verbosity and intermediate outputs. Default: ``False``.",
         "type": "boolean"
     }
 
@@ -395,7 +395,7 @@ for training/testing.
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "target_suffix",
-        "description": "Suffix list of the derivative file containing the ground-truth of interest.",
+        "description": "Suffix list of the derivative file containing the ground-truth of interest. Default: ``[]``.",
         "type": "list[str]"
     }
 
@@ -780,7 +780,7 @@ Split Dataset
         "$$description": [
             "Seed used by the random number generator to split the dataset between\n",
             "training/validation/testing sets. The use of the same seed ensures the same split between\n",
-            "the sub-datasets, which is useful for reproducibility."
+            "the sub-datasets, which is useful for reproducibility. Default: ``6``."
         ],
         "type": "int"
     }
@@ -803,7 +803,7 @@ Split Dataset
             "Metadata contained in a BIDS tabular (TSV) file or a BIDS sidecar JSON file on which the files are shuffled\n",
             "then split between train/validation/test, according to ``train_fraction`` and ``test_fraction``.\n",
             "For examples, ``participant_id`` will shuffle all participants from the ``participants.tsv`` file\n",
-            "then split between train/validation/test sets."
+            "then split between train/validation/test sets. Default: ``participant_id``."
         ],
         "type": "string"
     }
@@ -831,7 +831,7 @@ Split Dataset
                 "$$description": [
                     "Metadata to include in the testing dataset.\n",
                     "If specified, the ``test_fraction`` is applied to this metadata.\n",
-                    "If not specified, ``data_type`` is the same as ``split_method``."
+                    "If not specified, ``data_type`` is the same as ``split_method``. Default: ``null``."
                 ],
                 "type": "string"
             },
@@ -839,7 +839,7 @@ Split Dataset
                 "$$description": [
                     "(Optional) List of metadata values from the ``data_type`` column to include in the testing dataset.\n",
                     "If specified, the testing set contains only files from the ``data_value`` list and the ``test_fraction`` is not used.\n",
-                    "If not specified, create a random ``data_value`` according to ``data_type`` and ``test_fraction``."
+                    "If not specified, create a random ``data_value`` according to ``data_type`` and ``test_fraction``. Default: ``[]``."
                 ],
                 "type": "list"
             }
@@ -880,7 +880,7 @@ Split Dataset
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "train_fraction",
-        "description": "Fraction of the dataset used as training set.",
+        "description": "Fraction of the dataset used as training set. Default: ``0.6``.",
         "type": "float",
         "range": "[0, 1]"
     }
@@ -898,7 +898,7 @@ Split Dataset
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "test_fraction",
-        "description": "Fraction of the dataset used as testing set.",
+        "description": "Fraction of the dataset used as testing set. Default: ``0.2``.",
         "type": "float",
         "range": "[0, 1]"
     }
@@ -921,7 +921,7 @@ Training Parameters
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "batch_size",
         "type": "int",
-        "description": "Defines the number of samples that will be propagated through the network.",
+        "description": "Defines the number of samples that will be propagated through the network. Default: ``18``.",
         "range": "(0, inf)"
     }
 
@@ -941,14 +941,13 @@ Training Parameters
         "title": "loss",
         "$$description": [
             "Metadata for the loss function. Other parameters that could be needed in the\n",
-            "Loss function definition: see attributes of the Loss function of interest\n",
-            "(e.g. ``'gamma': 0.5`` for ``FocalLoss``)."
+            "Loss function definition: see attributes of the Loss function of interest (e.g. ``'gamma': 0.5`` for ``FocalLoss``)."
         ],
         "type": "dict",
         "options": {
             "name": {
                 "type": "string",
-                "description": "Name of the loss function class. See :mod:`ivadomed.losses`."
+                "description": "Name of the loss function class. See :mod:`ivadomed.losses`. Default: ``DiceLoss``."
             }
         }
     }
@@ -1020,26 +1019,30 @@ Training Parameters
                 "type": "float",
                 "description": "Initial learning rate. Default: ``0.001``."
             },
-            "scheduler_lr": {
+            "lr_scheduler": {
                 "type": "dict",
                 "options": {
                     "name": {
                         "type": "string",
                         "$$description": [
                             "One of ``CosineAnnealingLR``, ``CosineAnnealingWarmRestarts`` and ``CyclicLR``.\n",
-                            "Please find documentation `here <https://pytorch.org/docs/stable/optim.html>`__."
+                            "Please find documentation `here <https://pytorch.org/docs/stable/optim.html>`__.",
+                            "Default: ``CosineAnnealingLR``."
                         ]
                     },
                     "max_lr": {
                         "type": "float",
-                        "description": "Upper learning rate boundaries in the cycle for each parameter group."
+                        "description": "Upper learning rate boundaries in the cycle for each parameter group. Default: ``1e-2``."
                     },
                     "base_lr": {
                         "type": "float",
-                        "description": "Initial learning rate which is the lower boundary in the cycle for each parameter group."
+                        "$$description": [
+                            "Initial learning rate which is the lower boundary in the cycle for each parameter group.\n",
+                            "Default: ``1e-5``."
+                        ]
                     }
                 },
-                "description": "Other parameters depend on the scheduler of interest"
+                "description": "Other parameters depend on the scheduler of interest."
             }
         }
     }
@@ -1050,7 +1053,7 @@ Training Parameters
         "training_parameters": {
             "scheduler": {
                 "initial_lr": 0.001,
-                "scheduler_lr": {
+                "lr_scheduler": {
                     "name": "CosineAnnealingLR",
                     "max_lr": 1e-2,
                     "base_lr": 1e-5
@@ -1431,7 +1434,7 @@ Cascaded Architecture Features
                     "configuration file, and model need to have the same name\n",
                     "(e.g. ``findcord_tumor/``, ``findcord_tumor/findcord_tumor.json``, and\n",
                     "``findcord_tumor/findcord_tumor.onnx``, respectively). The model's prediction\n",
-                    "will be used to generate bounding boxes."
+                    "will be used to generate bounding boxes. Default: ``null``."
                 ]
             },
             "safety_factor": {
@@ -1921,7 +1924,7 @@ Transformations applied during data augmentation. Transformations are sorted in 
         "title": "RandomBiasField",
         "type": "dict",
         "$$description": [
-            "Applies a random MRI bias field artifact to the image via ``torchio.RandomBiasField()``"
+            "Applies a random MRI bias field artifact to the image via ``torchio.RandomBiasField()``."
         ],
         "options": {
             "coefficients": {
@@ -2003,7 +2006,7 @@ Uncertainty computation is performed if ``n_it>0`` and at least
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "epistemic",
         "type": "boolean",
-        "description": "Model-based uncertainty with `Monte Carlo Dropout <https://arxiv.org/abs/1506.02142>`__."
+        "description": "Model-based uncertainty with `Monte Carlo Dropout <https://arxiv.org/abs/1506.02142>`__. Default: ``false``."
     }
 
 .. code-block:: JSON
@@ -2020,7 +2023,7 @@ Uncertainty computation is performed if ``n_it>0`` and at least
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "aleatoric",
         "type": "boolean",
-        "description": "Image-based uncertainty with `test-time augmentation <https://doi.org/10.1016/j.neucom.2019.01.103>`__."
+        "description": "Image-based uncertainty with `test-time augmentation <https://doi.org/10.1016/j.neucom.2019.01.103>`__. Default: ``false``."
     }
 
 .. code-block:: JSON
@@ -2037,7 +2040,7 @@ Uncertainty computation is performed if ``n_it>0`` and at least
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "n_it",
         "type": "int",
-        "description": "Number of Monte Carlo iterations. Set to 0 for no uncertainty computation."
+        "description": "Number of Monte Carlo iterations. Set to 0 for no uncertainty computation. Default: ``0``."
     }
 
 .. code-block:: JSON
