@@ -1,26 +1,26 @@
 Installation
 ============
 
+
 Supported OS
 ++++++++++++
     
-    (TODO: update GPU acceleration)
-    Currently, ``ivadomed`` supports GPU/CPU on ``Linux`` and ``Windows``, and CPU only on ``macOS`` and `Windows Subsystem for Linux <https://docs.microsoft.com/en-us/windows/wsl/>`_.
+    ``ivadomed`` officially supports GPU acceleration only on ``Linux`` and CPU on ``Linux``, 
+    ``Windows`` and ``macOS``.
 
-Step 1: Setup dedicated python environment
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Step 1: Set up a dedicated virtual environment
++++++++++++++++++++++++++++++++++++++++++++++
 
-    You can setup ``ivadomed`` using either Conda or Venv:
+    You can set up a virtual environment for ``ivadomed`` using either conda or venv:
 
     .. tabs::
 
         .. tab:: Install via ``venv``
 
-            1. Setup Python Venv Virtual Environment.
+            1. Set up Python Venv Virtual Environment.
 
-                ``ivadomed`` requires Python >= 3.7 and <3.10.
-
-                First, make sure that a compatible version of Python 3 is installed on your system by running:
+                ``ivadomed`` requires Python >= 3.7 and <3.10. First, make sure that a
+                compatible version of Python 3 is installed on your system by running:
 
                 .. tabs::
 
@@ -36,10 +36,10 @@ Step 1: Setup dedicated python environment
 
                             python --version
 
-                If your system's Python is not 3.7, 3.8, or 3.9 (or if you don't have Python 3 installed at all), please `install Python <https://wiki.python.org/moin/BeginnersGuide/Download/>`_ before continuing.
+                If your system's Python is not 3.7, 3.8, or 3.9 (or if you don't have Python 3 installed at all),
+                please `install Python <https://wiki.python.org/moin/BeginnersGuide/Download/>`_ before continuing.
 
                 Once you have a supported version of Python installed, run the following command:
-
 
                 .. tabs::
 
@@ -47,12 +47,14 @@ Step 1: Setup dedicated python environment
 
                         .. code::
 
-                            # Replacing ``3.X`` with the Python version number that you installed):
-                            python3.X -m venv ivadomed_env
+                            python3 -m venv ivadomed_env
 
                         .. note::
 
-                           If you use ``Debian`` or ``Ubuntu``, you may be prompted to install the ``python3-venv`` module when creating the virtual environment. This is expected, so please follow the instructions provided by Python. For other operating systems, ``venv`` will be installed by default.
+                           If you use ``Debian`` or ``Ubuntu``, you may be prompted to install 
+                           the ``python3-venv`` module when creating the virtual environment.
+                           This is expected, so please follow the instructions provided by Python.
+                           For other operating systems, ``venv`` will be installed by default.
 
                     .. group-tab:: Windows
 
@@ -74,18 +76,17 @@ Step 1: Setup dedicated python environment
 
                         .. code::
 
-                            cd ivadomed_env/Scripts/
-                            activate
+                            ivadomed_env\Scripts\activate
 
         .. tab:: Install via ``conda``
 
-            1. Create new conda environment using ``environment.yml`` file
+            1. Create a new virtual environment using conda:
 
                 ::
 
                     conda env create --name ivadomed_env
 
-            2. Activate the new conda environment
+            2. Activate the created conda environment
 
                 ::
 
