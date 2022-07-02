@@ -27,13 +27,21 @@ Contributor or Developer ``ivadomed`` installation
             <https://docs.nvidia.com/deploy/cuda-compatibility/index.html#minor-version-compatibility>`_.
             And, for CUDA 11.1 you'd need an upgraded NVIDIA driver version >=450.
             
-            To verify the NVIDIA driver version, just look in ``/sys`` by 
-            executing the command ``cat /sys/module/nvidia/version`` and you'll find 
-            your current driver version.
+            To verify the NVIDIA driver version, look in ``/sys`` by executing the
+            command:
+
+            ::
+
+                cat /sys/module/nvidia/version
+                
+            and it will return your current driver version.
             
             Before proceeding with the installation, we suggest you to set up a virtual environment
-            by following the instructions as specified in the :ref:`Step 1 of the installation procedure <just-a-label>`.
-            ``ivadomed`` from source along with additional dependencies related to building documentation and testing:
+            by following the instructions as specified in the :ref:`installation-step1`.
+
+            Once you've set up a virtual environment and activated it, we recommend installing 
+            ``ivadomed`` from source along with some additional dependencies related to building
+            documentation, linting and testing:
 
             .. tabs::
 
@@ -53,11 +61,11 @@ Contributor or Developer ``ivadomed`` installation
 
                     ::
 
-                    git clone https://github.com/ivadomed/ivadomed.git
+                        git clone https://github.com/ivadomed/ivadomed.git
 
-                    cd ivadomed
+                        cd ivadomed
 
-                    pip install -e .[dev] --extra-index-url https://download.pytorch.org/whl/cu111
+                        pip install -e .[dev] --extra-index-url https://download.pytorch.org/whl/cu111
 
                 .. tab:: Mac/Windows
 
@@ -97,17 +105,7 @@ Contributor or Developer ``ivadomed`` installation
 
                         pip install -e .[dev] --extra-index-url https://download.pytorch.org/whl/cpu
 
-                .. tab:: Mac/Windows 
-
-                    ::
-
-                        git clone https://github.com/ivadomed/ivadomed.git
-
-                        cd ivadomed
-
-                        pip install -e .[dev]
-
-                .. tab:: Mac
+                .. tab:: Mac/Windows
 
                     ::
 
