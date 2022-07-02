@@ -119,7 +119,7 @@ Step 2: Install ``ivadomed``
 
             To accelerate ``ivadomed`` with CUDA 10.2 on a Linux system, you'd
             need to have GPUs installed with an `NVIDIA driver version >=440.33 
-            <https://docs.nvidia.com/deploy/cuda-compatibility/index.html#minor-version-compatibility>`__.
+            <https://docs.nvidia.com/deploy/cuda-compatibility/index.html#minor-version-compatibility>`_.
             And, for CUDA 11.1 you'd need an upgraded NVIDIA driver version >=450.
             
             To verify the NVIDIA driver version, just look in ``/sys`` by 
