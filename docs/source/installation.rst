@@ -6,7 +6,7 @@ Supported OS
 ++++++++++++
     
     ``ivadomed`` officially supports GPU acceleration only on ``Linux`` and CPU on ``Linux``, 
-    ``Windows`` and ``macOS``.
+    ``Windows`` and ``MacOS``.
 
 Step 1: Set up a dedicated virtual environment
 +++++++++++++++++++++++++++++++++++++++++++++
@@ -112,18 +112,18 @@ Step 2: Install ``ivadomed``
             PyTorch is an integral part of ``ivadomed`` which ships 
             CUDA 10.2 and CUDA 11.1 runtime by default.
 
-            Ampere-based GPUs (with a `Compute Capability <https://developer.nvidia.com/cuda-gpus>`
+            Ampere-based GPUs (with a `Compute Capability <https://developer.nvidia.com/cuda-gpus>`_
             of 8.x) only work with CUDA>=11.1. Although CUDA 11.1 is
             backward compatible with older hardware, CUDA 10.2 is
             preferred if available.
 
-            To accelerate `ivadomed` with CUDA 10.2 on a Linux system, you'd
-            need to have GPUs installed with an `NVIDIA driver version >=440.33
+            To accelerate ``ivadomed`` with CUDA 10.2 on a Linux system, you'd
+            need to have GPUs installed with an `NVIDIA driver version >=440.33 
             <https://docs.nvidia.com/deploy/cuda-compatibility/index.html#minor-version-compatibility>`__.
-            And, for CUDA 11.1 you'd need an NVIDIA driver version >=450.
+            And, for CUDA 11.1 you'd need an upgraded NVIDIA driver version >=450.
             
             To verify the NVIDIA driver version, just look in ``/sys`` by 
-            executing the command `cat /sys/module/nvidia/version` and you'll find 
+            executing the command ``cat /sys/module/nvidia/version`` and you'll find 
             your current driver version.
             
             .. tabs::
@@ -189,8 +189,7 @@ Step 2: Install ``ivadomed``
 
                             ::
 
-                                pip install git+https://github.com/ivadomed/ivadomed.git \
-                                --extra-index-url https://download.pytorch.org/whl/cpu
+                                pip install git+https://github.com/ivadomed/ivadomed.git --extra-index-url https://download.pytorch.org/whl/cpu
 
                         .. tab:: Windows/Mac 
 

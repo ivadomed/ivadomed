@@ -90,6 +90,7 @@ extensions = [
     'sphinx-jsonschema',
     'sphinx_tabs.tabs',
     'sphinx_toolbox.collapse',
+    'sphinx_copybutton'
 ]
 
 autoclass_content = "both"

@@ -27,6 +27,7 @@ extra_requirements = {
         'sphinx-toolbox==2.15.2',
         'sphinx-jsonschema~=1.16',
         'pypandoc',
+        'sphinx-copybutton',
     ],
     'tests': [
         'pytest~=6.2',
