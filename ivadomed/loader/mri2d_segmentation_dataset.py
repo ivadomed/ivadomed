@@ -10,7 +10,8 @@ import torch
 from torch.utils.data import Dataset
 from loguru import logger
 
-from ivadomed import transforms as imed_transforms, postprocessing as imed_postpro
+from ivadomed.transforms.utils import apply_preprocessing_transforms
+from ivadomed import postprocessing as imed_postpro
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.loader.utils import dropout_input, get_obj_size, create_temp_directory
 from ivadomed.loader.segmentation_pair import SegmentationPair
@@ -131,7 +132,7 @@ class MRI2DSegmentationDataset(Dataset):
                 if self.slice_filter_roi and imed_loader_utils.filter_roi(slice_roi_pair['gt'], self.roi_thr):
                     continue
 
-                item: Tuple[dict, dict] = imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
+                item: Tuple[dict, dict] = apply_preprocessing_transforms(self.prepro_transforms,
                                                                       slice_seg_pair,
                                                                       slice_roi_pair)
                 # Run once code to keep track if disk cache is used

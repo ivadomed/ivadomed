@@ -9,7 +9,8 @@ import torch
 from torch.utils.data import Dataset
 from loguru import logger
 
-from ivadomed import transforms as imed_transforms, postprocessing as imed_postpro
+from ivadomed.transforms.utils import apply_preprocessing_transforms
+from ivadomed import postprocessing as imed_postpro
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.loader.utils import dropout_input, create_temp_directory, get_obj_size
 from ivadomed.loader.segmentation_pair import SegmentationPair
@@ -84,7 +85,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
                 self.prepro_transforms = imed_obj_detect.adjust_transforms(self.prepro_transforms, seg_pair,
                                                                            length=self.length,
                                                                            stride=self.stride)
-            seg_pair, roi_pair = imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
+            seg_pair, roi_pair = apply_preprocessing_transforms(self.prepro_transforms,
                                                                                 seg_pair=seg_pair)
 
             for metadata in seg_pair[MetadataKW.INPUT_METADATA]:
