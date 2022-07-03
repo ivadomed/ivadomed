@@ -201,17 +201,17 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         # Extract image and gt slices or patches from coordinates
         stack_input = np.asarray(seg_pair[SegmentationPairKW.INPUT])[
                       :,
-                      x_min: x_max,
-                      y_min: y_max,
-                      z_min: z_max
+                      x_min:x_max,
+                      y_min:y_max,
+                      z_min:z_max
             ]
 
         if seg_pair[SegmentationPairKW.GT]:
             stack_gt = np.asarray(seg_pair[SegmentationPairKW.GT])[
                        :,
-                       x_min: x_max,
-                       y_min: y_max,
-                       z_min: z_max
+                       x_min:x_max,
+                       y_min:y_max,
+                       z_min:z_max
             ]
         else:
             stack_gt = []
