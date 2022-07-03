@@ -25,7 +25,7 @@ def download_data_testing_test_files():
 @pytest.fixture(scope='session')
 def download_multi_data():
     """
-    This Pytest fixture DOWNLOAD all the test data set REQUIRED for the multi-session, multi-contrast related unite
+    This Pytest fixture DOWNLOAD all the test data set REQUIRED for the multi-session, multi-contrast related unit
     testing.
     """
     download_dataset("data_multi_testing")
@@ -53,17 +53,15 @@ def create_tmp_dir(copy_data_testing_dir=True):
 
 def create_tmp_dir_multi_session():
     """Create a temporary directory for data related to multi-session unit tests and copy test data files.
-
     1. Remove the ``tmp`` directory if it exists.
     2. Copy the ``data_testing_multi`` directory to the ``tmp`` directory. Ignoring the `.git` folder within
-
     Any data files created during testing will go into ``tmp`` directory.
     This is created/removed for each test.
     """
     ignore_git_pattern = shutil.ignore_patterns(str(path_data_multi_sessions_contrasts_source / '.git'))
     remove_tmp_dir()
-    os.mkdir(path_temp)
-    if os.path.exists(path_data_multi_sessions_contrasts_source):
+    Path(path_temp).mkdir()
+    if Path(path_data_multi_sessions_contrasts_source).exists():
         shutil.copytree(path_data_multi_sessions_contrasts_source,
                         path_data_multi_sessions_contrasts_tmp,
                         ignore=ignore_git_pattern)

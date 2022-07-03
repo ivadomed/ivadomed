@@ -14,7 +14,8 @@ def write_derivatives_dataset_description(path_data: str):
     """Writes default dataset_description.json file if not found in path_data/derivatives folder
 
     Args:
-        path_data (str): Path of the data
+        path_data (str): Path to the BIDS dataset.
+
 
     Returns:
 
@@ -27,9 +28,15 @@ def write_derivatives_dataset_description(path_data: str):
 
     # need to write default dataset_description.json file if not found
     if not path_deriv_desc_file.is_file() and not path_label_desc_file.is_file():
+	    logger.warning(f"{path_deriv_desc_file} not found. Will attempt to create a place holder "
+                       f"description file for now at {path_deriv_desc_file}.")
+	
         with path_deriv_desc_file.open('w') as f:
             f.write(
-                '{"Name": "Example dataset", "BIDSVersion": "1.0.2", "PipelineDescription": {"Name": "Example pipeline"}}')
+                    '{"Name": "Example dataset", '
+                    '"BIDSVersion": "1.0.2", '
+                    '"GeneratedBy": [{"Name": "Example pipeline"}]}'
+                   )
 
 
 class BidsDataframe:
@@ -40,6 +47,8 @@ class BidsDataframe:
         loader_params (dict): Loader parameters, see :doc:`configuration_file` for more details.
         path_output (str): Output folder.
         derivatives (bool): If True, derivatives are indexed.
+        split_method (str): split_method from Split Dataset parameters, see :doc:`configuration_file` for more details.
+            Default: None. Used to remove unused subject files from the bids_dataframe.
 
     Attributes:
         path_data (list): Paths to the BIDS datasets.
@@ -50,10 +59,11 @@ class BidsDataframe:
         contrast_lst (list of str): List of the contrasts of interest.
         derivatives (bool): If True, derivatives are indexed.
         multichannel (bool): If True, we are deading with multi channel data.
+        split_method (str): split_method from Split Dataset parameters
         df (pd.DataFrame): Dataframe containing dataset information
     """
 
-    def __init__(self, loader_params: dict, path_output: str, derivatives: bool):
+    def __init__(self, loader_params: dict, path_output: str, derivatives: bool, split_method: str = None):
 
         # Enable tracing of the input loader_params for easier debugging
         logger.trace(f"Consolidated Loader Parameters Received:\n {json.dumps(loader_params, indent=4)}")
@@ -83,6 +93,8 @@ class BidsDataframe:
         if self.roi_suffix is not None:
             self.target_suffix.append(self.roi_suffix)
 
+        self.bids_validate = loader_params.get('bids_validate', True)
+
         # extensions from loader parameters
         if loader_params.get(LoaderParamsKW.EXTENSIONS):
             self.extensions: List[str] = loader_params[LoaderParamsKW.EXTENSIONS]
@@ -97,8 +109,12 @@ class BidsDataframe:
             raise ValueError(error_message)
         elif ContrastParamsKW.CONTRAST_LIST not in loader_params[LoaderParamsKW.CONTRAST_PARAMS]:
             self.contrast_lst: List[str] = []
+
         else:
             self.contrast_lst: List[str] = loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.CONTRAST_LIST]
+		
+		# split_method
+        self.split_method = split_method
 
         # derivatives
         self.derivatives: bool = derivatives
@@ -136,11 +152,6 @@ class BidsDataframe:
         converting that bids layout into a DATAFRAME which we add several custom columns
         """
 
-        # Suppress a Future Warning from pybids about leading dot included in 'extension' from version 0.14.0
-        # The config_bids.json file used matches the future behavior
-        # TODO: when reaching version 0.14.0, remove the following line
-        pybids.config.set_option('extension_initial_dot', True)
-
         # First pass over the data to create the self.df data
         # Filter for those files that has
         # 1) subject files of chosen contrasts and extensions,
@@ -157,6 +168,23 @@ class BidsDataframe:
         columns = self.df.columns.to_list()
         columns.remove('path')
         self.df = self.df[~(self.df.astype(str).duplicated(subset=columns, keep='first'))]
+		
+		# todo: fixme
+		# Remove subject files without the "split_method" metadata if specified and keep all derivatives
+        if self.split_method:
+            files_remove = (self.df[(
+                list_force_index.append(str(Path(*path_object.parent.parts[subject_path_index:])))
+                                ~self.df['path'].str.contains('derivatives')
+                                # and split method metadata is null (i.e. the subject must have the split_method metadata or will be excluded)
+                                & self.df[self.split_method].isnull())]
+                                # Get these filesnames and convert to list.
+                                ['filename']).tolist()
+            if files_remove:
+                logger.warning(f"The following files don't have the '{self.split_method}' metadata indicated as the "
+                               f"split_method in the configuration JSON file. Skipping these files: {files_remove}")
+                # Removing from dataframe all filenames which contain any of the file from files_remove field.
+                self.df = self.df[~self.df['filename'].str.contains('|'.join(files_remove))]
+		
 
         # If indexing of derivatives is true, do a second pass to filter for ONLY data that has self target_suffix ground truth labels
         if self.derivatives:
@@ -196,7 +224,7 @@ class BidsDataframe:
             # Initialize BIDSLayoutIndexer and BIDSLayout
             # validate=True by default for both indexer and layout, BIDS-validator is not skipped
             list_force_index = self.construct_force_index_list(path_data, )
-            indexer = pybids.BIDSLayoutIndexer(force_index=list_force_index)
+            indexer = pybids.BIDSLayoutIndexer(force_index=list_force_index, validate=self.bids_validate))
 
             if self.derivatives:
                 write_derivatives_dataset_description(str(path_data))
@@ -218,6 +246,12 @@ class BidsDataframe:
 
             # Stage 2 Update dataframe with
             # 1) SUBJECTIVE files of chosen contrasts and extensions (SINGLE SESSION VERSION, no session filtering)
+			# TODO: REVIEW COMMENT: 
+				# The following command updates the dataframe by doing 2 things:
+	            # 1. Keep only subject files of chosen contrasts (for files that are not in the 'derivatives' folder)
+	            #    (ex: '<dataset_path>/sub-XX/anat/sub-XX_T1w.nii.gz' with contrast_lst:["T1w"])
+	            # 2. Keep only derivatives files of chosen target_suffix (for files that are in the 'derivatives' folder)
+	            #    (ex: '<dataset_path>/derivatives/labels/sub-XX/anat/sub-XX_T1w_seg-manual.nii.gz' with target_suffix:["_seg-manual"])
             if not self.target_sessions:
                 df_filtered_subject_files_of_chosen_contrasts_and_extensions = (
                         ~df_stage1[BidsDataFrameKW.PATH].str.contains(
@@ -236,7 +270,7 @@ class BidsDataframe:
                     '|'.join(self.contrast_lst))  # must have one of the relevant contrast
                         & df_stage1[BidsDataFrameKW.SESSION].str.contains(
                     '|'.join(self.target_sessions))  # must have one of the relevant targeted sessions
-                        & df_stage1[BidsDataFrameKW.EXTENSION].str.contains('|'.join(self.extensions))
+                        & df_stage1[BidsDataFrameKW.EXTENSION].str.split('.').apply(lambda x: x[0])).str.endswith(tuple(self.extensions))
                 )
 
             # and with 2) DERIVATIVE files of chosen target_suffix from loader parameters
@@ -256,7 +290,6 @@ class BidsDataframe:
             # WARNING if there are nothing other than derivative data (i.e. no subject files are found in path_data)
             if df_stage2[~df_stage2[BidsDataFrameKW.PATH].str.contains(BidsDataFrameKW.DERIVATIVES)].empty:
                 logger.critical(f"No subject files were found in '{path_data}' dataset during FIRST PASS. "
-                                f"Skipping dataset.")
                 # first_pass_data_frame as an empty dataframe gets returned!
 
             else:
@@ -280,9 +313,10 @@ class BidsDataframe:
         Returns:
 
         """
-        # TODO: remove force indexing of microscopy files after BEP microscopy is merged in BIDS
+    	# TODO: remove force indexing of microscopy files after Microscopy-BIDS is integrated in pybids
         # TODO: remove force indexing of CT-scan files after BEP CT-scan is merged in BIDS
-        ext_microscopy = ('.png', '.tif', '.tiff', '.ome.tif', '.ome.tiff', '.ome.tf2', '.ome.tf8', '.ome.btf')
+        ext_microscopy = ('.png', '.tif', '.ome.tif', '.ome.btf')
+
         ext_ct = ('.nii.gz', '.nii')
         suffix_ct = ('ct', 'CT')
 
@@ -310,10 +344,8 @@ class BidsDataframe:
                 continue
 
             # Force index microscopy data
-            if (file_name.endswith(ext_microscopy) and (parent_folder_name == "microscopy" or
-                                                        parent_folder_name == "micr")):
-                list_force_index.append(str(Path(*path_object.parent.parts[subject_path_index:])))
-
+            if (file_name.endswith(ext_microscopy) and parent_folder_name == "micr" and subject_path.startswith('sub')):
+				list_force_index.append(str(Path(*path_object.parent.parts[subject_path_index:])))
             # Force index of subject subfolders containing CT-scan files under "anat" or "ct" folder based on
             # extensions and modality suffix.
             if (file_name.endswith(ext_ct) and file_name.split('.')[0].endswith(suffix_ct) and
@@ -456,29 +488,41 @@ class BidsDataframe:
         return df_next
 
     def add_tsv_metadata(self, df: pd.DataFrame, path_data: str, layout: pybids.BIDSLayout):
-
         """Add tsv files metadata to dataframe.
+
         Args:
-            layout (BIDSLayout): pybids BIDSLayout of the indexed files of the path_data
+            df (pd.DataFrame): Dataframe containing dataset information
+            path_data (str): Path to the BIDS dataset
+            layout (pybids.BIDSLayout): pybids BIDSLayout of the indexed files of the path_data
+
+        Returns:
+            pd.DataFrame: Dataframe containing datasets information
         """
 
-        # Add participant_id column, and metadata from participants.tsv file if present
+        # Drop columns with all null values before loading TSV metadata
+        # Avoid conflicts with unused columns descriptions from TSV sidecar JSON files
+        df.dropna(axis=1, inplace=True, how='all')
+
+        # Add metadata from 'participants.tsv' file if present
         # Uses pybids function
-        df['participant_id'] = "sub-" + df['subject']
         if layout.get_collections(level='dataset'):
             df_participants = layout.get_collections(level='dataset', merge=True).to_df()
+            df_participants.insert(1, 'participant_id', "sub-" + df_participants['subject'])
             df_participants.drop(['suffix'], axis=1, inplace=True)
             df = pd.merge(df, df_participants, on='subject', suffixes=("_x", None), how='left')
 
-        # Add sample_id column if sample column exists, and add metadata from samples.tsv file if present
-        # TODO: use pybids function after BEP microscopy is merged in BIDS
-        if 'sample' in df:
-            df['sample_id'] = "sample-" + df['sample']
+        # Add metadata from 'samples.tsv' file if present
+        # The 'participant_id' column is added only if not already present from the 'participants.tsv' file.
+        # TODO: use pybids function after Microscopy-BIDS is integrated in pybids
         fname_samples = Path(path_data, "samples.tsv")
         if fname_samples.exists():
             df_samples = pd.read_csv(str(fname_samples), sep='\t')
-            df = pd.merge(df, df_samples, on=['participant_id', 'sample_id'], suffixes=("_x", None),
-                          how='left')
+            df_samples['sample'] = df_samples['sample_id'].str.split("sample-").apply(lambda x: x[1])
+            df_samples['subject'] = df_samples['participant_id'].str.split("sub-").apply(lambda x: x[1])
+            columns = df_samples.columns.tolist()
+            if 'participant_id' in df.columns:
+                columns.remove('participant_id')
+            df = pd.merge(df, df_samples[columns], on=['subject', 'sample'], suffixes=("_x", None), how='left')
 
         # Add metadata from all _sessions.tsv files, if present
         # Uses pybids function
@@ -488,7 +532,7 @@ class BidsDataframe:
             df = pd.merge(df, df_sessions, on=['subject', 'session'], suffixes=("_x", None), how='left')
 
         # Add metadata from all _scans.tsv files, if present
-        # TODO: use pybids function after BEP microscopy is merged in BIDS
+        # TODO: use pybids function after Microscopy-BIDS is integrated in pybids
         # TODO: verify merge behavior with EEG and DWI scans files, tested with anat and microscopy only
         df_scans = pd.DataFrame()
         for path_object in Path(path_data).glob("**/*"):
@@ -730,6 +774,7 @@ class BidsDataframe:
 
     def get_derivatives(self, subject_filename: str, deriv_filenames: List[str]) -> List[str]:
         """Given a subject fname full path information, return list of AVAILABLE derivative filenames for the subject
+
         Args:
             subject_filename (str): Subject filename, NOT a full path. e.g. sub-ms01_ses-01_FLAIR
             deriv_filenames (list of str): list of ALL BIDS validated files from the derivative folder
@@ -769,11 +814,12 @@ class BidsDataframe:
 
     def save(self, path: str):
         """Save the dataframe into a csv file.
+
         Args:
             path (str): Path to csv file.
         """
         try:
             self.df.to_csv(path, index=False)
-            logger.info("Dataframe has been saved in {}.".format(path))
+            logger.info(f"Dataframe has been saved in {path}.")
         except FileNotFoundError:
-            logger.error("Wrong path, bids_dataframe.csv could not be saved in {}.".format(path))
+            logger.error(f"Wrong path, bids_dataframe.csv could not be saved in {path}.")

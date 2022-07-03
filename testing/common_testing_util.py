@@ -36,6 +36,7 @@ path_data_multi_sessions_contrasts_source: Path = path_repo_root / "data_multi_t
 path_data_multi_sessions_contrasts_tmp: Path = path_repo_root / "tmp" / Path(
     path_data_multi_sessions_contrasts_source).name
 
+
 def download_dataset(dataset: str = 'data_testing'):
     """Download testing data from internet.
 
