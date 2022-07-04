@@ -27,6 +27,6 @@ jobs:
           pip install -e .[type_checks]
 
       - name: Type Check with mypy
-        run: mypy ivadomed/
+        run: mypy --install-types --non-interactive ivadomed/
 
 

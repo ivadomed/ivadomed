@@ -469,7 +469,7 @@ def get_timestamp() -> str:
     return timestamp
 
 
-def get_system_memory() -> float:
+def get_system_memory():
     """
     Return the system memory in GB.
     Returns:
@@ -479,7 +479,7 @@ def get_system_memory() -> float:
         return get_linux_system_memory()
     elif current_platform == "Windows":
         return get_win_system_memory()
-    elif current_platform == "Darwin":
+    elif current_platform == "Darwin": 
         return get_mac_system_memory()
 
 

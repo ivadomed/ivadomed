@@ -109,7 +109,7 @@ def get_onehotencoder(context: dict, folder_model: str, options: dict, ds: Datas
         dict: onehotencoder used in the model params.
     """
     metadata_dict = joblib.load(Path(folder_model, 'metadata_dict.joblib'))
-    for idx in ds.indexes:
+    for idx in ds.indexes: # type: ignore[attr-defined]
         for i in range(len(idx)):
             idx[i][MetadataKW.INPUT_METADATA][0][context[ConfigKW.FILMED_UNET][ModelParamsKW.METADATA]] = options.get(OptionKW.METADATA)
             idx[i][MetadataKW.INPUT_METADATA][0][MetadataKW.METADATA_DICT] = metadata_dict
@@ -457,7 +457,7 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
         onehotencoder = get_onehotencoder(context, folder_model, options, ds)
         model_params.update({ModelParamsKW.NAME: ConfigKW.FILMED_UNET,
                              ModelParamsKW.FILM_ONEHOTENCODER: onehotencoder,
-                             ModelParamsKW.N_METADATA: len([ll for l in onehotencoder.categories_ for ll in l])})
+                             ModelParamsKW.N_METADATA: len([ll for l in onehotencoder.categories_ for ll in l])}) # type: ignore[attr-defined]
 
     # Data Loader
     data_loader = DataLoader(ds, batch_size=context[ConfigKW.TRAINING_PARAMETERS][TrainingParamsKW.BATCH_SIZE],
