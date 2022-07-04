@@ -96,6 +96,7 @@ extensions = [
 autoclass_content = "both"
 add_module_names = True
 autosectionlabel_prefix_document = True
+autosectionlabel_maxdepth >= 2
 autodoc_default_options = {
     'members': None,
     'member-order': 'bysource',  # 'alphabetical'

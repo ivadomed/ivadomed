@@ -1,4 +1,3 @@
-.. _installation:
 Installation
 ============
 
@@ -7,8 +6,7 @@ Supported OS
     
     ``ivadomed`` officially supports GPU acceleration only on ``Linux`` and CPU on ``Linux``, 
     ``Windows`` and ``MacOS``.
-
-.. _installation-step1: 
+ 
 Step 1: Set up a dedicated virtual environment
 ++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -102,7 +100,6 @@ Step 1: Set up a dedicated virtual environment
 
             If you are using `Compute Canada <https://www.computecanada.ca/>`_, you can load modules as `mentioned here <https://intranet.neuro.polymtl.ca/computing-resources/compute-canada#modules>`_ and `also here <https://docs.computecanada.ca/wiki/Utiliser_des_modules/en#Loading_modules_automatically>`_.
 
-.. _installation-step2:
 Step 2: Install ``ivadomed``
 ++++++++++++++++++++++++++++
 

@@ -14,12 +14,12 @@ Thank you for your interest in contributing to ivadomed! This project uses the f
     towards any contribution.
 
   * The `NeuroPoly Contributing Guidelines <https://intranet.neuro.polymtl.ca/software-development/contributing>`_ 
-  provide instructions for development workflows, such as reporting issues or submitting pull requests.
+    provide instructions for development workflows, such as reporting issues or submitting pull requests.
 
   * The `ivadomed Developer Wiki <https://github.com/ivadomed/ivadomed/wiki>`_
-  acts as a knowledge base for documenting internal design decisions specific
-  to the ivadomed codebase. It also contains step-by-step walkthroughs for
-  common ivadomed maintainer tasks.
+    acts as a knowledge base for documenting internal design decisions specific
+    to the ivadomed codebase. It also contains step-by-step walkthroughs for
+    common ivadomed maintainer tasks.
 
 Contributor or Developer ``ivadomed`` installation 
 ++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -53,7 +53,7 @@ Contributor or Developer ``ivadomed`` installation
             and it will return your current driver version.
             
             Before proceeding with the installation, we suggest you to set up a virtual environment
-            by following the instructions as specified in the :ref:`docs/source/installation::installation-step1` .
+            by following the instructions as specified in the :ref:`installation` .
 
             Once you've set up a virtual environment and activated it, we recommend installing 
             ``ivadomed`` from source along with some additional dependencies related to building
