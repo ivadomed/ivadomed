@@ -53,7 +53,7 @@ Contributor or Developer ``ivadomed`` installation
             and it will return your current driver version.
             
             Before proceeding with the installation, we suggest you to set up a virtual environment
-            by following the instructions as specified in the :ref:`installation` .
+            by following the instructions as specified in the :ref:`Installation`.
 
             Once you've set up a virtual environment and activated it, we recommend installing 
             ``ivadomed`` from source along with some additional dependencies related to building
