@@ -98,7 +98,7 @@ def check_multiple_raters(is_train, loader_params):
         if not is_train:
             logger.error(
                 "Please provide only one annotation per class in 'target_suffix' when not training a model.\n")
-            exit()
+            sys.exit()
 
 
 def film_normalize_data(context, model_params, ds_train, ds_valid, path_output):
