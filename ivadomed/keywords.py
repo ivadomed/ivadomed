@@ -256,3 +256,20 @@ class MetadataParamsKW:
 class MetadataChoiceKW:
     MRI_PARAMS = "mri_params"
     CONTRASTS = "contrasts"
+
+@dataclass
+class SegmentationDatasetKW:
+    X_MIN: str = 'x_min'
+    X_MAX: str = 'x_max'
+    Y_MIN: str = 'y_min'
+    Y_MAX: str = 'y_max'
+    Z_MIN: str = 'z_min'
+    Z_MAX: str = 'z_max'
+    HANDLER_INDEX: str = 'handler_index'
+
+@dataclass
+class SegmentationPairKW:
+    GT_METADATA = "gt_metadata"
+    INPUT_METADATA = "input_metadata"
+    GT = "gt"
+    INPUT = "input"
