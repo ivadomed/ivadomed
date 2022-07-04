@@ -112,20 +112,19 @@ Step 2: Install ``ivadomed``
 
             PyTorch, an integral part of ``ivadomed``, ships
             CUDA 10.2 and CUDA 11.1 runtime by default with its
-            installation binaries. Thus, to accelerate ``ivadomed``
-            on with CUDA 10.2 on a Linux system, you'd just need
-            to have GPUs installed with an `NVIDIA driver version >=440.33 
+            respective installation binaries. 
+
+            In case if you're wondering, Ampere-based GPUs 
+            (with a `Compute Capability <https://developer.nvidia.com/cuda-gpus>`_
+            of 8.x) only work with CUDA>=11.1. Although CUDA 11.1 is
+            backward compatible with older hardware, CUDA 10.2 is
+            preferred if available.
+
+            Thus, to accelerate ``ivadomed`` with CUDA 10.2 on a Linux system,
+            you'd need to have GPUs installed with an `NVIDIA driver version >=440.33 
             <https://docs.nvidia.com/deploy/cuda-compatibility/index.html#minor-version-compatibility>`_.
-            And, for CUDA 11.1 you'd rather need an upgraded NVIDIA
-            driver version >=450.
-
-            .. note::
-
-                Ampere-based GPUs (with a `Compute Capability <https://developer.nvidia.com/cuda-gpus>`_
-                of 8.x) only work with CUDA>=11.1. Although CUDA 11.1 is
-                backward compatible with older hardware, CUDA 10.2 is
-                preferred if available.
-            
+            And, for CUDA 11.1 you'd rather need an upgraded NVIDIA driver version >=450.
+        
             To verify the NVIDIA driver version, just look in ``/sys`` by 
             executing the command ``cat /sys/module/nvidia/version`` and you'll find 
             your current driver version.
