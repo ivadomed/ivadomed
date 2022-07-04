@@ -6,6 +6,8 @@ Supported OS
     
     ``ivadomed`` officially supports GPU acceleration only on ``Linux`` and CPU on ``Linux``, 
     ``Windows`` and ``MacOS``.
+
+.. _installation_step1:
  
 Step 1: Set up a dedicated virtual environment
 ++++++++++++++++++++++++++++++++++++++++++++++
