@@ -241,60 +241,61 @@ class BidsDataframe:
             # Stage 1: Drop rows with `json`, `tsv` and `LICENSE` files in case no extensions are provided in config file for filtering
             df_stage1 = df_stage0[~df_stage0[BidsDataFrameKW.FILENAME].str.endswith(tuple(['.json', '.tsv', 'LICENSE']))]
 
-        # Stage 2 Update dataframe with
-        # 1) SUBJECTIVE files of chosen contrasts and extensions (SINGLE SESSION VERSION, no session filtering)
-        # TODO: REVIEW COMMENT:
-        # The following command updates the dataframe by doing 2 things:
-        # 1. Keep only subject files of chosen contrasts (for files that are not in the 'derivatives' folder)
-        #    (ex: '<dataset_path>/sub-XX/anat/sub-XX_T1w.nii.gz' with contrast_lst:["T1w"])
-        # 2. Keep only derivatives files of chosen target_suffix (for files that are in the 'derivatives' folder)
-        #    (ex: '<dataset_path>/derivatives/labels/sub-XX/anat/sub-XX_T1w_seg-manual.nii.gz' with target_suffix:["_seg-manual"])
-        if not self.target_sessions:
-            df_filtered_subject_files_of_chosen_contrasts_and_extensions = (
-            ~df_stage1[BidsDataFrameKW.PATH].str.contains(BidsDataFrameKW.DERIVATIVES)   # not derivative. Must be SUBJECTIVE data
-            & df_stage1[BidsDataFrameKW.SUFFIX].str.contains('|'.join(self.contrast_lst))  # must have one of the relevant contrast
-            & df_stage1[BidsDataFrameKW.EXTENSION].str.contains('|'.join(self.extensions))
+            # Stage 2 Update dataframe with
+            # 1) SUBJECTIVE files of chosen contrasts and extensions (SINGLE SESSION VERSION, no session filtering)
+            # TODO: REVIEW COMMENT:
+            # The following command updates the dataframe by doing 2 things:
+            # 1. Keep only subject files of chosen contrasts (for files that are not in the 'derivatives' folder)
+            #    (ex: '<dataset_path>/sub-XX/anat/sub-XX_T1w.nii.gz' with contrast_lst:["T1w"])
+            # 2. Keep only derivatives files of chosen target_suffix (for files that are in the 'derivatives' folder)
+            #    (ex: '<dataset_path>/derivatives/labels/sub-XX/anat/sub-XX_T1w_seg-manual.nii.gz' with target_suffix:["_seg-manual"])
+            if not self.target_sessions:
+                df_filtered_subject_files_of_chosen_contrasts_and_extensions = (
+                ~df_stage1[BidsDataFrameKW.PATH].str.contains(BidsDataFrameKW.DERIVATIVES)   # not derivative. Must be SUBJECTIVE data
+                & df_stage1[BidsDataFrameKW.SUFFIX].str.contains('|'.join(self.contrast_lst))  # must have one of the relevant contrast
+                & df_stage1[BidsDataFrameKW.EXTENSION].str.contains('|'.join(self.extensions))
+                )
+
+            # 1) SUBJECTIVE files of chosen contrasts and extensions (MULTI-SESSION VERSION, filter for data that are only
+            # with the relevant sessions (i.e. cannot have missing session data)
+            else:
+                df_filtered_subject_files_of_chosen_contrasts_and_extensions = (
+                    ~df_stage1[BidsDataFrameKW.PATH].str.contains(
+                        BidsDataFrameKW.DERIVATIVES)  # not derivative. Must be SUBJECTIVE data
+                    & df_stage1[BidsDataFrameKW.SUFFIX].str.contains(
+                        '|'.join(self.contrast_lst))  # must have one of the relevant contrast
+                    & df_stage1[BidsDataFrameKW.SESSION].str.contains(
+                        '|'.join(self.target_sessions))  # must have one of the relevant targeted sessions
+                    & df_stage1[BidsDataFrameKW.EXTENSION].str.split('.').apply(lambda x: x[0]).str.endswith(tuple(self.extensions))
+                )
+
+            # and with 2) DERIVATIVE files of chosen target_suffix from loader parameters
+            filter_derivative_files_of_chosen_target_suffix = (
+                    df_stage1[BidsDataFrameKW.PATH].str.contains(BidsDataFrameKW.DERIVATIVES)  # must be derivatives
+                    & df_stage1[BidsDataFrameKW.FILENAME].str.contains('|'.join(self.target_suffix))
+                # don't care about session here as the ground truth can technically from ANY session
+                # (assumed all session / contrast aligned)
             )
 
-        # 1) SUBJECTIVE files of chosen contrasts and extensions (MULTI-SESSION VERSION, filter for data that are only
-        # with the relevant sessions (i.e. cannot have missing session data)
-        else:
-            df_filtered_subject_files_of_chosen_contrasts_and_extensions = (
-                ~df_stage1[BidsDataFrameKW.PATH].str.contains(
-                    BidsDataFrameKW.DERIVATIVES)  # not derivative. Must be SUBJECTIVE data
-                & df_stage1[BidsDataFrameKW.SUFFIX].str.contains(
-                    '|'.join(self.contrast_lst))  # must have one of the relevant contrast
-                & df_stage1[BidsDataFrameKW.SESSION].str.contains(
-                    '|'.join(self.target_sessions))  # must have one of the relevant targeted sessions
-                & df_stage1[BidsDataFrameKW.EXTENSION].str.split('.').apply(lambda x: x[0]).str.endswith(tuple(self.extensions))
-            )
+            # Stage 2 End Combine them together.
+            df_stage2 = df_stage1[
+                df_filtered_subject_files_of_chosen_contrasts_and_extensions
+                | filter_derivative_files_of_chosen_target_suffix
+                ]
 
-        # and with 2) DERIVATIVE files of chosen target_suffix from loader parameters
-        filter_derivative_files_of_chosen_target_suffix = (
-                df_stage1[BidsDataFrameKW.PATH].str.contains(BidsDataFrameKW.DERIVATIVES)  # must be derivatives
-                & df_stage1[BidsDataFrameKW.FILENAME].str.contains('|'.join(self.target_suffix))
-            # don't care about session here as the ground truth can technically from ANY session
-            # (assumed all session / contrast aligned)
-        )
+            # WARNING if there are nothing other than derivative data (i.e. no subject files are found in path_data)
+            if df_stage2[~df_stage2[BidsDataFrameKW.PATH].str.contains(BidsDataFrameKW.DERIVATIVES)].empty:
+                logger.critical(f"No subject files were found in '{path_data}' dataset during FIRST PASS.")
+                # first_pass_data_frame as an empty dataframe gets returned!
+                df_stage3 = df_stage2
+            else:
+                # Add tsv files metadata to dataframe
+                df_stage3 = self.add_tsv_metadata(df_stage2, str(path_data), layout)
 
-        # Stage 2 End Combine them together.
-        df_stage2 = df_stage1[
-            df_filtered_subject_files_of_chosen_contrasts_and_extensions
-            | filter_derivative_files_of_chosen_target_suffix
-            ]
+            # TODO: check if other files are needed for EEG and DWI
 
-        # WARNING if there are nothing other than derivative data (i.e. no subject files are found in path_data)
-        if df_stage2[~df_stage2[BidsDataFrameKW.PATH].str.contains(BidsDataFrameKW.DERIVATIVES)].empty:
-            logger.critical(f"No subject files were found in '{path_data}' dataset during FIRST PASS.")
-            # first_pass_data_frame as an empty dataframe gets returned!
-        else:
-            # Add tsv files metadata to dataframe
-            df_stage3 = self.add_tsv_metadata(df_stage2, str(path_data), layout)
-
-        # TODO: check if other files are needed for EEG and DWI
-
-        # Merge the default empty first_pass_data_frame with outer join to construct the proper output data frame
-        first_pass_data_frame = pd.concat([first_pass_data_frame, df_stage3], join='outer', ignore_index=True)
+            # Merge the default empty first_pass_data_frame with outer join to construct the proper output data frame
+            first_pass_data_frame = pd.concat([first_pass_data_frame, df_stage3], join='outer', ignore_index=True)
 
         return first_pass_data_frame
 
