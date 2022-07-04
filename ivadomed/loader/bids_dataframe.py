@@ -28,15 +28,15 @@ def write_derivatives_dataset_description(path_data: str):
 
     # need to write default dataset_description.json file if not found
     if not path_deriv_desc_file.is_file() and not path_label_desc_file.is_file():
-	    logger.warning(f"{path_deriv_desc_file} not found. Will attempt to create a place holder "
+        logger.warning(f"{path_deriv_desc_file} not found. Will attempt to create a place holder "
                        f"description file for now at {path_deriv_desc_file}.")
-	
+
         with path_deriv_desc_file.open('w') as f:
             f.write(
-                    '{"Name": "Example dataset", '
-                    '"BIDSVersion": "1.0.2", '
-                    '"GeneratedBy": [{"Name": "Example pipeline"}]}'
-                   )
+                '{"Name": "Example dataset", '
+                '"BIDSVersion": "1.0.2", '
+                '"GeneratedBy": [{"Name": "Example pipeline"}]}'
+            )
 
 
 class BidsDataframe:
@@ -112,8 +112,8 @@ class BidsDataframe:
 
         else:
             self.contrast_lst: List[str] = loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.CONTRAST_LIST]
-		
-		# split_method
+
+        # split_method
         self.split_method = split_method
 
         # derivatives
@@ -168,12 +168,11 @@ class BidsDataframe:
         columns = self.df.columns.to_list()
         columns.remove('path')
         self.df = self.df[~(self.df.astype(str).duplicated(subset=columns, keep='first'))]
-		
-		# todo: fixme
-		# Remove subject files without the "split_method" metadata if specified and keep all derivatives
+
+        # Remove subject files without the "split_method" metadata if specified and keep all derivatives
         if self.split_method:
             files_remove = (self.df[(
-                list_force_index.append(str(Path(*path_object.parent.parts[subject_path_index:])))
+                                # Path does not contain derivative string (i.e. we only target subject raw data files)
                                 ~self.df['path'].str.contains('derivatives')
                                 # and split method metadata is null (i.e. the subject must have the split_method metadata or will be excluded)
                                 & self.df[self.split_method].isnull())]
@@ -184,7 +183,6 @@ class BidsDataframe:
                                f"split_method in the configuration JSON file. Skipping these files: {files_remove}")
                 # Removing from dataframe all filenames which contain any of the file from files_remove field.
                 self.df = self.df[~self.df['filename'].str.contains('|'.join(files_remove))]
-		
 
         # If indexing of derivatives is true, do a second pass to filter for ONLY data that has self target_suffix ground truth labels
         if self.derivatives:
@@ -224,13 +222,13 @@ class BidsDataframe:
             # Initialize BIDSLayoutIndexer and BIDSLayout
             # validate=True by default for both indexer and layout, BIDS-validator is not skipped
             list_force_index = self.construct_force_index_list(path_data, )
-            indexer = pybids.BIDSLayoutIndexer(force_index=list_force_index, validate=self.bids_validate))
+            indexer = pybids.BIDSLayoutIndexer(force_index=list_force_index, validate=self.bids_validate)
 
             if self.derivatives:
                 write_derivatives_dataset_description(str(path_data))
 
             layout = pybids.BIDSLayout(str(path_data), config=self.bids_config, indexer=indexer,
-                                       derivatives=self.derivatives)
+            derivatives = self.derivatives)
 
             # Transform layout to dataframe with all entities and json metadata
             # Stage 0
@@ -241,67 +239,65 @@ class BidsDataframe:
             df_stage0.insert(1, BidsDataFrameKW.FILENAME, df_stage0[BidsDataFrameKW.PATH].apply(os.path.basename))
 
             # Stage 1: Drop rows with `json`, `tsv` and `LICENSE` files in case no extensions are provided in config file for filtering
-            df_stage1 = df_stage0[
-                ~df_stage0[BidsDataFrameKW.FILENAME].str.endswith(tuple(['.json', '.tsv', 'LICENSE']))]
+            df_stage1 = df_stage0[~df_stage0[BidsDataFrameKW.FILENAME].str.endswith(tuple(['.json', '.tsv', 'LICENSE']))]
 
-            # Stage 2 Update dataframe with
-            # 1) SUBJECTIVE files of chosen contrasts and extensions (SINGLE SESSION VERSION, no session filtering)
-			# TODO: REVIEW COMMENT: 
-				# The following command updates the dataframe by doing 2 things:
-	            # 1. Keep only subject files of chosen contrasts (for files that are not in the 'derivatives' folder)
-	            #    (ex: '<dataset_path>/sub-XX/anat/sub-XX_T1w.nii.gz' with contrast_lst:["T1w"])
-	            # 2. Keep only derivatives files of chosen target_suffix (for files that are in the 'derivatives' folder)
-	            #    (ex: '<dataset_path>/derivatives/labels/sub-XX/anat/sub-XX_T1w_seg-manual.nii.gz' with target_suffix:["_seg-manual"])
-            if not self.target_sessions:
-                df_filtered_subject_files_of_chosen_contrasts_and_extensions = (
-                        ~df_stage1[BidsDataFrameKW.PATH].str.contains(
-                            BidsDataFrameKW.DERIVATIVES)  # not derivative. Must be SUBJECTIVE data
-                        & df_stage1[BidsDataFrameKW.SUFFIX].str.contains(
-                    '|'.join(self.contrast_lst))  # must have one of the relevant contrast
-                        & df_stage1[BidsDataFrameKW.EXTENSION].str.contains('|'.join(self.extensions))
-                )
-            # 1) SUBJECTIVE files of chosen contrasts and extensions (MULTI-SESSION VERSION, filter for data that are only
-            # with the relevant sessions (i.e. cannot have missing session data)
-            else:
-                df_filtered_subject_files_of_chosen_contrasts_and_extensions = (
-                        ~df_stage1[BidsDataFrameKW.PATH].str.contains(
-                            BidsDataFrameKW.DERIVATIVES)  # not derivative. Must be SUBJECTIVE data
-                        & df_stage1[BidsDataFrameKW.SUFFIX].str.contains(
-                    '|'.join(self.contrast_lst))  # must have one of the relevant contrast
-                        & df_stage1[BidsDataFrameKW.SESSION].str.contains(
-                    '|'.join(self.target_sessions))  # must have one of the relevant targeted sessions
-                        & df_stage1[BidsDataFrameKW.EXTENSION].str.split('.').apply(lambda x: x[0])).str.endswith(tuple(self.extensions))
-                )
-
-            # and with 2) DERIVATIVE files of chosen target_suffix from loader parameters
-            filter_derivative_files_of_chosen_target_suffix = (
-                    df_stage1[BidsDataFrameKW.PATH].str.contains(BidsDataFrameKW.DERIVATIVES)  # must be derivatives
-                    & df_stage1[BidsDataFrameKW.FILENAME].str.contains('|'.join(self.target_suffix))
-                # don't care about session here as the ground truth can technically from ANY session
-                # (assumed all session / contrast aligned)
+        # Stage 2 Update dataframe with
+        # 1) SUBJECTIVE files of chosen contrasts and extensions (SINGLE SESSION VERSION, no session filtering)
+        # TODO: REVIEW COMMENT:
+        # The following command updates the dataframe by doing 2 things:
+        # 1. Keep only subject files of chosen contrasts (for files that are not in the 'derivatives' folder)
+        #    (ex: '<dataset_path>/sub-XX/anat/sub-XX_T1w.nii.gz' with contrast_lst:["T1w"])
+        # 2. Keep only derivatives files of chosen target_suffix (for files that are in the 'derivatives' folder)
+        #    (ex: '<dataset_path>/derivatives/labels/sub-XX/anat/sub-XX_T1w_seg-manual.nii.gz' with target_suffix:["_seg-manual"])
+        if not self.target_sessions:
+            df_filtered_subject_files_of_chosen_contrasts_and_extensions = (
+            ~df_stage1[BidsDataFrameKW.PATH].str.contains(BidsDataFrameKW.DERIVATIVES)   # not derivative. Must be SUBJECTIVE data
+            & df_stage1[BidsDataFrameKW.SUFFIX].str.contains('|'.join(self.contrast_lst))  # must have one of the relevant contrast
+            & df_stage1[BidsDataFrameKW.EXTENSION].str.contains('|'.join(self.extensions))
             )
 
-            # Stage 2 End Combine them together.
-            df_stage2 = df_stage1[
-                df_filtered_subject_files_of_chosen_contrasts_and_extensions
-                | filter_derivative_files_of_chosen_target_suffix
-                ]
+        # 1) SUBJECTIVE files of chosen contrasts and extensions (MULTI-SESSION VERSION, filter for data that are only
+        # with the relevant sessions (i.e. cannot have missing session data)
+        else:
+            df_filtered_subject_files_of_chosen_contrasts_and_extensions = (
+                ~df_stage1[BidsDataFrameKW.PATH].str.contains(
+                    BidsDataFrameKW.DERIVATIVES)  # not derivative. Must be SUBJECTIVE data
+                & df_stage1[BidsDataFrameKW.SUFFIX].str.contains(
+                    '|'.join(self.contrast_lst))  # must have one of the relevant contrast
+                & df_stage1[BidsDataFrameKW.SESSION].str.contains(
+                    '|'.join(self.target_sessions))  # must have one of the relevant targeted sessions
+                & df_stage1[BidsDataFrameKW.EXTENSION].str.split('.').apply(lambda x: x[0]).str.endswith(tuple(self.extensions))
+            )
 
-            # WARNING if there are nothing other than derivative data (i.e. no subject files are found in path_data)
-            if df_stage2[~df_stage2[BidsDataFrameKW.PATH].str.contains(BidsDataFrameKW.DERIVATIVES)].empty:
-                logger.critical(f"No subject files were found in '{path_data}' dataset during FIRST PASS. "
-                # first_pass_data_frame as an empty dataframe gets returned!
+        # and with 2) DERIVATIVE files of chosen target_suffix from loader parameters
+        filter_derivative_files_of_chosen_target_suffix = (
+                df_stage1[BidsDataFrameKW.PATH].str.contains(BidsDataFrameKW.DERIVATIVES)  # must be derivatives
+                & df_stage1[BidsDataFrameKW.FILENAME].str.contains('|'.join(self.target_suffix))
+            # don't care about session here as the ground truth can technically from ANY session
+            # (assumed all session / contrast aligned)
+        )
 
-            else:
-                # Add tsv files metadata to dataframe
-                df_stage3 = self.add_tsv_metadata(df_stage2, str(path_data), layout)
+        # Stage 2 End Combine them together.
+        df_stage2 = df_stage1[
+            df_filtered_subject_files_of_chosen_contrasts_and_extensions
+            | filter_derivative_files_of_chosen_target_suffix
+            ]
 
-                # TODO: check if other files are needed for EEG and DWI
+        # WARNING if there are nothing other than derivative data (i.e. no subject files are found in path_data)
+        if df_stage2[~df_stage2[BidsDataFrameKW.PATH].str.contains(BidsDataFrameKW.DERIVATIVES)].empty:
+            logger.critical(f"No subject files were found in '{path_data}' dataset during FIRST PASS.")
+            # first_pass_data_frame as an empty dataframe gets returned!
+        else:
+            # Add tsv files metadata to dataframe
+            df_stage3 = self.add_tsv_metadata(df_stage2, str(path_data), layout)
 
-                # Merge the default empty first_pass_data_frame with outer join to construct the proper output data frame
-                first_pass_data_frame = pd.concat([first_pass_data_frame, df_stage3], join='outer', ignore_index=True)
+        # TODO: check if other files are needed for EEG and DWI
+
+        # Merge the default empty first_pass_data_frame with outer join to construct the proper output data frame
+        first_pass_data_frame = pd.concat([first_pass_data_frame, df_stage3], join='outer', ignore_index=True)
 
         return first_pass_data_frame
+
 
     def construct_force_index_list(self, path_data: Path) -> list:
         """
@@ -313,7 +309,7 @@ class BidsDataframe:
         Returns:
 
         """
-    	# TODO: remove force indexing of microscopy files after Microscopy-BIDS is integrated in pybids
+        # TODO: remove force indexing of microscopy files after Microscopy-BIDS is integrated in pybids
         # TODO: remove force indexing of CT-scan files after BEP CT-scan is merged in BIDS
         ext_microscopy = ('.png', '.tif', '.ome.tif', '.ome.btf')
 
@@ -345,7 +341,7 @@ class BidsDataframe:
 
             # Force index microscopy data
             if (file_name.endswith(ext_microscopy) and parent_folder_name == "micr" and subject_path.startswith('sub')):
-				list_force_index.append(str(Path(*path_object.parent.parts[subject_path_index:])))
+                list_force_index.append(str(Path(*path_object.parent.parts[subject_path_index:])))
             # Force index of subject subfolders containing CT-scan files under "anat" or "ct" folder based on
             # extensions and modality suffix.
             if (file_name.endswith(ext_ct) and file_name.split('.')[0].endswith(suffix_ct) and
@@ -353,6 +349,7 @@ class BidsDataframe:
                 list_force_index.append(str(Path(*path_object.parent.parts[subject_path_index:])))
 
         return list_force_index
+
 
     def second_exclusive_pass_dataframe_creation_removing_subjects_without_derivatives(self,
                                                                                        first_df: pd.DataFrame) -> pd.DataFrame:
@@ -389,6 +386,7 @@ class BidsDataframe:
                 "Training MUST at least have some ground truth labels.")
 
         return second_pass_dataframe
+
 
     def third_exclusive_pass_df_creation_check_modalities_sessions_combinations(self, df_next):
         """
@@ -436,6 +434,7 @@ class BidsDataframe:
 
         return df_next
 
+
     def validate_modality(self, data_frame: pd.DataFrame):
         """
         Using the given dataframe to perform a validation on if all modality data are present.
@@ -453,6 +452,7 @@ class BidsDataframe:
             return False
         else:
             return True
+
 
     def exclude_subjects(self, list_exclude_subject: list, df_next: pd.DataFrame):
         """
@@ -486,6 +486,7 @@ class BidsDataframe:
         df_next = df_next[filter_derivative_exclude_subject_list
                           | filter_subject_exclude_subject_list]
         return df_next
+
 
     def add_tsv_metadata(self, df: pd.DataFrame, path_data: str, layout: pybids.BIDSLayout):
         """Add tsv files metadata to dataframe.
@@ -546,6 +547,7 @@ class BidsDataframe:
 
         return df
 
+
     def get_subjects_with_derivatives(self) -> (list, list):
         """Get lists of subject filenames with available derivatives.
 
@@ -598,6 +600,7 @@ class BidsDataframe:
 
         return subjects_with_derivatives, all_available_derivatives
 
+
     def prune_subjects_without_ground_truth(self):
         """Remove any subject from self.df that has no ground truth information.
         """
@@ -626,6 +629,7 @@ class BidsDataframe:
         # Exclude the subject's data.
         self.df = self.exclude_subjects(list_exclude_subject, self.df)
 
+
     def check_for_at_least_one_one_ground_truth(self, list_subject_available_derivatives: list, subject_filename: str):
         """
         Go through each derivative, check to ensure it is in at least ONE file of the list_subject_available_derivatives
@@ -653,6 +657,7 @@ class BidsDataframe:
 
         logger.warning(f"Not even one one ground truth found for {subject_filename}.")
         return False
+
 
     def include_first_subject_specific_derivatives(self, all_available_derivatives: list,
                                                    subjects_with_derivatives: list,
@@ -696,6 +701,7 @@ class BidsDataframe:
             subjects_with_derivatives.append(subject_filename)
 
         return all_available_derivatives, subjects_with_derivatives
+
 
     def include_first_roi_specific_derivative(self, all_available_derivatives: list, subjects_with_derivatives: list,
                                               list_subject_available_derivatives: list, subject_filename: str):
@@ -745,6 +751,7 @@ class BidsDataframe:
 
         return all_available_derivatives, subjects_with_derivatives
 
+
     def get_subject_fnames(self) -> list:
         """Get the list of BIDS validated subject filenames in dataframe.
 
@@ -752,6 +759,7 @@ class BidsDataframe:
             list: subject filenames.
         """
         return self.df[~self.df['path'].str.contains('derivatives')]['filename'].to_list()
+
 
     def get_all_subject_ids_with_derivatives(self) -> list:
         """Get the list of subject filenames in dataframe regardless of modalities.
@@ -764,6 +772,7 @@ class BidsDataframe:
         unique_subjects_with_derivatives: list = list(set(subject_field_from_every_derivative_files))
         return unique_subjects_with_derivatives
 
+
     def get_deriv_fnames(self) -> list:
         """Get the list of BIDS validated derivative filenames in dataframe.
 
@@ -771,6 +780,7 @@ class BidsDataframe:
             list: derivative filenames.
         """
         return self.df[self.df['path'].str.contains('derivatives')]['filename'].tolist()
+
 
     def get_derivatives(self, subject_filename: str, deriv_filenames: List[str]) -> List[str]:
         """Given a subject fname full path information, return list of AVAILABLE derivative filenames for the subject
@@ -811,6 +821,7 @@ class BidsDataframe:
             return list_derived_matching_subject_fname
 
         return list_derived_matching_subject_fname
+
 
     def save(self, path: str):
         """Save the dataframe into a csv file.
