@@ -127,8 +127,9 @@ Step 2: Install ``ivadomed``
         
             To verify the NVIDIA driver version, just look in ``/sys`` by 
             executing the command:
-            
+                     
             ::
+                
                  ``cat /sys/module/nvidia/version`` 
             
             and it will return your current driver version.
