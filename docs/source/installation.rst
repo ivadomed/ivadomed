@@ -129,8 +129,8 @@ Step 2: Install ``ivadomed``
             executing the command:
                      
             ::
-                
-                 ``cat /sys/module/nvidia/version`` 
+
+                cat /sys/module/nvidia/version 
             
             and it will return your current driver version.
             
