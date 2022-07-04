@@ -21,8 +21,8 @@ from ivadomed import metrics as imed_metrics
 from ivadomed import inference as imed_inference
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, film as imed_film
 from ivadomed.keywords import ConfigKW, ModelParamsKW, LoaderParamsKW, ContrastParamsKW, BalanceSamplesKW, \
-    TrainingParamsKW, ObjectDetectionParamsKW, UncertaintyKW, PostprocessingKW, BinarizeProdictionKW, MetricsKW, \
-    MetadataKW, OptionKW, BidsDataFrameKW, ObjectDetectionParamsKW
+    TrainingParamsKW, UncertaintyKW, PostprocessingKW, BinarizeProdictionKW, MetricsKW, \
+    MetadataKW, OptionKW, BidsDataFrameKW, ObjectDetectionParamsKW, SplitDatasetKW
 from loguru import logger
 from pathlib import Path
 

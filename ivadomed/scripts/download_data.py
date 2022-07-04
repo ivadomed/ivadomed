@@ -7,7 +7,7 @@ import tarfile
 import zipfile
 import requests
 from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util import Retry
+from urllib3.util import Retry
 from pathlib import Path
 import argparse
 import textwrap
