@@ -251,9 +251,9 @@ class BidsDataframe:
             #    (ex: '<dataset_path>/derivatives/labels/sub-XX/anat/sub-XX_T1w_seg-manual.nii.gz' with target_suffix:["_seg-manual"])
             if not self.target_sessions:
                 df_filtered_subject_files_of_chosen_contrasts_and_extensions = (
-                ~df_stage1[BidsDataFrameKW.PATH].str.contains(BidsDataFrameKW.DERIVATIVES)   # not derivative. Must be SUBJECTIVE data
-                & df_stage1[BidsDataFrameKW.SUFFIX].str.contains('|'.join(self.contrast_lst))  # must have one of the relevant contrast
-                & df_stage1[BidsDataFrameKW.EXTENSION].str.contains('|'.join(self.extensions))
+                    ~df_stage1[BidsDataFrameKW.PATH].str.contains(BidsDataFrameKW.DERIVATIVES)   # not derivative. Must be SUBJECTIVE data
+                    & df_stage1[BidsDataFrameKW.SUFFIX].str.contains('|'.join(self.contrast_lst))  # must have one of the relevant contrast
+                    & df_stage1[BidsDataFrameKW.EXTENSION].str.contains('|'.join(self.extensions))
                 )
 
             # 1) SUBJECTIVE files of chosen contrasts and extensions (MULTI-SESSION VERSION, filter for data that are only
