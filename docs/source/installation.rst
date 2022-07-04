@@ -8,9 +8,9 @@ Supported OS
     ``ivadomed`` officially supports GPU acceleration only on ``Linux`` and CPU on ``Linux``, 
     ``Windows`` and ``MacOS``.
 
-.. _installation-step1:
+.. _installation-step1: 
 Step 1: Set up a dedicated virtual environment
-+++++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++
 
     You can set up a virtual environment for ``ivadomed`` using either conda or venv:
 
@@ -126,8 +126,12 @@ Step 2: Install ``ivadomed``
             And, for CUDA 11.1 you'd rather need an upgraded NVIDIA driver version >=450.
         
             To verify the NVIDIA driver version, just look in ``/sys`` by 
-            executing the command ``cat /sys/module/nvidia/version`` and you'll find 
-            your current driver version.
+            executing the command:
+            
+            ::
+                 ``cat /sys/module/nvidia/version`` 
+            
+            and it will return your current driver version.
             
             .. tabs::
 

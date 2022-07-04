@@ -1,11 +1,17 @@
 Contributing to ivadomed
 ========================
 
+General Guidelines
+++++++++++++++++++
+
 Thank you for your interest in contributing to ivadomed! This project uses the following pages to guide new contributions:
 
   * The `ivadomed GitHub repository <https://github.com/ivadomed/ivadomed>`_ is where the source code for the project is maintained, and where new contributions are submitted to.
   * The `NeuroPoly Contributing Guidelines <https://intranet.neuro.polymtl.ca/software-development/contributing>`_ provide instructions for development workflows, such as reporting issues or submitting pull requests.
   * The `ivadomed Developer Wiki <https://github.com/ivadomed/ivadomed/wiki>`_ acts as a knowledge base for documenting internal design decisions specific to the ivadomed codebase. It also contains step-by-step walkthroughs for common ivadomed maintainer tasks.
+
+We welcome any type of contribution and recommend setting up ``ivadomed`` by following the
+Contributor or Developer installation before proceeding towards any contribution.
 
 Contributor or Developer ``ivadomed`` installation 
 ++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -14,18 +20,20 @@ Contributor or Developer ``ivadomed`` installation
         
         .. tab:: NVIDIA GPU Support
 
-            PyTorch is an integral part of ``ivadomed`` which ships 
-            CUDA 10.2 and CUDA 11.1 runtime by default.
+            PyTorch, integral part of ``ivadomed``, ships 
+            CUDA 10.2 and CUDA 11.1 runtime by default with its
+            respective installation binaries.
 
-            Ampere-based GPUs (with a `Compute Capability <https://developer.nvidia.com/cuda-gpus>`_
+            In case if you're wondering, Ampere-based GPUs
+            (with a `Compute Capability <https://developer.nvidia.com/cuda-gpus>`_
             of 8.x) only work with CUDA>=11.1. Although CUDA 11.1 is
             backward compatible with older hardware, CUDA 10.2 is
             preferred if available.
 
-            To accelerate ``ivadomed`` with CUDA 10.2 on a Linux system, you'd
+            Thus, to accelerate ``ivadomed`` with CUDA 10.2 on a Linux system, you'd
             need to have GPUs installed with an `NVIDIA driver version >=440.33 
             <https://docs.nvidia.com/deploy/cuda-compatibility/index.html#minor-version-compatibility>`_.
-            And, for CUDA 11.1 you'd need an upgraded NVIDIA driver version >=450.
+            And, for CUDA 11.1 you'd rather need an upgraded NVIDIA driver version >=450.
             
             To verify the NVIDIA driver version, look in ``/sys`` by executing the
             command:
