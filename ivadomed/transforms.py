@@ -4,17 +4,18 @@ import math
 import numbers
 import random
 
+from typing import Tuple
+
 import numpy as np
 import torch
 from loguru import logger
 from scipy.ndimage import zoom
-from scipy.ndimage.filters import gaussian_filter
-from scipy.ndimage.interpolation import map_coordinates, affine_transform
-from scipy.ndimage.measurements import label, center_of_mass
-from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_closing
+from scipy.ndimage import gaussian_filter, map_coordinates, affine_transform, label, center_of_mass, binary_dilation, \
+    binary_fill_holes, binary_closing
 from skimage.exposure import equalize_adapthist
 from torchvision import transforms as torchvision_transforms
 import torchio as tio
+
 
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.keywords import TransformationKW, MetadataKW
@@ -486,7 +487,7 @@ class ROICrop(Crop):
         # then we are here dealing with ROI data to determine crop params
         if self.__class__.__name__ not in metadata[MetadataKW.CROP_PARAMS]:
             # Compute center of mass of the ROI
-            h_roi, w_roi, d_roi = center_of_mass(sample.astype(np.int))
+            h_roi, w_roi, d_roi = center_of_mass(sample.astype(int))
             h_roi, w_roi, d_roi = int(round(h_roi)), int(round(w_roi)), int(round(d_roi))
             th, tw, td = self.size
             th_half, tw_half, td_half = int(round(th / 2.)), int(round(tw / 2.)), int(round(td / 2.))
@@ -529,26 +530,26 @@ class DilateGT(ImedTransform):
             arr_dilated = binary_dilation(arr_bin, iterations=1)
 
             # isolate new voxels, i.e. the ones from the dilation
-            new_voxels = np.logical_xor(arr_dilated, arr_bin).astype(np.int)
+            new_voxels = np.logical_xor(arr_dilated, arr_bin).astype(int)
 
             # assign a soft value (]0, 1[) to the new voxels
             soft_new_voxels = lb * new_voxels
 
             # add the new voxels to the input mask
             arr_soft += soft_new_voxels
-            arr_bin = (arr_soft > 0).astype(np.int)
+            arr_bin = (arr_soft > 0).astype(int)
 
         return arr_bin, arr_soft
 
     def dilate_arr(self, arr, dil_factor):
         # identify each object
-        arr_labeled, lb_nb = label(arr.astype(np.int))
+        arr_labeled, lb_nb = label(arr.astype(int))
 
         # loop across each object
         arr_bin_lst, arr_soft_lst = [], []
         for obj_idx in range(1, lb_nb + 1):
-            arr_bin_obj = (arr_labeled == obj_idx).astype(np.int)
-            arr_soft_obj = np.copy(arr_bin_obj).astype(np.float)
+            arr_bin_obj = (arr_labeled == obj_idx).astype(int)
+            arr_soft_obj = np.copy(arr_bin_obj).astype(float)
             # compute the number of dilation iterations depending on the size of the lesion
             nb_it = int(round(dil_factor * math.sqrt(arr_bin_obj.sum())))
             # values of the voxels added to the input mask
@@ -564,7 +565,7 @@ class DilateGT(ImedTransform):
         # clip values in case dilated voxels overlap
         arr_bin_clip, arr_soft_clip = np.clip(arr_bin_idx, 0, 1), np.clip(arr_soft_idx, 0.0, 1.0)
 
-        return arr_soft_clip.astype(np.float), arr_bin_clip.astype(np.int)
+        return arr_soft_clip.astype(float), arr_bin_clip.astype(int)
 
     @staticmethod
     def random_holes(arr_in, arr_soft, arr_bin):
@@ -584,7 +585,7 @@ class DilateGT(ImedTransform):
         arr_soft_out[new_voxels_xx[idx_to_remove],
                      new_voxels_yy[idx_to_remove],
                      new_voxels_zz[idx_to_remove]] = 0.0
-        arr_bin_out = (arr_soft_out > 0).astype(np.int)
+        arr_bin_out = (arr_soft_out > 0).astype(int)
 
         return arr_soft_out, arr_bin_out
 
@@ -600,7 +601,7 @@ class DilateGT(ImedTransform):
 
         struct = np.ones((3, 3, 1) if arr_soft.shape[2] == 1 else (3, 3, 3))
         # binary closing
-        arr_bin_closed = binary_closing((arr_soft > 0).astype(np.int), structure=struct)
+        arr_bin_closed = binary_closing((arr_soft > 0).astype(int), structure=struct)
         # fill binary holes
         arr_bin_filled = binary_fill_holes(arr_bin_closed)
 
@@ -1186,7 +1187,7 @@ def get_preprocessing_transforms(transforms):
     return preprocessing_transforms
 
 
-def apply_preprocessing_transforms(transforms, seg_pair, roi_pair=None):
+def apply_preprocessing_transforms(transforms, seg_pair, roi_pair=None) -> Tuple[dict, dict]:
     """
     Applies preprocessing transforms to segmentation pair (input, gt and metadata).
 

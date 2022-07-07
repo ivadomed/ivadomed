@@ -109,11 +109,10 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
         dataset.load_filenames()
 
     if model_params[ModelParamsKW.NAME] == ConfigKW.MODIFIED_3D_UNET:
-        logger.info("Loaded {} volumes of shape {} for the {} set.".format(len(dataset), dataset.length, dataset_type))
+        logger.info(f"Loaded {len(dataset)} volumes of shape {dataset.length} for the {dataset_type} set.")
     elif model_params[ModelParamsKW.NAME] != ConfigKW.HEMIS_UNET and dataset.length:
-        logger.info("Loaded {} {} patches of shape {} for the {} set.".format(len(dataset), slice_axis, dataset.length,
-                                                                              dataset_type))
+        logger.info(f"Loaded {len(dataset)} {slice_axis} patches of shape {dataset.length} for the {dataset_type} set.")
     else:
-        logger.info("Loaded {} {} slices for the {} set.".format(len(dataset), slice_axis, dataset_type))
+        logger.info(f"Loaded {len(dataset)} {slice_axis} slices for the { dataset_type} set.")
 
     return dataset
