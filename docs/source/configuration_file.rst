@@ -48,8 +48,8 @@ General Parameters
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "gpu_ids",
-        "description": "List of IDs of one or more GPUs to use.",
-        "type": "list * integer"
+        "description": "List of IDs of one or more GPUs to use. Default: ``[0]``.",
+        "type": "list[int]"
     }
 
 .. code-block:: JSON
@@ -88,7 +88,7 @@ General Parameters
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "model_name",
         "description": "Folder name containing the trained model (ONNX format) and its configuration
-            file, located within ``log_directory/``",
+            file, located within ``log_directory/``.",
         "type": "string"
     }
 
@@ -122,7 +122,7 @@ When possible, the folder name will follow the following convention:
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "debugging",
-        "description": "Extended verbosity and intermediate outputs.",
+        "description": "Extended verbosity and intermediate outputs. Default: ``False``.",
         "type": "boolean"
     }
 
@@ -140,7 +140,7 @@ When possible, the folder name will follow the following convention:
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "log_file",
-        "description": "Name of the file to be logged to, located within ``log_directory/``",
+        "description": "Name of the file to be logged to, located within ``log_directory/``. Default: ``log``.",
         "type": "string"
     }
 
@@ -156,11 +156,12 @@ When possible, the folder name will follow the following convention:
 Weights & Biases (WandB)
 ------------------------
 
-WandB is an additional option to track your DL experiments. It provides a 
-feature-rich dashboard (accessible through any web-browser) to track and visualize the learning 
-curves, gradients, and media. It is recommended to setup a personal 
-WandB account to track experiments on WandB, however, you can still train ivadomed models 
-without an account, since the metrics are logged on Tensorboard by default. 
+WandB is an additional option to track your DL experiments. It provides a
+feature-rich dashboard (accessible through any web-browser) to track and visualize the learning
+curves, gradients, and media. It is recommended to setup a personal
+WandB account to track experiments on WandB, however, you can still train ivadomed models
+without an account, since the metrics are logged on Tensorboard by default.
+
 
 
 .. jsonschema::
@@ -172,8 +173,8 @@ without an account, since the metrics are logged on Tensorboard by default.
             "A private key used to sync the local wandb folder with the wandb dashboard accessible through the browser.\n",
             "The API key can be found from the browser in your WandB Account's Settings, under the section ``API Keys``.\n",
             "Note that once it is successfully authenticated, a message would be printed in the terminal notifying\n",
-            "that the API key is stored in the ``.netrc`` file in the ``/home`` folder. From then on, the value in this key-value\n", 
-            pair in the config file could be omitted, like ``'wandb_api_key': ''``"
+            "that the API key is stored in the ``.netrc`` file in the ``/home`` folder. From then on, the value in this key-value\n",
+            "pair in the config file could be omitted, like ``'wandb_api_key': ''``"
         ],
         "type": "string"
     }
@@ -193,7 +194,7 @@ without an account, since the metrics are logged on Tensorboard by default.
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "project_name",
         "$$description": [
-            "Defines the name of the current project to which the groups and runs will be synced."
+            "Defines the name of the current project to which the groups and runs will be synced. Default: ``my_project``."
         ],
         "type": "string"
     }
@@ -214,7 +215,7 @@ without an account, since the metrics are logged on Tensorboard by default.
         "title": "group_name",
         "$$description": [
             "Defines the name of the group to which the runs will be synced. On the WandB Dashboard,\n",
-            "the groups can be found on clicking the ``Projects`` tab on the left."
+            "the groups can be found on clicking the ``Projects`` tab on the left. Default: ``my_group``."
         ],
         "type": "string"
     }
@@ -235,7 +236,7 @@ without an account, since the metrics are logged on Tensorboard by default.
         "title": "run_name",
         "$$description": [
             "Defines the name of the current run (or, experiment). All the previous and active runs\n",
-            "can be found under the corresponding group on the WandB Dashboard."
+            "can be found under the corresponding group on the WandB Dashboard. Default: ``run-1``."
         ],
         "type": "string"
     }
@@ -248,6 +249,11 @@ without an account, since the metrics are logged on Tensorboard by default.
         }
     }
 
+.. note::
+    Using the same ``run_name`` does not replace the previous run but does create multiple entries of the same name. If left empty then the default is a random string assigned by WandB.
+
+.. note::
+    We recommend defining the project/group/run names such that hierarchy is easily understandable. For instance, ``project_name`` could be the name of the dataset or the problem you are working (i.e. brain tumor segmentation/spinal cord lesion segmentation etc.), the ``group_name`` could be the various models you are willing to train, and the ``run_name`` could be the various experiments within a particular model (i.e. typically with different hyperparameters).
 
 .. jsonschema::
 
@@ -256,7 +262,7 @@ without an account, since the metrics are logged on Tensorboard by default.
         "title": "log_grads_every",
         "$$description": [
             "Defines the frequency (in number of steps) of the logging of gradients on to the Dashboard to track and visualize\n",
-            "their histograms as the model trains.\n"
+            "their histograms as the model trains. Default: ``100``.\n"
         ],
         "type": "int"
     }
@@ -270,15 +276,17 @@ without an account, since the metrics are logged on Tensorboard by default.
     }
 
 .. note::
-    There are two important points to be noted: 
-    (1) Gradients can be large so they can consume more storage space if ``log_grads_every`` is set to a small number, 
+    There are two important points to be noted:
+    (1) Gradients can be large so they can consume more storage space if ``log_grads_every`` is set to a small number,
     (2) ``log_grads_every`` also depends on the total duration of training, i.e. if the model is run for only
     a few epochs, gradients might not be logged if ``log_grads_every`` is too large. Hence, the right frequency of
     gradient logging depends on the training duration and model size.
 
 .. note::
-    If ``debugging = True`` is specified in the config file, the training and validation input images, ground truth labels, and 
+    If ``debugging = True`` is specified in the config file, the training and validation input images, ground truth labels, and
     the model predictions are also periodically logged on WandB, which can be seen under ``Media`` on the WandB Dashboard.
+
+
 
 
 Loader Parameters
@@ -290,7 +298,7 @@ Loader Parameters
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "path_data",
         "description": "Path(s) of the BIDS folder(s).",
-        "type": "list or str"
+        "type": "str or list[str]"
     }
 
 
@@ -319,8 +327,10 @@ Alternatively:
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "bids_config",
-        "description": "(Optional). Path of the custom BIDS configuration file for
-            BIDS non-compliant modalities",
+        "$$description": [
+            "(Optional). Path of the custom BIDS configuration file for",
+            "BIDS non-compliant modalities. Default: ``ivadomed/config/config_bids.json``."
+        ],
         "type": "string"
     }
 
@@ -344,19 +354,19 @@ Alternatively:
         "type": "dict",
         "options": {
             "n": {
-                "description": "List containing the number subjects of each metadata.",
-                "type": "list"
+                "description": "List containing the number subjects of each metadata. Default: ``[]``.",
+                "type": "list[int]"
             },
             "metadata": {
                 "$$description": [
                     "List of metadata used to select the subjects. Each metadata should be the name\n",
-                    "of a column from the participants.tsv file."
+                    "of a column from the participants.tsv file. Default: ``[]``."
                 ],
-                "type": "list"
+                "type": "list[str]"
             },
             "value": {
-                "description": "List of metadata values of the subject to be selected.",
-                "type": "list"
+                "description": "List of metadata values of the subject to be selected. Default: ``[]``.",
+                "type": "list[str]"
             }
         }
     }
@@ -385,8 +395,8 @@ for training/testing.
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "target_suffix",
-        "description": "Suffix list of the derivative file containing the ground-truth of interest.",
-        "type": "list * string"
+        "description": "Suffix list of the derivative file containing the ground-truth of interest. Default: ``[]``.",
+        "type": "list[str]"
     }
 
 
@@ -416,10 +426,9 @@ will be randomly chosen.
         "title": "extensions",
         "$$description": [
             "Used to specify a list of file extensions to be selected for training/testing.\n",
-            "Must include the file extensions of both the raw data and derivatives.\n",
-            "If not specified, then `.nii` and `.nii.gz` will be used by default.",
-            ],
-        "type": "list, string"
+            "Must include the file extensions of both the raw data and derivatives. Default: ``[]``."
+        ],
+        "type": "list[str]"
     }
 
 
@@ -441,17 +450,17 @@ will be randomly chosen.
         "type": "dict",
         "options": {
             "train_validation": {
-                "type": "list, string",
+                "type": "list[str]",
                 "$$description": [
                     "List of image contrasts (e.g. ``T1w``, ``T2w``) loaded for the training and\n",
                     "validation. If ``multichannel`` is ``true``, this list represents the different\n",
                     "channels of the input tensors (i.e. its length equals model's ``in_channel``).\n",
                     "Otherwise, the contrasts are mixed and the model has only one input channel\n",
-                    "(i.e. model's ``in_channel=1``)"
+                    "(i.e. model's ``in_channel=1``)."
                 ]
             },
             "test": {
-                "type": "list, string",
+                "type": "list[str]",
                 "$$description": [
                     "List of image contrasts (e.g. ``T1w``, ``T2w``) loaded in the testing dataset.\n",
                     "Same comment as for ``train_validation`` regarding ``multichannel``."
@@ -463,7 +472,7 @@ will be randomly chosen.
                     "Enables to weight the importance of specific channels (or contrasts) in the\n",
                     "dataset: e.g. ``{'T1w': 0.1}`` means that only 10% of the available ``T1w``\n",
                     "images will be included into the training/validation/test set. Please set\n",
-                    "``multichannel`` to ``false`` if you are using this parameter."
+                    "``multichannel`` to ``false`` if you are using this parameter. Default: ``{}``."
                 ]
             }
         }
@@ -490,7 +499,7 @@ will be randomly chosen.
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "multichannel",
         "description": "Indicated if more than a contrast (e.g. ``T1w`` and ``T2w``) is
-            used by the model.",
+            used by the model. Default: ``False``.",
         "type": "boolean"
     }
 
@@ -511,8 +520,28 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
 
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "bids_validate",
+        "description": "Indicates if the loader should validate the dataset for compliance with BIDS. Default: ``True``.",
+        "type": "boolean"
+    }
+
+
+
+.. code-block:: JSON
+
+    {
+        "loader_parameters": {
+            "bids_validate": true
+        }
+    }
+
+
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "slice_axis",
-        "description": "Sets the slice orientation for 3D NIfTI files on which the model will be used.",
+        "description": "Sets the slice orientation for 3D NIfTI files on which the model will be used. Default: ``axial``.",
         "type": "string",
         "options": {"sagittal": "plane dividing body into left/right",
                     "coronal": "plane dividing body into front/back",
@@ -551,16 +580,14 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
                 "type": "boolean",
                 "$$description": [
                     "Discard slices where all voxel labels are zero for one or more classes\n",
-                    "(this is most relevant for multi-class models that need GT for all classes at training time).\n",
-                    "Default: ``False``."
+                    "(this is most relevant for multi-class models that need GT for all classes at training time). Default: ``False``."
                 ]
             },
             "filter_classification": {
                 "type": "boolean",
                 "$$description": [
                     "Discard slices where all images fail a custom classifier filter. If used,\n",
-                    "``classifier_path`` must also be specified, pointing to a saved PyTorch classifier.\n",
-                    "Default: ``False``."
+                    "``classifier_path`` must also be specified, pointing to a saved PyTorch classifier. Default: ``False``."
                 ]
             }
         }
@@ -602,8 +629,7 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
                 "type": "boolean",
                 "$$description": [
                     "Discard 2D patches where all voxel labels are zero for one or more classes\n",
-                    "(this is most relevant for multi-class models that need GT for all classes).\n",
-                    "Default: ``False``."
+                    "(this is most relevant for multi-class models that need GT for all classes). Default: ``False``."
                 ]
             }
         }
@@ -627,15 +653,14 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "roi_params",
-        "description": "Parameters for the region of interest",
+        "description": "Parameters for the region of interest.",
         "type": "dict",
         "options": {
             "suffix": {
                 "type": "string",
                 "$$description": [
                     "Suffix of the derivative file containing the ROI used to crop\n",
-                    "(e.g. ``_seg-manual``) with ``ROICrop`` as transform. Please use ``null`` if",
-                    "you do not want to use an ROI to crop."
+                    "(e.g. ``_seg-manual``) with ``ROICrop`` as transform. Default: ``null``."
                 ]
             },
             "slice_filter_roi": {
@@ -645,7 +670,7 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
                     "the slice will be discarded from the dataset. This feature helps with\n",
                     "noisy labels, e.g., if a slice contains only 2-3 labeled voxels, we do\n",
                     "not want to use these labels to crop the image. This parameter is only\n",
-                    "considered when using ``ROICrop``."
+                    "considered when using ``ROICrop``. Default: ``null``."
                 ]
             }
         }
@@ -673,7 +698,7 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
             "Indicates if a soft mask will be used as ground-truth to train\n",
             "and / or evaluate a model. In particular, the masks are not binarized\n",
             "after interpolations implied by preprocessing or data-augmentation operations.\n",
-            "Approach inspired by the `SoftSeg <https://arxiv.org/ftp/arxiv/papers/2011/2011.09041.pdf>`__ paper."
+            "Approach inspired by the `SoftSeg <https://arxiv.org/ftp/arxiv/papers/2011/2011.09041.pdf>`__ paper. Default: ``False``."
         ],
         "type": "boolean"
     }
@@ -687,11 +712,11 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
     }
 
 .. note::
-    To get the full advantage of the soft segmentations, in addition to setting 
-    ``soft_gt: true`` the following keys in the config file must also be changed: 
+    To get the full advantage of the soft segmentations, in addition to setting
+    ``soft_gt: true`` the following keys in the config file must also be changed:
     (i) ``final_activation: relu`` - to use the normalized ReLU activation function
-    (ii) ``loss: AdapWingLoss`` - a regression loss described in the 
-    paper. Note: It is also recommended to use the ``DiceLoss`` since convergence 
+    (ii) ``loss: AdapWingLoss`` - a regression loss described in the
+    paper. Note: It is also recommended to use the ``DiceLoss`` since convergence
     with ``AdapWingLoss`` is sometimes difficult to achieve.
 
 .. jsonschema::
@@ -704,7 +729,7 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
             "This option trains a model to be robust to missing modalities by setting \n",
             "to zero input channels (from 0 to all channels - 1). Always at least one \n",
             "channel will remain. If one or more modalities are already missing, they will \n",
-            "be considered as dropped."
+            "be considered as dropped. Default: ``False``."
         ],
         "type": "boolean"
     }
@@ -732,7 +757,7 @@ Split Dataset
             "that contains the list of training/validation/testing filenames. This file can later\n",
             "be used to re-train a model using the same data splitting scheme. If ``null``,\n",
             "a new splitting scheme is performed. If specified, the .joblib file data splitting scheme\n",
-            "bypasses all the other split dataset parameters."
+            "bypasses all the other split dataset parameters. Default: ``null``."
         ],
         "type": "string"
     }
@@ -755,7 +780,7 @@ Split Dataset
         "$$description": [
             "Seed used by the random number generator to split the dataset between\n",
             "training/validation/testing sets. The use of the same seed ensures the same split between\n",
-            "the sub-datasets, which is useful for reproducibility."
+            "the sub-datasets, which is useful for reproducibility. Default: ``6``."
         ],
         "type": "int"
     }
@@ -778,7 +803,7 @@ Split Dataset
             "Metadata contained in a BIDS tabular (TSV) file or a BIDS sidecar JSON file on which the files are shuffled\n",
             "then split between train/validation/test, according to ``train_fraction`` and ``test_fraction``.\n",
             "For examples, ``participant_id`` will shuffle all participants from the ``participants.tsv`` file\n",
-            "then split between train/validation/test sets."
+            "then split between train/validation/test sets. Default: ``participant_id``."
         ],
         "type": "string"
     }
@@ -798,22 +823,23 @@ Split Dataset
         "title": "data_testing",
         "$$description": ["(Optional) Used to specify a custom metadata to only include in the testing dataset (not validation).\n",
             "For example, to not mix participants from different institutions between the train/validation set and the test set,\n",
-			"use the column ``institution_id`` from ``participants.tsv`` in ``data_type``.\n"
-		],
+            "use the column ``institution_id`` from ``participants.tsv`` in ``data_type``.\n"
+        ],
         "type": "dict",
         "options": {
             "data_type": {
                 "$$description": [
-					"Metadata to include in the testing dataset.\n",
-					"If specified, the ``test_fraction`` is applied to this metadata."
+                    "Metadata to include in the testing dataset.\n",
+                    "If specified, the ``test_fraction`` is applied to this metadata.\n",
+                    "If not specified, ``data_type`` is the same as ``split_method``. Default: ``null``."
                 ],
                 "type": "string"
             },
             "data_value": {
                 "$$description": [
-					"(Optional) List of metadata values from the ``data_type`` column to include in\n",
-                    "the testing dataset. If specified, the testing set contains only files from the\n",
-                    "``data_value`` list and the ``test_fraction`` is not used."
+                    "(Optional) List of metadata values from the ``data_type`` column to include in the testing dataset.\n",
+                    "If specified, the testing set contains only files from the ``data_value`` list and the ``test_fraction`` is not used.\n",
+                    "If not specified, create a random ``data_value`` according to ``data_type`` and ``test_fraction``. Default: ``[]``."
                 ],
                 "type": "list"
             }
@@ -835,7 +861,7 @@ Split Dataset
         "title": "balance",
         "$$description": [
             "Metadata contained in ``participants.tsv`` file with categorical values. Each category\n",
-            "will be evenly distributed in the training, validation and testing datasets."
+            "will be evenly distributed in the training, validation and testing datasets. Default: ``null``."
         ],
         "type": "string",
         "required": "false"
@@ -854,7 +880,7 @@ Split Dataset
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "train_fraction",
-        "description": "Fraction of the dataset used as training set.",
+        "description": "Fraction of the dataset used as training set. Default: ``0.6``.",
         "type": "float",
         "range": "[0, 1]"
     }
@@ -872,9 +898,7 @@ Split Dataset
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "test_fraction",
-        "$$description": [
-            "Fraction of the dataset used as testing set.\n"
-        ],
+        "description": "Fraction of the dataset used as testing set. Default: ``0.2``.",
         "type": "float",
         "range": "[0, 1]"
     }
@@ -897,6 +921,7 @@ Training Parameters
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "batch_size",
         "type": "int",
+        "description": "Defines the number of samples that will be propagated through the network. Default: ``18``.",
         "range": "(0, inf)"
     }
 
@@ -916,14 +941,13 @@ Training Parameters
         "title": "loss",
         "$$description": [
             "Metadata for the loss function. Other parameters that could be needed in the\n",
-            "Loss function definition: see attributes of the Loss function of interest\n",
-            "(e.g. ``'gamma': 0.5`` for ``FocalLoss``)."
+            "Loss function definition: see attributes of the Loss function of interest (e.g. ``'gamma': 0.5`` for ``FocalLoss``)."
         ],
         "type": "dict",
         "options": {
             "name": {
                 "type": "string",
-                "description": "Name of the loss function class. See :mod:`ivadomed.losses`"
+                "description": "Name of the loss function class. See :mod:`ivadomed.losses`. Default: ``DiceLoss``."
             }
         }
     }
@@ -944,11 +968,6 @@ Training Parameters
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "training_time",
-        "$$description": [
-            "Metadata for the loss function. Other parameters that could be needed in the\n",
-            "Loss function definition: see attributes of the Loss function of interest\n",
-            "(e.g. ``'gamma': 0.5`` for ``FocalLoss``)."
-        ],
         "type": "dict",
         "options": {
             "num_epochs": {
@@ -961,7 +980,7 @@ Training Parameters
                     "If the validation loss difference during one epoch\n",
                     "(i.e. ``abs(validation_loss[n] - validation_loss[n-1]`` where n is the current epoch)\n",
                     "is inferior to this epsilon for ``early_stopping_patience`` consecutive epochs,\n",
-                    "then training stops."
+                    "then training stops. Default: ``0.001``."
                 ]
             },
             "early_stopping_patience": {
@@ -969,7 +988,7 @@ Training Parameters
                 "range": "(0, inf)",
                 "$$description": [
                     "Number of epochs after which the training is stopped if the validation loss\n",
-                    "improvement is smaller than ``early_stopping_epsilon``."
+                    "improvement is smaller than ``early_stopping_epsilon``. Default: ``50``."
                 ]
             }
         }
@@ -994,24 +1013,36 @@ Training Parameters
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "scheduler",
         "type": "dict",
+        "description": "A predefined framework that adjusts the learning rate between epochs or iterations as the training progresses.",
         "options": {
             "initial_lr": {
                 "type": "float",
-                "description": "Initial learning rate."
+                "description": "Initial learning rate. Default: ``0.001``."
             },
-            "scheduler_lr": {
+            "lr_scheduler": {
                 "type": "dict",
                 "options": {
                     "name": {
                         "type": "string",
                         "$$description": [
-                            "One of ``CosineAnnealingLR``, ``CosineAnnealingWarmRestarts``\n",
-                            "and ``CyclicLR``. Please find documentation `here <https://pytorch.org/docs/stable/optim.html>`__.\n",
-
+                            "One of ``CosineAnnealingLR``, ``CosineAnnealingWarmRestarts`` and ``CyclicLR``.\n",
+                            "Please find documentation `here <https://pytorch.org/docs/stable/optim.html>`__.",
+                            "Default: ``CosineAnnealingLR``."
+                        ]
+                    },
+                    "max_lr": {
+                        "type": "float",
+                        "description": "Upper learning rate boundaries in the cycle for each parameter group. Default: ``1e-2``."
+                    },
+                    "base_lr": {
+                        "type": "float",
+                        "$$description": [
+                            "Initial learning rate which is the lower boundary in the cycle for each parameter group.\n",
+                            "Default: ``1e-5``."
                         ]
                     }
                 },
-                "description": "Other parameters depend on the scheduler of interest"
+                "description": "Other parameters depend on the scheduler of interest."
             }
         }
     }
@@ -1022,7 +1053,7 @@ Training Parameters
         "training_parameters": {
             "scheduler": {
                 "initial_lr": 0.001,
-                "scheduler_lr": {
+                "lr_scheduler": {
                     "name": "CosineAnnealingLR",
                     "max_lr": 1e-2,
                     "base_lr": 1e-5
@@ -1042,14 +1073,14 @@ Training Parameters
         "options": {
           "applied": {
               "type": "boolean",
-              "description": "Indicates whether to use a balanced sampler or not."
+              "description": "Indicates whether to use a balanced sampler or not. Default: ``False``."
           },
           "type": {
               "type": "string",
               "$$description": [
                 "Indicates which metadata to use to balance the sampler.\n",
                 "Choices: ``gt`` or  the name of a column from the ``participants.tsv`` file\n",
-                "(i.e. subject-based metadata)"
+                "(i.e. subject-based metadata). Default: ``gt``."
               ]
           }
         }
@@ -1073,7 +1104,7 @@ Training Parameters
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "mixup_alpha",
         "description": "Alpha parameter of the Beta distribution, see `original paper on
-        the Mixup technique <https://arxiv.org/abs/1710.09412>`__.",
+        the Mixup technique <https://arxiv.org/abs/1710.09412>`__. Default: ``null``.",
         "type": "float"
     }
 
@@ -1088,34 +1119,38 @@ Training Parameters
 
 .. jsonschema::
 
-   {
-       "$schema": "http://json-schema.org/draft-04/schema#",
-       "title": "transfer_learning",
-       "type": "dict",
-       "options": {
-           "retrain_model": {
-               "type": "string",
-               "$$description": [
-                   "Filename of the pretrained model (``path/to/pretrained-model``). If ``null``,\n",
-                   "no transfer learning is performed and the network is trained from scratch."
-               ]
-           },
-           "retrain_fraction": {
-               "type": "float",
-               "range": "[0, 1]",
-               "$$description": [
-                   "Controls the fraction of the pre-trained model that will be fine-tuned. For\n",
-                   "instance, if set to 0.5, the second half of the model will be fine-tuned while\n",
-                   "the first layers will be frozen."
-               ]
-           },
-           "reset": {
-               "type": "boolean",
-               "description": "If true, the weights of the layers that are not frozen
-                  are reset. If false, they are kept as loaded."
-           }
-       }
-   }
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "transfer_learning",
+        "type": "dict",
+        "$$description": ["A learning method where a model pretrained for a task is reused as the starting point",
+            "for a model on a second task."
+        ],
+        "options": {
+            "retrain_model": {
+                "type": "string",
+                "$$description": [
+                    "Filename of the pretrained model (``path/to/pretrained-model``). If ``null``,\n",
+                    "no transfer learning is performed and the network is trained from scratch. Default: ``null``."
+                ]
+            },
+            "retrain_fraction": {
+                "type": "float",
+                "range": "[0, 1]",
+                "$$description": [
+                    "Controls the fraction of the pre-trained model that will be fine-tuned. For\n",
+                    "instance, if set to 0.5, the second half of the model will be fine-tuned while\n",
+                    "the first layers will be frozen. Default: ``1.0``."
+                ]
+            },
+            "reset": {
+                "type": "boolean",
+                "$$description": ["If true, the weights of the layers that are not frozen are reset.",
+                    "If false, they are kept as loaded. Default: ``True``."
+                ]
+            }
+        }
+    }
 
 .. code-block:: JSON
 
@@ -1150,9 +1185,9 @@ being used for the segmentation task).
        "required": "true",
        "type": "dict",
        "$$description": [
-           "Define the default model (``Unet``) and mandatory parameters that are common to all\n",
-           "available :ref:`architectures`. For custom architectures (see below), the default\n",
-           "parameters are merged with the parameters that are specific to the tailored architecture."
+           "Define the default model (``Unet``) and mandatory parameters that are common to all available :ref:`architectures`.\n",
+           "For custom architectures (see below), the default parameters are merged with the parameters that are specific\n",
+           "to the tailored architecture."
        ],
        "options": {
            "name": {
@@ -1202,7 +1237,8 @@ being used for the segmentation task).
                "type": "boolean",
                "$$description": [
                    "Indicates if the model is 2D, if not the model is 3D. If ``is_2d`` is ``False``, then parameters\n",
-                   "``length_3D`` and ``stride_3D`` for 3D loader need to be specified (see :ref:`Modified3DUNet <Modified3DUNet>`)."
+                   "``length_3D`` and ``stride_3D`` for 3D loader need to be specified (see :ref:`Modified3DUNet <Modified3DUNet>`).\n",
+                    "Default: ``True``."
                ]
            }
        }
@@ -1218,6 +1254,9 @@ being used for the segmentation task).
             "bn_momentum": 0.1,
             "depth": 3,
             "final_activation": "sigmoid"
+            "is_2d": true,
+            "length_2D": [256, 256],
+            "stride_2D": [244, 244]
         }
     }
 
@@ -1229,10 +1268,11 @@ being used for the segmentation task).
         "title": "FiLMedUnet",
         "type": "dict",
         "required": "false",
+        "description": "U-Net network containing FiLM layers to condition the model with another data type (i.e. not an image).",
         "options": {
             "applied": {
                 "type": "boolean",
-                "description": "Set to ``true`` to use this model."
+                "description": "Set to ``true`` to use this model. Default: ``False``."
             },
             "metadata": {
                 "type": "string",
@@ -1243,13 +1283,16 @@ being used for the segmentation task).
                             "(defined in the json of each image) are input to the FiLM generator."
                         ]
                     },
-                    "contrast": "Image contrasts (according to ``config/contrast_dct.json``) are input to the FiLM generator."
+                    "contrasts": "Image contrasts (according to ``config/contrast_dct.json``) are input to the FiLM generator."
                },
                "$$description": [
                    "Choice between ``mri_params``, ``contrasts`` (i.e. image-based metadata) or the\n",
                    "name of a column from the participants.tsv file (i.e. subject-based metadata)."
                ]
-           }
+            },
+            "film_layers": {
+                "description": "List of 0 or 1 indicating on which layer FiLM is applied."
+            }
        }
    }
 
@@ -1267,18 +1310,19 @@ being used for the segmentation task).
 .. jsonschema::
 
 
-  	{
-		"$schema": "http://json-schema.org/draft-04/schema#",
-      	"title": "HeMISUnet",
-      	"type": "dict",
-      	"required": "false",
-      	"options": {
-			"applied": {
-				"type": "boolean",
-              	"description": "Set to ``true`` to use this model."
-			},
-          	"missing_probability": {
-				"type": "float",
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "HeMISUnet",
+        "type": "dict",
+        "required": "false",
+        "description": "A U-Net model inspired by HeMIS to deal with missing contrasts.",
+        "options": {
+            "applied": {
+                "type": "boolean",
+                "description": "Set to ``true`` to use this model."
+            },
+            "missing_probability": {
+                "type": "float",
                 "range": "[0, 1]",
                 "$$description": [
                     "Initial probability of missing image contrasts as model's input\n",
@@ -1290,7 +1334,7 @@ being used for the segmentation task).
                 "type": "float",
                 "$$description": [
                     "Controls missing probability growth at each epoch: at each epoch, the\n",
-                    "``missing_probability`` is modified with the exponent ``missing_probability_growth``."
+                    "``missing_probability`` is modified with the exponent ``missing_probability_growth``.",
                 ]
             }
          }
@@ -1321,10 +1365,18 @@ being used for the segmentation task).
         "title": "Modified3DUNet",
         "type": "dict",
         "required": "false",
+        "$$description": [
+            "The main differences with the original UNet resides in the use of LeakyReLU instead of ReLU, InstanceNormalisation\n",
+            "instead of BatchNorm due to small batch size in 3D and the addition of segmentation layers in the decoder."
+        ],
         "options": {
+            "applied": {
+                "type": "boolean",
+                "description": "Set to ``true`` to use this model."
+            },
             "length_3D": {
                 "type": "[int, int, int]",
-                "description": "Size of the 3D patches used as model's input tensors."
+                "description": "Size of the 3D patches used as model's input tensors. Default: ``[128, 128, 16]``."
             },
             "stride_3D": {
                 "type": "[int, int, int]",
@@ -1332,19 +1384,19 @@ being used for the segmentation task).
                     "Voxels' shift over the input matrix to create patches. Ex: Stride of [1, 2, 3]\n",
                     "will cause a patch translation of 1 voxel in the 1st dimension, 2 voxels in\n",
                     "the 2nd dimension and 3 voxels in the 3rd dimension at every iteration until\n",
-                    "the whole input matrix is covered."
+                    "the whole input matrix is covered. Default: ``[128, 128, 16]``."
                 ]
             },
-            "attention_unet": {
+            "attention": {
                 "type": "boolean",
-                "description": "Use attention gates in the Unet's decoder.",
+                "description": "Use attention gates in the Unet's decoder. Default: ``False``.",
                 "required": "false"
             },
             "n_filters": {
                 "type": "int",
                 "$$description": [
                     "Number of filters in the first convolution of the UNet.\n",
-                    "This number of filters will be doubled at each convolution."
+                    "This number of filters will be doubled at each convolution. Default: ``16``."
                 ],
                 "required": "false"
             }
@@ -1382,7 +1434,7 @@ Cascaded Architecture Features
                     "configuration file, and model need to have the same name\n",
                     "(e.g. ``findcord_tumor/``, ``findcord_tumor/findcord_tumor.json``, and\n",
                     "``findcord_tumor/findcord_tumor.onnx``, respectively). The model's prediction\n",
-                    "will be used to generate bounding boxes."
+                    "will be used to generate bounding boxes. Default: ``null``."
                 ]
             },
             "safety_factor": {
@@ -1391,7 +1443,7 @@ Cascaded Architecture Features
                     "List of length 3 containing the factors to multiply each dimension of the\n",
                     "bounding box. Ex: If the original bounding box has a size of 10x20x30 with\n",
                     "a safety factor of [1.5, 1.5, 1.5], the final dimensions of the bounding box\n",
-                    "will be 15x30x45 with an unchanged center."
+                    "will be 15x30x45 with an unchanged center. Default: ``[1.0, 1.0, 1.0]``."
                 ]
             }
        }
@@ -1410,7 +1462,7 @@ Cascaded Architecture Features
 Transformations
 ---------------
 
-Transformations applied during data augmentation. Transformations are sorted in the order they are applied to the image samples. For each transformation, the following parameters are customizable: 
+Transformations applied during data augmentation. Transformations are sorted in the order they are applied to the image samples. For each transformation, the following parameters are customizable:
 
 - ``applied_to``: list between ``"im", "gt", "roi"``. If not specified, then the transformation is applied to all loaded samples. Otherwise, only applied to the specified types: Example: ``["gt"]`` implies that this transformation is only applied to the ground-truth data.
 - ``dataset_type``: list between ``"training", "validation", "testing"``. If not specified, then the transformation is applied to the three sub-datasets. Otherwise, only applied to the specified subdatasets. Example: ``["testing"]`` implies that this transformation is only applied to the testing sub-dataset.
@@ -1442,12 +1494,15 @@ Transformations applied during data augmentation. Transformations are sorted in 
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "CenterCrop",
         "type": "dict",
+        "$$description": [
+            "Make a centered crop of a specified size."
+        ],
         "options": {
             "size": {
-                "type": "list, int"
+                "type": "list[int]"
             },
             "applied_to": {
-                "type": "list, string"
+                "type": "list[str]"
             }
         }
     }
@@ -1470,12 +1525,15 @@ Transformations applied during data augmentation. Transformations are sorted in 
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "ROICrop",
         "type": "dict",
+        "$$description": [
+            "Make a crop of a specified size around a Region of Interest (ROI).",
+        ],
         "options": {
             "size": {
-                "type": "list, int"
+                "type": "list[int]"
             },
             "applied_to": {
-                "type": "list, string"
+                "type": "list[str]"
             }
         }
     }
@@ -1485,7 +1543,8 @@ Transformations applied during data augmentation. Transformations are sorted in 
     {
         "transformation": {
             "ROICrop": {
-                "size": [48, 48]
+                "size": [48, 48],
+                "applied_to": ["im", "roi"]
             }
         }
     }
@@ -1500,14 +1559,21 @@ Transformations applied during data augmentation. Transformations are sorted in 
         "$$description": [
             "Normalize a tensor or an array image with mean and standard deviation estimated from\n",
             "the sample itself."
-        ]
+        ],
+        "options": {
+            "applied_to": {
+                "type": "list[str]"
+            }
+        }
     }
 
 .. code-block:: JSON
 
     {
         "transformation": {
-            "NormalizeInstance": {}
+            "NormalizeInstance": {
+                "applied_to": ["im"]
+            }
         }
     }
 
@@ -1518,9 +1584,10 @@ Transformations applied during data augmentation. Transformations are sorted in 
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "RandomAffine",
         "type": "dict",
+        "description": "Apply Random Affine transformation.",
         "options": {
             "degrees": {
-                "type": "float or tuple of float",
+                "type": "float or tuple(float)",
                 "range": "(0, inf)",
                 "$$description": [
                     "Positive float or list (or tuple) of length two. Angles in degrees. If only\n",
@@ -1529,7 +1596,7 @@ Transformations applied during data augmentation. Transformations are sorted in 
                 ]
             },
             "translate": {
-                "type": "list, float",
+                "type": "list[float]",
                 "range": "[0, 1]",
                 "$$description": [
                     "Length 2 or 3 depending on the sample shape (2D or 3D). Defines\n",
@@ -1537,11 +1604,11 @@ Transformations applied during data augmentation. Transformations are sorted in 
                 ]
             },
             "scale": {
-                "type": "list, float",
+                "type": "list[float]",
                 "range": "[0, 1]",
                 "$$description": [
                     "Length 2 or 3 depending on the sample shape (2D or 3D). Defines\n",
-                    "the maximum range of scaling along each axis."
+                    "the maximum range of scaling along each axis. Default: ``[0., 0., 0.]``."
                 ]
             }
         }
@@ -1568,9 +1635,10 @@ Transformations applied during data augmentation. Transformations are sorted in 
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "RandomShiftIntensity",
         "type": "dict",
+        "description": "Add a random intensity offset.",
         "options": {
             "shift_range": {
-                "type": "[float, float]",
+                "type": "(float, float)",
                 "description": "Range from which the offset applied is randomly selected."
             }
         }
@@ -1608,7 +1676,8 @@ Transformations applied during data augmentation. Transformations are sorted in 
                 "description": "Standard deviation."
             },
             "p": {
-                "type": "float"
+                "type": "float",
+                "description": "Probability. Default: ``0.1``"
             }
         }
     }
@@ -1634,6 +1703,7 @@ Transformations applied during data augmentation. Transformations are sorted in 
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "Resample",
         "type": "dict",
+        "description": "Resample image to a given resolution.",
         "options": {
             "hspace": {
                 "type": "float",
@@ -1672,14 +1742,15 @@ Transformations applied during data augmentation. Transformations are sorted in 
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "AdditiveGaussianNoise",
         "type": "dict",
+        "description": "Adds Gaussian Noise to images.",
         "options": {
             "mean": {
                 "type": "float",
-                "description": "Mean of Gaussian noise."
+                "description": "Mean of Gaussian noise. Default: ``0.0``."
             },
             "std": {
                 "type": "float",
-                "description": "Standard deviation of Gaussian noise."
+                "description": "Standard deviation of Gaussian noise. Default: ``0.01``."
             }
         }
     }
@@ -1702,6 +1773,7 @@ Transformations applied during data augmentation. Transformations are sorted in 
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "DilateGT",
         "type": "dict",
+        "description": "Randomly dilate a ground-truth tensor.",
         "options": {
             "dilation_factor": {
                 "type": "float",
@@ -1735,11 +1807,13 @@ Transformations applied during data augmentation. Transformations are sorted in 
         "options": {
             "min_percentile": {
                 "type": "float",
-                "range": "[0, 100]"
+                "range": "[0, 100]",
+                "description": "Lower clipping limit. Default: ``5.0``."
             },
             "max_percentile": {
                 "type": "float",
-                "range": "[0, 100]"
+                "range": "[0, 100]",
+                "description": "Higher clipping limit. Default: ``95.0``."
             }
         }
     }
@@ -1762,15 +1836,17 @@ Transformations applied during data augmentation. Transformations are sorted in 
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "Clahe",
         "type": "dict",
+        "description": "Applies Contrast Limited Adaptive Histogram Equalization for enhancing the local image contrast.",
         "options": {
             "clip_limit": {
-                "type": "float"
+                "type": "float",
+                "description": "Clipping limit, normalized between 0 and 1. Default: ``3.0``."
             },
             "kernel_size": {
-                "type": "list, int",
+                "type": "list[int]",
                 "$$description": [
                     "Defines the shape of contextual regions used in the algorithm.\n",
-                    "List length = dimension, i.e. 2D or 3D"
+                    "List length = dimension, i.e. 2D or 3D. Default: ``[8, 8]``."
                 ]
             }
         }
@@ -1818,11 +1894,12 @@ Transformations applied during data augmentation. Transformations are sorted in 
         ],
         "options": {
             "log_gamma_range": {
-                "type": "(float, float)",
+                "type": "[float, float]",
                 "description": "Log gamma range for changing contrast."
             },
             "p": {
-                "type": "float"
+                "type": "float",
+                "description": "Probability of performing the gamma contrast. Default: ``0.5``."
             }
         }
     }
@@ -1847,7 +1924,7 @@ Transformations applied during data augmentation. Transformations are sorted in 
         "title": "RandomBiasField",
         "type": "dict",
         "$$description": [
-            "Applies a random MRI bias field artifact to the image via `torchio.RandomBiasField()`"
+            "Applies a random MRI bias field artifact to the image via ``torchio.RandomBiasField()``."
         ],
         "options": {
             "coefficients": {
@@ -1859,7 +1936,8 @@ Transformations applied during data augmentation. Transformations are sorted in 
                 "description": "Order of the basis polynomial functions."
             },
             "p": {
-                "type": "float"
+                "type": "float",
+                "description": "Probability of applying the bias field. Default: ``0.5``."
             }
         }
     }
@@ -1893,7 +1971,8 @@ Transformations applied during data augmentation. Transformations are sorted in 
                 "description": "Standard deviation range for the gaussian filter."
             },
             "p": {
-                "type": "float"
+                "type": "float",
+                "description": "Probability of performing blur. Default: ``0.5``."
             }
         }
     }
@@ -1927,7 +2006,7 @@ Uncertainty computation is performed if ``n_it>0`` and at least
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "epistemic",
         "type": "boolean",
-        "description": "Model-based uncertainty with `Monte Carlo Dropout <https://arxiv.org/abs/1506.02142>`__."
+        "description": "Model-based uncertainty with `Monte Carlo Dropout <https://arxiv.org/abs/1506.02142>`__. Default: ``false``."
     }
 
 .. code-block:: JSON
@@ -1944,7 +2023,7 @@ Uncertainty computation is performed if ``n_it>0`` and at least
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "aleatoric",
         "type": "boolean",
-        "description": "Image-based uncertainty with `test-time augmentation <https://doi.org/10.1016/j.neucom.2019.01.103>`__."
+        "description": "Image-based uncertainty with `test-time augmentation <https://doi.org/10.1016/j.neucom.2019.01.103>`__. Default: ``false``."
     }
 
 .. code-block:: JSON
@@ -1961,7 +2040,7 @@ Uncertainty computation is performed if ``n_it>0`` and at least
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "n_it",
         "type": "int",
-        "description": "Number of Monte Carlo iterations. Set to 0 for no uncertainty computation."
+        "description": "Number of Monte Carlo iterations. Set to 0 for no uncertainty computation. Default: ``0``."
     }
 
 .. code-block:: JSON
@@ -1988,7 +2067,7 @@ Postprocessing
                 "range": "[0, 1]",
                 "$$description": [
                     "Threshold. To use soft predictions (i.e. no binarisation, float between 0 and 1)\n",
-                    "for metric computation, indicate -1."
+                    "for metric computation, indicate -1. Default: ``0.5``."
                 ]
             }
         },
@@ -2019,7 +2098,7 @@ Postprocessing
         "type": "dict",
         "$$description": [
             "Binarize by setting to 1 the voxel having the maximum prediction across all classes.\n",
-            "Useful for multiclass models. No parameters required (i.e., {})."
+            "Useful for multiclass models. No parameters required (i.e., {}). Default: ``{}``."
         ]
     }
 
@@ -2040,7 +2119,7 @@ Postprocessing
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "fill_holes",
         "type": "dict",
-        "description": "Fill holes in the predictions. No parameters required (i.e., {})."
+        "description": "Fill holes in the predictions. No parameters required (i.e., {}). Default: ``{}``."
     }
 
 
@@ -2063,7 +2142,7 @@ Postprocessing
         "$$description": [
             "Keeps only the largest connected object in prediction. Only nearest neighbors are\n",
             "connected to the center, diagonally-connected elements are not considered neighbors.\n",
-            "No parameters required (i.e., {})"
+            "No parameters required (i.e., {}). Default: ``{}``."
         ]
     }
 
@@ -2088,7 +2167,7 @@ Postprocessing
             "thr": {
                 "type": "float",
                 "range": "[0, 1]",
-                "description": "Threshold. Threshold set to ``-1`` will not apply this postprocessing step."
+                "description": "Threshold. Threshold set to ``-1`` will not apply this postprocessing step. Default: ``-1``."
             }
         },
         "description": "Sets to zero prediction values strictly below the given threshold ``thr``."
@@ -2120,17 +2199,17 @@ Postprocessing
         ],
         "options": {
             "thr": {
-                "type": "int or list",
+                "type": "int or list[int]",
                 "$$description": [
                     "Minimal object size. If a list of thresholds is chosen, the length should\n",
-                    "match the number of predicted classes."
+                    "match the number of predicted classes. Default: ``3``."
                 ]
             },
             "unit": {
                 "type": "string",
                 "$$description": [
-                    "Either `vox` for voxels or `mm3`. Indicates the unit used to define the\n",
-                    "minimal object size."
+                    "Either ``vox`` for voxels or ``mm3``. Indicates the unit used to define the\n",
+                    "minimal object size. Default: ``vox``."
                 ]
             }
         }
@@ -2211,19 +2290,19 @@ object sizes.
         "type": "dict",
         "options": {
             "thr": {
-                "type": "list, int",
+                "type": "list[int]",
                 "$$description": [
                     "These values will create several consecutive target size bins. For instance\n",
                     "with a list of two values, we will have three target size bins: minimal size\n",
                     "to first list element, first list element to second list element, and second\n",
-                    "list element to infinity."
+                    "list element to infinity. Default: ``[20, 100]``."
                 ]
             },
             "unit": {
                 "type": "string",
                 "$$description": [
-                    "Either `vox` for voxels or `mm3`. Indicates the unit used to define the\n",
-                    "target object sizes."
+                    "Either ``vox`` for voxels or ``mm3``. Indicates the unit used to define the\n",
+                    "target object sizes. Default: ``vox``."
                 ]
             }
         }
@@ -2250,15 +2329,13 @@ object sizes.
         "options": {
             "thr": {
                 "type": "int",
-                "$$description": [
-                    "Minimal object size overlapping to be considered a TP, FP, or FN."
-                ]
+                "description": "Minimal object size overlapping to be considered a TP, FP, or FN. Default: ``3``."
             },
             "unit": {
                 "type": "string",
-                "$$description": [
-                    "Either `vox` for voxels or `mm3`. Indicates the unit used to define the\n",
-                    "overlap."
+                "$$description":[
+                    "Either ``vox`` for voxels or ``mm3``. Indicates the unit used to define the overlap.\n",
+                    "Default: ``vox``."
                 ]
             }
         }
@@ -2269,7 +2346,7 @@ object sizes.
     {
         "evaluation_parameters": {
             "overlap": {
-                "thr": 30,
+                "thr": 3,
                 "unit": "vox"
             }
         }
