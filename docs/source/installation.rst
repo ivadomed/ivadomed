@@ -131,46 +131,6 @@ Step 2: Install ``ivadomed``
                 pip install -e .
 
 
-Step 3: Install ``torch`` and ``torchvision`` with CPU or GPU Support
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-    .. tabs::
-
-        .. group-tab:: PyPI Installation
-
-            .. tabs::
-
-                .. tab:: Nvidia GPU Support
-
-                    ``ivadomed`` requires CUDA11 to execute properly. If you have a nvidia GPU, try to look up its Cuda Compute Score `here <https://developer.nvidia.com/cuda-gpus>`__, which needs to be > 3.5 to support CUDA11. Then, make sure to upgrade to nvidia driver to be at least v450+ or newer.
-
-                    You can use ``nvidia-smi`` in both Linux and Windows to check for driver CUDA Version listed at the top right of the output console. On Linux, simply type in ``nvidia-smi`` in any console to see the output. On windows, you will need to locate the `nvidia-smi.exe` tool by following the instructions on `this page <https://stackoverflow.com/a/57100016>`__.
-
-                    If you have a compatible NVIDIA GPU that supports CUDA11, and you have a recent enough driver installed, then run the following command:
-
-                    .. code::
-
-                       pip install torch==1.8.1+cu111 torchvision==0.9.1+cu111 --find-links https://download.pytorch.org/whl/torch_stable.html
-
-                .. tab:: CPU Support
-
-                    If you plan to run ``ivadomed`` on CPU only, install PyTorch per instructions provided below for your specific operating system:
-
-                    .. tabs::
-
-                        .. tab:: Windows/Linux
-
-                            .. code::
-
-                               pip install torch==1.8.0+cpu torchvision==0.9.0+cpu --find-links https://download.pytorch.org/whl/torch_stable.html
-
-                        .. tab:: Mac
-
-                            .. code::
-
-                               pip install torch==1.8.0 torchvision==0.9.0 --find-links https://download.pytorch.org/whl/torch_stable.html
-
-
         .. group-tab:: Repo Installation (Advanced or Developer)
 
             Run this only if you have already downloaded/cloned the repo with access to the ``requirement_gpu.txt`` file, then run the following command while at the repository root level:
