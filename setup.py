@@ -40,6 +40,9 @@ extra_requirements = {
     'contrib': [
         'pre-commit>=2.10.1',
         'flake8',
+    ],
+    'type_checks': [
+        'mypy',
     ]
 }
 

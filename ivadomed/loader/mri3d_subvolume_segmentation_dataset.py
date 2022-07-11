@@ -169,7 +169,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         z_max = coord.get(SegmentationDatasetKW.Z_MAX)
 
         # Obtain tuple reference to the pairs of file references
-        tuple_seg_roi_pair: tuple = self.handlers[coord.get(SegmentationDatasetKW.HANDLER_INDEX)]
+        tuple_seg_roi_pair: tuple = self.handlers[coord.get(SegmentationDatasetKW.HANDLER_INDEX)] # type: ignore[index]
 
         # Disk Cache handling, either, load the seg_pair, not using ROI pair here.
         if self.disk_cache:
@@ -214,7 +214,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
                        z_min:z_max
             ]
         else:
-            stack_gt = []
+            stack_gt = np.asarray([])
 
         # Run transforms on image slices
         stack_input, metadata_input = self.transform(sample=stack_input,
@@ -231,9 +231,9 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         if stack_gt is not None and not self.soft_gt:
             stack_gt = imed_postpro.threshold_predictions(stack_gt, thr=0.5).astype(np.uint8)
 
-        shape_x = x_max - x_min
-        shape_y = y_max - y_min
-        shape_z = z_max - z_min
+        shape_x = x_max - x_min # type: ignore[operator]
+        shape_y = y_max - y_min # type: ignore[operator]
+        shape_z = z_max - z_min # type: ignore[operator]
 
         # add coordinates to metadata to reconstruct volume
         for metadata in metadata_input:

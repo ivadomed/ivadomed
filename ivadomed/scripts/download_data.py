@@ -7,7 +7,7 @@ import tarfile
 import zipfile
 import requests
 from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util import Retry
+from urllib3.util import Retry
 from pathlib import Path
 import argparse
 import textwrap
@@ -265,7 +265,7 @@ def install_data(url, dest_folder, keep=False):
 # cannot be done in the function directly.
 # `create_string()` is a custom function that converts our dict into a string
 # which is easier to add in the documentation.
-install_data.__doc__ = install_data.__doc__.format(BUNDLES=textwrap.indent(_format_bundles(), ' '*6))
+install_data.__doc__ = install_data.__doc__.format(BUNDLES=textwrap.indent(_format_bundles(), ' '*6)) # type: ignore[union-attr]
 
 
 def main(args=None):
