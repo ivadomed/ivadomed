@@ -315,7 +315,7 @@ class SegmentationPair(object):
             if len(img.shape) > 3:
                 img = np.expand_dims(imageio.imread(filename, format='tiff-pil', as_gray=True), axis=-1).astype(np.uint8)
         else:
-            img = np.expand_dims(imageio.imread(filename, as_gray=True), axis=-1).astype(np.uint8)
+            img = np.expand_dims(imageio.v2.imread(filename, as_gray=True), axis=-1).astype(np.uint8)
 
         # Binarize ground-truth values (0-255) to 0 and 1 in uint8 with threshold 0.5
         if is_gt:
