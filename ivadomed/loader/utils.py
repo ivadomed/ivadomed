@@ -145,7 +145,6 @@ def get_new_subject_file_split(df, split_method, data_testing, random_seed,
             raise ValueError("All lists in subject_selection parameter should have the same length.")
 
         sampled_dfs = []
-        random.seed(random_seed)
         for m, n, v in zip(subject_selection["metadata"], subject_selection["n"], subject_selection["value"]):
             participants = random.sample(df[df[m] == v]['participant_id'].unique().tolist(), n)
             for participant in participants:
