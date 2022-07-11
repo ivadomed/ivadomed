@@ -130,28 +130,3 @@ Step 2: Install ``ivadomed``
 
                 pip install -e .
 
-
-        .. group-tab:: Repo Installation (Advanced or Developer)
-
-            Run this only if you have already downloaded/cloned the repo with access to the ``requirement_gpu.txt`` file, then run the following command while at the repository root level:
-
-            .. code::
-
-               pip install -r requirements_gpu.txt
-
-
-
-
-Developer-only Installation Steps
-+++++++++++++++++++++++++++++++++
-
-    The additional steps below are only necessary for contributors to the ``ivadomed`` project.
-
-    The ``pre-commit`` package is used to enforce a size limit on committed files. The ``requirements_dev.txt`` also contain additional dependencies related to documentation building and testing.
-
-    After you've installed ``ivadomed``, install the ``pre-commit`` hooks by running:
-
-    .. code::
-
-        pip install -r requirements_dev.txt
-        pre-commit install
