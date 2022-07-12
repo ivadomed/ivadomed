@@ -70,8 +70,8 @@ def get_parser():
                                help='Load a saved model ("checkpoint.pth.tar" in the output directory specified either with flag "--path-output" or via the config file "output_path" argument)  '
                                     'for resume training. This training state is saved everytime a new best model is saved in the output directory specified with flag "--path-output"')
     optional_args.add_argument('--no-patch', dest="no_patch", action='store_true', required=False,
-                               help='2D patches are not used while segmenting with models that includes the '
-                               '"length_2D" parameter (command "--segment" only).')
+                               help='2D patches are not used while segmenting with models trained with patches '
+                               '(command "--segment" only). The "no_patch" option supersedes the "overlap_2D" option.')
     optional_args.add_argument('--overlap-2d', dest="overlap_2d", required=False, type=int, nargs="+",
                                 help='Custom overlap for 2D patches while segmenting (command "--segment" only). '
                                 'Default model overlap is used otherwise.')
@@ -344,10 +344,11 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False, no_
             the training + validation sub-dataset to find the optimal binarization threshold. The specified value
             indicates the increment between 0 and 1 used during the ROC analysis (e.g. 0.1).
         resume_training (bool): Load a saved model ("checkpoint.pth.tar" in the output directory specified with flag
-            "--path-output" or via the config file "output_path" ' This training state is saved everytime a new best
+            "--path-output" or via the config file "output_path". This training state is saved everytime a new best
             model is saved in the log argument) for resume training directory.
-        no_patch (bool): If True, 2D patches are not used while segmenting with models that includes the "length_2D"
-            parameter (command "--segment" only). Default: False.
+        no_patch (bool): If True, 2D patches are not used while segmenting with models trained with patches
+            (command "--segment" only). Default: False (i.e. segment with patches). The "no_patch" option supersedes
+            the "overlap_2D" option.
         overlap_2d (list of int): Custom overlap for 2D patches while segmenting (command "--segment" only).
             Default model overlap is used otherwise.
 

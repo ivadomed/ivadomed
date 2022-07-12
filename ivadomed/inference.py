@@ -349,8 +349,8 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
                             Length equals 2 [PixelSizeX, PixelSizeY] for 2D or 3 [PixelSizeX, PixelSizeY, PixelSizeZ] for 3D, \
                             where X is the width, Y the height and Z the depth of the image.
             * 'pixel_size_units': (str) Units of pixel size (Must be either "mm", "um" or "nm")
-            * 'no_patch': (bool) If True, 2D patches are not used while segmenting with models that includes the \
-                          "length_2D" parameter.
+            * 'no_patch': (bool) 2D patches are not used while segmenting with models trained with patches. \
+                          The "no_patch" option supersedes the "overlap_2D" option.
             * 'overlap_2D': (list of int) List of overlaps in pixels for 2D patching. Length equals 2 [OverlapX, OverlapY], \
                             where X is the width and Y the height of the image.
             * 'metadata': (str) Film metadata.
