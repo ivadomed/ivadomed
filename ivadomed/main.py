@@ -71,9 +71,10 @@ def get_parser():
                                     'for resume training. This training state is saved everytime a new best model is saved in the output directory specified with flag "--path-output"')
     optional_args.add_argument('--no-patch', dest="no_patch", action='store_true', required=False,
                                help='2D patches are not used while segmenting with models trained with patches '
-                               '(command "--segment" only). The "no_patch" option supersedes the "overlap_2D" option.')
+                               '(command "--segment" only). The "--no-patch" argument supersedes the "--overlap-2D" argument.')
     optional_args.add_argument('--overlap-2d', dest="overlap_2d", required=False, type=int, nargs="+",
                                 help='Custom overlap for 2D patches while segmenting (command "--segment" only). '
+                                'Example: "--overlap-2d 48 48" for an overlap of 48 pixels between patches in X and Y respectively. '
                                 'Default model overlap is used otherwise.')
     optional_args.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS,
                                help='Shows function documentation.')
