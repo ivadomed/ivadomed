@@ -14,7 +14,7 @@ from loguru import logger
 from sklearn.model_selection import train_test_split
 from torch._six import string_classes
 from ivadomed import utils as imed_utils
-from ivadomed.keywords import SplitDatasetKW, LoaderParamsKW, ROIParamsKW, ContrastParamsKW
+from ivadomed.keywords import SplitDatasetKW, LoaderParamsKW, ROIParamsKW, ContrastParamsKW, ConfigKW
 import nibabel as nib
 import random
 
@@ -145,7 +145,6 @@ def get_new_subject_file_split(df, split_method, data_testing, random_seed,
             raise ValueError("All lists in subject_selection parameter should have the same length.")
 
         sampled_dfs = []
-        random.seed(random_seed)
         for m, n, v in zip(subject_selection["metadata"], subject_selection["n"], subject_selection["value"]):
             participants = random.sample(df[df[m] == v]['participant_id'].unique().tolist(), n)
             for participant in participants:

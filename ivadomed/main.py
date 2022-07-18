@@ -9,6 +9,7 @@ import platform
 import multiprocessing
 import re
 
+from ivadomed.random import set_seed
 from ivadomed.loader.bids_dataframe import BidsDataframe
 from ivadomed import evaluation as imed_evaluation
 from ivadomed import config_manager as imed_config_manager
@@ -369,6 +370,8 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False, no_
     logger.add(str(path_log))
     logger.add(sys.stdout)
 
+    set_seed(context[ConfigKW.SPLIT_DATASET][SplitDatasetKW.RANDOM_SEED])
+   
     # Create a log with the version of the Ivadomed software and the version of the Annexed dataset (if present)
     create_dataset_and_ivadomed_version_log(context)
 
@@ -625,7 +628,6 @@ def run_main():
                 resume_training=bool(args.resume_training),
                 no_patch=bool(args.no_patch),
                 overlap_2d=args.overlap_2d if args.overlap_2d else None)
-
 
 if __name__ == "__main__":
     run_main()
