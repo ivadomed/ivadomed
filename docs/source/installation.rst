@@ -113,8 +113,8 @@ Step 2: Install ``ivadomed``
             CUDA 10.2 and CUDA 11.1 runtime by default with its
             respective installation binaries. 
 
-            In case if you're wondering, Ampere-based GPUs 
-            (with a `Compute Capability <https://developer.nvidia.com/cuda-gpus>`_
+            In case if you're wondering about CUDA runtime, Ampere-based
+            GPUs (with a `Compute Capability <https://developer.nvidia.com/cuda-gpus>`_
             of 8.x) only work with CUDA>=11.1. Although CUDA 11.1 is
             backward compatible with older hardware, CUDA 10.2 is
             preferred if available.
@@ -203,3 +203,8 @@ Step 2: Install ``ivadomed``
                             ::
 
                                 pip install git+https://github.com/ivadomed/ivadomed.git
+
+
+Interested in Contributing? Just head over to the 
+:ref:`contributing section <contributing_to_ivadomed>` for the guidelines and
+contributor specific installation instructions.

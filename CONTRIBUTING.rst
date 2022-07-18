@@ -1,3 +1,5 @@
+.. _contributing_to_ivadomed:
+
 Contributing to ivadomed
 ========================
 
@@ -21,6 +23,8 @@ Thank you for your interest in contributing to ivadomed! This project uses the f
     to the ivadomed codebase. It also contains step-by-step walkthroughs for
     common ivadomed maintainer tasks.
 
+.. _installation_contributor:
+
 Contributor or Developer ``ivadomed`` installation 
 ++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -28,11 +32,11 @@ Contributor or Developer ``ivadomed`` installation
         
         .. tab:: NVIDIA GPU Support
 
-            PyTorch, integral part of ``ivadomed``, ships 
+            PyTorch, an integral part of ``ivadomed``, ships 
             CUDA 10.2 and CUDA 11.1 runtime by default with its
             respective installation binaries.
 
-            In case if you're wondering, Ampere-based GPUs
+            In case if you're wondering about CUDA runtime, Ampere-based GPUs
             (with a `Compute Capability <https://developer.nvidia.com/cuda-gpus>`_
             of 8.x) only work with CUDA>=11.1. Although CUDA 11.1 is
             backward compatible with older hardware, CUDA 10.2 is
