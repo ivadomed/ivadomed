@@ -151,6 +151,7 @@ class OptionKW:
     OVERLAP_2D: str = "overlap_2D"
     PIXEL_SIZE: str = "pixel_size"
     PIXEL_SIZE_UNITS: str = "pixel_size_units"
+    NO_PATCH: str = "no_patch"
 
 
 @dataclass
