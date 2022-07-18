@@ -56,11 +56,6 @@ def set_global_seed(seed: int, control_randomness: bool) -> None:
         torch.cuda.manual_seed_all(seed)
         torch.backends.cudnn.benchmark = False
 
-    # TODO: update deterministic behaviour
-    # if deterministic:
-    #     torch.backends.cudnn.deterministic = True
-    #     torch.backends.cudnn.benchmark = False
-        
         
 def initialize_wandb(wandb_params):
     try:
