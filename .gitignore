@@ -21,9 +21,6 @@ log.txt
 # Pycharm stuff
 .idea
 
-# VSCode stuff
-.vscode
-
 # Pytest Cache, anywhere:
 .pytest_cache/
 
