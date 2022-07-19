@@ -223,7 +223,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                     # save the completely processed file as a NifTI file
                     if ofolder:
                         fname_pred = str(Path(ofolder, Path(fname_ref).name))
-                        fname_pred = fname_pred.rsplit("_", 1)[0] + '_pred.nii.gz'
+                        fname_pred = fname_pred.split(testing_params['target_suffix'][0])[0] + '_pred.nii.gz'
                         # If Uncertainty running, then we save each simulation result
                         if testing_params['uncertainty']['applied']:
                             fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monte_carlo).zfill(2) + '.nii.gz'
