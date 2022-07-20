@@ -295,6 +295,9 @@ smart_quotes = False
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'ivadomed-doc'
 
+# configure sphinx_copybutton for python and bash examples
+copybutton_prompt_text = r">>> |\$ "
+copybutton_prompt_is_regexp = True
 
 # PATCH `sphinx-jsonschema`
 #  to render the extra `options`` and ``tags`` schema properties
