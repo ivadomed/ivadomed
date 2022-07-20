@@ -14,7 +14,7 @@ from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.loader.utils import dropout_input, create_temp_directory, get_obj_size
 from ivadomed.loader.segmentation_pair import SegmentationPair
 from ivadomed.object_detection import utils as imed_obj_detect
-from ivadomed.keywords import MetadataKW
+from ivadomed.keywords import MetadataKW, SegmentationDatasetKW, SegmentationPairKW
 from ivadomed.utils import get_timestamp, get_system_memory
 
 
@@ -148,19 +148,30 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         """Return the dataset size. The number of subvolumes."""
         return len(self.indexes)
 
-    def __getitem__(self, index):
+    def __getitem__(self, subvolume_index: int):
         """Return the specific index pair subvolume (input, ground truth).
 
         Args:
-            index (int): Subvolume index.
+            subvolume_index (int): Subvolume index.
         """
 
         # copy.deepcopy is used to have different coordinates for reconstruction for a given handler,
         # to allow a different rater at each iteration of training, and to clean transforms params from previous
         # transforms i.e. remove params from previous iterations so that the coming transforms are different
-        coord = self.indexes[index]
 
-        tuple_seg_roi_pair: tuple = self.handlers[coord['handler_index']]
+        # Get the tuple that defines the boundaries for the subsample
+        coord: dict = self.indexes[subvolume_index]
+        x_min = coord.get(SegmentationDatasetKW.X_MIN)
+        x_max = coord.get(SegmentationDatasetKW.X_MAX)
+        y_min = coord.get(SegmentationDatasetKW.Y_MIN)
+        y_max = coord.get(SegmentationDatasetKW.Y_MAX)
+        z_min = coord.get(SegmentationDatasetKW.Z_MIN)
+        z_max = coord.get(SegmentationDatasetKW.Z_MAX)
+
+        # Obtain tuple reference to the pairs of file references
+        tuple_seg_roi_pair: tuple = self.handlers[coord.get(SegmentationDatasetKW.HANDLER_INDEX)]
+
+        # Disk Cache handling, either, load the seg_pair, not using ROI pair here.
         if self.disk_cache:
             with tuple_seg_roi_pair[0].open(mode='rb') as f:
                 seg_pair = pickle.load(f)
@@ -168,65 +179,80 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
             seg_pair, _ = copy.deepcopy(tuple_seg_roi_pair)
 
         # In case multiple raters
-        if seg_pair['gt'] and isinstance(seg_pair['gt'][0], list):
+        if seg_pair[SegmentationPairKW.GT] and isinstance(seg_pair[SegmentationPairKW.GT][0], list):
             # Randomly pick a rater
-            idx_rater = random.randint(0, len(seg_pair['gt'][0]) - 1)
+            idx_rater = random.randint(0, len(seg_pair[SegmentationPairKW.GT][0]) - 1)
             # Use it as ground truth for this iteration
             # Note: in case of multi-class: the same rater is used across classes
-            for idx_class in range(len(seg_pair['gt'])):
-                seg_pair['gt'][idx_class] = seg_pair['gt'][idx_class][idx_rater]
-                seg_pair['gt_metadata'][idx_class] = seg_pair['gt_metadata'][idx_class][idx_rater]
+            for idx_class in range(len(seg_pair[SegmentationPairKW.GT])):
+                seg_pair[SegmentationPairKW.GT][idx_class] = seg_pair[SegmentationPairKW.GT][idx_class][idx_rater]
+                seg_pair[SegmentationPairKW.GT_METADATA][idx_class] = seg_pair[SegmentationPairKW.GT_METADATA][idx_class][idx_rater]
 
-        metadata_input = seg_pair['input_metadata'] if seg_pair['input_metadata'] is not None else []
-        metadata_gt = seg_pair['gt_metadata'] if seg_pair['gt_metadata'] is not None else []
+        if seg_pair[SegmentationPairKW.INPUT_METADATA]:
+            metadata_input = seg_pair[SegmentationPairKW.INPUT_METADATA]
+        else:
+            metadata_input = []
 
-        # Run transforms on images
-        stack_input, metadata_input = self.transform(sample=seg_pair['input'],
+        if seg_pair[SegmentationPairKW.GT_METADATA]:
+            metadata_gt = seg_pair[SegmentationPairKW.GT_METADATA]
+        else:
+            metadata_gt = []
+
+        # Extract image and gt slices or patches from coordinates
+        stack_input = np.asarray(seg_pair[SegmentationPairKW.INPUT])[
+                      :,
+                      x_min:x_max,
+                      y_min:y_max,
+                      z_min:z_max
+            ]
+
+        if seg_pair[SegmentationPairKW.GT]:
+            stack_gt = np.asarray(seg_pair[SegmentationPairKW.GT])[
+                       :,
+                       x_min:x_max,
+                       y_min:y_max,
+                       z_min:z_max
+            ]
+        else:
+            stack_gt = []
+
+        # Run transforms on image slices
+        stack_input, metadata_input = self.transform(sample=stack_input,
                                                      metadata=metadata_input,
                                                      data_type="im")
         # Update metadata_gt with metadata_input
         metadata_gt = imed_loader_utils.update_metadata(metadata_input, metadata_gt)
 
-        # Run transforms on images
-        stack_gt, metadata_gt = self.transform(sample=seg_pair['gt'],
+        # Run transforms on gt slices
+        stack_gt, metadata_gt = self.transform(sample=stack_gt,
                                                metadata=metadata_gt,
                                                data_type="gt")
         # Make sure stack_gt is binarized
         if stack_gt is not None and not self.soft_gt:
             stack_gt = imed_postpro.threshold_predictions(stack_gt, thr=0.5).astype(np.uint8)
 
-        shape_x = coord["x_max"] - coord["x_min"]
-        shape_y = coord["y_max"] - coord["y_min"]
-        shape_z = coord["z_max"] - coord["z_min"]
+        shape_x = x_max - x_min
+        shape_y = y_max - y_min
+        shape_z = z_max - z_min
 
         # add coordinates to metadata to reconstruct volume
         for metadata in metadata_input:
-            metadata[MetadataKW.COORD] = [coord["x_min"], coord["x_max"], coord["y_min"], coord["y_max"], coord["z_min"],
-                                 coord["z_max"]]
+            metadata[MetadataKW.COORD] = [
+                x_min, x_max,
+                y_min, y_max,
+                z_min, z_max,
+            ]
 
         subvolumes = {
-            'input': torch.zeros(stack_input.shape[0], shape_x, shape_y, shape_z),
-            'gt': torch.zeros(stack_gt.shape[0], shape_x, shape_y, shape_z) if stack_gt is not None else None,
+            SegmentationPairKW.INPUT: stack_input,
+            SegmentationPairKW.GT: stack_gt,
             MetadataKW.INPUT_METADATA: metadata_input,
             MetadataKW.GT_METADATA: metadata_gt
         }
 
-        for _ in range(len(stack_input)):
-            subvolumes['input'] = stack_input[:,
-                                  coord['x_min']:coord['x_max'],
-                                  coord['y_min']:coord['y_max'],
-                                  coord['z_min']:coord['z_max']]
-
         # Input-level dropout to train with missing modalities
         if self.is_input_dropout:
             subvolumes = dropout_input(subvolumes)
-
-        if stack_gt is not None:
-            for _ in range(len(stack_gt)):
-                subvolumes['gt'] = stack_gt[:,
-                                   coord['x_min']:coord['x_max'],
-                                   coord['y_min']:coord['y_max'],
-                                   coord['z_min']:coord['z_max']]
 
         return subvolumes
 
