@@ -25,112 +25,97 @@ Thank you for your interest in contributing to ivadomed! This project uses the f
 
 .. _installation_contributor:
 
-Contributor or Developer ``ivadomed`` installation 
+Developer ``ivadomed`` installation
 ++++++++++++++++++++++++++++++++++++++++++++++++++
 
+1. Download the code:
+
+    ::
+
+        cd ivadomed
+        git clone https://github.com/ivadomed/ivadomed.git
+
+2. Isolate your work in a virtual environment:
+
+    We recommend developing inside of ``venv`` or ``conda``.
+    It makes debugging easier.
+
     .. tabs::
-        
-        .. tab:: NVIDIA GPU Support
 
-            PyTorch, an integral part of ``ivadomed``, ships 
-            CUDA 10.2 and CUDA 11.1 runtime by default with its
-            respective installation binaries.
+        .. group-tab:: ``venv``
 
-            In case if you're wondering about CUDA runtime, Ampere-based GPUs
-            (with a `Compute Capability <https://developer.nvidia.com/cuda-gpus>`_
-            of 8.x) only work with CUDA>=11.1. Although CUDA 11.1 is
-            backward compatible with older hardware, CUDA 10.2 is
-            preferred if available.
+            Create the environment:
 
-            Thus, to accelerate ``ivadomed`` with CUDA 10.2 on a Linux system, you'd
-            need to have GPUs installed with an `NVIDIA driver version >=440.33 
-            <https://docs.nvidia.com/deploy/cuda-compatibility/index.html#minor-version-compatibility>`_.
-            And, for CUDA 11.1 you'd rather need an upgraded NVIDIA driver version >=450.
-            
-            To verify the NVIDIA driver version, look in ``/sys`` by executing the
-            command:
+            .. code::
+
+                python -m venv venv
+
+
+            .. note::
+
+                If you use ``Debian`` or ``Ubuntu``, you may be prompted to
+                ``sudo apt install python3-venv`` when creating the virtual environment.
+                This is expected, so please follow the instructions provided.
+
+                For other operating systems, ``venv`` will usually be bundled alongside ``python``.
+
+        .. group-tab:: ``conda``
+
+            If you have `conda <https://docs.conda.io/en/latest/miniconda.html>`_ installed, you can
+            create a new virtual environment using the provided ``environment.yml``:
+
+                ::
+
+                    conda env create
+
+3. Activate the environment:
+
+    .. tabs::
+
+        .. group-tab:: ``venv``
+
+            .. tabs::
+
+                .. group-tab:: Linux
+
+                    .. code::
+
+                        source venv/bin/activate
+
+                .. group-tab:: Windows
+
+                    .. code::
+
+                        venv\Scripts\activate
+
+                .. group-tab:: macOS
+
+                    .. code::
+
+                        source venv/bin/activate
+
+        .. group-tab:: ``conda``
 
             ::
 
-                cat /sys/module/nvidia/version
-                
-            and it will return your current driver version.
-            
-            Before proceeding with the installation, we suggest you to set up a virtual environment
-            by following the instructions as specified in the :ref:`step 1 of the installation <installation_step1>`.
-
-            Once you've set up a virtual environment and activated it, we recommend installing 
-            ``ivadomed`` from source along with some additional dependencies related to building
-            documentation, linting and testing:
-
-            .. tabs::
-
-                .. tab:: Linux
-
-                    with CUDA 10.2:
-
-                    ::
-
-                        git clone https://github.com/ivadomed/ivadomed.git
-
-                        cd ivadomed
-
-                        pip install -e .[dev]
-
-                    with CUDA 11.1:
-
-                    ::
-
-                        git clone https://github.com/ivadomed/ivadomed.git
-
-                        cd ivadomed
-
-                        pip install -e .[dev] --extra-index-url https://download.pytorch.org/whl/cu111
-
-                .. tab:: Mac/Windows
-
-                    with CUDA 10.2:
-
-                    ::
-
-                        git clone https://github.com/ivadomed/ivadomed.git
-
-                        cd ivadomed
-
-                        pip install -e .[dev] --extra-index-url https://download.pytorch.org/whl/cu102
-
-                        
-                    with CUDA 11.1:
-
-                    ::
-
-                        git clone https://github.com/ivadomed/ivadomed.git
-
-                        cd ivadomed
-
-                        pip install -e .[dev] --extra-index-url https://download.pytorch.org/whl/cu111
+                conda activate ivadomed_env
 
 
-        .. tab:: CPU Support
+    .. note::
 
-            .. tabs::
+        Every time you come to work on the code you will need to activate the environment in this way.
 
-                .. tab:: Linux
-                    
-                    ::
+4. Install the code in "editable" mode:
 
-                        git clone https://github.com/ivadomed/ivadomed.git
+    ::
 
-                        cd ivadomed
+        pip install -e .[dev]
 
-                        pip install -e .[dev] --extra-index-url https://download.pytorch.org/whl/cpu
+    .. note::
 
-                .. tab:: Mac/Windows
+        For developing under specific circumstances like exotic GPUs or none at all,
+        follow :ref:`the special case install guide <install_special_cases>`, but replace any ``pip install ivadomed`` there with ``pip install -e .[dev]``.
 
-                    ::
 
-                        git clone https://github.com/ivadomed/ivadomed.git
 
-                        cd ivadomed
 
-                        pip install -e .[dev]

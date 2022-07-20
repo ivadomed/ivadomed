@@ -1,210 +1,159 @@
 Installation
 ============
 
-Supported OS
-++++++++++++
-    
-    ``ivadomed`` officially supports GPU acceleration only on ``Linux`` and CPU on ``Linux``, 
-    ``Windows`` and ``MacOS``.
+At your command prompt, run:
 
-.. _installation_step1:
- 
-Step 1: Set up a dedicated virtual environment
-++++++++++++++++++++++++++++++++++++++++++++++
+::
 
-    You can set up a virtual environment for ``ivadomed`` using either conda or venv:
+    pip install ivadomed
 
-    .. tabs::
+This should work with most combinations of OSes and pythons. If not, come ask us for help.
 
-        .. tab:: Install via ``venv``
+.. TODO: is this note even worth having, given that 99% of people are running Ubuntu which is configured correctly?
+.. note::
 
-            1. Set up Python Venv Virtual Environment.
+    If you are installing into your home folder (``pip install --user``), which is the default,
+    you need to make sure that ``~/.local/bin/`` (or ``%APPDATA%\Python\PythonXY\Scripts`` on Windows)
+    is on your ``$PATH`` for ivadomed's tools to be available. ``pip`` will warn you if it is not.
+    It should be pre-configured properly on Ubuntu and most common Linux distros.
 
-                ``ivadomed`` requires Python >= 3.7 and <3.10. First, make sure that a
-                compatible version of Python 3 is installed on your system by running:
+    If you are installing into a `venv <https://docs.python.org/3/library/venv.html>`_ or a
+    `conda env <https://docs.conda.io/projects/conda/en/latest/commands.html#conda-vs-pip-vs-virtualenv-commands>`_
+    then the tools will be available whenever that environment is activated.
 
-                .. tabs::
 
-                    .. group-tab:: Mac/Linux
+.. _install_special_cases:
 
-                        .. code::
+Special Cases
+=============
 
-                            python3 --version
+In rarer cases, you might **instead** use a more specific command,
+depending on your hardware and OS.
 
-                    .. group-tab:: Windows
+GPU Support
+-----------
 
-                        .. code::
+Some features in ``ivadomed`` can be accelerated with
+the aid of GPU hardware and `PyTorch <https://pytorch.org>`_.
+By default, acceleration is available on Linux if
+`NVIDIA GPUs <https://developer.nvidia.com/cuda-gpus>`_ are installed in the machine and a compatible
+`NVIDIA driver <https://docs.nvidia.com/deploy/cuda-compatibility/index.html#minor-version-compatibility>`_
+is installed in the OS.
 
-                            python --version
+After ``pip install ivadomed``, check if acceleration is available by running:
 
-                If your system's Python is not 3.7, 3.8, or 3.9 (or if you don't have Python 3 installed at all),
-                please `install Python <https://wiki.python.org/moin/BeginnersGuide/Download/>`_ before continuing.
+::
 
-                Once you have a supported version of Python installed, run the following command:
+  $ python -c 'import torch; print(torch.cuda.is_available())'
+  True
 
-                .. tabs::
+If this reports 'False' or something else, you are not configured for GPU acceleration.
 
-                    .. group-tab:: Mac/Linux
+.. tabs::
 
-                        .. code::
+  .. group-tab:: Linux
 
-                            python3 -m venv ivadomed_env
+        To verify your GPU hardware is detected, use ``lspci`` like in:
 
-                        .. note::
+        ::
 
-                           If you use ``Debian`` or ``Ubuntu``, you may be prompted to install 
-                           the ``python3-venv`` module when creating the virtual environment.
-                           This is expected, so please follow the instructions provided by Python.
-                           For other operating systems, ``venv`` will be installed by default.
+            $ lspci -nn -d 10DE::0300
+            01:00.0 VGA compatible controller [0300]: NVIDIA Corporation GM200 [GeForce GTX TITAN X] [10de:17c2] (rev a1)
+            02:00.0 VGA compatible controller [0300]: NVIDIA Corporation GM200 [GeForce GTX TITAN X] [10de:17c2] (rev a1)
 
-                    .. group-tab:: Windows
+        To verify the NVIDIA driver, examine its version like this example:
 
-                        .. code::
+        ::
 
-                            python -m venv ivadomed_env
+            $ cat /sys/module/nvidia/version
+            510.73.05
 
-            2. Activate the new virtual environment (default named ``ivadomed_env``)
 
-                .. tabs::
+  .. group-tab:: Windows
 
-                    .. group-tab:: Mac/Linux
+        .. TODO: document verifying hardware/driver on Windows
 
-                        .. code::
+        The default Windows install is CPU-only, because it's still rare to be doing machine-learning
+        directly on Windows. But it's possible to use it by asking for a CUDA build:
 
-                            source ivadomed_env/bin/activate
+        .. NOTE: we must periodically update the URL here to use the most recent CUDA,
+                 or else pip will start prefering the PyPI build to the pytorch.org build
+        .. NOTE: here we recommend CUDA 10.2, because that matches what Linux currently gets from PyPI.
+                 If/when torch starts pushing CUDA 11 to PyPI, update this.
+        ::
 
-                    .. group-tab:: Windows
+            pip install ivadomed --force-reinstall --extra-index-url https://download.pytorch.org/whl/cu102
+  .. group-tab:: macOS
 
-                        .. code::
+        macOS does not support GPUs. You should treat yourself as being in the `CPU-only Support`_ case.
 
-                            ivadomed_env\Scripts\activate
+CUDA 11
+~~~~~~~
 
-        .. tab:: Install via ``conda``
+.. NOTE: If/when torch starts pushing CUDA 11 to PyPI, drop this section.
+   (maybe it will need to be reinstated for CUDA 12, but we can cross that bridge whenw e get to it)
 
-            1. Create a new virtual environment using conda:
+If after checking the above, ``torch.cuda.is_available()`` is still not detecting the GPUs, it might be because
+they are either too old -- with a `Compute Capability <https://developer.nvidia.com/cuda-gpus>`_ < 3.7 --
+or too new -- with a Compute Capability >= 8.0.
 
-                ::
+If your GPUs are too old, you are out of luck; you should treat yourself as being in the `CPU-only Support`_ case.
 
-                    conda env create --name ivadomed_env
+But if the GPUs are too new, you can probably get them working by switching
+to a CUDA 11.x build. At the moment, this is less well tested than the CUDA 10.x builds,
+but it should work:
 
-            2. Activate the created conda environment
+.. Using --force-reinstall is overwrought, but it's the most reliable one-liner
+    to handle switching from one build to another; otherwise pip just says "torch is already installed".
+    It would be unnecessary if the user was able to predict which torch they needed,
+    from the start, but there's no easy way to instruct them in that besides just trying
+    multiple versions, so we're stuck with --force-reinstall.
 
-                ::
+.. NOTE: we must periodically update the URLs here to cover the most recent CUDA,
+            or else pip will start prefering the PyPI build to the pytorch.org build
+::
 
-                    conda activate ivadomed_env
+    pip install ivadomed --force-reinstall \
+        --extra-index-url https://download.pytorch.org/whl/cu110 \
+        --extra-index-url https://download.pytorch.org/whl/cu111 \
+        --extra-index-url https://download.pytorch.org/whl/cu112 \
+        --extra-index-url https://download.pytorch.org/whl/cu113 \
+        --extra-index-url https://download.pytorch.org/whl/cu114 \
+        --extra-index-url https://download.pytorch.org/whl/cu115 \
+        --extra-index-url https://download.pytorch.org/whl/cu116 \
+        --extra-index-url https://download.pytorch.org/whl/cu117 \
+        --extra-index-url https://download.pytorch.org/whl/cu118
 
 
-        .. tab:: Compute Canada HPC
+CPU-only Support
+----------------
 
-            There are numerous constraints and limited package availabilities with ComputeCanada cluster environment.
+If you do not own supported GPUs it is a waste of time and (up to 2GB of!) space to install the full GPU build.
 
-            It is best to attempt ``venv`` based installations and follow up with ComputeCanada technical support as MANY specially compiled packages (e.g. numpy) are exclusively available for Compute Canada HPC environment.
+.. tabs::
 
-            If you are using `Compute Canada <https://www.computecanada.ca/>`_, you can load modules as `mentioned here <https://intranet.neuro.polymtl.ca/computing-resources/compute-canada#modules>`_ and `also here <https://docs.computecanada.ca/wiki/Utiliser_des_modules/en#Loading_modules_automatically>`_.
+    .. group-tab:: Linux
 
-Step 2: Install ``ivadomed``
-++++++++++++++++++++++++++++
+        ::
 
-    .. tabs::
-        
-        .. tab:: NVIDIA GPU Support
+            pip install ivadomed --extra-index-url https://download.pytorch.org/whl/cpu
+    .. group-tab:: Windows
 
-            PyTorch, an integral part of ``ivadomed``, ships
-            CUDA 10.2 and CUDA 11.1 runtime by default with its
-            respective installation binaries. 
+        Windows' ``torch`` is already CPU-only by default.
 
-            In case if you're wondering about CUDA runtime, Ampere-based
-            GPUs (with a `Compute Capability <https://developer.nvidia.com/cuda-gpus>`_
-            of 8.x) only work with CUDA>=11.1. Although CUDA 11.1 is
-            backward compatible with older hardware, CUDA 10.2 is
-            preferred if available.
+        Use the standard installation command.
 
-            Thus, to accelerate ``ivadomed`` with CUDA 10.2 on a Linux system,
-            you'd need to have GPUs installed with an `NVIDIA driver version >=440.33 
-            <https://docs.nvidia.com/deploy/cuda-compatibility/index.html#minor-version-compatibility>`_.
-            And, for CUDA 11.1 you'd rather need an upgraded NVIDIA driver version >=450.
-        
-            To verify the NVIDIA driver version, just look in ``/sys`` by 
-            executing the command:
-                     
-            ::
+    .. group-tab:: macOS
 
-                cat /sys/module/nvidia/version 
-            
-            and it will return your current driver version.
-            
-            .. tabs::
+        macOS's ``torch`` only supports running in CPU mode.
 
-                .. tab:: Package Installation (Recommended)
+        Use the standard installation command.
 
-                    To install ``ivadomed`` with CUDA 10.2:
 
-                    ::
-                        
-                        pip install ivadomed
 
-                    or, with CUDA 11.1:
+Developer Installation
+======================
 
-                    ::
-
-                        pip install ivadomed --extra-index-url https://download.pytorch.org/whl/cu111 
-
-                .. tab:: Source Installation
-
-                    Bleeding-edge developments are available on the master branch of the project
-                    on Github. To install ``ivadomed`` from source with CUDA 10.2:
-                    
-                    ::
-            
-                        pip install git+https://github.com/ivadomed/ivadomed.git
-
-                    or, with CUDA 11.1:
-
-                    ::
-
-                        pip install git+https://github.com/ivadomed/ivadomed.git \
-                        --extra-index-url https://download.pytorch.org/whl/cu111
-
-        .. tab:: CPU Support
-
-            .. tabs:: 
-                
-                .. tab:: Package Installation (Recommended)
-
-                    .. tabs::
-
-                        .. tab:: Linux
-
-                            ::
-
-                                pip install ivadomed --extra-index-url https://download.pytorch.org/whl/cpu
-
-                        .. tab:: Windows/Mac
-
-                            ::
-
-                                pip install ivadomed
-                    
-                .. tab:: Source Installation
-
-                    Bleeding-edge developments are available on the project's master branch
-                    on Github. To install ``ivadomed`` from source:
-
-                    .. tabs::
-
-                        .. tab:: Linux 
-
-                            ::
-
-                                pip install git+https://github.com/ivadomed/ivadomed.git --extra-index-url https://download.pytorch.org/whl/cpu
-
-                        .. tab:: Windows/Mac 
-
-                            ::
-
-                                pip install git+https://github.com/ivadomed/ivadomed.git
-
-
-Interested in Contributing? Just head over to the 
+Interested in contributing to the project? Just head over to the
 :ref:`contributing section <contributing_to_ivadomed>` for the guidelines and
 contributor specific installation instructions.
