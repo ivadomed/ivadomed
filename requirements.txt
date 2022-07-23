@@ -10,11 +10,7 @@ loguru~=0.5
 joblib~=1.0
 matplotlib>=3.3.0
 nibabel~=3.2
-# FIXME: use the official onnxruntime when it's published
-# https://github.com/microsoft/onnxruntime/issues/11680#issuecomment-1141228127
---extra-index-url https://test.pypi.org/simple
-ort-nightly;python_version>="3.10"
-onnxruntime==1.7.0;python_version<"3.10"
+onnxruntime~=1.12.0
 pandas~=1.1
 pillow>=7.0.0
 pybids>=0.14.0
