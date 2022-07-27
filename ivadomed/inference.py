@@ -225,7 +225,7 @@ def pred_to_png(pred_list: list, target_list: list, subj_path: str, suffix: str 
     for pred, target in zip(pred_list, target_list):
         filename = subj_path + target + suffix
         data = pred.get_fdata()
-        imageio.imwrite(filename, data, format='png')
+        imageio.imwrite(filename, (data*255).astype(np.uint8), format='png')
 
 
 def process_transformations(context: dict, fname_roi: str, fname_prior: str, metadata: dict, slice_axis: int,
