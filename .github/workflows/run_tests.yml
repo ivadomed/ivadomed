@@ -12,6 +12,8 @@ on:
       - 'ivadomed/**'
       - 'testing/**'
       - '.github/workflows/run_tests.yml'
+      - 'pytest.ini'
+      - 'environment.yml'
       - 'requirements.txt'
       - 'setup.py'
   # Trigger the workflow on pull requests, but reveal no secrets, do not use pull_request_target, see:
@@ -21,6 +23,8 @@ on:
       - 'ivadomed/**'
       - 'testing/**'
       - '.github/workflows/run_tests.yml'
+      - 'pytest.ini'
+      - 'environment.yml'
       - 'requirements.txt'
       - 'setup.py'
 
