@@ -1,14 +1,18 @@
 import collections.abc
 import re
+import sys
+import os
+import joblib
+import gc
+from pathlib import Path
+from tempfile import mkdtemp
+
 import numpy as np
 import pandas as pd
 import torch
-import joblib
-import os
-from pathlib import Path
 from loguru import logger
 from sklearn.model_selection import train_test_split
-from torch._six import string_classes, int_classes
+from torch._six import string_classes
 from ivadomed import utils as imed_utils
 from ivadomed.keywords import SplitDatasetKW, LoaderParamsKW, ROIParamsKW, ContrastParamsKW
 import nibabel as nib
@@ -254,7 +258,7 @@ def imed_collate(batch):
         if elem.shape == ():  # scalars
             py_type = float if elem.dtype.name.startswith('float') else int
             return __numpy_type_map[elem.dtype.name](list(map(py_type, batch)))
-    elif isinstance(batch[0], int_classes):
+    elif isinstance(batch[0], int):
         return torch.LongTensor(batch)
     elif isinstance(batch[0], float):
         return torch.DoubleTensor(batch)
@@ -465,3 +469,51 @@ def dropout_input(seg_pair):
         logger.warning("\n Impossible to apply input-level dropout since input is not multi-channel.")
 
     return seg_pair
+
+
+def create_temp_directory() -> str:
+    """Creates a temporary directory and returns its path.
+    This temporary directory is only deleted when explicitly requested.
+
+    Returns:
+        str: Path of the temporary directory.
+    """
+    import datetime
+    time_stamp = datetime.datetime.now().isoformat().replace(":", "")
+    temp_folder_location = mkdtemp(prefix="ivadomed_", suffix=f"_{time_stamp}")
+    return temp_folder_location
+
+def get_obj_size(obj) -> int:
+    """
+    Returns the size of an object in bytes. Used to gauge whether storing object in memory vs write to disk.
+
+    Source: https://stackoverflow.com/a/53705610
+
+    Args:
+        obj:
+
+    Returns:
+
+    """
+    marked = {id(obj)}
+    obj_q = [obj]
+    object_size = 0
+
+    while obj_q:
+        object_size += sum(map(sys.getsizeof, obj_q))
+
+        # Lookup all the object referred to by the object in obj_q.
+        # See: https://docs.python.org/3.7/library/gc.html#gc.get_referents
+        all_refr = ((id(o), o) for o in gc.get_referents(*obj_q))
+
+        # Filter object that are already marked.
+        # Using dict notation will prevent repeated objects.
+        new_refr = {o_id: o for o_id, o in all_refr if o_id not in marked and not isinstance(o, type)}
+
+        # The new obj_q will be the ones that were not marked,
+        # and we will update marked with their ids so we will
+        # not traverse them again.
+        obj_q = new_refr.values()
+        marked.update(new_refr.keys())
+
+    return object_size

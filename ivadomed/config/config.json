@@ -8,6 +8,13 @@
         "object_detection_path": null,
         "safety_factor": [1.0, 1.0, 1.0]
     },
+    "wandb": {
+        "wandb_api_key": "",
+        "project_name": "my_project",
+        "group_name": "my_group",
+        "run_name": "run-1",
+        "log_grads_every": 100
+    },
     "loader_parameters": {
         "path_data": ["data_example_spinegeneric"],
         "subject_selection": {"n": [], "metadata": [], "value": []},
@@ -28,7 +35,8 @@
         },
         "slice_axis": "axial",
         "multichannel": false,
-        "soft_gt": false
+        "soft_gt": false,
+        "bids_validate": true
     },
     "split_dataset": {
         "fname_split": null,
@@ -40,12 +48,12 @@
         "test_fraction": 0.2
     },
     "training_parameters": {
-        "batch_size": 18,
+        "batch_size": 32,
         "loss": {
             "name": "DiceLoss"
         },
         "training_time": {
-            "num_epochs": 100,
+            "num_epochs": 15,
             "early_stopping_patience": 50,
             "early_stopping_epsilon": 0.001
         },

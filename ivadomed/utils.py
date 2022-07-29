@@ -2,12 +2,17 @@ import os
 import sys
 import subprocess
 import hashlib
+import datetime
+import platform
+
 import numpy as np
+import wandb
 from enum import Enum
 from loguru import logger
 from pathlib import Path
-from ivadomed.keywords import ConfigKW, LoaderParamsKW
+from ivadomed.keywords import ConfigKW, LoaderParamsKW, WandbKW
 from typing import List
+from difflib import SequenceMatcher
 
 AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 
@@ -27,6 +32,31 @@ class Metavar(Enum):
 
     def __str__(self):
         return self.value
+
+
+def initialize_wandb(wandb_params):
+    try:
+        # Log on to WandB (assuming that the API Key is correct)
+        # if not, login would raise an exception for the cases invalid API key and not found
+        wandb.login(key=wandb_params[WandbKW.WANDB_API_KEY])
+
+    except Exception as e:
+        # log error mssg for unsuccessful wandb authentication
+        if wandb_params is not None:
+            logger.info("Incorrect WandB API Key! Please re-check the entered API key.")
+            logger.info("Disabling WandB Tracking, continuing with Tensorboard Logging")
+        else:
+            logger.info("No WandB parameters found! Continuing with Tensorboard Logging")
+
+        # set flag
+        wandb_tracking = False
+
+    else:
+        # setting flag after successful authentication
+        logger.info("WandB API Authentication Successful!")
+        wandb_tracking = True
+
+    return wandb_tracking
 
 
 def get_task(model_name):
@@ -179,6 +209,7 @@ def plot_transformed_sample(before, after, list_title=None, fname_out="", cmap="
         list_title = ['Sample before transform', 'Sample after transform']
 
     plt.interactive(False)
+    plt.rcParams.update({'figure.max_open_warning': 0})
     plt.figure(figsize=(20, 10))
 
     plt.subplot(1, 2, 1)
@@ -194,7 +225,6 @@ def plot_transformed_sample(before, after, list_title=None, fname_out="", cmap="
     if fname_out:
         plt.savefig(fname_out)
     else:
-        matplotlib.use('TkAgg')
         plt.show()
 
 
@@ -354,10 +384,12 @@ def get_command(args, context):
     elif args.segment:
         return "segment"
     else:
-        logger.info("No CLI argument given for command: ( --train | --test | --segment ). Will check config file for command...")
+        logger.info(
+            "No CLI argument given for command: ( --train | --test | --segment ). Will check config file for command...")
 
         try:
-            if context[ConfigKW.COMMAND] == "train" or context[ConfigKW.COMMAND] == "test" or context[ConfigKW.COMMAND] == "segment":
+            if context[ConfigKW.COMMAND] == "train" or context[ConfigKW.COMMAND] == "test" or context[
+                ConfigKW.COMMAND] == "segment":
                 return context[ConfigKW.COMMAND]
             else:
                 logger.error("Specified invalid command argument in config file.")
@@ -369,7 +401,8 @@ def get_path_output(args, context):
     if args.path_output:
         return args.path_output
     else:
-        logger.info("CLI flag --path-output not used to specify output directory. Will check config file for directory...")
+        logger.info(
+            "CLI flag --path-output not used to specify output directory. Will check config file for directory...")
         try:
             if context[ConfigKW.PATH_OUTPUT]:
                 return context[ConfigKW.PATH_OUTPUT]
@@ -381,7 +414,8 @@ def get_path_data(args, context):
     if args.path_data:
         return args.path_data
     else:
-        logger.info("CLI flag --path-data not used to specify BIDS data directory. Will check config file for directory...")
+        logger.info(
+            "CLI flag --path-data not used to specify BIDS data directory. Will check config file for directory...")
         try:
             if context[ConfigKW.LOADER_PARAMETERS][LoaderParamsKW.PATH_DATA]:
                 return context[ConfigKW.LOADER_PARAMETERS][LoaderParamsKW.PATH_DATA]
@@ -403,6 +437,17 @@ def format_path_data(path_data):
     return path_data
 
 
+def similarity_score(a: str, b: str) -> float:
+    """
+    use DiffLIb SequenceMatcher to resolve the similarity between text. Help make better choice in terms of derivatives.
+    Args:
+        a: a string
+        b: another string
+    Returns: a score indicative of the similarity between the sequence.
+    """
+    return SequenceMatcher(None, a, b).ratio()
+
+
 def init_ivadomed():
     """Initialize the ivadomed for typical terminal usage."""
     # Display ivadomed version
@@ -413,3 +458,82 @@ def print_stats(arr):
     logger.info(f"\tMean: {np.mean(arr)} %")
     logger.info(f"\tMedian: {np.median(arr)} %")
     logger.info(f"\tInter-quartile range: [{np.percentile(arr, 25)}, {np.percentile(arr, 75)}] %")
+
+
+def get_timestamp() -> str:
+    """
+    Return a datetime string in the format YYYY-MM-DDTHHMMSS.(sub-precision)
+    Returns:
+    """
+    timestamp = datetime.datetime.now().isoformat().replace(":", "")
+    return timestamp
+
+
+def get_system_memory() -> float:
+    """
+    Return the system memory in GB.
+    Returns:
+    """
+    current_platform = platform.system()
+    if current_platform == "Linux":
+        return get_linux_system_memory()
+    elif current_platform == "Windows":
+        return get_win_system_memory()
+    elif current_platform == "Darwin":
+        return get_mac_system_memory()
+
+
+def get_win_system_memory() -> float:
+    """
+    Obtain the amount of memory available on Windows system.
+    Returns: memory in GB
+    Source: https://stackoverflow.com/a/21589439
+    """
+    process = os.popen('wmic memorychip get capacity')
+    result = process.read()
+    process.close()
+    totalMem = 0
+    for m in result.split("  \n\n")[1:-1]:
+        totalMem += int(m)
+    return totalMem / (1024 ** 3)
+
+
+def get_linux_system_memory() -> float:
+    """
+    Obtain the amount of memory available on Linux system.
+    Returns: memory in GB
+    Source: https://stackoverflow.com/a/28161352
+    """
+    import os
+    mem_bytes = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')  # e.g. 4015976448
+    mem_gib = mem_bytes / (1024. ** 3)  # e.g. 3.74
+    return mem_gib
+
+
+def get_mac_system_memory() -> float:
+    """
+    Obtain the amount of memory available on MacOS system.
+    Returns: memory in GB
+    Source: https://apple.stackexchange.com/a/4296
+    """
+
+    import subprocess
+    import re
+
+    # Get process info
+    ps = subprocess.Popen(['ps', '-caxm', '-orss,comm'], stdout=subprocess.PIPE).communicate()[0].decode()
+
+    # Iterate processes
+    processLines = ps.split('\n')
+    sep = re.compile('[\s]+')
+    rssTotal = 0  # kB
+    for row in range(1, len(processLines)):
+        rowText = processLines[row].strip()
+        rowElements = sep.split(rowText)
+        try:
+            rss = float(rowElements[0]) * 1024
+        except:
+            rss = 0  # ignore...
+        rssTotal += rss
+
+    return rssTotal / 1024 ** 3

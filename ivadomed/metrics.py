@@ -81,10 +81,10 @@ def numeric_score(prediction, groundtruth):
     Returns:
         float, float, float, float: FP, FN, TP, TN
     """
-    FP = np.float(np.sum(prediction * (1.0 - groundtruth)))
-    FN = np.float(np.sum((1.0 - prediction) * groundtruth))
-    TP = np.float(np.sum(prediction * groundtruth))
-    TN = np.float(np.sum((1.0 - prediction) * (1.0 - groundtruth)))
+    FP = float(np.sum(prediction * (1.0 - groundtruth)))
+    FN = float(np.sum((1.0 - prediction) * groundtruth))
+    TP = float(np.sum(prediction * groundtruth))
+    TN = float(np.sum((1.0 - prediction) * (1.0 - groundtruth)))
     return FP, FN, TP, TN
 
 
