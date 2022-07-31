@@ -16,21 +16,16 @@ cd ivadomed  # root of the repo
 pip install -e .[dev]
 ```
 
-2. Download the required dataset(s) using the `ivadomed` command line tools:
+2. To run all tests:
 ```
-cd ivadomed  # root of the repo
-ivadomed_download_data -d data_testing -o data_testing  # for unit tests
-ivadomed_download_data -d data_functional_testing -o data_functional_testing  # for functional tests
+pytest -v
 ```
-3. To run all tests:
-```
-pytest
-```
+
 or, to run specific tests:
 ```
-pytest testing/functional_tests/
-pytest testing/unit_tests/
-pytest testing/functional_tests/test_example.py
+pytest -v testing/functional_tests/
+pytest -v testing/unit_tests/
+pytest -v testing/functional_tests/test_example.py
 ```
 
 ## Wiki
