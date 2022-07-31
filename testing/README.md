@@ -12,7 +12,8 @@ Checkout `ivadomed/.github/workflows/run_tests.yml` to see how tests are run on 
 
 1. Install dependencies
 ```
-pip install pytest pytest_console_scripts
+cd ivadomed  # root of the repo
+pip install -e .[dev]
 ```
 
 2. Download the required dataset(s) using the `ivadomed` command line tools:
