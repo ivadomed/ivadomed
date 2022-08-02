@@ -6,7 +6,7 @@ from scipy import spatial
 
 
 # METRICS
-def get_metric_fns(task, eval_params=None):
+def get_metric_fns(task):
     metric_fns = [dice_score,
                   multi_class_dice_score,
                   precision_score,
@@ -14,7 +14,7 @@ def get_metric_fns(task, eval_params=None):
                   specificity_score,
                   intersection_over_union,
                   accuracy_score]
-    if task == "segmentation" and (eval_params and eval_params['object_detection_metrics']):
+    if task == "segmentation":
         metric_fns = metric_fns + [hausdorff_score]
 
     return metric_fns
