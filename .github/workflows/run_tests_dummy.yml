@@ -27,6 +27,5 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    # Main steps for the test to be reproduced across OS x Python
     steps:
       - run: 'echo "No code changes, so no build required" '
