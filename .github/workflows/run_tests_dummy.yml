@@ -3,15 +3,19 @@
 # and https://github.com/orgs/community/discussions/13690
 on:
   pull_request:
-    paths-ignore:
+    paths:
       # this list needs to be kept in sync manually with the opposite list in run_tests.yml
-      - 'ivadomed/**'
-      - 'testing/**'
-      - '.github/workflows/run_tests.yml'
-      - 'pytest.ini'
-      - 'environment.yml'
-      - 'requirements.txt'
-      - 'setup.py'
+      - '**.md'
+      - '**.rst'
+      - '**.bib':
+      - '.github/**'
+      - '!.github/workflows/run_tests.yml'
+      - 'dev/**'
+      - 'docs/**'
+      - 'images/**'
+      - '.gitignore'
+      - '.pre-commit-config.yaml'
+      - '.readthedocs.yml'
 
 jobs:
   ultra_matrix_test:
