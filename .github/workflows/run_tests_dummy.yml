@@ -1,4 +1,7 @@
 # This is a dummy version of run_tests.yml, which allows for conditional checks to still be "Required Statuses" for pull requests to be allowed to be merged
+
+name: Run tests on all platforms
+
 # see https://docs.github.com/en/enterprise-cloud@latest/repositories/configuring-branches-and-merges-in-your-repository/defining-the-mergeability-of-pull-requests/troubleshooting-required-status-checks#handling-skipped-but-required-checks
 # and https://github.com/orgs/community/discussions/13690
 on:
