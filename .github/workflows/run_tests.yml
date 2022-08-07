@@ -11,7 +11,7 @@ on:
     paths-ignore:
       - '**.md'
       - '**.rst'
-      - '**.bib':
+      - '**.bib'
       - '.github/**'
       - '!.github/workflows/run_tests.yml'
       - 'dev/**'
@@ -26,7 +26,7 @@ on:
     paths-ignore:
       - '**.md'
       - '**.rst'
-      - '**.bib':
+      - '**.bib'
       - '.github/**'
       - '!.github/workflows/run_tests.yml'
       - 'dev/**'
