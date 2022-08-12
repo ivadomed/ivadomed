@@ -2278,8 +2278,8 @@ Postprocessing
 
 Evaluation Parameters
 ---------------------
-Dict. Parameters to get object detection metrics (lesions true positive and false detection rates), and this,
-for defined object sizes.
+Dict. Parameters to get object detection metrics (lesions true positive rate, lesions false detection rate
+and Hausdorff score), and this, for defined object sizes.
 
 .. jsonschema::
 
@@ -2287,8 +2287,8 @@ for defined object sizes.
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "object_detection_metrics",
         "$$description": [
-            "Indicate if object detection metrics (lesions true positive and false detection rates) are computed or not\n",
-            "at evaluation time. Default: ``true``",
+            "Indicate if object detection metrics (lesions true positive rate, lesions false detection rate\n",
+            "and Hausdorff score) are computed or not at evaluation time. Default: ``true``",
         ],
         "type": "boolean"
     }
@@ -2297,7 +2297,7 @@ for defined object sizes.
 
     {
         "evaluation_parameters": {
-            "object_detection_metrics": false
+            "object_detection_metrics": true
         }
     }
 
