@@ -53,6 +53,8 @@ class LoaderParamsKW:
     IS_INPUT_DROPOUT: str = "is_input_dropout"
     SLICE_FILTER_PARAMS: str = "slice_filter_params"
     SUBJECT_SELECTION: str = "subject_selection"
+    MULTI_PATH_LOADER: str = "multi_loader"
+    TRADITIONAL_BIDS_LOADER: str = "traditional_bids_loader"
 
 
 @dataclass
@@ -274,3 +276,11 @@ class SegmentationPairKW:
     INPUT_METADATA = "input_metadata"
     GT = "gt"
     INPUT = "input"
+
+@dataclass
+class CommandKW:
+    TRAIN = "train"
+    SEGMENT = "segment"
+    TEST = "test"
+
+

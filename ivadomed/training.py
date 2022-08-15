@@ -27,7 +27,7 @@ from ivadomed.keywords import ModelParamsKW, ConfigKW, BalanceSamplesKW, Trainin
 cudnn.benchmark = True
 
 
-def train(model_params, dataset_train, dataset_val, training_params, path_output, device, wandb_params=None,
+def train(model_params: dict, dataset_train, dataset_val, training_params, path_output, device, wandb_params=None,
           cuda_available=True, metric_fns=None, n_gif=0, resume_training=False, debugging=False):
     """Main command to train the network.
 

@@ -2,7 +2,7 @@ import copy
 import random
 from pathlib import Path
 import pickle
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 import torch
@@ -43,7 +43,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
 
     def __init__(self, filename_pairs, transform=None, length=(64, 64, 64), stride=(0, 0, 0), slice_axis=0,
                  task="segmentation", soft_gt=False, is_input_dropout=False, disk_cache=True):
-        self.filename_pairs = filename_pairs
+        self.filename_pairs: List[Tuple[list, list, str, dict]] = filename_pairs
 
         # could be a list of tuple of objects OR path objects to the actual disk equivalent.
         # behaves differently depend on if self.cache is set to true or not.

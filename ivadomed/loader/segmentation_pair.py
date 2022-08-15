@@ -36,7 +36,7 @@ class SegmentationPair(object):
         gt_handle (list): List of gt (ground truth) NifTI data as 'nibabel.nifti1.Nifti1Image' object
     """
 
-    def __init__(self, input_filenames, gt_filenames, metadata=None, slice_axis=2, cache=True, prepro_transforms=None,
+    def __init__(self, input_filenames: list, gt_filenames: list, metadata: dict=None, slice_axis: int=2, cache: bool=True, prepro_transforms: dict=None,
                  soft_gt=False):
 
         self.input_filenames = input_filenames
