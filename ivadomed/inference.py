@@ -212,7 +212,7 @@ def pred_to_nib(data_lst: List[np.ndarray], z_lst: List[int], fname_ref: str, fn
     return nib_pred
 
 
-def pred_to_png(pred_list: list, target_list: list, subj_path: str, suffix: str = ''):
+def pred_to_png(pred_list: list, target_list: list, subj_path: str, suffix: str = '', max_value: int = 1):
     """Save the network predictions as PNG files with suffix "_target_pred".
 
     Args:
@@ -221,11 +221,12 @@ def pred_to_png(pred_list: list, target_list: list, subj_path: str, suffix: str 
         subj_path (str): Path of the subject filename in output folder without extension
             (e.g. "path_output/pred_masks/sub-01_sample-01_SEM").
         suffix (str): additional suffix to append to the filename (e.g. "_pred.png")
+        max_value (int): Maximum mask value of the float mask to use during the converion to uint8.
     """
     for pred, target in zip(pred_list, target_list):
         filename = subj_path + target + suffix
         data = pred.get_fdata()
-        imageio.imwrite(filename, (data*255).astype(np.uint8), format='png')
+        imageio.imwrite(filename, (data*255/max_value).astype(np.uint8), format='png')
 
 
 def process_transformations(context: dict, fname_roi: str, fname_prior: str, metadata: dict, slice_axis: int,
