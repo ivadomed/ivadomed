@@ -742,6 +742,163 @@ class HeMISUnet(Module):
         return preds
 
 
+class Modified3DUNetContextBlock(nn.Module):
+    """Encoding layer of the Modified U-Net model.
+    It returns the features map for the skip connections
+
+    Args:
+        in_channel (int): Number of channels in the input image.
+        depth (int): Number of down convolutions minus bottom down convolution.
+        dropout_rate (float): Probability of dropout.
+        bn_momentum (float): Batch normalization momentum.
+        n_metadata (dict): FiLM metadata see ivadomed.loader.film for more details.
+        film_layers (list): List of 0 or 1 indicating on which layer FiLM is applied.
+        is_2d (bool): Indicates dimensionality of model: True for 2D convolutions, False for 3D convolutions.
+        n_filters (int):  Number of base filters in the U-Net.
+
+    Attributes:
+        depth (int): Number of down convolutions minus bottom down convolution.
+        down_path (ModuleList): List of module operations done during encoding.
+        conv_bottom (DownConv): Bottom down convolution.
+        film_bottom (FiLMlayer): FiLM layer applied to bottom convolution.
+    """
+    def __init__(self, in_features, out_features, momentum):
+        super(Modified3DUNetContextBlock, self).__init__()
+        self.instance_norm_1 = nn.InstanceNorm3d(in_features, momentum=momentum)
+        self.conv = nn.Conv3d(in_features, out_features,
+                kernel_size=3, stride=1, padding=1, bias=False)
+        self.leaky_relu_conv = nn.Sequential(
+            nn.InstanceNorm3d(out_features, momentum=momentum),
+            nn.LeakyReLU(),
+            nn.Conv3d(out_features, out_features,
+                kernel_size=3, stride=1, padding=1, bias=False)
+        )
+        self.instance_norm = nn.InstanceNorm3d(out_features, momentum=momentum)
+
+    def forward(self, x):
+        x = self.conv(x)
+        x = self.leaky_relu_conv(x)
+        x = self.instance_norm(x)
+
+        return x
+
+
+class Modified3DUNetLBlock(nn.Module):
+    """ Decoding (localization) layer of the Modified UNet model.
+
+    Args:
+
+
+    Attributes:
+    """
+    def __init__(self, in_features, out_features, momentum=0.1):
+        super(Modified3DUNetContextBlock, self).__init__()
+        self.conv_norm_lrelu = nn.Sequential(
+            nn.Conv3d(in_features, in_features,
+                kernel_size=3, stride=1, padding=1, bias=False),
+            nn.InstanceNorm3d(in_features, momentum=momentum),
+            nn.LeakyReLU()        
+        )
+        self.conv = nn.Conv3d(in_features, out_features,
+                kernel_size=3, stride=1, padding=1, bias=False)
+        self.norm_relu_upscale_conv_norm__lrelu = nn.Sequential(
+            nn.InstanceNorm3d(out_features, momentum=momentum),
+            nn.LeakyReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.Conv3d(out_features, out_features / 2),
+            nn.InstanceNorm3d(out_features / 2, momentum=momentum),
+            nn.LeakyReLU()
+        )
+
+    def forward(self, x):
+        x = self.conv_norm_lrelu(x)
+        x = self.conv(x)
+        x = self.norm_relu_upscale_conv_norm__lrelu(x)
+
+        return x
+
+
+class NewModified3DUNet(nn.Module):
+    """Code from the following repository:
+    https://github.com/pykao/Modified-3D-UNet-Pytorch
+    The main differences with the original UNet resides in the use of LeakyReLU instead of ReLU, InstanceNormalisation
+    instead of BatchNorm due to small batch size in 3D and the addition of segmentation layers in the decoder.
+
+    If attention=True, attention gates are added in the decoder to help focus attention on important features for a
+    given task. Code related to the attentions gates is inspired from:
+    https://github.com/ozan-oktay/Attention-Gated-Networks
+
+    Args:
+        in_channel (int): Number of channels in the input image.
+        out_channel (int): Number of channels in the output image.
+        n_filters (int): Number of base filters in the U-Net.
+        attention (bool): Boolean indicating whether the attention module is on or not.
+        dropout_rate (float): Probability of dropout.
+        bn_momentum (float): Batch normalization momentum.
+        final_activation (str): Choice of final activation between "sigmoid", "relu" and "softmax".
+        **kwargs:
+
+    Attributes:
+        in_channels (int): Number of channels in the input image.
+        n_classes (int): Number of channels in the output image.
+        depth (int): Number of both encoding and decoding blocks in the U-Net.
+        base_n_filter (int): Number of base filters in the U-Net.
+        attention (bool): Boolean indicating whether the attention module is on or not.
+        momentum (float): Batch normalization momentum.
+        final_activation (str): Choice of final activation between "sigmoid", "relu" and "softmax".
+
+    Note: All layers are defined as attributes and used in the forward method.
+    """
+    def __init__(self, in_channels, out_channels, depth=4, n_filters=16, attention=False, dropout_rate=0.3, bn_momentum=0.1,
+                 final_activation="sigmoid", n_metadata=None, film_layers=None, **kwargs):
+        super(NewModified3DUNet).__init__()
+        self.depth = depth
+        self.final_activation = final_activation
+        self.softmax = nn.Softmax(dim=1)
+
+        layer_channels = [n_filters * 2 ** n for n in range(depth)]
+        # create list of context blocks based on the depth & number of filters
+        self.context_blocks = [Modified3DUNetContextBlock(in_channels, layer_channels[0])]
+        for i in range(depth-1):
+            self.context_blocks.append(Modified3DUNetContextBlock(i, i+1))
+
+        # add corresponding localization blocks to a list
+        self.localization_blocks = [Modified3DUNetLBlock(layer_channels[0], out_channels)]
+        for i in range(depth-1):
+            self.localization_blocks.append(Modified3DUNetLBlock())
+
+    def forward(self, x):
+        # create a list to store features. Features at a given layer will be passed during localization
+        context_features = []
+        for block in self.context_blocks:
+            x = block(x)
+            context_features.append(x)
+
+        # reverse through each localization block, concatenating the result from the corresponding
+        # context layer
+        for i in range(self.depth, -1, -1):
+            x = torch.cat([x, context_features[i]], dim=1)
+            x = self.localization_blocks[i]
+
+        # pass through final activation
+        seg_layer = x
+        if hasattr(self, "final_activation") and self.final_activation not in ["softmax", "relu", "sigmoid"]:
+            raise ValueError("final_activation value has to be either softmax, relu, or sigmoid")
+        elif hasattr(self, "final_activation") and self.final_activation == "softmax":
+            x = self.softmax(x)
+        elif hasattr(self, "final_activation") and self.final_activation == "relu":
+            x = nn.ReLU()(seg_layer) / nn.ReLU()(seg_layer).max() if bool(nn.ReLU()(seg_layer).max()) \
+                else nn.ReLU()(seg_layer)
+        else:
+            x = torch.sigmoid(x)
+
+        if self.n_classes > 1:
+            # Remove background class
+            x = x[:, 1:, ]
+
+        return x
+
+
 class Modified3DUNet(nn.Module):
     """Code from the following repository:
     https://github.com/pykao/Modified-3D-UNet-Pytorch
@@ -773,7 +930,7 @@ class Modified3DUNet(nn.Module):
     Note: All layers are defined as attributes and used in the forward method.
     """
 
-    def __init__(self, in_channel, out_channel, n_filters=16, attention=False, dropout_rate=0.3, bn_momentum=0.1,
+    def __init__(self, in_channel, out_channel, depth=4, n_filters=16, attention=False, dropout_rate=0.3, bn_momentum=0.1,
                  final_activation="sigmoid", n_metadata=None, film_layers=None, **kwargs):
         super(Modified3DUNet, self).__init__()
         self.in_channels = in_channel
@@ -1129,6 +1286,7 @@ class Modified3DUNet(nn.Module):
             out = out[:, 1:, ]
 
         return out
+
 
 
 class UNet3D(Modified3DUNet):
