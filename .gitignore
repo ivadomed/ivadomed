@@ -24,7 +24,7 @@ log.txt
 # Pytest Cache, anywhere:
 .pytest_cache/
 
-# IvadoMed pytest downloaded data file, anywhere:
+# ivadomed pytest downloaded data file, anywhere:
 data_testing/
 data_functional_testing/
 data_multi_testing/
