@@ -8,9 +8,33 @@ on:
   push:
     branches:
       - master
+    paths-ignore:
+      - '**.md'
+      - '**.rst'
+      - '**.bib'
+      - '.github/**'
+      - '!.github/workflows/run_tests.yml'
+      - 'dev/**'
+      - 'docs/**'
+      - 'images/**'
+      - '.gitignore'
+      - '.pre-commit-config.yaml'
+      - '.readthedocs.yml'
   # Trigger the workflow on pull requests, but reveal no secrets, do not use pull_request_target, see:
   # https://docs.github.com/en/actions/reference/events-that-trigger-workflows#pull_request_target
   pull_request:
+    paths-ignore:
+      - '**.md'
+      - '**.rst'
+      - '**.bib'
+      - '.github/**'
+      - '!.github/workflows/run_tests.yml'
+      - 'dev/**'
+      - 'docs/**'
+      - 'images/**'
+      - '.gitignore'
+      - '.pre-commit-config.yaml'
+      - '.readthedocs.yml'
 
 env:
   # Even when given -y, apt will still sometimes hang at a prompt if a package
@@ -41,8 +65,8 @@ jobs:
       fail-fast: false
 
       matrix:
-        os: [ "macos-latest", "windows-latest", "ubuntu-20.04", "ubuntu-18.04", "macos-10.15" ]
-        python-version: [3.7, 3.8, 3.9 ]
+        os: [ "macos-latest", "windows-latest", "ubuntu-20.04", "ubuntu-18.04" ]
+        python-version: [ '3.7', '3.8', '3.9', '3.10' ]
         test-name:
           - integration-test
 

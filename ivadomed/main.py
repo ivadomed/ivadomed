@@ -69,6 +69,14 @@ def get_parser():
     optional_args.add_argument('--resume-training', dest="resume_training", required=False, action='store_true',
                                help='Load a saved model ("checkpoint.pth.tar" in the output directory specified either with flag "--path-output" or via the config file "output_path" argument)  '
                                     'for resume training. This training state is saved everytime a new best model is saved in the output directory specified with flag "--path-output"')
+    optional_args.add_argument('--no-patch', dest="no_patch", action='store_true', required=False,
+                               help='2D patches are not used while segmenting with models trained with patches '
+                               '(command "--segment" only). The "--no-patch" argument supersedes the "--overlap-2D" argument. '
+                               ' This option may not be suitable with large images depending on computer RAM capacity.')
+    optional_args.add_argument('--overlap-2d', dest="overlap_2d", required=False, type=int, nargs="+",
+                                help='Custom overlap for 2D patches while segmenting (command "--segment" only). '
+                                'Example: "--overlap-2d 48 48" for an overlap of 48 pixels between patches in X and Y respectively. '
+                                'Default model overlap is used otherwise.')
     optional_args.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS,
                                help='Shows function documentation.')
 
@@ -98,7 +106,7 @@ def check_multiple_raters(is_train, loader_params):
         if not is_train:
             logger.error(
                 "Please provide only one annotation per class in 'target_suffix' when not training a model.\n")
-            exit()
+            sys.exit()
 
 
 def film_normalize_data(context, model_params, ds_train, ds_valid, path_output):
@@ -223,7 +231,7 @@ def update_film_model_params(context, ds_test, model_params, path_output):
     return ds_test, model_params
 
 
-def run_segment_command(context, model_params):
+def run_segment_command(context, model_params, no_patch, overlap_2d):
     # BIDSDataframe of all image files
     # Indexing of derivatives is False for command segment
     # split_method is unused for command segment
@@ -291,6 +299,12 @@ def run_segment_command(context, model_params):
             options[OptionKW.PIXEL_SIZE_UNITS] = \
                 bids_df.df.loc[bids_df.df['filename'] == subject][MetadataKW.PIXEL_SIZE_UNITS].values[0]
 
+        # Add 'no_patch' and 'overlap-2d' argument to options
+        if no_patch:
+            options[OptionKW.NO_PATCH] = no_patch
+        if overlap_2d:
+            options[OptionKW.OVERLAP_2D] = overlap_2d
+
         if fname_img:
             pred_list, target_list = imed_inference.segment_volume(str(path_model),
                                                                    fname_images=fname_img,
@@ -316,7 +330,7 @@ def run_segment_command(context, model_params):
                                            suffix="_pred.png")
 
 
-def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
+def run_command(context, n_gif=0, thr_increment=None, resume_training=False, no_patch=False, overlap_2d=None):
     """Run main command.
 
     This function is central in the ivadomed project as training / testing / evaluation commands
@@ -331,8 +345,14 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         thr_increment (float): A threshold analysis is performed at the end of the training using the trained model and
             the training + validation sub-dataset to find the optimal binarization threshold. The specified value
             indicates the increment between 0 and 1 used during the ROC analysis (e.g. 0.1).
-        resume_training (bool): Load a saved model ("checkpoint.pth.tar" in the output directory specified with flag "--path-output" or via the config file "output_path" '            This training state is saved everytime a new best model is saved in the log
-            argument) for resume training directory.
+        resume_training (bool): Load a saved model ("checkpoint.pth.tar" in the output directory specified with flag
+            "--path-output" or via the config file "output_path". This training state is saved everytime a new best
+            model is saved in the log argument) for resume training directory.
+        no_patch (bool): If True, 2D patches are not used while segmenting with models trained with patches
+            (command "--segment" only). Default: False (i.e. segment with patches). The "no_patch" option supersedes
+            the "overlap_2D" option.
+        overlap_2d (list of int): Custom overlap for 2D patches while segmenting (command "--segment" only).
+            Default model overlap is used otherwise.
 
     Returns:
         float or pandas.DataFrame or None:
@@ -369,7 +389,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     model_params, loader_params = set_model_params(context, loader_params)
 
     if command == 'segment':
-        run_segment_command(context, model_params)
+        run_segment_command(context, model_params, no_patch, overlap_2d)
         return
 
     # BIDSDataframe of all image files
@@ -602,7 +622,9 @@ def run_main():
     run_command(context=context,
                 n_gif=args.gif if args.gif is not None else 0,
                 thr_increment=args.thr_increment if args.thr_increment else None,
-                resume_training=bool(args.resume_training))
+                resume_training=bool(args.resume_training),
+                no_patch=bool(args.no_patch),
+                overlap_2d=args.overlap_2d if args.overlap_2d else None)
 
 
 if __name__ == "__main__":
