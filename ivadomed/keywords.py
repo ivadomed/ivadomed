@@ -283,4 +283,26 @@ class CommandKW:
     SEGMENT = "segment"
     TEST = "test"
 
+@dataclass(frozen=True)
+class DataloaderKW:
+    # AllDatasetGroups Level
+    DATASET_GROUPS: str = "dataset_groups"
 
+    # DatasetGroup Level
+    DATASET_GROUP_LABEL: str = "dataset_group_label"
+    TRAINING: str = "training"
+    VALIDATION: str = "validation"
+    TEST: str = "test"
+    # Reserved DatasetGroup to be implemented
+    TRAINING_VALIDATION: str = "training_validation"
+    TRAINING_TEST: str = "training_test"
+
+    # Dataset Level
+    TYPE: str = "type"
+    DATASET_LABEL: str = "dataset_label"
+    IMAGE_GROUND_TRUTH: str = "image_ground_truth"
+    EXPECTED_INPUT: str = "expected_input"
+    EXPECTED_GT: str = "expected_gt"
+    # Reserved keyword for future implementation
+    MISSING_FILES_HANDLE: str = "missing_files_handle"
+    EXCESSIVE_FILES_HANDLE: str = "excessive_files_handle"

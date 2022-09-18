@@ -476,8 +476,12 @@ def run_command(context: dict, n_gif=0, thr_increment=None, resume_training=Fals
         # Generating sha256 for the training files into the bids DataFrame
         imed_utils.generate_sha_256(context, bids_df.df, train_lst)
 
-    testing_params, transformation_dict = generate_test_params_dict(context, loader_params, transform_test_params,
-                                                                    transform_train_params)
+    testing_params, transformation_dict = generate_test_params_dict(
+        context,
+        loader_params,
+        transform_test_params,
+        transform_train_params
+    )
 
     # Display transforms for the various subsets
     if command == CommandKW.TRAIN:
@@ -491,12 +495,13 @@ def run_command(context: dict, n_gif=0, thr_increment=None, resume_training=Fals
 
     # Training when only with BIDS and via the older path.
     if command == CommandKW.TRAIN and loader_version == LoaderParamsKW.TRADITIONAL_BIDS_LOADER:
-        best_training_dice, best_training_loss, best_validation_dice, best_validation_loss, ds_valid = \
-            execute_training_bids(
+        best_training_dice, \
+        best_training_loss, \
+        best_validation_dice, \
+        best_validation_loss, \
+        ds_valid = execute_training_bids(
                 bids_df,
                 context,
-                cuda_available,
-                device,
                 loader_params,
                 model_params,
                 n_gif,
@@ -508,12 +513,12 @@ def run_command(context: dict, n_gif=0, thr_increment=None, resume_training=Fals
                 valid_lst
             )
     elif command == CommandKW.TRAIN and loader_version == LoaderParamsKW.MULTI_PATH_LOADER:
-
-
         best_training_dice, \
         best_training_loss, \
         best_validation_dice, \
-        best_validation_loss, ds_valid, model_params = \
+        best_validation_loss, \
+        ds_valid, \
+        model_params = \
             execute_multi_path_training(
                 context,
                 loader_params,
@@ -584,8 +589,11 @@ def generate_test_params_dict(context, loader_params, transform_test_params, tra
     return testing_params, transformation_dict
 
 
-def execute_training_bids(bids_df, context, cuda_available, device, loader_params, model_params, n_gif, path_output,
+def execute_training_bids(bids_df, context, loader_params, model_params, n_gif, path_output,
                           resume_training, train_lst, transform_train_params, transform_valid_params, valid_lst):
+
+    cuda_available, device = imed_utils.define_device(context[ConfigKW.GPU_IDS][0])
+
     # Get Validation BIDS dataset
     ds_valid = get_dataset(bids_df, loader_params, valid_lst, transform_valid_params, cuda_available, device,
                            'validation')

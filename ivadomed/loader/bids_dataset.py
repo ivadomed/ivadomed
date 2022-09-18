@@ -44,7 +44,8 @@ class BidsDataset(MRI2DSegmentationDataset):
 
     """
 
-    def __init__(self, bids_df, subject_file_lst, target_suffix, contrast_params, model_params, slice_axis=2,
+    def __init__(self, bids_df, subject_file_lst, target_suffix, contrast_params, # these are all BIDS specific.
+                 model_params, slice_axis=2,
                  nibabel_cache=True, transform=None, metadata_choice=False, slice_filter_fn=None, patch_filter_fn=None,
                  roi_params=None, multichannel=False, object_detection_params=None, task="segmentation",
                  soft_gt=False, is_input_dropout=False):

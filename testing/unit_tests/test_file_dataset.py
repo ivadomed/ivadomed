@@ -11,7 +11,7 @@ def setup_function():
     create_tmp_dir()
 
 
-example_json: dict = {
+files_config_json: dict = {
     "type": "FILES",
     "subset_label": "Subset3",
     "image_ground_truth": [
@@ -64,11 +64,6 @@ example_json: dict = {
 
 
 def test_FilesDataset():
-    contrast_dict = {
-        "training_validation": ["T1w", "T2w", "T2star"],
-        "testing": ["T1w", "T2w", "T2star"],
-        "balance": {},
-    }
     model_dict = {
         "name": "Unet",
         "dropout_rate": 0.3,
@@ -78,9 +73,8 @@ def test_FilesDataset():
     }
 
     # Build a GeneralizedLoaderConfiguration:
-    config = GeneralizedLoaderConfiguration(
-        contrast_params=contrast_dict,
+    model_config_json: GeneralizedLoaderConfiguration = GeneralizedLoaderConfiguration(
         model_params=model_dict,
     )
-    a = FilesDataset(example_json, config)
-    print(a)
+    a = FilesDataset(files_config_json, model_config_json)
+    a.preview()

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import collections.abc
 import re
 import sys
@@ -517,3 +519,34 @@ def get_obj_size(obj) -> int:
         marked.update(new_refr.keys())
 
     return object_size
+
+
+def ensure_absolute_path(path_potential_relative: Path, path_absolute_root: Path) -> str or None:
+    """
+    Check if a path is valid. If not, return the path combined with a predefined root path
+    Args:
+        path_potential_relative:
+        path_absolute_root:
+
+    Returns:
+
+    """
+    # Reject if it is empty
+    if not path_potential_relative:
+        logger.warning(f"A file path to load image was not specified, double check configuration file.")
+        return None
+
+    # If original path exists, then return its string version
+    if Path(path_potential_relative).absolute().exists():
+        return str(path_potential_relative)
+
+    # If original path does not exist, then append it to the "common" data path and check if that exists
+    # If that file exists, then return its string version
+    elif (Path(path_absolute_root) / Path(path_potential_relative)).absolute().exists():
+        return str(Path(path_absolute_root) / Path(path_potential_relative))
+    else:
+        logger.warning(
+            f"Neither the original path ({path_potential_relative}) or the path "
+            f"appended to the common data path ({Path(path_absolute_root) / Path(path_potential_relative)}) exists. "
+            f"Likely data file is missing.")
+        return None

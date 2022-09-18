@@ -2,7 +2,9 @@ from __future__ import annotations
 from pathlib import Path
 import typing
 from typing import List, Tuple
-
+from loguru import logger
+from ivadomed.loader.utils import ensure_absolute_path
+from pprint import pformat
 if typing.TYPE_CHECKING:
     from ivadomed.loader.generalized_loader_configuration import (
         GeneralizedLoaderConfiguration,
@@ -15,7 +17,7 @@ from ivadomed.keywords import (
     MetadataKW,
 )
 
-example_json: dict = {
+example_FileDataset_json: dict = {
     "type": "FILES",
     "subset_label": "Subset3",
     "image_ground_truth": [
@@ -76,7 +78,7 @@ class FilesDataset(MRI2DSegmentationDataset):
         """
         Construator that leverage a generalized loader configuration
         Args:
-            dict_files_pairing:
+            dict_files_pairing: An example shown above in example_json dict.
             config:
         """
 
@@ -92,6 +94,9 @@ class FilesDataset(MRI2DSegmentationDataset):
                 "Manufacturer": [],
             }
 
+        if dict_files_pairing.get("missing_files_handle") == "drop_subject":
+            self.drop_missing = True
+
         # We assume user explicitly provide the subject lists so WE do not do any additional filtering
 
         # Currently does not support contrast balance (See BIDS Data 2D for reference implementation)
@@ -106,7 +111,7 @@ class FilesDataset(MRI2DSegmentationDataset):
         #################
         # Create filename_pairs
         #################
-        self.parse_spec_json_and_update_filename_pairs(dict_files_pairing)
+        self.path_data, self.filename_pairs = self.parse_spec_json_and_update_filename_pairs(dict_files_pairing)
 
         if not self.filename_pairs:
             raise Exception(
@@ -140,104 +145,131 @@ class FilesDataset(MRI2DSegmentationDataset):
             config.is_input_dropout,
         )
 
-    def parse_spec_json_and_update_filename_pairs(self, loader_json: dict):
+    def parse_spec_json_and_update_filename_pairs(self, loader_json: dict) -> Tuple[str, list]:
         """Load the json file and return the dictionary"""
         # Given a JSON file, try to load the file pairing from it.
         assert loader_json.get("type") == "FILES"
 
-        path_data = loader_json.get("path_data", ".")
+        self.path_data = loader_json.get("path_data", ".")
 
-        n_expected_input: int = loader_json.get("expected_input", 0)
-        if n_expected_input == 0:
+        n_expected_input: int = int(loader_json.get("expected_input", 0))
+        if n_expected_input <= 0:
             raise ValueError("Number of Expected Input must be > 0")
 
-        n_expected_gt: int = loader_json.get("expected_gt", 0)
-        if n_expected_gt == 0:
+        n_expected_gt: int = int(loader_json.get("expected_gt", 0))
+        if n_expected_gt <= 0:
             raise ValueError("Number of Expected Ground Truth must be > 0")
 
         if "image_ground_truth" in loader_json.keys():
-            list_image_ground_truth_pairs: list = loader_json.get("image_ground_truth")
+            self.filename_pairs = self.validate_update_filename_pairs(loader_json, n_expected_gt, n_expected_input, self.path_data)
 
-            # Go through each subject
-            for subject_index, a_subject_image_ground_truth_pair in enumerate(
+        return self.path_data, self.filename_pairs
+
+    def validate_update_filename_pairs(self,
+                                       loader_json: dict,
+                                       n_expected_gt: int,
+                                       n_expected_input: int,
+                                       path_data: Path) -> list:
+        """
+        Validate the JSON file and update the filename_pairs after ensuring no extra or insufficient files presents.
+
+        Args:
+            loader_json:
+            n_expected_gt:
+            n_expected_input:
+            path_data:
+
+        Returns:
+
+        """
+        filename_pairs = []
+        list_image_ground_truth_pairs: list = loader_json.get("image_ground_truth")
+        # Go through each subject
+        for subject_index, a_subject_image_ground_truth_pair in enumerate(
                 list_image_ground_truth_pairs
-            ):
-                skip_subject_flag = False
+        ):
+            skip_subject_flag = False
 
-                # 2 lists: Subject List + Ground Truth List
-                assert len(a_subject_image_ground_truth_pair) == 2
+            # 2 lists: Subject List + Ground Truth List
+            assert len(a_subject_image_ground_truth_pair) == 2
 
-                # Validate and trim Subject List
-                list_subject_specific_images: list = a_subject_image_ground_truth_pair[
-                    0
-                ]
-                if len(list_subject_specific_images) > n_expected_input:
-                    list_subject_specific_images = list_subject_specific_images[
-                        :n_expected_input
-                    ]
+            # Validate and trim Subject List
+            list_subject_specific_images: list = a_subject_image_ground_truth_pair[
+                0
+            ]
+            if len(list_subject_specific_images) > n_expected_input:
+                list_subject_specific_images = list_subject_specific_images[
+                                               :n_expected_input
+                                               ]
 
-                # Validate and trim Ground Truth List
-                list_subject_specific_gt: list = a_subject_image_ground_truth_pair[1]
-                if len(list_subject_specific_gt) > n_expected_gt:
-                    list_subject_specific_gt = list_subject_specific_gt[:n_expected_gt]
+            # Validate and trim Ground Truth List
+            list_subject_specific_gt: list = a_subject_image_ground_truth_pair[1]
+            if len(list_subject_specific_gt) > n_expected_gt:
+                list_subject_specific_gt = list_subject_specific_gt[:n_expected_gt]
 
-                # Go check every file and if any of them don't exist, skip the subject
-                for subject_images_index, path_file in enumerate(
+            # Go check every file and if any of them don't exist, skip the subject
+            for subject_images_index, path_file in enumerate(
                     list_subject_specific_images
-                ):
-                    list_subject_specific_images[subject_images_index] = ensure_absolute_path(
-                        path_file, path_data
-                    )
-                    if not list_subject_specific_images[subject_images_index]:
-                        skip_subject_flag = True
-
-                # Exclude current subject
-                if skip_subject_flag:
-                    list_image_ground_truth_pairs[subject_index] = None
-                    continue
-
-                for gt_index, path_file in enumerate(list_subject_specific_gt):
-                    list_subject_specific_gt[gt_index] = ensure_absolute_path(
-                        path_file, path_data
-                    )
-                    if not list_subject_specific_images[gt_index]:
-                        skip_subject_flag = True
-
-                # Exclude current subject
-                if skip_subject_flag:
-                    list_image_ground_truth_pairs[subject_index] = None
-                    continue
-
-                # At this point, established ALL subject's related image and ground truth file exists.
-                self.filename_pairs.append(
-                    (
-                        list_subject_specific_images,
-                        list_subject_specific_gt,
-                        None,  # No ROI for this dataset
-                        None,  # No metadata for this dataset
-                    )
+            ):
+                list_subject_specific_images[subject_images_index] = ensure_absolute_path(
+                    path_file, path_data
                 )
+                if not list_subject_specific_images[subject_images_index]:
+                    skip_subject_flag = True
 
-        return example_json
+            # Exclude current subject
+            if skip_subject_flag:
+                list_image_ground_truth_pairs[subject_index] = None
+                continue
 
+            if len(list_subject_specific_images) < n_expected_input:
+                logger.warning(f"Fewer input files found than expected for subject {subject_index}. Expected {n_expected_input} but found {len(list_subject_specific_images)} from {list_subject_specific_images}")
+                if self.drop_missing:
+                    list_image_ground_truth_pairs[subject_index] = None
+                    continue
 
-def ensure_absolute_path(path_potential_relative: Path, path_absolute_root: Path) -> str or None:
-    """
-    Check if a path is valid. If not, return the path combined with a predefined root path
-    Args:
-        path_potential_relative:
-        path_absolute_root:
+            if len(list_subject_specific_gt) < n_expected_gt:
+                logger.warning(f"Fewer ground truth files found than expected, for subject {subject_index}. Expected {n_expected_gt} but found {len(list_subject_specific_gt)} from {list_subject_specific_gt}")
+                if self.drop_missing:
+                    list_image_ground_truth_pairs[subject_index] = None
+                    continue
 
-    Returns:
+            for gt_index, path_file in enumerate(list_subject_specific_gt):
+                list_subject_specific_gt[gt_index] = ensure_absolute_path(
+                    path_file, path_data
+                )
+                if not list_subject_specific_images[gt_index]:
+                    skip_subject_flag = True
 
-    """
-    # If original path exists, then return its string version
-    if Path(path_potential_relative).absolute().exists():
-        return str(path_potential_relative)
+            # Exclude current subject
+            if skip_subject_flag:
+                list_image_ground_truth_pairs[subject_index] = None
+                continue
 
-    # If original path does not exist, then append it to the "common" data path and check if that exists
-    # If that file exists, then return its string version
-    elif (Path(path_absolute_root) / Path(path_potential_relative)).absolute().exists():
-        return str(Path(path_absolute_root) / Path(path_potential_relative))
-    else:
-        return None
+            # At this point, established ALL subject's related image and ground truth file exists.
+            filename_pairs.append(
+                (
+                    list_subject_specific_images,
+                    list_subject_specific_gt,
+                    "",  # No ROI for this dataset
+                    {},  # No metadata for this dataset
+                )
+            )
+        return filename_pairs
+
+    def preview(self, verbose: bool = False):
+        """
+        Preview the FINALIZED FileDataSet included that has undergone validation and is ready to be used for training.
+        Args:
+            verbose: whether to print out the actual data path
+        """
+        logger.info(f"\t\tFileDataset object from {self.path_data}, {len(self.filename_pairs)} pairs of data files")
+
+        if verbose:
+            for pair_index, a_pair in enumerate(self.filename_pairs):
+                logger.info(f"\t\t\tImage Pair {pair_index}, Subject Image(s):")
+                for a_image in a_pair[0]:
+                    logger.info(f"\t\t\t\t{a_image}")
+                logger.info(f"\t\t\tImage Pair {pair_index}, Ground Truth Image(s):")
+                for a_gt in a_pair[1]:
+                    logger.info(f"\t\t\t\t{a_gt}")

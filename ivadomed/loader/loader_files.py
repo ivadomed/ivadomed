@@ -16,21 +16,18 @@ from ivadomed.loader.patch_filter import PatchFilter
 
 def load_fileset(
     filesets_dict: dict,
-    model_params,
-    transforms_params,
-    roi_params,
-    slice_axis,
-    dataset_type="training",
-    requires_undo=False,
-    metadata_type=None,
-    object_detection_params=None,
-    soft_gt=False,
-    device=None,
-    cuda_available=None,
-    is_input_dropout=False,
+    model_params: dict,
+    transforms_params: dict,
+    roi_params: dict,
+    slice_axis: int,
+    dataset_type: str="training",
+    requires_undo: bool=False,
     **kwargs,
 ):
-    # Get loader appropriate loader according to model type: Available loaders are Files3DDataset for 3D data and FilesDataset for 2D data
+    # Get loader appropriate loader according to model type:
+    # Available loaders are :
+    #   Files3DDataset for 3D data
+    #   FilesDataset for 2D data
 
     # Compose transforms
     tranform_lst, _ = imed_transforms.prepare_transforms(
@@ -42,8 +39,8 @@ def load_fileset(
         roi_params[ROIParamsKW.SLICE_FILTER_ROI] = None
 
     config = GeneralizedLoaderConfiguration(
-        contrast_params=contrast_dict,
-        model_params=model_dict,
+        model_params=model_params,
+        transform=tranform_lst,
     )
 
     # Generate the dataset object to allow data loading.

@@ -15,33 +15,37 @@ if typing.TYPE_CHECKING:
 class GeneralizedLoaderConfiguration:
     """
     A generalized class to store ALL key data requirement for the loading purpose.
+    It is a ONE-STOP configuration data class to enable subsequent downstream analyses.
     Used to significantly simply the constructor parameters
     """
 
     def __init__(
-        self,
-        # Mandatory Parameters
-        contrast_params: dict,
-        model_params: dict,
-        # Optional Parameters
-        object_detection_params: dict = None,
-        transform: list = None,
-        nibabel_cache: bool = True,
-        disk_cache: bool = True,
-        metadata_choice: bool = False,
-        multichannel: bool = False,
-        soft_gt: bool = False,
-        is_input_dropout: bool = False,
-        slice_axis: int = 2,
-        slice_filter_fn: callable = None,
-        patch_filter_fn: callable = None,
-        roi_params: dict = None,
-        task: str = "segmentation",
-        length: Tuple[int, int, int] = (64, 64, 64),
-        stride: Tuple[int, int, int] = (0, 0, 0),
+            self,
+            # Mandatory Parameters
+            model_params: dict,
+            # Optional Parameters
+            object_detection_params: dict = None,
+            transform: list = None,
+            nibabel_cache: bool = True,
+            disk_cache: bool = True,
+            metadata_choice: bool = False,
+            multichannel: bool = False,
+            soft_gt: bool = False,
+            is_input_dropout: bool = False,
+            slice_axis: int = 2,
+            slice_filter_fn: callable = None,
+            patch_filter_fn: callable = None,
+            roi_params: dict = None,
+            task: str = "segmentation",
+            length: Tuple[int, int, int] = (64, 64, 64),
+            stride: Tuple[int, int, int] = (0, 0, 0),
+            # Bids specific
+            bids_df: dict = None,
+            subject_file_lst=None,
+            target_suffix=None,
+            contrast_params=None
     ):
         # Mandatory
-        self.contrast_params: dict = contrast_params
         self.model_params: dict = model_params
 
         # Optional
@@ -72,3 +76,9 @@ class GeneralizedLoaderConfiguration:
         self.disk_cache: bool = disk_cache
         self.length: typing.Tuple[int, int, int] = length
         self.stride: typing.Tuple[int, int, int] = stride
+
+        # Optional Bids specific
+        self.bids_df: dict = bids_df
+        self.subject_file_lst: List[str] = subject_file_lst
+        self.target_suffix: List[str] = target_suffix
+        self.contrast_params: dict = contrast_params
