@@ -68,6 +68,9 @@ class DatasetGroup:
         self.val_filename_pairs: List[Tuple[list, list, str, dict]] = []
         self.test_filename_pairs: List[Tuple[list, list, str, dict]] = []
 
+        # DatasetGroup config
+        self.config = config
+
         # This is the key attribute that needs to be populated once data loading is complete.
         if (ModelParamsKW.IS_2D in config.model_params and not config.model_params.get(ModelParamsKW.IS_2D)):
             # Instantiate all the 3D Train/Val/Test Datasets

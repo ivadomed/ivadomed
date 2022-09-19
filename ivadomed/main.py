@@ -8,6 +8,7 @@ import sys
 import platform
 import multiprocessing
 import re
+from typing import Tuple
 
 from ivadomed.loader.bids_dataframe import BidsDataframe
 from ivadomed import evaluation as imed_evaluation
@@ -21,10 +22,12 @@ from ivadomed import inference as imed_inference
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, film as imed_film
 from ivadomed.keywords import ConfigKW, ModelParamsKW, LoaderParamsKW, ContrastParamsKW, BalanceSamplesKW, \
     TrainingParamsKW, ObjectDetectionParamsKW, UncertaintyKW, PostprocessingKW, BinarizeProdictionKW, MetricsKW, \
-    MetadataKW, OptionKW, SplitDatasetKW, CommandKW
+    MetadataKW, OptionKW, SplitDatasetKW, CommandKW, DataloaderKW
 from loguru import logger
 from pathlib import Path
 
+from ivadomed.loader.consolidation import ConsolidatedDataset
+from ivadomed.loader.generalized_loader_configuration import GeneralizedLoaderConfiguration
 from ivadomed.loader.loader_files import load_fileset
 
 cudnn.benchmark = True
@@ -172,7 +175,7 @@ def update_loader_params(context: dict, is_train: bool):
     return loader_params
 
 
-def set_model_params(context: dict, loader_params: dict):
+def set_model_params(context: dict, loader_params: dict) -> Tuple[dict, dict]:
     """
     Update the model parameters using context.
     Args:
@@ -447,7 +450,7 @@ def run_command(context: dict, n_gif=0, thr_increment=None, resume_training=Fals
     transform_valid_params, \
     transform_test_params = imed_transforms.get_subdatasets_transforms(context[ConfigKW.TRANSFORMATION])
 
-    # Update and populate model parameters and loader parameters
+    # Update and populate model parameters AND loader parameters
     model_params, loader_params = set_model_params(context, loader_params)
 
     if command == CommandKW.SEGMENT and loader_version == LoaderParamsKW.TRADITIONAL_BIDS_LOADER:
@@ -494,77 +497,92 @@ def run_command(context: dict, n_gif=0, thr_increment=None, resume_training=Fals
     check_multiple_raters(command==CommandKW.TRAIN, loader_params)
 
     # Training when only with BIDS and via the older path.
-    if command == CommandKW.TRAIN and loader_version == LoaderParamsKW.TRADITIONAL_BIDS_LOADER:
-        best_training_dice, \
-        best_training_loss, \
-        best_validation_dice, \
-        best_validation_loss, \
-        ds_valid = execute_training_bids(
+    if command == CommandKW.TRAIN:
+        if loader_version == LoaderParamsKW.TRADITIONAL_BIDS_LOADER:
+            best_training_dice, \
+            best_training_loss, \
+            best_validation_dice, \
+            best_validation_loss, \
+            ds_valid = execute_training_bids(
+                    bids_df,
+                    context,
+                    loader_params,
+                    model_params,
+                    n_gif,
+                    path_output,
+                    resume_training,
+                    train_lst,
+                    transform_train_params,
+                    transform_valid_params,
+                    valid_lst
+                )
+        elif loader_version == LoaderParamsKW.MULTI_PATH_LOADER:
+            best_training_dice, \
+            best_training_loss, \
+            best_validation_dice, \
+            best_validation_loss, \
+            ds_valid, \
+            model_params = \
+                execute_multi_path_training(
+                    context,
+                    model_params,
+                    n_gif,
+                    path_output,
+                    resume_training,
+                    transform_train_params,
+                    transform_valid_params,
+                )
+        else:
+            raise ValueError("The loader version is not supported.")
+
+    # Threshold Increment Analyses when dealing with BIDS dataset ONLY
+    if thr_increment:
+        if loader_version == LoaderParamsKW.TRADITIONAL_BIDS_LOADER:
+            execute_threshold_analyses(
                 bids_df,
+                command,
                 context,
+                cuda_available,
+                device,
+                ds_valid,
                 loader_params,
                 model_params,
-                n_gif,
                 path_output,
-                resume_training,
+                testing_params,
+                thr_increment,
                 train_lst,
-                transform_train_params,
                 transform_valid_params,
                 valid_lst
             )
-    elif command == CommandKW.TRAIN and loader_version == LoaderParamsKW.MULTI_PATH_LOADER:
-        best_training_dice, \
-        best_training_loss, \
-        best_validation_dice, \
-        best_validation_loss, \
-        ds_valid, \
-        model_params = \
-            execute_multi_path_training(
-                context,
-                loader_params,
-                model_params,
-                n_gif,
-                path_output,
-                resume_training,
-                transform_train_params,
-                transform_valid_params,
-            )
+        # todo: implement threshold increment analyses for multi-path loader
 
-    # Threshold Increment Analyses when dealing with BIDS dataset ONLY
-    if thr_increment and loader_version == LoaderParamsKW.TRADITIONAL_BIDS_LOADER:
-        execute_threshold_analyses(
-            bids_df,
-            command,
-            context,
-            cuda_available,
-            device,
-            ds_valid,
-            loader_params,
-            model_params,
-            path_output,
-            testing_params,
-            thr_increment,
-            train_lst,
-            transform_valid_params,
-            valid_lst
-        )
+        else:
+            raise ValueError("The threshold increment analyses is only supported for BIDS datasets.")
+
+
 
     # Early return training results when on the bids loading path.
-    if command == CommandKW.TRAIN and loader_version == LoaderParamsKW.TRADITIONAL_BIDS_LOADER:
+    if command == CommandKW.TRAIN:
         return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
 
-    if command == CommandKW.TEST and loader_version == LoaderParamsKW.TRADITIONAL_BIDS_LOADER:
-        df_results, pred_metrics = execute_traditional_test(bids_df,
-                                                            context,
-                                                            cuda_available,
-                                                            device,
-                                                            loader_params,
-                                                            model_params,
-                                                            path_output,
-                                                            test_lst,
-                                                            testing_params,
-                                                            transformation_dict)
-        return df_results, pred_metrics
+    if command == CommandKW.TEST:
+        if loader_version == LoaderParamsKW.TRADITIONAL_BIDS_LOADER:
+            df_results, pred_metrics = execute_traditional_test(bids_df,
+                                                                context,
+                                                                cuda_available,
+                                                                device,
+                                                                loader_params,
+                                                                model_params,
+                                                                path_output,
+                                                                test_lst,
+                                                                testing_params,
+                                                                transformation_dict)
+            return df_results, pred_metrics
+
+        # todo: implement test for multi-path loader
+
+        else:
+            raise ValueError(f"The loader version {loader_version} is not supported for testing currently.")
 
 
 def generate_test_params_dict(context, loader_params, transform_test_params, transform_train_params):
@@ -630,12 +648,15 @@ def execute_training_bids(bids_df, context, loader_params, model_params, n_gif, 
     return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss, ds_valid
 
 
-def execute_multi_path_training(context,
-                                model_params,
-                                transform_train_params,
-                                transform_valid_params):
+def execute_multi_path_training(context: dict,
+                                model_params: dict,
+                                n_gif: int,
+                                path_output: str,
+                                resume_training: bool,
+                                transform_train_params: dict,
+                                transform_valid_params: dict):
 
-    cuda_available, device = imed_utils.define_device(context[ConfigKW.GPU_IDS][0])
+    cuda_available, device = imed_utils.define_device(context.get(ConfigKW.GPU_IDS)[0])
 
     # Probably need to invoke the aggregator around here.
     # Parse the DataSets keys.
@@ -643,28 +664,32 @@ def execute_multi_path_training(context,
     # BIDS Data Set Section
     ####
 
-    # Get Training BIDS dataset
-    ds_train = load_fileset(filesets_dict,
-                            model_params,
-                            transform_train_params,
-                            cuda_available=cuda_available,
-                            device=device,
-                            dataset_type='training')
+    #
+    from ivadomed.loader.all_dataset_group import AllDatasetGroups
 
-    # Get Validation BIDS dataset
-    ds_valid = load_fileset(filesets_dict,
-                            model_params,
-                            transform_valid_params,
-                            cuda_available=cuda_available,
-                            device=device,
-                            dataset_type='validation')
+
+    # Build the generalized configuration object
+    # Build all dataset group object
+    all_data = AllDatasetGroups(
+        context.get(DataloaderKW.DATASET_GROUPS),
+        GeneralizedLoaderConfiguration(model_params)
+    )
+
+    # Aggreagte train acorss AllDatasetGroups
+    ds_train = ConsolidatedDataset.consolidate_AllDatasetGroups_to_a_specific_filedataset_type(all_data, DataloaderKW.TRAINING)
+
+    # Aggregate validation dataset across AllDatasetGroups
+    ds_valid = ConsolidatedDataset.consolidate_AllDatasetGroups_to_a_specific_filedataset_type(all_data, DataloaderKW.VALIDATION)
+
 
     ####
     # File Data Set Section
     ####
+
     ####
     # RegEx Data Set Section
     ####
+
     metric_fns = imed_metrics.get_metric_fns(ds_train.task)
     # If FiLM, normalize data
     if ModelParamsKW.FILM_LAYERS in model_params and any(model_params[ModelParamsKW.FILM_LAYERS]):

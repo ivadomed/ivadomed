@@ -88,6 +88,9 @@ class AllDatasetGroups:
         self.val_filename_pairs: List[Tuple[list, list, str, dict]] = []
         self.test_filename_pairs: List[Tuple[list, list, str, dict]] = []
 
+        # Store the Generalized configuration
+        self.config = config
+
         # Instantiate each the DatasetGroups
         for dict_dataset_group_spec in dict_all_datasets_group_spec.get(DataloaderKW.DATASET_GROUPS):
 

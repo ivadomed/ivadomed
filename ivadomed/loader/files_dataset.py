@@ -76,7 +76,7 @@ class FilesDataset(MRI2DSegmentationDataset):
         self, dict_files_pairing: dict, config: GeneralizedLoaderConfiguration
     ):
         """
-        Construator that leverage a generalized loader configuration
+        Constructor that leverage a generalized loader configuration
         Args:
             dict_files_pairing: An example shown above in example_json dict.
             config:
