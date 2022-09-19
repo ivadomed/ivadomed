@@ -1,0 +1,178 @@
+2022-09-19 11:31:12.097 | INFO     | ivadomed.utils:define_device:160 - Cuda is not available.
+2022-09-19 11:31:12.098 | INFO     | ivadomed.utils:define_device:161 - Working on cpu.
+2022-09-19 11:43:30.496 | INFO     | ivadomed.utils:define_device:160 - Cuda is not available.
+2022-09-19 11:43:30.496 | INFO     | ivadomed.utils:define_device:161 - Working on cpu.
+2022-09-19 11:53:37.721 | INFO     | ivadomed.utils:define_device:160 - Cuda is not available.
+2022-09-19 11:53:37.722 | INFO     | ivadomed.utils:define_device:161 - Working on cpu.
+2022-09-19 12:03:28.618 | INFO     | ivadomed.utils:define_device:160 - Cuda is not available.
+2022-09-19 12:03:28.618 | INFO     | ivadomed.utils:define_device:161 - Working on cpu.
+2022-09-19 12:03:28.618 | INFO     | ivadomed.utils:display_selected_model_spec:176 - Selected architecture: Unet, with the following parameters:
+2022-09-19 12:03:28.619 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	dropout_rate: 0.3
+2022-09-19 12:03:28.619 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	bn_momentum: 0.1
+2022-09-19 12:03:28.619 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	out_channel: 1
+2022-09-19 12:03:28.620 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	depth: 1
+2022-09-19 12:03:28.620 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	is_2d: True
+2022-09-19 12:03:28.620 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	folder_name: unit_test
+2022-09-19 12:03:28.620 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	in_channel: 1
+2022-09-19 12:03:28.620 | INFO     | ivadomed.transforms:__init__:135 - ElasticTransform transform not included since no undo_transform available for it.
+2022-09-19 12:03:28.620 | INFO     | ivadomed.utils:display_selected_transfoms:189 - Selected transformations for the ['training'] dataset:
+2022-09-19 12:03:28.620 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	Resample: {'wspace': 0.75, 'hspace': 0.75}
+2022-09-19 12:03:28.620 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	ElasticTransform: {'alpha_range': [28.0, 30.0], 'sigma_range': [3.5, 4.5], 'p': 0.1}
+2022-09-19 12:03:28.621 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	RandomAffine: {'degrees': 4.6, 'translate': [0.03, 0.03, 0.0], 'scale': [0.98, 1, 0.0]}
+2022-09-19 12:03:28.621 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	CenterCrop: {'size': [128, 128], 'preprocessing': True}
+2022-09-19 12:03:28.621 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	NormalizeInstance: {'applied_to': ['im']}
+2022-09-19 12:03:28.621 | INFO     | ivadomed.utils:display_selected_transfoms:189 - Selected transformations for the ['validation'] dataset:
+2022-09-19 12:03:28.621 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	Resample: {'wspace': 0.75, 'hspace': 0.75}
+2022-09-19 12:03:28.621 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	ElasticTransform: {'alpha_range': [28.0, 30.0], 'sigma_range': [3.5, 4.5], 'p': 0.1}
+2022-09-19 12:03:28.621 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	RandomAffine: {'degrees': 4.6, 'translate': [0.03, 0.03, 0.0], 'scale': [0.98, 1, 0.0]}
+2022-09-19 12:03:28.621 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	CenterCrop: {'size': [128, 128], 'preprocessing': True}
+2022-09-19 12:03:28.621 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	NormalizeInstance: {'applied_to': ['im']}
+2022-09-19 12:03:28.622 | INFO     | ivadomed.utils:define_device:160 - Cuda is not available.
+2022-09-19 12:03:28.622 | INFO     | ivadomed.utils:define_device:161 - Working on cpu.
+2022-09-19 12:06:02.041 | INFO     | ivadomed.utils:define_device:160 - Cuda is not available.
+2022-09-19 12:06:02.041 | INFO     | ivadomed.utils:define_device:161 - Working on cpu.
+2022-09-19 12:06:02.041 | INFO     | ivadomed.utils:display_selected_model_spec:176 - Selected architecture: Unet, with the following parameters:
+2022-09-19 12:06:02.041 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	dropout_rate: 0.3
+2022-09-19 12:06:02.042 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	bn_momentum: 0.1
+2022-09-19 12:06:02.042 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	out_channel: 1
+2022-09-19 12:06:02.042 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	depth: 1
+2022-09-19 12:06:02.042 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	is_2d: True
+2022-09-19 12:06:02.042 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	folder_name: unit_test
+2022-09-19 12:06:02.042 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	in_channel: 1
+2022-09-19 12:06:02.042 | INFO     | ivadomed.transforms:__init__:135 - ElasticTransform transform not included since no undo_transform available for it.
+2022-09-19 12:06:02.043 | INFO     | ivadomed.utils:display_selected_transfoms:189 - Selected transformations for the ['training'] dataset:
+2022-09-19 12:06:02.043 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	Resample: {'wspace': 0.75, 'hspace': 0.75}
+2022-09-19 12:06:02.043 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	ElasticTransform: {'alpha_range': [28.0, 30.0], 'sigma_range': [3.5, 4.5], 'p': 0.1}
+2022-09-19 12:06:02.043 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	RandomAffine: {'degrees': 4.6, 'translate': [0.03, 0.03, 0.0], 'scale': [0.98, 1, 0.0]}
+2022-09-19 12:06:02.043 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	CenterCrop: {'size': [128, 128], 'preprocessing': True}
+2022-09-19 12:06:02.043 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	NormalizeInstance: {'applied_to': ['im']}
+2022-09-19 12:06:02.043 | INFO     | ivadomed.utils:display_selected_transfoms:189 - Selected transformations for the ['validation'] dataset:
+2022-09-19 12:06:02.043 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	Resample: {'wspace': 0.75, 'hspace': 0.75}
+2022-09-19 12:06:02.044 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	ElasticTransform: {'alpha_range': [28.0, 30.0], 'sigma_range': [3.5, 4.5], 'p': 0.1}
+2022-09-19 12:06:02.044 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	RandomAffine: {'degrees': 4.6, 'translate': [0.03, 0.03, 0.0], 'scale': [0.98, 1, 0.0]}
+2022-09-19 12:06:02.044 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	CenterCrop: {'size': [128, 128], 'preprocessing': True}
+2022-09-19 12:06:02.044 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	NormalizeInstance: {'applied_to': ['im']}
+2022-09-19 12:06:02.044 | INFO     | ivadomed.utils:define_device:160 - Cuda is not available.
+2022-09-19 12:06:02.044 | INFO     | ivadomed.utils:define_device:161 - Working on cpu.
+2022-09-19 12:15:25.062 | INFO     | ivadomed.utils:define_device:160 - Cuda is not available.
+2022-09-19 12:15:25.062 | INFO     | ivadomed.utils:define_device:161 - Working on cpu.
+2022-09-19 12:15:25.063 | INFO     | ivadomed.utils:display_selected_model_spec:176 - Selected architecture: Unet, with the following parameters:
+2022-09-19 12:15:25.063 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	dropout_rate: 0.3
+2022-09-19 12:15:25.063 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	bn_momentum: 0.1
+2022-09-19 12:15:25.063 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	out_channel: 1
+2022-09-19 12:15:25.063 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	depth: 1
+2022-09-19 12:15:25.063 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	is_2d: True
+2022-09-19 12:15:25.063 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	folder_name: unit_test
+2022-09-19 12:15:25.063 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	in_channel: 1
+2022-09-19 12:15:25.064 | INFO     | ivadomed.transforms:__init__:135 - ElasticTransform transform not included since no undo_transform available for it.
+2022-09-19 12:15:25.064 | INFO     | ivadomed.utils:display_selected_transfoms:189 - Selected transformations for the ['training'] dataset:
+2022-09-19 12:15:25.064 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	Resample: {'wspace': 0.75, 'hspace': 0.75}
+2022-09-19 12:15:25.064 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	ElasticTransform: {'alpha_range': [28.0, 30.0], 'sigma_range': [3.5, 4.5], 'p': 0.1}
+2022-09-19 12:15:25.064 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	RandomAffine: {'degrees': 4.6, 'translate': [0.03, 0.03, 0.0], 'scale': [0.98, 1, 0.0]}
+2022-09-19 12:15:25.064 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	CenterCrop: {'size': [128, 128], 'preprocessing': True}
+2022-09-19 12:15:25.064 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	NormalizeInstance: {'applied_to': ['im']}
+2022-09-19 12:15:25.065 | INFO     | ivadomed.utils:display_selected_transfoms:189 - Selected transformations for the ['validation'] dataset:
+2022-09-19 12:15:25.065 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	Resample: {'wspace': 0.75, 'hspace': 0.75}
+2022-09-19 12:15:25.065 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	ElasticTransform: {'alpha_range': [28.0, 30.0], 'sigma_range': [3.5, 4.5], 'p': 0.1}
+2022-09-19 12:15:25.065 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	RandomAffine: {'degrees': 4.6, 'translate': [0.03, 0.03, 0.0], 'scale': [0.98, 1, 0.0]}
+2022-09-19 12:15:25.065 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	CenterCrop: {'size': [128, 128], 'preprocessing': True}
+2022-09-19 12:15:25.065 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	NormalizeInstance: {'applied_to': ['im']}
+2022-09-19 12:15:25.065 | INFO     | ivadomed.utils:define_device:160 - Cuda is not available.
+2022-09-19 12:15:25.065 | INFO     | ivadomed.utils:define_device:161 - Working on cpu.
+2022-09-19 12:15:25.066 | WARNING  | ivadomed.loader.utils:ensure_absolute_path:548 - Neither the original path (/Path to/subset_folder_2/sub1_T1.nii) or the path appended to the common data path (\Path to\subset_folder_2\sub1_T1.nii) exists. Likely data file is missing.
+2022-09-19 12:15:25.066 | WARNING  | ivadomed.loader.utils:ensure_absolute_path:548 - Neither the original path (/Path to/subset_folder_2/sub1_T2.nii) or the path appended to the common data path (\Path to\subset_folder_2\sub1_T2.nii) exists. Likely data file is missing.
+2022-09-19 12:15:25.066 | WARNING  | ivadomed.loader.utils:ensure_absolute_path:548 - Neither the original path (/Path to/subset_folder_2/sub2_T1.nii) or the path appended to the common data path (\Path to\subset_folder_2\sub2_T1.nii) exists. Likely data file is missing.
+2022-09-19 12:15:25.067 | WARNING  | ivadomed.loader.utils:ensure_absolute_path:548 - Neither the original path (/Path to/subset_folder_2/sub1_T1.nii) or the path appended to the common data path (\Path to\subset_folder_2\sub1_T1.nii) exists. Likely data file is missing.
+2022-09-19 12:15:25.067 | WARNING  | ivadomed.loader.utils:ensure_absolute_path:548 - Neither the original path (/Path to/subset_folder_2/sub3_T1.nii) or the path appended to the common data path (\Path to\subset_folder_2\sub3_T1.nii) exists. Likely data file is missing.
+2022-09-19 12:15:25.068 | WARNING  | ivadomed.loader.utils:ensure_absolute_path:548 - Neither the original path (/Path to/subset_folder_2/sub1_T1.nii) or the path appended to the common data path (\Path to\subset_folder_2\sub1_T1.nii) exists. Likely data file is missing.
+2022-09-19 12:16:06.050 | INFO     | ivadomed.utils:define_device:160 - Cuda is not available.
+2022-09-19 12:16:06.051 | INFO     | ivadomed.utils:define_device:161 - Working on cpu.
+2022-09-19 12:16:06.051 | INFO     | ivadomed.utils:display_selected_model_spec:176 - Selected architecture: Unet, with the following parameters:
+2022-09-19 12:16:06.052 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	dropout_rate: 0.3
+2022-09-19 12:16:06.052 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	bn_momentum: 0.1
+2022-09-19 12:16:06.052 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	out_channel: 1
+2022-09-19 12:16:06.052 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	depth: 1
+2022-09-19 12:16:06.053 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	is_2d: True
+2022-09-19 12:16:06.053 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	folder_name: unit_test
+2022-09-19 12:16:06.053 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	in_channel: 1
+2022-09-19 12:16:06.053 | INFO     | ivadomed.transforms:__init__:135 - ElasticTransform transform not included since no undo_transform available for it.
+2022-09-19 12:16:06.054 | INFO     | ivadomed.utils:display_selected_transfoms:189 - Selected transformations for the ['training'] dataset:
+2022-09-19 12:16:06.054 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	Resample: {'wspace': 0.75, 'hspace': 0.75}
+2022-09-19 12:16:06.054 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	ElasticTransform: {'alpha_range': [28.0, 30.0], 'sigma_range': [3.5, 4.5], 'p': 0.1}
+2022-09-19 12:16:06.054 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	RandomAffine: {'degrees': 4.6, 'translate': [0.03, 0.03, 0.0], 'scale': [0.98, 1, 0.0]}
+2022-09-19 12:16:06.054 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	CenterCrop: {'size': [128, 128], 'preprocessing': True}
+2022-09-19 12:16:06.055 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	NormalizeInstance: {'applied_to': ['im']}
+2022-09-19 12:16:06.055 | INFO     | ivadomed.utils:display_selected_transfoms:189 - Selected transformations for the ['validation'] dataset:
+2022-09-19 12:16:06.055 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	Resample: {'wspace': 0.75, 'hspace': 0.75}
+2022-09-19 12:16:06.055 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	ElasticTransform: {'alpha_range': [28.0, 30.0], 'sigma_range': [3.5, 4.5], 'p': 0.1}
+2022-09-19 12:16:06.055 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	RandomAffine: {'degrees': 4.6, 'translate': [0.03, 0.03, 0.0], 'scale': [0.98, 1, 0.0]}
+2022-09-19 12:16:06.055 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	CenterCrop: {'size': [128, 128], 'preprocessing': True}
+2022-09-19 12:16:06.056 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	NormalizeInstance: {'applied_to': ['im']}
+2022-09-19 12:16:06.056 | INFO     | ivadomed.utils:define_device:160 - Cuda is not available.
+2022-09-19 12:16:06.056 | INFO     | ivadomed.utils:define_device:161 - Working on cpu.
+2022-09-19 12:18:20.975 | INFO     | ivadomed.utils:define_device:160 - Cuda is not available.
+2022-09-19 12:18:20.975 | INFO     | ivadomed.utils:define_device:161 - Working on cpu.
+2022-09-19 12:18:20.975 | INFO     | ivadomed.utils:display_selected_model_spec:176 - Selected architecture: Unet, with the following parameters:
+2022-09-19 12:18:20.975 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	dropout_rate: 0.3
+2022-09-19 12:18:20.976 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	bn_momentum: 0.1
+2022-09-19 12:18:20.976 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	out_channel: 1
+2022-09-19 12:18:20.976 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	depth: 1
+2022-09-19 12:18:20.976 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	is_2d: True
+2022-09-19 12:18:20.976 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	folder_name: unit_test
+2022-09-19 12:18:20.976 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	in_channel: 1
+2022-09-19 12:18:20.976 | INFO     | ivadomed.transforms:__init__:135 - ElasticTransform transform not included since no undo_transform available for it.
+2022-09-19 12:18:20.976 | INFO     | ivadomed.utils:display_selected_transfoms:189 - Selected transformations for the ['training'] dataset:
+2022-09-19 12:18:20.977 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	Resample: {'wspace': 0.75, 'hspace': 0.75}
+2022-09-19 12:18:20.977 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	ElasticTransform: {'alpha_range': [28.0, 30.0], 'sigma_range': [3.5, 4.5], 'p': 0.1}
+2022-09-19 12:18:20.977 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	RandomAffine: {'degrees': 4.6, 'translate': [0.03, 0.03, 0.0], 'scale': [0.98, 1, 0.0]}
+2022-09-19 12:18:20.977 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	CenterCrop: {'size': [128, 128], 'preprocessing': True}
+2022-09-19 12:18:20.977 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	NormalizeInstance: {'applied_to': ['im']}
+2022-09-19 12:18:20.977 | INFO     | ivadomed.utils:display_selected_transfoms:189 - Selected transformations for the ['validation'] dataset:
+2022-09-19 12:18:20.977 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	Resample: {'wspace': 0.75, 'hspace': 0.75}
+2022-09-19 12:18:20.977 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	ElasticTransform: {'alpha_range': [28.0, 30.0], 'sigma_range': [3.5, 4.5], 'p': 0.1}
+2022-09-19 12:18:20.978 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	RandomAffine: {'degrees': 4.6, 'translate': [0.03, 0.03, 0.0], 'scale': [0.98, 1, 0.0]}
+2022-09-19 12:18:20.978 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	CenterCrop: {'size': [128, 128], 'preprocessing': True}
+2022-09-19 12:18:20.978 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	NormalizeInstance: {'applied_to': ['im']}
+2022-09-19 12:18:20.978 | INFO     | ivadomed.utils:define_device:160 - Cuda is not available.
+2022-09-19 12:18:20.979 | INFO     | ivadomed.utils:define_device:161 - Working on cpu.
+2022-09-19 12:18:20.985 | WARNING  | ivadomed.loader.files_dataset:validate_update_filename_pairs:226 - Fewer input files found than expected for subject 3. Expected 2 but found 1 from ['C:\\Temp\\Test\\sub-01\\ses-04\\anat\\sub-01_ses-04_flip-1_mt-off_MTS.nii']
+2022-09-19 12:18:20.990 | WARNING  | ivadomed.loader.files_dataset:validate_update_filename_pairs:226 - Fewer input files found than expected for subject 3. Expected 2 but found 1 from ['C:\\Temp\\Test\\sub-02\\ses-04\\anat\\sub-02_ses-04_flip-1_mt-off_MTS.nii']
+2022-09-19 12:18:20.997 | WARNING  | ivadomed.loader.files_dataset:validate_update_filename_pairs:226 - Fewer input files found than expected for subject 3. Expected 2 but found 1 from ['C:\\Temp\\Test\\sub-03\\ses-04\\anat\\sub-03_ses-04_flip-1_mt-off_MTS.nii']
+2022-09-19 12:18:21.004 | WARNING  | ivadomed.loader.files_dataset:validate_update_filename_pairs:226 - Fewer input files found than expected for subject 3. Expected 2 but found 1 from ['C:\\Temp\\Test\\sub-04\\ses-04\\anat\\sub-04_ses-04_flip-1_mt-off_MTS.nii']
+2022-09-19 12:18:21.012 | WARNING  | ivadomed.loader.files_dataset:validate_update_filename_pairs:226 - Fewer input files found than expected for subject 3. Expected 2 but found 1 from ['C:\\Temp\\Test\\sub-05\\ses-04\\anat\\sub-05_ses-04_flip-1_mt-off_MTS.nii']
+2022-09-19 12:18:21.019 | WARNING  | ivadomed.loader.files_dataset:validate_update_filename_pairs:226 - Fewer input files found than expected for subject 3. Expected 2 but found 1 from ['C:\\Temp\\Test\\sub-06\\ses-04\\anat\\sub-06_ses-04_flip-1_mt-off_MTS.nii']
+2022-09-19 12:18:21.020 | INFO     | ivadomed.main:create_path_model:94 - Creating model directory: pytest_output_folder\unit_test
+2022-09-19 12:18:21.027 | INFO     | ivadomed.utils:initialize_wandb:49 - No WandB parameters found! Continuing with Tensorboard Logging
+2022-09-19 12:20:02.177 | INFO     | ivadomed.utils:define_device:160 - Cuda is not available.
+2022-09-19 12:20:02.177 | INFO     | ivadomed.utils:define_device:161 - Working on cpu.
+2022-09-19 12:20:02.178 | INFO     | ivadomed.utils:display_selected_model_spec:176 - Selected architecture: Unet, with the following parameters:
+2022-09-19 12:20:02.178 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	dropout_rate: 0.3
+2022-09-19 12:20:02.179 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	bn_momentum: 0.1
+2022-09-19 12:20:02.179 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	out_channel: 1
+2022-09-19 12:20:02.179 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	depth: 1
+2022-09-19 12:20:02.179 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	is_2d: True
+2022-09-19 12:20:02.179 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	folder_name: unit_test
+2022-09-19 12:20:02.180 | INFO     | ivadomed.utils:display_selected_model_spec:179 - 	in_channel: 1
+2022-09-19 12:20:02.180 | INFO     | ivadomed.transforms:__init__:135 - ElasticTransform transform not included since no undo_transform available for it.
+2022-09-19 12:20:02.180 | INFO     | ivadomed.utils:display_selected_transfoms:189 - Selected transformations for the ['training'] dataset:
+2022-09-19 12:20:02.180 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	Resample: {'wspace': 0.75, 'hspace': 0.75}
+2022-09-19 12:20:02.181 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	ElasticTransform: {'alpha_range': [28.0, 30.0], 'sigma_range': [3.5, 4.5], 'p': 0.1}
+2022-09-19 12:20:02.181 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	RandomAffine: {'degrees': 4.6, 'translate': [0.03, 0.03, 0.0], 'scale': [0.98, 1, 0.0]}
+2022-09-19 12:20:02.181 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	CenterCrop: {'size': [128, 128], 'preprocessing': True}
+2022-09-19 12:20:02.181 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	NormalizeInstance: {'applied_to': ['im']}
+2022-09-19 12:20:02.181 | INFO     | ivadomed.utils:display_selected_transfoms:189 - Selected transformations for the ['validation'] dataset:
+2022-09-19 12:20:02.182 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	Resample: {'wspace': 0.75, 'hspace': 0.75}
+2022-09-19 12:20:02.182 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	ElasticTransform: {'alpha_range': [28.0, 30.0], 'sigma_range': [3.5, 4.5], 'p': 0.1}
+2022-09-19 12:20:02.182 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	RandomAffine: {'degrees': 4.6, 'translate': [0.03, 0.03, 0.0], 'scale': [0.98, 1, 0.0]}
+2022-09-19 12:20:02.182 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	CenterCrop: {'size': [128, 128], 'preprocessing': True}
+2022-09-19 12:20:02.182 | INFO     | ivadomed.utils:display_selected_transfoms:191 - 	NormalizeInstance: {'applied_to': ['im']}
+2022-09-19 12:20:02.183 | INFO     | ivadomed.utils:define_device:160 - Cuda is not available.
+2022-09-19 12:20:02.183 | INFO     | ivadomed.utils:define_device:161 - Working on cpu.
+2022-09-19 12:20:09.161 | WARNING  | ivadomed.loader.files_dataset:validate_update_filename_pairs:226 - Fewer input files found than expected for subject 3. Expected 2 but found 1 from ['C:\\Temp\\Test\\sub-01\\ses-04\\anat\\sub-01_ses-04_flip-1_mt-off_MTS.nii']
+2022-09-19 12:20:09.164 | WARNING  | ivadomed.loader.files_dataset:validate_update_filename_pairs:226 - Fewer input files found than expected for subject 3. Expected 2 but found 1 from ['C:\\Temp\\Test\\sub-02\\ses-04\\anat\\sub-02_ses-04_flip-1_mt-off_MTS.nii']
+2022-09-19 12:20:09.167 | WARNING  | ivadomed.loader.files_dataset:validate_update_filename_pairs:226 - Fewer input files found than expected for subject 3. Expected 2 but found 1 from ['C:\\Temp\\Test\\sub-03\\ses-04\\anat\\sub-03_ses-04_flip-1_mt-off_MTS.nii']
+2022-09-19 12:20:09.170 | WARNING  | ivadomed.loader.files_dataset:validate_update_filename_pairs:226 - Fewer input files found than expected for subject 3. Expected 2 but found 1 from ['C:\\Temp\\Test\\sub-04\\ses-04\\anat\\sub-04_ses-04_flip-1_mt-off_MTS.nii']
+2022-09-19 12:20:09.174 | WARNING  | ivadomed.loader.files_dataset:validate_update_filename_pairs:226 - Fewer input files found than expected for subject 3. Expected 2 but found 1 from ['C:\\Temp\\Test\\sub-05\\ses-04\\anat\\sub-05_ses-04_flip-1_mt-off_MTS.nii']
+2022-09-19 12:20:09.177 | WARNING  | ivadomed.loader.files_dataset:validate_update_filename_pairs:226 - Fewer input files found than expected for subject 3. Expected 2 but found 1 from ['C:\\Temp\\Test\\sub-06\\ses-04\\anat\\sub-06_ses-04_flip-1_mt-off_MTS.nii']
+2022-09-19 12:20:09.178 | INFO     | ivadomed.main:create_path_model:103 - Model directory already exists: pytest_output_folder\unit_test
+2022-09-19 12:20:09.210 | INFO     | ivadomed.utils:initialize_wandb:49 - No WandB parameters found! Continuing with Tensorboard Logging

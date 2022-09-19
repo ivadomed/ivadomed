@@ -150,19 +150,22 @@ def save_config_file(context, path_output):
         json.dump(context, fp, indent=4)
 
 
-def update_loader_params(context: dict, is_train: bool):
+def update_loader_params(context: dict, is_train: bool, loader_version: str):
     """
-    Update the loader parameters
+    Update the loader parameters dictionary
     """
     # Copy Get the loader parameter from context first.
     loader_params: dict = copy.deepcopy(context[ConfigKW.LOADER_PARAMETERS])
 
-    if is_train:
-        loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.CONTRAST_LST] = \
-            loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.TRAINING_VALIDATION]
-    else:
-        loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.CONTRAST_LST] =\
-            loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.TESTING]
+    # Only BIDS Loader has the contrast param key
+    if loader_version == LoaderParamsKW.TRADITIONAL_BIDS_LOADER:
+        if is_train:
+            loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.CONTRAST_LST] = \
+                loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.TRAINING_VALIDATION]
+        else:
+            loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.CONTRAST_LST] =\
+                loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.TESTING]
+
 
     if ConfigKW.FILMED_UNET in context and context[ConfigKW.FILMED_UNET][ModelParamsKW.APPLIED]:
         loader_params.update({LoaderParamsKW.METADATA_TYPE: context[ConfigKW.FILMED_UNET][ModelParamsKW.METADATA]})
@@ -212,8 +215,10 @@ def set_model_params(context: dict, loader_params: dict) -> Tuple[dict, dict]:
               'Please select only one (i.e. only one where: "applied": true).')
         exit()
 
-    model_params[ModelParamsKW.IS_2D] = False if ConfigKW.MODIFIED_3D_UNET in model_params[ModelParamsKW.NAME] \
-        else model_params[ModelParamsKW.IS_2D]
+    if ConfigKW.MODIFIED_3D_UNET in model_params[ModelParamsKW.NAME]:
+        model_params[ModelParamsKW.IS_2D] = False
+    else:
+        model_params[ModelParamsKW.IS_2D]
 
     # Get in_channel from contrast_lst
     if loader_params[LoaderParamsKW.MULTICHANNEL]:
@@ -432,7 +437,7 @@ def run_command(context: dict, n_gif=0, thr_increment=None, resume_training=Fals
     logger.add(sys.stdout)
 
     # Create a log with the version of the Ivadomed software and the version of the Annexed dataset (if present)
-    create_dataset_and_ivadomed_version_log(context)
+    # create_dataset_and_ivadomed_version_log(context)
 
     cuda_available, device = imed_utils.define_device(context[ConfigKW.GPU_IDS][0])
 
@@ -443,7 +448,7 @@ def run_command(context: dict, n_gif=0, thr_increment=None, resume_training=Fals
 
     # Set Loader params leveraging information from Loader_Parameters for the BIDS Loader version.
     # Not needed in the alternative loader version.
-    loader_params: dict = update_loader_params(context, command == "train")
+    loader_params: dict = update_loader_params(context, command == "train", loader_version)
 
     # Get transforms dictionaries for each subdataset
     transform_train_params, \
@@ -667,15 +672,18 @@ def execute_multi_path_training(context: dict,
     #
     from ivadomed.loader.all_dataset_group import AllDatasetGroups
 
+    # Build simple dict
+    all_data_groups_dict = {}
+    all_data_groups_dict[DataloaderKW.DATASET_GROUPS] = context.get(DataloaderKW.DATASET_GROUPS)
 
     # Build the generalized configuration object
     # Build all dataset group object
     all_data = AllDatasetGroups(
-        context.get(DataloaderKW.DATASET_GROUPS),
+        all_data_groups_dict,
         GeneralizedLoaderConfiguration(model_params)
     )
 
-    # Aggreagte train acorss AllDatasetGroups
+    # Aggregate train across AllDatasetGroups
     ds_train = ConsolidatedDataset.consolidate_AllDatasetGroups_to_a_specific_filedataset_type(all_data, DataloaderKW.TRAINING)
 
     # Aggregate validation dataset across AllDatasetGroups

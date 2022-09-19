@@ -131,7 +131,7 @@ def test_dataset_group():
         model_params=model_dict,
     )
     a = DatasetGroup(dataset_group_config_json, loader_config)
-    a.preview()
+    a.preview(verbose=True)
 
 
 def teardown_function():

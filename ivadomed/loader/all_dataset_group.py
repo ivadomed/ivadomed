@@ -12,53 +12,167 @@ if typing.TYPE_CHECKING:
 from loguru import logger
 
 
-example_AllDatasetGroup_json: dict = {
-     "Datasets": [
+example_all_dataset_groups_config_json: dict = {
+    "dataset_groups": [
         {
-            "datasetgroup_label": "DataSet1",
+            "dataset_group_label": "DataSetGroup1",
             "training": [
                 {
                     "type": "FILES",
-                    "subset_label": "Subset3",
+                    "subset_label": "TrainFileDataSet1",
                     "image_ground_truth": [
-                        [["/Path to/subset_folder_2/sub1_T1.nii", "/Path to/subset_folder_2/sub1_T2.nii"], ["/Path to/subset_folder_2/gt1"]],
-                        [["/Path to/subset_folder_2/sub2_T1.nii", "/Path to/subset_folder_2/sub1_T1.nii"], ["/Path to/subset_folder_2/gt2"]],
-                        [["/Path to/subset_folder_2/sub3_T1.nii", "/Path to/subset_folder_2/sub1_T1.nii"], ["/Path to/subset_folder_2/gt3"]]
+                        [["sub-01/ses-01/anat/sub-01_ses-01_flip-1_mt-off_MTS.nii",
+                          "sub-01/ses-01/anat/sub-01_ses-01_flip-1_mt-on_MTS.nii"],
+                         ["derivatives/labels/sub-01/ses-01/anat/sub-01_ses-01_mt-off_MTS_lesion-manual-rater1.nii"]],
+                        [["sub-01/ses-02/anat/sub-01_ses-02_flip-1_mt-off_MTS.nii",
+                          "sub-01/ses-02/anat/sub-01_ses-02_flip-1_mt-on_MTS.nii"],
+                         ["derivatives/labels/sub-01/ses-02/anat/sub-01_ses-02_mt-off_MTS_lesion-manual-rater1.nii"]],
+                        [["sub-01/ses-03/anat/sub-01_ses-03_flip-1_mt-off_MTS.nii",
+                          "sub-01/ses-03/anat/sub-01_ses-03_flip-1_mt-on_MTS.nii",
+                          "sub-01/ses-03/anat/sub-01_ses-03_flip-1_mt-on_MTS.nii"],
+                         ["derivatives/labels/sub-01/ses-03/anat/sub-01_ses-03_mt-off_MTS_lesion-manual-rater1.nii"]],
+                        [["sub-01/ses-04/anat/sub-01_ses-04_flip-1_mt-off_MTS.nii", ],
+                         ["derivatives/labels/sub-01/ses-04/anat/sub-01_ses-04_mt-off_MTS_lesion-manual-rater1.nii"]],
                     ],
                     "expected_input": 2,
                     "expected_gt": 1,
                     "missing_files_handle": "drop_subject",
-                    "excessive_files_handle": "use_first_and_warn"
-                    # "path_data": no path data key as absolute path required for image_ground_truth pairing
+                    "excessive_files_handle": "use_first_and_warn",
+                    "path_data": r"C:\Temp\Test",
+                },
+            ],
+            "validation": [
+                {
+                    "type": "FILES",
+                    "subset_label": "ValFileDataSet1",
+                    "image_ground_truth": [
+                        [["sub-02/ses-01/anat/sub-02_ses-01_flip-1_mt-off_MTS.nii",
+                          "sub-02/ses-01/anat/sub-02_ses-01_flip-1_mt-on_MTS.nii"],
+                         ["derivatives/labels/sub-02/ses-01/anat/sub-02_ses-01_mt-off_MTS_lesion-manual-rater1.nii"]],
+                        [["sub-02/ses-02/anat/sub-02_ses-02_flip-1_mt-off_MTS.nii",
+                          "sub-02/ses-02/anat/sub-02_ses-02_flip-1_mt-on_MTS.nii"],
+                         ["derivatives/labels/sub-02/ses-02/anat/sub-02_ses-02_mt-off_MTS_lesion-manual-rater1.nii"]],
+                        [["sub-02/ses-03/anat/sub-02_ses-03_flip-1_mt-off_MTS.nii",
+                          "sub-02/ses-03/anat/sub-02_ses-03_flip-1_mt-on_MTS.nii",
+                          "sub-02/ses-03/anat/sub-02_ses-03_flip-1_mt-on_MTS.nii"],
+                         ["derivatives/labels/sub-02/ses-03/anat/sub-02_ses-03_mt-off_MTS_lesion-manual-rater1.nii"]],
+                        [["sub-02/ses-04/anat/sub-02_ses-04_flip-1_mt-off_MTS.nii", ],
+                         ["derivatives/labels/sub-02/ses-04/anat/sub-02_ses-04_mt-off_MTS_lesion-manual-rater1.nii"]],
+                    ],
+                    "expected_input": 2,
+                    "expected_gt": 1,
+                    "missing_files_handle": "drop_subject",
+                    "excessive_files_handle": "use_first_and_warn",
+                    "path_data": r"C:\Temp\Test",
+
                 }
             ],
-            "validation": "[ Same Above Dict struct]",
-            "test": "[Same Above Dict struct]",
+            "test": [
+                {
+                    "type": "FILES",
+                    "subset_label": "TestFileDataSet1",
+                    "image_ground_truth": [
+                        [["sub-03/ses-01/anat/sub-03_ses-01_flip-1_mt-off_MTS.nii",
+                          "sub-03/ses-01/anat/sub-03_ses-01_flip-1_mt-on_MTS.nii"],
+                         ["derivatives/labels/sub-03/ses-01/anat/sub-03_ses-01_mt-off_MTS_lesion-manual-rater1.nii"]],
+                        [["sub-03/ses-02/anat/sub-03_ses-02_flip-1_mt-off_MTS.nii",
+                          "sub-03/ses-02/anat/sub-03_ses-02_flip-1_mt-on_MTS.nii"],
+                         ["derivatives/labels/sub-03/ses-02/anat/sub-03_ses-02_mt-off_MTS_lesion-manual-rater1.nii"]],
+                        [["sub-03/ses-03/anat/sub-03_ses-03_flip-1_mt-off_MTS.nii",
+                          "sub-03/ses-03/anat/sub-03_ses-03_flip-1_mt-on_MTS.nii",
+                          "sub-03/ses-03/anat/sub-03_ses-03_flip-1_mt-on_MTS.nii"],
+                         ["derivatives/labels/sub-03/ses-03/anat/sub-03_ses-03_mt-off_MTS_lesion-manual-rater1.nii"]],
+                        [["sub-03/ses-04/anat/sub-03_ses-04_flip-1_mt-off_MTS.nii", ],
+                         ["derivatives/labels/sub-03/ses-04/anat/sub-03_ses-04_mt-off_MTS_lesion-manual-rater1.nii"]],
+                    ],
+                    "expected_input": 2,
+                    "expected_gt": 1,
+                    "missing_files_handle": "drop_subject",
+                    "excessive_files_handle": "use_first_and_warn",
+                    "path_data": r"C:\Temp\Test",
+                }
+            ],
+
         },
         {
-            "datasetgroup_label": "DataSet2",
+            "dataset_group_label": "DataSetGroup2",
             "training": [
                 {
                     "type": "FILES",
-                    "subset_label": "Subset3",
+                    "subset_label": "TrainFileDataSet1",
                     "image_ground_truth": [
-                        [["/Path to/subset_folder_2/sub1_T1.nii", "/Path to/subset_folder_2/sub1_T2.nii"],
-                         ["/Path to/subset_folder_2/gt1"]],
-                        [["/Path to/subset_folder_2/sub2_T1.nii", "/Path to/subset_folder_2/sub1_T1.nii"],
-                         ["/Path to/subset_folder_2/gt2"]],
-                        [["/Path to/subset_folder_2/sub3_T1.nii", "/Path to/subset_folder_2/sub1_T1.nii"],
-                         ["/Path to/subset_folder_2/gt3"]]
+                        [["sub-04/ses-01/anat/sub-04_ses-01_flip-1_mt-off_MTS.nii",
+                          "sub-04/ses-01/anat/sub-04_ses-01_flip-1_mt-on_MTS.nii"],
+                         ["derivatives/labels/sub-04/ses-01/anat/sub-04_ses-01_mt-off_MTS_lesion-manual-rater1.nii"]],
+                        [["sub-04/ses-02/anat/sub-04_ses-02_flip-1_mt-off_MTS.nii",
+                          "sub-04/ses-02/anat/sub-04_ses-02_flip-1_mt-on_MTS.nii"],
+                         ["derivatives/labels/sub-04/ses-02/anat/sub-04_ses-02_mt-off_MTS_lesion-manual-rater1.nii"]],
+                        [["sub-04/ses-03/anat/sub-04_ses-03_flip-1_mt-off_MTS.nii",
+                          "sub-04/ses-03/anat/sub-04_ses-03_flip-1_mt-on_MTS.nii",
+                          "sub-04/ses-03/anat/sub-04_ses-03_flip-1_mt-on_MTS.nii"],
+                         ["derivatives/labels/sub-04/ses-03/anat/sub-04_ses-03_mt-off_MTS_lesion-manual-rater1.nii"]],
+                        [["sub-04/ses-04/anat/sub-04_ses-04_flip-1_mt-off_MTS.nii", ],
+                         ["derivatives/labels/sub-04/ses-04/anat/sub-04_ses-04_mt-off_MTS_lesion-manual-rater1.nii"]],
                     ],
                     "expected_input": 2,
                     "expected_gt": 1,
                     "missing_files_handle": "drop_subject",
-                    "excessive_files_handle": "use_first_and_warn"
-                    # "path_data": no path data key as absolute path required for image_ground_truth pairing
+                    "excessive_files_handle": "use_first_and_warn",
+                    "path_data": r"C:\Temp\Test",
+                },
+            ],
+            "validation": [
+                {
+                    "type": "FILES",
+                    "subset_label": "ValFileDataSet1",
+                    "image_ground_truth": [
+                        [["sub-05/ses-01/anat/sub-05_ses-01_flip-1_mt-off_MTS.nii",
+                          "sub-05/ses-01/anat/sub-05_ses-01_flip-1_mt-on_MTS.nii"],
+                         ["derivatives/labels/sub-05/ses-01/anat/sub-05_ses-01_mt-off_MTS_lesion-manual-rater1.nii"]],
+                        [["sub-05/ses-02/anat/sub-05_ses-02_flip-1_mt-off_MTS.nii",
+                          "sub-05/ses-02/anat/sub-05_ses-02_flip-1_mt-on_MTS.nii"],
+                         ["derivatives/labels/sub-05/ses-02/anat/sub-05_ses-02_mt-off_MTS_lesion-manual-rater1.nii"]],
+                        [["sub-05/ses-03/anat/sub-05_ses-03_flip-1_mt-off_MTS.nii",
+                          "sub-05/ses-03/anat/sub-05_ses-03_flip-1_mt-on_MTS.nii",
+                          "sub-05/ses-03/anat/sub-05_ses-03_flip-1_mt-on_MTS.nii"],
+                         ["derivatives/labels/sub-05/ses-03/anat/sub-05_ses-03_mt-off_MTS_lesion-manual-rater1.nii"]],
+                        [["sub-05/ses-04/anat/sub-05_ses-04_flip-1_mt-off_MTS.nii", ],
+                         ["derivatives/labels/sub-05/ses-04/anat/sub-05_ses-04_mt-off_MTS_lesion-manual-rater1.nii"]],
+                    ],
+                    "expected_input": 2,
+                    "expected_gt": 1,
+                    "missing_files_handle": "drop_subject",
+                    "excessive_files_handle": "use_first_and_warn",
+                    "path_data": r"C:\Temp\Test",
                 }
             ],
-            "validation": "[ Same Above Dict struct]",
-            "test": "[Same Above Dict struct]",
-        }
+            "test": [
+                {
+                    "type": "FILES",
+                    "subset_label": "TestFileDataSet1",
+                    "image_ground_truth": [
+                        [["sub-06/ses-01/anat/sub-06_ses-01_flip-1_mt-off_MTS.nii",
+                          "sub-06/ses-01/anat/sub-06_ses-01_flip-1_mt-on_MTS.nii"],
+                         ["derivatives/labels/sub-06/ses-01/anat/sub-06_ses-01_mt-off_MTS_lesion-manual-rater1.nii"]],
+                        [["sub-06/ses-02/anat/sub-06_ses-02_flip-1_mt-off_MTS.nii",
+                          "sub-06/ses-02/anat/sub-06_ses-02_flip-1_mt-on_MTS.nii"],
+                         ["derivatives/labels/sub-06/ses-02/anat/sub-06_ses-02_mt-off_MTS_lesion-manual-rater1.nii"]],
+                        [["sub-06/ses-03/anat/sub-06_ses-03_flip-1_mt-off_MTS.nii",
+                          "sub-06/ses-03/anat/sub-06_ses-03_flip-1_mt-on_MTS.nii",
+                          "sub-06/ses-03/anat/sub-06_ses-03_flip-1_mt-on_MTS.nii"],
+                         ["derivatives/labels/sub-06/ses-03/anat/sub-06_ses-03_mt-off_MTS_lesion-manual-rater1.nii"]],
+                        [["sub-06/ses-04/anat/sub-06_ses-04_flip-1_mt-off_MTS.nii", ],
+                         ["derivatives/labels/sub-06/ses-04/anat/sub-06_ses-04_mt-off_MTS_lesion-manual-rater1.nii"]],
+                    ],
+                    "expected_input": 2,
+                    "expected_gt": 1,
+                    "missing_files_handle": "drop_subject",
+                    "excessive_files_handle": "use_first_and_warn",
+                    "path_data": r"C:\Temp\Test",
+                }
+            ],
+
+        },
     ]
 }
 

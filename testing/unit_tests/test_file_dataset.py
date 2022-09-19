@@ -1,4 +1,5 @@
 from ivadomed.loader.files_dataset import FilesDataset
+from testing.common_testing_util import remove_tmp_dir
 from testing.unit_tests.t_utils import (
     create_tmp_dir
 )
@@ -78,3 +79,6 @@ def test_FilesDataset():
     )
     a = FilesDataset(files_config_json, model_config_json)
     a.preview()
+
+def teardown_function():
+    remove_tmp_dir()
