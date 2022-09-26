@@ -48,9 +48,11 @@ def load_fileset(
         ModelParamsKW.IS_2D in model_params and not model_params[ModelParamsKW.IS_2D]
     ):
         dataset = Files3DDataset(filesets_dict, config)
+        dataset._load_filenames()
     else:
         # Task selection
         dataset = FilesDataset(filesets_dict, config)
+        dataset.load_filenames()
 
     # 3D Path
     if model_params[ModelParamsKW.NAME] == ConfigKW.MODIFIED_3D_UNET:

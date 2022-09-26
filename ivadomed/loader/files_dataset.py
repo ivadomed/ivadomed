@@ -246,13 +246,16 @@ class FilesDataset(MRI2DSegmentationDataset):
                 list_image_ground_truth_pairs[subject_index] = None
                 continue
 
+            # Generate simple meta data #todo: should load json if present.
+            metadata: List[dict] = [{}]* len(list_subject_specific_images) # "data_specificiation_type": "file_dataset"
+
             # At this point, established ALL subject's related image and ground truth file exists.
             filename_pairs.append(
                 (
                     list_subject_specific_images,
                     list_subject_specific_gt,
-                    "",  # No ROI for this dataset
-                    {},  # No metadata for this dataset
+                    None,  # No ROI for this dataset, String?
+                    metadata,  # No metadata for this dataset, Dict?
                 )
             )
         return filename_pairs

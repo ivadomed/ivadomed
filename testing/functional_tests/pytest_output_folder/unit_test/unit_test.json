@@ -182,8 +182,8 @@
                     "image_ground_truth": [
                         [
                             [
-                                "C:\\Temp\\Test\\sub-01\\ses-01\\anat\\sub-01_ses-01_flip-1_mt-off_MTS.nii",
-                                "C:\\Temp\\Test\\sub-01\\ses-01\\anat\\sub-01_ses-01_flip-1_mt-on_MTS.nii"
+                                "sub-01/ses-01/anat/sub-01_ses-01_flip-1_mt-off_MTS.nii",
+                                "sub-01/ses-01/anat/sub-01_ses-01_flip-1_mt-on_MTS.nii"
                             ],
                             [
                                 "C:\\Temp\\Test\\derivatives\\labels\\sub-01\\ses-01\\anat\\sub-01_ses-01_mt-off_MTS_lesion-manual-rater1.nii"
@@ -191,8 +191,8 @@
                         ],
                         [
                             [
-                                "C:\\Temp\\Test\\sub-01\\ses-02\\anat\\sub-01_ses-02_flip-1_mt-off_MTS.nii",
-                                "C:\\Temp\\Test\\sub-01\\ses-02\\anat\\sub-01_ses-02_flip-1_mt-on_MTS.nii"
+                                "sub-01/ses-02/anat/sub-01_ses-02_flip-1_mt-off_MTS.nii",
+                                "sub-01/ses-02/anat/sub-01_ses-02_flip-1_mt-on_MTS.nii"
                             ],
                             [
                                 "C:\\Temp\\Test\\derivatives\\labels\\sub-01\\ses-02\\anat\\sub-01_ses-02_mt-off_MTS_lesion-manual-rater1.nii"
@@ -208,9 +208,16 @@
                                 "C:\\Temp\\Test\\derivatives\\labels\\sub-01\\ses-03\\anat\\sub-01_ses-03_mt-off_MTS_lesion-manual-rater1.nii"
                             ]
                         ],
-                        null
+                        [
+                            [
+                                "C:\\Temp\\Test\\sub-01\\ses-04\\anat\\sub-01_ses-04_flip-1_mt-off_MTS.nii"
+                            ],
+                            [
+                                "C:\\Temp\\Test\\derivatives\\labels\\sub-01\\ses-04\\anat\\sub-01_ses-04_mt-off_MTS_lesion-manual-rater1.nii"
+                            ]
+                        ]
                     ],
-                    "expected_input": 2,
+                    "expected_input": 1,
                     "expected_gt": 1,
                     "missing_files_handle": "drop_subject",
                     "excessive_files_handle": "use_first_and_warn",
@@ -224,8 +231,8 @@
                     "image_ground_truth": [
                         [
                             [
-                                "C:\\Temp\\Test\\sub-02\\ses-01\\anat\\sub-02_ses-01_flip-1_mt-off_MTS.nii",
-                                "C:\\Temp\\Test\\sub-02\\ses-01\\anat\\sub-02_ses-01_flip-1_mt-on_MTS.nii"
+                                "sub-02/ses-01/anat/sub-02_ses-01_flip-1_mt-off_MTS.nii",
+                                "sub-02/ses-01/anat/sub-02_ses-01_flip-1_mt-on_MTS.nii"
                             ],
                             [
                                 "C:\\Temp\\Test\\derivatives\\labels\\sub-02\\ses-01\\anat\\sub-02_ses-01_mt-off_MTS_lesion-manual-rater1.nii"
@@ -233,8 +240,8 @@
                         ],
                         [
                             [
-                                "C:\\Temp\\Test\\sub-02\\ses-02\\anat\\sub-02_ses-02_flip-1_mt-off_MTS.nii",
-                                "C:\\Temp\\Test\\sub-02\\ses-02\\anat\\sub-02_ses-02_flip-1_mt-on_MTS.nii"
+                                "sub-02/ses-02/anat/sub-02_ses-02_flip-1_mt-off_MTS.nii",
+                                "sub-02/ses-02/anat/sub-02_ses-02_flip-1_mt-on_MTS.nii"
                             ],
                             [
                                 "C:\\Temp\\Test\\derivatives\\labels\\sub-02\\ses-02\\anat\\sub-02_ses-02_mt-off_MTS_lesion-manual-rater1.nii"
@@ -250,9 +257,16 @@
                                 "C:\\Temp\\Test\\derivatives\\labels\\sub-02\\ses-03\\anat\\sub-02_ses-03_mt-off_MTS_lesion-manual-rater1.nii"
                             ]
                         ],
-                        null
+                        [
+                            [
+                                "C:\\Temp\\Test\\sub-02\\ses-04\\anat\\sub-02_ses-04_flip-1_mt-off_MTS.nii"
+                            ],
+                            [
+                                "C:\\Temp\\Test\\derivatives\\labels\\sub-02\\ses-04\\anat\\sub-02_ses-04_mt-off_MTS_lesion-manual-rater1.nii"
+                            ]
+                        ]
                     ],
-                    "expected_input": 2,
+                    "expected_input": 1,
                     "expected_gt": 1,
                     "missing_files_handle": "drop_subject",
                     "excessive_files_handle": "use_first_and_warn",
@@ -266,8 +280,8 @@
                     "image_ground_truth": [
                         [
                             [
-                                "C:\\Temp\\Test\\sub-03\\ses-01\\anat\\sub-03_ses-01_flip-1_mt-off_MTS.nii",
-                                "C:\\Temp\\Test\\sub-03\\ses-01\\anat\\sub-03_ses-01_flip-1_mt-on_MTS.nii"
+                                "sub-03/ses-01/anat/sub-03_ses-01_flip-1_mt-off_MTS.nii",
+                                "sub-03/ses-01/anat/sub-03_ses-01_flip-1_mt-on_MTS.nii"
                             ],
                             [
                                 "C:\\Temp\\Test\\derivatives\\labels\\sub-03\\ses-01\\anat\\sub-03_ses-01_mt-off_MTS_lesion-manual-rater1.nii"
@@ -275,8 +289,8 @@
                         ],
                         [
                             [
-                                "C:\\Temp\\Test\\sub-03\\ses-02\\anat\\sub-03_ses-02_flip-1_mt-off_MTS.nii",
-                                "C:\\Temp\\Test\\sub-03\\ses-02\\anat\\sub-03_ses-02_flip-1_mt-on_MTS.nii"
+                                "sub-03/ses-02/anat/sub-03_ses-02_flip-1_mt-off_MTS.nii",
+                                "sub-03/ses-02/anat/sub-03_ses-02_flip-1_mt-on_MTS.nii"
                             ],
                             [
                                 "C:\\Temp\\Test\\derivatives\\labels\\sub-03\\ses-02\\anat\\sub-03_ses-02_mt-off_MTS_lesion-manual-rater1.nii"
@@ -292,9 +306,16 @@
                                 "C:\\Temp\\Test\\derivatives\\labels\\sub-03\\ses-03\\anat\\sub-03_ses-03_mt-off_MTS_lesion-manual-rater1.nii"
                             ]
                         ],
-                        null
+                        [
+                            [
+                                "C:\\Temp\\Test\\sub-03\\ses-04\\anat\\sub-03_ses-04_flip-1_mt-off_MTS.nii"
+                            ],
+                            [
+                                "C:\\Temp\\Test\\derivatives\\labels\\sub-03\\ses-04\\anat\\sub-03_ses-04_mt-off_MTS_lesion-manual-rater1.nii"
+                            ]
+                        ]
                     ],
-                    "expected_input": 2,
+                    "expected_input": 1,
                     "expected_gt": 1,
                     "missing_files_handle": "drop_subject",
                     "excessive_files_handle": "use_first_and_warn",
@@ -311,8 +332,8 @@
                     "image_ground_truth": [
                         [
                             [
-                                "C:\\Temp\\Test\\sub-04\\ses-01\\anat\\sub-04_ses-01_flip-1_mt-off_MTS.nii",
-                                "C:\\Temp\\Test\\sub-04\\ses-01\\anat\\sub-04_ses-01_flip-1_mt-on_MTS.nii"
+                                "sub-04/ses-01/anat/sub-04_ses-01_flip-1_mt-off_MTS.nii",
+                                "sub-04/ses-01/anat/sub-04_ses-01_flip-1_mt-on_MTS.nii"
                             ],
                             [
                                 "C:\\Temp\\Test\\derivatives\\labels\\sub-04\\ses-01\\anat\\sub-04_ses-01_mt-off_MTS_lesion-manual-rater1.nii"
@@ -320,8 +341,8 @@
                         ],
                         [
                             [
-                                "C:\\Temp\\Test\\sub-04\\ses-02\\anat\\sub-04_ses-02_flip-1_mt-off_MTS.nii",
-                                "C:\\Temp\\Test\\sub-04\\ses-02\\anat\\sub-04_ses-02_flip-1_mt-on_MTS.nii"
+                                "sub-04/ses-02/anat/sub-04_ses-02_flip-1_mt-off_MTS.nii",
+                                "sub-04/ses-02/anat/sub-04_ses-02_flip-1_mt-on_MTS.nii"
                             ],
                             [
                                 "C:\\Temp\\Test\\derivatives\\labels\\sub-04\\ses-02\\anat\\sub-04_ses-02_mt-off_MTS_lesion-manual-rater1.nii"
@@ -337,9 +358,16 @@
                                 "C:\\Temp\\Test\\derivatives\\labels\\sub-04\\ses-03\\anat\\sub-04_ses-03_mt-off_MTS_lesion-manual-rater1.nii"
                             ]
                         ],
-                        null
+                        [
+                            [
+                                "C:\\Temp\\Test\\sub-04\\ses-04\\anat\\sub-04_ses-04_flip-1_mt-off_MTS.nii"
+                            ],
+                            [
+                                "C:\\Temp\\Test\\derivatives\\labels\\sub-04\\ses-04\\anat\\sub-04_ses-04_mt-off_MTS_lesion-manual-rater1.nii"
+                            ]
+                        ]
                     ],
-                    "expected_input": 2,
+                    "expected_input": 1,
                     "expected_gt": 1,
                     "missing_files_handle": "drop_subject",
                     "excessive_files_handle": "use_first_and_warn",
@@ -353,8 +381,8 @@
                     "image_ground_truth": [
                         [
                             [
-                                "C:\\Temp\\Test\\sub-05\\ses-01\\anat\\sub-05_ses-01_flip-1_mt-off_MTS.nii",
-                                "C:\\Temp\\Test\\sub-05\\ses-01\\anat\\sub-05_ses-01_flip-1_mt-on_MTS.nii"
+                                "sub-05/ses-01/anat/sub-05_ses-01_flip-1_mt-off_MTS.nii",
+                                "sub-05/ses-01/anat/sub-05_ses-01_flip-1_mt-on_MTS.nii"
                             ],
                             [
                                 "C:\\Temp\\Test\\derivatives\\labels\\sub-05\\ses-01\\anat\\sub-05_ses-01_mt-off_MTS_lesion-manual-rater1.nii"
@@ -362,8 +390,8 @@
                         ],
                         [
                             [
-                                "C:\\Temp\\Test\\sub-05\\ses-02\\anat\\sub-05_ses-02_flip-1_mt-off_MTS.nii",
-                                "C:\\Temp\\Test\\sub-05\\ses-02\\anat\\sub-05_ses-02_flip-1_mt-on_MTS.nii"
+                                "sub-05/ses-02/anat/sub-05_ses-02_flip-1_mt-off_MTS.nii",
+                                "sub-05/ses-02/anat/sub-05_ses-02_flip-1_mt-on_MTS.nii"
                             ],
                             [
                                 "C:\\Temp\\Test\\derivatives\\labels\\sub-05\\ses-02\\anat\\sub-05_ses-02_mt-off_MTS_lesion-manual-rater1.nii"
@@ -379,9 +407,16 @@
                                 "C:\\Temp\\Test\\derivatives\\labels\\sub-05\\ses-03\\anat\\sub-05_ses-03_mt-off_MTS_lesion-manual-rater1.nii"
                             ]
                         ],
-                        null
+                        [
+                            [
+                                "C:\\Temp\\Test\\sub-05\\ses-04\\anat\\sub-05_ses-04_flip-1_mt-off_MTS.nii"
+                            ],
+                            [
+                                "C:\\Temp\\Test\\derivatives\\labels\\sub-05\\ses-04\\anat\\sub-05_ses-04_mt-off_MTS_lesion-manual-rater1.nii"
+                            ]
+                        ]
                     ],
-                    "expected_input": 2,
+                    "expected_input": 1,
                     "expected_gt": 1,
                     "missing_files_handle": "drop_subject",
                     "excessive_files_handle": "use_first_and_warn",
@@ -395,8 +430,8 @@
                     "image_ground_truth": [
                         [
                             [
-                                "C:\\Temp\\Test\\sub-06\\ses-01\\anat\\sub-06_ses-01_flip-1_mt-off_MTS.nii",
-                                "C:\\Temp\\Test\\sub-06\\ses-01\\anat\\sub-06_ses-01_flip-1_mt-on_MTS.nii"
+                                "sub-06/ses-01/anat/sub-06_ses-01_flip-1_mt-off_MTS.nii",
+                                "sub-06/ses-01/anat/sub-06_ses-01_flip-1_mt-on_MTS.nii"
                             ],
                             [
                                 "C:\\Temp\\Test\\derivatives\\labels\\sub-06\\ses-01\\anat\\sub-06_ses-01_mt-off_MTS_lesion-manual-rater1.nii"
@@ -404,8 +439,8 @@
                         ],
                         [
                             [
-                                "C:\\Temp\\Test\\sub-06\\ses-02\\anat\\sub-06_ses-02_flip-1_mt-off_MTS.nii",
-                                "C:\\Temp\\Test\\sub-06\\ses-02\\anat\\sub-06_ses-02_flip-1_mt-on_MTS.nii"
+                                "sub-06/ses-02/anat/sub-06_ses-02_flip-1_mt-off_MTS.nii",
+                                "sub-06/ses-02/anat/sub-06_ses-02_flip-1_mt-on_MTS.nii"
                             ],
                             [
                                 "C:\\Temp\\Test\\derivatives\\labels\\sub-06\\ses-02\\anat\\sub-06_ses-02_mt-off_MTS_lesion-manual-rater1.nii"
@@ -421,9 +456,16 @@
                                 "C:\\Temp\\Test\\derivatives\\labels\\sub-06\\ses-03\\anat\\sub-06_ses-03_mt-off_MTS_lesion-manual-rater1.nii"
                             ]
                         ],
-                        null
+                        [
+                            [
+                                "C:\\Temp\\Test\\sub-06\\ses-04\\anat\\sub-06_ses-04_flip-1_mt-off_MTS.nii"
+                            ],
+                            [
+                                "C:\\Temp\\Test\\derivatives\\labels\\sub-06\\ses-04\\anat\\sub-06_ses-04_mt-off_MTS_lesion-manual-rater1.nii"
+                            ]
+                        ]
                     ],
-                    "expected_input": 2,
+                    "expected_input": 1,
                     "expected_gt": 1,
                     "missing_files_handle": "drop_subject",
                     "excessive_files_handle": "use_first_and_warn",

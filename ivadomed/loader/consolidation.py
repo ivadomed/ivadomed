@@ -66,13 +66,13 @@ class ConsolidatedDataset(MRI2DSegmentationDataset):
         filename_pairs: List[Tuple[list, list, str, dict]] = []
         if consolidation_type == DataloaderKW.TRAINING:
             for dataset_filename_pairs in all_data.train_filename_pairs:
-                filename_pairs.extend(dataset_filename_pairs)
+                filename_pairs.append(dataset_filename_pairs)
         elif consolidation_type == DataloaderKW.VALIDATION:
             for dataset_filename_pairs in all_data.val_filename_pairs:
-                filename_pairs.extend(dataset_filename_pairs)
+                filename_pairs.append(dataset_filename_pairs)
         elif consolidation_type == DataloaderKW.TEST:
             for dataset_filename_pairs in all_data.test_filename_pairs:
-                filename_pairs.extend(dataset_filename_pairs)
+                filename_pairs.append(dataset_filename_pairs)
         else:
             raise ValueError(f"Unknown consolidation type: {consolidation_type}")
 
@@ -92,13 +92,13 @@ class ConsolidatedDataset(MRI2DSegmentationDataset):
         filename_pairs: List[Tuple[list, list, str, dict]] = []
         if consolidation_type == DataloaderKW.TRAINING:
             for dataset_filename_pairs in data_group.train_filename_pairs:
-                filename_pairs.extend(dataset_filename_pairs)
+                filename_pairs.append(dataset_filename_pairs)
         elif consolidation_type == DataloaderKW.VALIDATION:
             for dataset_filename_pairs in data_group.val_filename_pairs:
-                filename_pairs.extend(dataset_filename_pairs)
+                filename_pairs.append(dataset_filename_pairs)
         elif consolidation_type == DataloaderKW.TEST:
             for dataset_filename_pairs in data_group.test_filename_pairs:
-                filename_pairs.extend(dataset_filename_pairs)
+                filename_pairs.append(dataset_filename_pairs)
         else:
             raise ValueError(f"Unknown consolidation type: {consolidation_type}")
 

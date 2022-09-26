@@ -685,9 +685,11 @@ def execute_multi_path_training(context: dict,
 
     # Aggregate train across AllDatasetGroups
     ds_train = ConsolidatedDataset.consolidate_AllDatasetGroups_to_a_specific_filedataset_type(all_data, DataloaderKW.TRAINING)
+    ds_train.load_filenames()
 
     # Aggregate validation dataset across AllDatasetGroups
     ds_valid = ConsolidatedDataset.consolidate_AllDatasetGroups_to_a_specific_filedataset_type(all_data, DataloaderKW.VALIDATION)
+    ds_valid.load_filenames()
 
 
     ####

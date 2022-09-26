@@ -1,15 +1,15 @@
 import torch
 import numpy as np
 
-from ivadomed.loader.bids_dataset import BidsDataset
+from ivadomed.loader.consolidation import ConsolidatedDataset
 
 
-class BalancedSampler(torch.utils.data.sampler.Sampler):
+class BalancedSamplerGeneric(torch.utils.data.sampler.Sampler):
     """Estimate sampling weights in order to rebalance the
     class distributions from an imbalanced dataset.
 
     Args:
-        dataset (BidsDataset): Dataset containing input, gt and metadata.
+        dataset (ConsolidatedDataset): ConsolidatedDataset containing input, gt and metadata.
         metadata (str): Indicates which metadata to use to balance the sampler.
 
     Attributes:
@@ -21,7 +21,7 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
         label_idx (int): Keeps track of the label indices already used for the metadata_dict.
     """
 
-    def __init__(self, dataset: BidsDataset, metadata='gt'):
+    def __init__(self, dataset: ConsolidatedDataset, metadata='gt'):
         self.indices = list(range(len(dataset)))
 
         self.nb_samples = len(self.indices)

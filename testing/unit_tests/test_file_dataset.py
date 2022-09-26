@@ -78,7 +78,8 @@ def test_FilesDataset():
         model_params=model_dict,
     )
     a = FilesDataset(files_config_json, model_config_json)
-    a.preview()
+    a.preview(verbose=True)
+    print(len(a))
 
 def teardown_function():
     remove_tmp_dir()
