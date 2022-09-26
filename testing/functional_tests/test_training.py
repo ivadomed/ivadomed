@@ -188,7 +188,8 @@ def test_training_with_filedataset(download_functional_test_files):
         json_data: dict = json.load(json_file)
 
     # Add the new key to JSON.
-    json_data.update(example_uni_channel_all_dataset_groups_config_json)
+    # json_data.update(example_uni_channel_all_dataset_groups_config_json)
+    json_data.update(example_all_dataset_groups_config_json)
 
     # Popping out the contract key to enable it to AUTO using the new LoaderConfiguration
     json_data[ConfigKW.LOADER_PARAMETERS].pop(LoaderParamsKW.CONTRAST_PARAMS)

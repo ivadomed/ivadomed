@@ -37,3 +37,5 @@ data_multi_testing/
 
 # venv
 venv/
+
+testing/functional_tests/pytest_output_folder/

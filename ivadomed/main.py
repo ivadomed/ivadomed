@@ -225,7 +225,8 @@ def set_model_params(context: dict, loader_params: dict) -> Tuple[dict, dict]:
         model_params[ModelParamsKW.IN_CHANNEL] = \
             len(loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.CONTRAST_LST])
     else:
-        model_params[ModelParamsKW.IN_CHANNEL] = 1
+        # todo: this needs to be determined based on the AllDataSet Spec
+        model_params[ModelParamsKW.IN_CHANNEL] = 2
 
     # Get out_channel from target_suffix
     model_params[ModelParamsKW.OUT_CHANNEL] = len(loader_params[LoaderParamsKW.TARGET_SUFFIX])
