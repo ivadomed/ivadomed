@@ -789,31 +789,7 @@ class Modified3DUNetLBlock(nn.Module):
     Args:
 
 
-    Attributes:
-    """
-    def __init__(self, in_features, out_features, momentum=0.1):
-        super(Modified3DUNetContextBlock, self).__init__()
-        self.conv_norm_lrelu = nn.Sequential(
-            nn.Conv3d(in_features, in_features,
-                kernel_size=3, stride=1, padding=1, bias=False),
-            nn.InstanceNorm3d(in_features, momentum=momentum),
-            nn.LeakyReLU()        
-        )
-        self.conv = nn.Conv3d(in_features, out_features,
-                kernel_size=3, stride=1, padding=1, bias=False)
-        self.norm_relu_upscale_conv_norm__lrelu = nn.Sequential(
-            nn.InstanceNorm3d(out_features, momentum=momentum),
-            nn.LeakyReLU(),
-            nn.Upsample(scale_factor=2, mode='nearest'),
-            nn.Conv3d(out_features, out_features / 2),
-            nn.InstanceNorm3d(out_features / 2, momentum=momentum),
-            nn.LeakyReLU()
-        )
 
-    def forward(self, x):
-        x = self.conv_norm_lrelu(x)
-        x = self.conv(x)
-        x = self.norm_relu_upscale_conv_norm__lrelu(x)
 
         return x
 
