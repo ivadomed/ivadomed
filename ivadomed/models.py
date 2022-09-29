@@ -263,8 +263,8 @@ class DownConv(Module):
 
 class Modified3DUNetDownConv(Module):
     """Two successive series of down convolution, instance normalization and dropout in 2D.
-    Used in Modified3DUNetEncoder. [What makes this different than DownConv?]. A residual block
-    is also used between the first and second down convolution series.
+    Used in Modified3DUNetEncoder. A residual block is also used between the first and 
+    second down convolution series.
 
     Args:
         in_feat (int): Number of channels in the input image.
@@ -314,7 +314,6 @@ class Modified3DUNetDownConv(Module):
         return x
 
 
-
 class UpConv(Module):
     """2D down convolution.
     Used in U-Net's decoder.
@@ -344,6 +343,23 @@ class UpConv(Module):
         x = F.interpolate(x, size=y.size()[dims:], mode=mode, align_corners=True)
         x = torch.cat([x, y], dim=1)
         x = self.downconv(x)
+        return x
+
+
+class Modified3DUNetUpConv(Module):
+    """ Up convolution for modified 3D UNet
+    Used in Modified3DUNetEncoder. 
+    """
+    def __init__(self, in_feat, out_feat, dropout_rate=0.3, inst_momentum=0.1):
+        super(Modified3DUNetUpConv, self).__init__()
+        self.upconv = Modified3DUNetDownConv(in_feat, out_feat, dropout_rate, inst_momentum)
+
+    def forward(self, x, y):
+        # interpolate x to same dims as y, then concatenate. Use that output as input for
+        # up convolution input
+        x = F.interpolate(x, size=y.size()[-3:], mode='trilinear', align_corners=True)
+        x = torch.cat([x, y], dim=1)
+        x = self.upconv(x)
         return x
 
 
@@ -806,7 +822,6 @@ class Modified3DUNetEncoder(nn.Module):
         inst_momentum (float): Instance normalization momentum.
         n_metadata (dict): FiLM metadata see ivadomed.loader.film for more details.
         film_layers (list): List of 0 or 1 indicating on which layer FiLM is applied.
-        is_2d (bool): Indicates dimensionality of model: True for 2D convolutions, False for 3D convolutions.
         n_filters (int):  Number of base filters in the U-Net.
 
     Attributes:
@@ -816,7 +831,7 @@ class Modified3DUNetEncoder(nn.Module):
         film_bottom (FiLMlayer): FiLM layer applied to bottom convolution.
     """
     def __init__(self, in_channel=1, depth=4, dropout_rate=0.3, inst_momentum=0.1, n_metadata=None, film_layers=None,
-                 is_2d=True, n_filters=16):
+                 n_filters=16):
         super(Encoder, self).__init__()
         self.depth = depth
         self.down_path = nn.ModuleList()
@@ -824,7 +839,7 @@ class Modified3DUNetEncoder(nn.Module):
         # first block
         self.down_path.append(Modified3DUNetDownConv(in_channel, n_filters, dropout_rate, inst_momentum))
         self.down_path.append(FiLMlayer(n_metadata, n_filters) if film_layers and film_layers[0] else None)
-        max_pool = nn.MaxPool2d if is_2d else nn.MaxPool3d
+        max_pool = nn.MaxPool3d
         self.down_path.append(max_pool(2))
 
         # subsequent blocks
@@ -865,9 +880,152 @@ class Modified3DUNetEncoder(nn.Module):
         return features, None if 'w_film' not in locals() else w_film
 
 
-
 class Modified3DUnetDecoder(nn.Module):
-    pass
+    """Decoding part of the Modified 3D U-Net model.
+
+    Args:
+        out_channel (int): Number of channels in the output image.
+        depth (int): Number of down convolutions minus bottom down convolution.
+        dropout_rate (float): Probability of dropout.
+        inst_momentum (float): Instance normalization momentum.
+        n_metadata (dict): FiLM metadata see ivadomed.loader.film for more details.
+        film_layers (list): List of 0 or 1 indicating on which layer FiLM is applied.
+        hemis (bool): Boolean indicating if HeMIS is on or not.
+        final_activation (str): Choice of final activation between "sigmoid", "relu" and "softmax".
+        n_filters (int):  Number of base filters in the U-Net.
+
+    Attributes:
+        depth (int): Number of down convolutions minus bottom down convolution.
+        out_channel (int): Number of channels in the output image.
+        up_path (ModuleList): List of module operations done during decoding.
+        last_conv (Conv2d): Last convolution.
+        last_film (FiLMlayer): FiLM layer applied to last convolution.
+        softmax (Softmax): Softmax layer that can be applied as last layer.
+        final_activation (str): Choice of final activation between "sigmoid", "relu", and "softmax"
+    """
+    def __init__(self, out_channel=1, depth=4, dropout_rate=0.3, inst_momentum=0.1, n_metadata=None, film_layers=None,
+                 final_activation="sigmoid", n_filters=16):
+        super(Modified3DUnetDecoder, self).__init__()
+        self.depth = depth
+        self.out_channel = out_channel
+        self.final_activation = final_activation
+
+        # Upsampling path
+        self.up_path = nn.ModuleList
+        in_channel = n_filters * 2 ** self.depth
+
+        self.up_path.append()
+        if film_layers and film_layers[self.depth + 1]:
+            self.up_path.append(FiLMlayer(n_metadata, n_filters * 2 ** (self.depth - 1)))
+        else:
+            self.up_path.append(None)
+
+        for i in range(1, depth):
+            in_channel //= 2
+
+            self.up_path.append(
+                None
+            )
+            if film_layers and film_layers[self.depth + i + 1]:
+                self.up_path.append(FiLMlayer(n_metadata, n_filters * 2 ** (self.depth - i - 1)))
+            else:
+                self.up_path.append(None)
+
+        # last convolution
+        conv = nn.Conv3d
+        self.last_conv = conv(in_channel // 2, out_channel, kernel_size=3, padding=1)
+        self.last_film = FiLMlayer(n_metadata, self.out_channel) if film_layers and film_layers[-1] else None
+        self.softmax = nn.Softmax(dim=1)
+        self.final_activation = final_activation
+
+
+    def forward(self, features, context=None, w_film=None):
+        """
+        Args:
+            features (list[torch.Tensor]): a list of corresponding feature values from
+            context:
+            w_film:  
+        """
+        x = features[-1]
+
+        # for each layer, apply features, and x at corresponding depth
+        for i in reversed(range(self.depth)):
+            x = self.up_path[-(i + 1) * 2](x, features[i])
+            if self.up_path[-(i + 1) * 2 + 1]:
+                x, w_film = self.up_path[-(i + 1) * 2 + 1](x, context, w_film)
+
+        # for the last convolution
+        x = self.last_conv(x)
+        if self.last_film:
+            x, w_film = self.up_path[-(i + 1) * 2 + 1](x, context, w_film)
+
+        if hasattr(self, "final_activation") and self.final_activation not in ["softmax", "relu", "sigmoid"]:
+            raise ValueError("final_activation value has to be either softmax, relu, or sigmoid")
+        elif hasattr(self, "final_activation") and self.final_activation == "softmax":
+            preds = self.softmax(x)
+        elif hasattr(self, "final_activation") and self.final_activation == "relu":
+            preds = nn.ReLU()(x) / nn.ReLU()(x).max()
+            # If nn.ReLU()(x).max()==0, then nn.ReLU()(x) will also ==0. So, here any zero division will always be 0/0.
+            # For float values, 0/0=nan. So, we can handle zero division (without checking data!) by setting nans to 0.
+            preds[torch.isnan(preds)] = 0.
+            # If model multiclass
+            if self.out_channel > 1:
+                class_sum = preds.sum(dim=1).unsqueeze(1)
+                # Avoid division by zero
+                class_sum[class_sum == 0] = 1
+                preds /= class_sum
+        else:
+            preds = torch.sigmoid(x)
+
+        # If model multiclass
+        if self.out_channel > 1:
+            # Remove background class
+            preds = preds[:, 1:, ]
+
+        return preds
+
+
+class Modified3DUNetAttentionGate(nn.Module):
+    """ Attention gates for Modified3DUNet.
+
+    Args:
+        depth (int): Number of down convolutions in Modified3DUNet minus bottom down convolution.
+        n_filters (int): Number of base filters in the U-Net.
+        inst_momentum (float): Instance normalization momentum.
+
+    Attributes:
+        attention_blocks (ModuleList): List of attention blocks to be applied to features from model encoder.
+        gating
+        instance_norm
+    """
+    def __init__(self, depth=4, n_filters=16, inst_momentum=0):
+        super(Modified3DUNetAttentionGate, self).__init__()
+        self.attention_blocks = nn.ModuleList
+        # create attention block for each layer
+        for i in range(1, depth):
+            self.attention_blocks.append(GridAttentionBlockND(in_channels=n_filters * 2 ** i,
+                                         gating_channels=n_filters * 2 ** (depth - 1),
+                                         inter_channels=n_filters * 2 ** i,
+                                         sub_sample_factor=(2, 2, 2),
+                                         ))
+
+        # gating
+        self.gating = UnetGridGatingSignal3(n_filters * 2 ** depth, n_filters * 2 ** (depth - 1))
+
+        # instance normalization
+        self.instance_norm = nn.InstanceNorm3d(n_filters * 2 ** depth, momentum=inst_momentum)
+    
+    def forward(self, features):
+        # apply gating to last set of features in list
+        x = self.instance_norm(features[-1]) 
+        x = nn.LeakyReLU(x)
+        gating = self.gating(x)
+
+        # apply attention gates to all encoder features but the first layer
+        for i in range(1, len(features) - 1):
+            features[i] = self.attention_blocks[i-1](features[i], gating)
+
+        return features
 
 
 class NewModified3DUNet(nn.Module):
@@ -881,73 +1039,45 @@ class NewModified3DUNet(nn.Module):
     https://github.com/ozan-oktay/Attention-Gated-Networks
 
     Args:
-        in_channel (int): Number of channels in the input image.
-        out_channel (int): Number of channels in the output image.
+        in_channels (int): Number of channels in the input image.
+        out_channels (int): Number of channels in the output image.
+        depth (int): 
         n_filters (int): Number of base filters in the U-Net.
         attention (bool): Boolean indicating whether the attention module is on or not.
         dropout_rate (float): Probability of dropout.
-        bn_momentum (float): Batch normalization momentum.
+        inst_momentum (float): Instance normalization momentum.
         final_activation (str): Choice of final activation between "sigmoid", "relu" and "softmax".
         **kwargs:
 
     Attributes:
-        in_channels (int): Number of channels in the input image.
-        n_classes (int): Number of channels in the output image.
-        depth (int): Number of both encoding and decoding blocks in the U-Net.
-        base_n_filter (int): Number of base filters in the U-Net.
-        attention (bool): Boolean indicating whether the attention module is on or not.
-        momentum (float): Batch normalization momentum.
-        final_activation (str): Choice of final activation between "sigmoid", "relu" and "softmax".
+        encoder (Modified3DUNetEncoder): Modified 3D UNet Encoder.
+        decoder (Modified3DUNetDecoder): Modified 3D UNet Decoder.
+        attention (Modified3DUNetAttentionGate): Attention gate to be applied to Encoder.
 
     Note: All layers are defined as attributes and used in the forward method.
     """
-    def __init__(self, in_channels, out_channels, depth=4, n_filters=16, attention=False, dropout_rate=0.3, bn_momentum=0.1,
+    def __init__(self, in_channels, out_channels, depth=4, n_filters=16, attention=False, dropout_rate=0.3, inst_momentum=0.1,
                  final_activation="sigmoid", n_metadata=None, film_layers=None, **kwargs):
         super(NewModified3DUNet, self).__init__()
-        self.depth = depth
-        self.final_activation = final_activation
-        # self.softmax = nn.Softmax(dim=1)
 
-        layer_channels = [n_filters * 2 ** n for n in range(depth)]
-        # create list of context blocks based on the depth & number of filters
-        self.context_blocks = [Modified3DUNetContextBlock(in_channels, layer_channels[0], dropout_rate=dropout_rate, bn_momentum=bn_momentum)]
-        for i in range(depth-1):
-            self.context_blocks.append(Modified3DUNetContextBlock(layer_channels[i], layer_channels[i+1], dropout_rate=dropout_rate, bn_momentum=bn_momentum))
+        # if attention module is on, set up attention gate
+        self.attention_gate = Modified3DUNetAttentionGate(depth=depth, n_filters=n_filters, inst_momentum=inst_momentum) if attention else None
 
-        # add corresponding localization blocks to a list
-        self.localization_blocks = [Modified3DUNetLBlock(layer_channels[0], out_channels)]
-        for i in range(depth-1):
-            self.localization_blocks.append(Modified3DUNetLBlock(layer_channels[i+1], layer_channels[i]))
+        # set the encoder path
+        self.encoder = Modified3DUNetEncoder(in_channel=in_channels, depth=depth, dropout_rate=dropout_rate, 
+                                             inst_momentum=inst_momentum, n_metadata=n_metadata, film_layers=film_layers,
+                                             n_filters=n_filters)
+
+        # set the decoder path
+        self.decoder = Modified3DUnetDecoder(out_channel=out_channels, depth=depth, dropout_rate=dropout_rate,
+                                            inst_momentum=inst_momentum, n_metadata=n_metadata, film_layers=film_layers,
+                                            final_activation=final_activation)
 
     def forward(self, x):
-        # create a list to store features. Features at a given layer will be passed during localization
-        context_features = []
-        for block in self.context_blocks:
-            print(block)
-            x = block(x)
-            # context_features.append(x)
-
-        # reverse through each localization block, concatenating the result from the corresponding
-        # context layer
-        # for i in range(self.depth, -1, -1):
-        #     x = torch.cat([x, context_features[i]], dim=1)
-        #     x = self.localization_blocks[i]
-
-        # # pass through final activation
-        # seg_layer = x
-        # if hasattr(self, "final_activation") and self.final_activation not in ["softmax", "relu", "sigmoid"]:
-        #     raise ValueError("final_activation value has to be either softmax, relu, or sigmoid")
-        # elif hasattr(self, "final_activation") and self.final_activation == "softmax":
-        #     x = self.softmax(x)
-        # elif hasattr(self, "final_activation") and self.final_activation == "relu":
-        #     x = nn.ReLU()(seg_layer) / nn.ReLU()(seg_layer).max() if bool(nn.ReLU()(seg_layer).max()) \
-        #         else nn.ReLU()(seg_layer)
-        # else:
-        #     x = torch.sigmoid(x)
-
-        # if self.n_classes > 1:
-        #     # Remove background class
-        #     x = x[:, 1:, ]
+        features, _ = self.encoder(x)
+        if self.attention_gate:
+            features = self.attention_gate(features)
+        x = self.decoder(features)
 
         return x
 
