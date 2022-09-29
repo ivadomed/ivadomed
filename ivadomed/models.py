@@ -261,6 +261,59 @@ class DownConv(Module):
         x = self.conv2_drop(x)
         return x
 
+class Modified3DUNetDownConv(Module):
+    """Two successive series of down convolution, instance normalization and dropout in 2D.
+    Used in Modified3DUNetEncoder. [What makes this different than DownConv?]. A residual block
+    is also used between the first and second down convolution series.
+
+    Args:
+        in_feat (int): Number of channels in the input image.
+        out_feat (int): Number of channels in the output image.
+        dropout_rate (float): Probability of dropout.
+        bn_momentum (float): Batch normalization momentum.
+        inst_norm (bool): Indicates whether instance normalization should be used: False for first layer, true for all subsequent layers.
+
+    Attributes:
+        conv1 (Conv2d): First 2D down convolution with kernel size 3 and padding of 1.
+        conv1_bn (BatchNorm2d): First 2D batch normalization.
+        conv1_drop (Dropout2d): First 2D dropout.
+        conv2 (Conv2d): Second 2D down convolution with kernel size 3 and padding of 1.
+        conv2_bn (BatchNorm2d): Second 2D batch normalization.
+        conv2_drop (Dropout2d): Second 2D dropout.
+    """
+
+    def __init__(self, in_feat, out_feat, dropout_rate=0.3, inst_norm_momentum=0.1, inst_norm=False):
+        super(Modified3DUNetDownConv, self).__init__()
+        conv = nn.Conv3d
+        # the first layer does not use instance normalization. Using identity will preserve layer
+        inst_norm = nn.InstanceNorm3d if inst_norm else nn.Identity
+        dropout = nn.Dropout3d
+
+        self.conv1 = conv(in_feat, out_feat, kernel_size=3, padding=1)
+        self.conv1_inst_norm = inst_norm(out_feat, momentum=inst_norm_momentum)
+        self.conv1_drop = dropout(dropout_rate)
+
+        self.conv2 = conv(out_feat, out_feat, kernel_size=3, padding=1)
+        self.conv2_inst_norm = inst_norm(out_feat, momentum=inst_norm_momentum)
+        self.conv2_drop = dropout(dropout_rate)
+
+    def forward(self, x):
+        x = self.conv1(x)
+        residual = x
+        x = self.conv1_inst_norm(x)
+        x = nn.LeakyReLU(x)
+        x = self.conv2(x)
+        x = self.conv1_drop(x)
+        x = self.conv2_inst_norm(x)
+        x = nn.LeakyReLU(x)
+        x = self.conv2(x)
+
+        x += residual
+        x = nn.LeakyReLU(self.conv2(x))
+        x = self.conv2_inst_norm(x)
+        return x
+
+
 
 class UpConv(Module):
     """2D down convolution.
@@ -742,15 +795,15 @@ class HeMISUnet(Module):
         return preds
 
 
-class Modified3DUNetContextBlock(nn.Module):
-    """Encoding layer of the Modified U-Net model.
+class Modified3DUNetEncoder(nn.Module):
+    """Encoding part of the Modified 3D U-Net model.
     It returns the features map for the skip connections
 
     Args:
         in_channel (int): Number of channels in the input image.
         depth (int): Number of down convolutions minus bottom down convolution.
         dropout_rate (float): Probability of dropout.
-        bn_momentum (float): Batch normalization momentum.
+        inst_momentum (float): Instance normalization momentum.
         n_metadata (dict): FiLM metadata see ivadomed.loader.film for more details.
         film_layers (list): List of 0 or 1 indicating on which layer FiLM is applied.
         is_2d (bool): Indicates dimensionality of model: True for 2D convolutions, False for 3D convolutions.
@@ -759,39 +812,62 @@ class Modified3DUNetContextBlock(nn.Module):
     Attributes:
         depth (int): Number of down convolutions minus bottom down convolution.
         down_path (ModuleList): List of module operations done during encoding.
-        conv_bottom (DownConv): Bottom down convolution.
+        conv_bottom (Modified3DUNetDownConv): Bottom down convolution.
         film_bottom (FiLMlayer): FiLM layer applied to bottom convolution.
     """
-    def __init__(self, in_features, out_features, momentum):
-        super(Modified3DUNetContextBlock, self).__init__()
-        self.instance_norm_1 = nn.InstanceNorm3d(in_features, momentum=momentum)
-        self.conv = nn.Conv3d(in_features, out_features,
-                kernel_size=3, stride=1, padding=1, bias=False)
-        self.leaky_relu_conv = nn.Sequential(
-            nn.InstanceNorm3d(out_features, momentum=momentum),
-            nn.LeakyReLU(),
-            nn.Conv3d(out_features, out_features,
-                kernel_size=3, stride=1, padding=1, bias=False)
-        )
-        self.instance_norm = nn.InstanceNorm3d(out_features, momentum=momentum)
+    def __init__(self, in_channel=1, depth=4, dropout_rate=0.3, inst_momentum=0.1, n_metadata=None, film_layers=None,
+                 is_2d=True, n_filters=16):
+        super(Encoder, self).__init__()
+        self.depth = depth
+        self.down_path = nn.ModuleList()
 
-    def forward(self, x):
-        x = self.conv(x)
-        x = self.leaky_relu_conv(x)
-        x = self.instance_norm(x)
+        # first block
+        self.down_path.append(Modified3DUNetDownConv(in_channel, n_filters, dropout_rate, inst_momentum))
+        self.down_path.append(FiLMlayer(n_metadata, n_filters) if film_layers and film_layers[0] else None)
+        max_pool = nn.MaxPool2d if is_2d else nn.MaxPool3d
+        self.down_path.append(max_pool(2))
 
-        return x
+        # subsequent blocks
+        for i in range(depth - 1):
+            self.down_path.append(Modified3DUNetDownConv(n_filters, n_filters * 2, dropout_rate, inst_momentum, inst_norm=True))
+            self.down_path.append(FiLMlayer(n_metadata, n_filters * 2) if film_layers and film_layers[i + 1] else None)
+            self.down_path.append(max_pool(2))
+            n_filters = n_filters * 2
+
+        # Bottom
+        self.conv_bottom = Modified3DUNetDownConv(n_filters, n_filters, dropout_rate, inst_momentum, inst_norm=True)
+        self.film_bottom = FiLMlayer(n_metadata, n_filters) if film_layers and film_layers[self.depth] else None
+
+    def forward(self, x, context=None):
+        features = []
+
+        # First block
+        x = self.down_path[0](x)
+        if self.down_path[1]:
+            x, w_film = self.down_path[1](x, context, None)
+        features.append(x)
+        x = self.down_path[2](x)
+
+        # Down-sampling path (other blocks)
+        for i in range(1, self.depth):
+            x = self.down_path[i * 3](x)
+            if self.down_path[i * 3 + 1]:
+                x, w_film = self.down_path[i * 3 + 1](x, context, None if 'w_film' not in locals() else w_film)
+            features.append(x)
+            x = self.down_path[i * 3 + 2](x)
+
+        # Bottom level
+        x = self.conv_bottom(x)
+        if self.film_bottom:
+            x, w_film = self.film_bottom(x, context, None if 'w_film' not in locals() else w_film)
+        features.append(x)
+
+        return features, None if 'w_film' not in locals() else w_film
 
 
-class Modified3DUNetLBlock(nn.Module):
-    """ Decoding (localization) layer of the Modified UNet model.
 
-    Args:
-
-
-
-
-        return x
+class Modified3DUnetDecoder(nn.Module):
+    pass
 
 
 class NewModified3DUNet(nn.Module):
@@ -827,50 +903,51 @@ class NewModified3DUNet(nn.Module):
     """
     def __init__(self, in_channels, out_channels, depth=4, n_filters=16, attention=False, dropout_rate=0.3, bn_momentum=0.1,
                  final_activation="sigmoid", n_metadata=None, film_layers=None, **kwargs):
-        super(NewModified3DUNet).__init__()
+        super(NewModified3DUNet, self).__init__()
         self.depth = depth
         self.final_activation = final_activation
-        self.softmax = nn.Softmax(dim=1)
+        # self.softmax = nn.Softmax(dim=1)
 
         layer_channels = [n_filters * 2 ** n for n in range(depth)]
         # create list of context blocks based on the depth & number of filters
-        self.context_blocks = [Modified3DUNetContextBlock(in_channels, layer_channels[0])]
+        self.context_blocks = [Modified3DUNetContextBlock(in_channels, layer_channels[0], dropout_rate=dropout_rate, bn_momentum=bn_momentum)]
         for i in range(depth-1):
-            self.context_blocks.append(Modified3DUNetContextBlock(i, i+1))
+            self.context_blocks.append(Modified3DUNetContextBlock(layer_channels[i], layer_channels[i+1], dropout_rate=dropout_rate, bn_momentum=bn_momentum))
 
         # add corresponding localization blocks to a list
         self.localization_blocks = [Modified3DUNetLBlock(layer_channels[0], out_channels)]
         for i in range(depth-1):
-            self.localization_blocks.append(Modified3DUNetLBlock())
+            self.localization_blocks.append(Modified3DUNetLBlock(layer_channels[i+1], layer_channels[i]))
 
     def forward(self, x):
         # create a list to store features. Features at a given layer will be passed during localization
         context_features = []
         for block in self.context_blocks:
+            print(block)
             x = block(x)
-            context_features.append(x)
+            # context_features.append(x)
 
         # reverse through each localization block, concatenating the result from the corresponding
         # context layer
-        for i in range(self.depth, -1, -1):
-            x = torch.cat([x, context_features[i]], dim=1)
-            x = self.localization_blocks[i]
+        # for i in range(self.depth, -1, -1):
+        #     x = torch.cat([x, context_features[i]], dim=1)
+        #     x = self.localization_blocks[i]
 
-        # pass through final activation
-        seg_layer = x
-        if hasattr(self, "final_activation") and self.final_activation not in ["softmax", "relu", "sigmoid"]:
-            raise ValueError("final_activation value has to be either softmax, relu, or sigmoid")
-        elif hasattr(self, "final_activation") and self.final_activation == "softmax":
-            x = self.softmax(x)
-        elif hasattr(self, "final_activation") and self.final_activation == "relu":
-            x = nn.ReLU()(seg_layer) / nn.ReLU()(seg_layer).max() if bool(nn.ReLU()(seg_layer).max()) \
-                else nn.ReLU()(seg_layer)
-        else:
-            x = torch.sigmoid(x)
+        # # pass through final activation
+        # seg_layer = x
+        # if hasattr(self, "final_activation") and self.final_activation not in ["softmax", "relu", "sigmoid"]:
+        #     raise ValueError("final_activation value has to be either softmax, relu, or sigmoid")
+        # elif hasattr(self, "final_activation") and self.final_activation == "softmax":
+        #     x = self.softmax(x)
+        # elif hasattr(self, "final_activation") and self.final_activation == "relu":
+        #     x = nn.ReLU()(seg_layer) / nn.ReLU()(seg_layer).max() if bool(nn.ReLU()(seg_layer).max()) \
+        #         else nn.ReLU()(seg_layer)
+        # else:
+        #     x = torch.sigmoid(x)
 
-        if self.n_classes > 1:
-            # Remove background class
-            x = x[:, 1:, ]
+        # if self.n_classes > 1:
+        #     # Remove background class
+        #     x = x[:, 1:, ]
 
         return x
 
