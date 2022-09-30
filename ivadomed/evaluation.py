@@ -86,24 +86,25 @@ def evaluate(bids_df, path_output, target_suffix, eval_params):
                                    params=eval_params)
         results_pred, data_painted = eval.run_eval()
 
-        # SAVE PAINTED DATA, TP FP FN
-        fname_paint = str(fname_pred).split('.nii.gz')[0] + '_painted.nii.gz'
-        nib_painted = nib.Nifti1Image(
-            dataobj=data_painted,
-            affine=nib_pred.header.get_best_affine(),
-            header=nib_pred.header.copy()
-        )
-        nib.save(nib_painted, fname_paint)
+        if eval_params['object_detection_metrics']:
+            # SAVE PAINTED DATA, TP FP FN
+            fname_paint = str(fname_pred).split('.nii.gz')[0] + '_painted.nii.gz'
+            nib_painted = nib.Nifti1Image(
+                dataobj=data_painted,
+                affine=nib_pred.header.get_best_affine(),
+                header=nib_pred.header.copy()
+            )
+            nib.save(nib_painted, fname_paint)
 
-        # For Microscopy PNG/TIF files (TODO: implement OMETIFF behavior)
-        if "nii" not in extension:
-            painted_list = imed_inference.split_classes(nib_painted)
-            # Reformat target list to include class index and be compatible with multiple raters
-            target_list = ["_class-%d" % i for i in range(len(target_suffix))]
-            imed_inference.pred_to_png(painted_list,
-                                       target_list,
-                                       str(path_preds.joinpath(subj_acq)),
-                                       suffix="_pred_painted.png")
+            # For Microscopy PNG/TIF files (TODO: implement OMETIFF behavior)
+            if "nii" not in extension:
+                painted_list = imed_inference.split_classes(nib_painted)
+                # Reformat target list to include class index and be compatible with multiple raters
+                target_list = ["_class-%d" % i for i in range(len(target_suffix))]
+                imed_inference.pred_to_png(painted_list,
+                                           target_list,
+                                           str(path_preds.joinpath(subj_acq)),
+                                           suffix="_pred_painted.png")
 
         # SAVE RESULTS FOR THIS PRED
         results_pred['image_id'] = subj_acq
@@ -135,6 +136,8 @@ class Evaluation3DMetrics(object):
         bin_struct (ndarray): Binary structure.
         size_min (int): Minimum size of objects. Objects that are smaller than this limit can be removed if
             "removeSmall" is in params.
+        object_detection_metrics (bool): Indicate if object detection metrics (lesions true positive and false detection
+            rates) are computed or not.
         overlap_vox (int): A prediction and ground-truth are considered as overlapping if they overlap for at least this
             amount of voxels.
         overlap_ratio (float): A prediction and ground-truth are considered as overlapping if they overlap for at least
@@ -166,6 +169,8 @@ class Evaluation3DMetrics(object):
         self.bin_struct = generate_binary_structure(3, 2)  # 18-connectivity
         self.postprocessing_dict = {}
         self.size_min = 0
+
+        self.object_detection_metrics = params["object_detection_metrics"]
 
         if "target_size" in params:
             self.size_rng_lst, self.size_suffix_lst = \
@@ -389,8 +394,12 @@ class Evaluation3DMetrics(object):
             label_size (int): Size of label.
             class_idx (int): Label index. If monolabel 0, else ranges from 0 to number of output channels - 1.
 
-        Note: computed only if n_obj >= 1.
+        Note: computed only if n_obj >= 1 and "object_detection_metrics" evaluation parameter is True.
         """
+        if not self.object_detection_metrics:
+            n_obj = 0
+            return np.nan, n_obj
+
         ltp, lfn, n_obj = self._get_ltp_lfn(label_size, class_idx)
 
         denom = ltp + lfn
@@ -406,8 +415,12 @@ class Evaluation3DMetrics(object):
             label_size (int): Size of label.
             class_idx (int): Label index. If monolabel 0, else ranges from 0 to number of output channels - 1.
 
-        Note: computed only if n_obj >= 1.
+        Note: computed only if n_obj >= 1 and "object_detection_metrics" evaluation parameter is True.
         """
+
+        if not self.object_detection_metrics:
+            return np.nan
+
         ltp, _, n_obj = self._get_ltp_lfn(label_size, class_idx)
         lfp = self._get_lfp(label_size, class_idx)
 

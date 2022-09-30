@@ -517,7 +517,8 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False, no_
                                                                            'requires_undo': True}}, device=device,
                                            cuda_available=cuda_available)
 
-        metric_fns = imed_metrics.get_metric_fns(ds_test.task)
+        eval_params = context[ConfigKW.EVALUATION_PARAMETERS]
+        metric_fns = imed_metrics.get_metric_fns(ds_test.task, eval_params)
 
         if ModelParamsKW.FILM_LAYERS in model_params and any(model_params[ModelParamsKW.FILM_LAYERS]):
             ds_test, model_params = update_film_model_params(context, ds_test, model_params, path_output)
@@ -535,7 +536,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False, no_
         # RUN EVALUATION
         df_results = imed_evaluation.evaluate(bids_df, path_output=path_output,
                                               target_suffix=loader_params[LoaderParamsKW.TARGET_SUFFIX],
-                                              eval_params=context[ConfigKW.EVALUATION_PARAMETERS])
+                                              eval_params=eval_params)
         return df_results, pred_metrics
 
 
