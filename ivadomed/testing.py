@@ -264,8 +264,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                         imed_inference.pred_to_png(output_list,
                                                    target_list,
                                                    fname_pred.split("_pred.nii.gz")[0],
-                                                   suffix="_pred.png",
-                                                   max_value=len(target_list))
+                                                   suffix="_pred.png")
 
                     # re-init pred_stack_lst and last_slice_bool
                     pred_tmp_lst, z_tmp_lst = [], []
