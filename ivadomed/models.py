@@ -288,6 +288,7 @@ class Modified3DUNetDownConv(Module):
         # the first layer does not use instance normalization. Using identity will preserve layer
         inst_norm = nn.InstanceNorm3d if inst_norm else nn.Identity
         dropout = nn.Dropout3d
+        self.lrelu = nn.LeakyReLU()
 
         self.conv1 = conv(in_feat, out_feat, kernel_size=3, padding=1)
         self.conv1_inst_norm = inst_norm(out_feat, momentum=inst_norm_momentum)
@@ -297,19 +298,20 @@ class Modified3DUNetDownConv(Module):
         self.conv2_inst_norm = inst_norm(out_feat, momentum=inst_norm_momentum)
         self.conv2_drop = dropout(dropout_rate)
 
+
     def forward(self, x):
         x = self.conv1(x)
         residual = x
         x = self.conv1_inst_norm(x)
-        x = nn.LeakyReLU(x)
+        x = self.lrelu(x)
         x = self.conv2(x)
         x = self.conv1_drop(x)
         x = self.conv2_inst_norm(x)
-        x = nn.LeakyReLU(x)
+        x = self.lrelu(x)
         x = self.conv2(x)
 
         x += residual
-        x = nn.LeakyReLU(self.conv2(x))
+        x = self.lrelu(self.conv2(x))
         x = self.conv2_inst_norm(x)
         return x
 
@@ -349,6 +351,9 @@ class UpConv(Module):
 class Modified3DUNetUpConv(Module):
     """ Up convolution for modified 3D UNet
     Used in Modified3DUNetEncoder. 
+
+    Attributes:
+        upconv (Modified3DUnetDownConv): Down convolution.
     """
     def __init__(self, in_feat, out_feat, dropout_rate=0.3, inst_momentum=0.1):
         super(Modified3DUNetUpConv, self).__init__()
@@ -832,7 +837,7 @@ class Modified3DUNetEncoder(nn.Module):
     """
     def __init__(self, in_channel=1, depth=4, dropout_rate=0.3, inst_momentum=0.1, n_metadata=None, film_layers=None,
                  n_filters=16):
-        super(Encoder, self).__init__()
+        super(Modified3DUNetEncoder, self).__init__()
         self.depth = depth
         self.down_path = nn.ModuleList()
 
@@ -880,7 +885,7 @@ class Modified3DUNetEncoder(nn.Module):
         return features, None if 'w_film' not in locals() else w_film
 
 
-class Modified3DUnetDecoder(nn.Module):
+class Modified3DUNetDecoder(nn.Module):
     """Decoding part of the Modified 3D U-Net model.
 
     Args:
@@ -905,16 +910,16 @@ class Modified3DUnetDecoder(nn.Module):
     """
     def __init__(self, out_channel=1, depth=4, dropout_rate=0.3, inst_momentum=0.1, n_metadata=None, film_layers=None,
                  final_activation="sigmoid", n_filters=16):
-        super(Modified3DUnetDecoder, self).__init__()
+        super(Modified3DUNetDecoder, self).__init__()
         self.depth = depth
         self.out_channel = out_channel
         self.final_activation = final_activation
 
         # Upsampling path
-        self.up_path = nn.ModuleList
+        self.up_path = nn.ModuleList()
         in_channel = n_filters * 2 ** self.depth
+        self.up_path.append(Modified3DUNetUpConv(in_channel, n_filters * 2 ** (self.depth - 1), dropout_rate, inst_momentum))
 
-        self.up_path.append()
         if film_layers and film_layers[self.depth + 1]:
             self.up_path.append(FiLMlayer(n_metadata, n_filters * 2 ** (self.depth - 1)))
         else:
@@ -924,7 +929,8 @@ class Modified3DUnetDecoder(nn.Module):
             in_channel //= 2
 
             self.up_path.append(
-                None
+                Modified3DUNetUpConv(in_channel + n_filters * 2 ** (self.depth - i - 1), n_filters * 2 ** (self.depth - i - 1),
+                       dropout_rate, inst_momentum)
             )
             if film_layers and film_layers[self.depth + i + 1]:
                 self.up_path.append(FiLMlayer(n_metadata, n_filters * 2 ** (self.depth - i - 1)))
@@ -995,12 +1001,12 @@ class Modified3DUNetAttentionGate(nn.Module):
 
     Attributes:
         attention_blocks (ModuleList): List of attention blocks to be applied to features from model encoder.
-        gating
-        instance_norm
+        gating (UnetGridGatingSignal3): Gating operation to be applied to each layer of the UNet
+        instance_norm (InstanceNorm3d): Instance normalization applied to the features
     """
     def __init__(self, depth=4, n_filters=16, inst_momentum=0):
         super(Modified3DUNetAttentionGate, self).__init__()
-        self.attention_blocks = nn.ModuleList
+        self.attention_blocks = nn.ModuleList()
         # create attention block for each layer
         for i in range(1, depth):
             self.attention_blocks.append(GridAttentionBlockND(in_channels=n_filters * 2 ** i,
@@ -1069,7 +1075,7 @@ class NewModified3DUNet(nn.Module):
                                              n_filters=n_filters)
 
         # set the decoder path
-        self.decoder = Modified3DUnetDecoder(out_channel=out_channels, depth=depth, dropout_rate=dropout_rate,
+        self.decoder = Modified3DUNetDecoder(out_channel=out_channels, depth=depth, dropout_rate=dropout_rate,
                                             inst_momentum=inst_momentum, n_metadata=n_metadata, film_layers=film_layers,
                                             final_activation=final_activation)
 
