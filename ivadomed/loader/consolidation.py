@@ -14,6 +14,11 @@ from loguru import logger
 
 
 class ConsolidatedDataset(MRI2DSegmentationDataset):
+    """
+    A consolidated dataset is a harmonized way to handle BIDSDataset and FilesDataset.
+    The consolidated dataset is a list of tuples of the form:
+    (list of input files, list of ground truth files, ROI filename, metadata)
+    """
 
     def __init__(
         self, filename_pairs: list, config: GeneralizedLoaderConfiguration
@@ -53,43 +58,55 @@ class ConsolidatedDataset(MRI2DSegmentationDataset):
         )
 
     @staticmethod
-    def consolidate_AllDatasetGroups_to_a_specific_filedataset_type(all_data: AllDatasetGroups, consolidation_type: str) -> ConsolidatedDataset:
-        """Consolidate data across all the dataset groups into a single ConsolidatedDataset object.
+    def consolidate_AllDatasetGroups_to_a_specific_filedataset_type(
+            all_dataset_groups: AllDatasetGroups,
+            consolidation_type: str
+    ) -> ConsolidatedDataset:
+        """
+        Consolidate data across "all the dataset groups" into a single ConsolidatedDataset object.
 
         Args:
             consolidation_type:
-            all_data (AllDatasetGroups): All the dataset groups.
+            all_dataset_groups (AllDatasetGroups): All the dataset groups.
 
         Returns:
-            AllDatasetGroups: A single dataset group.
+            ConsolidatedDataset: A single dataset group.
         """
+
         filename_pairs: List[Tuple[list, list, str, dict]] = []
+
         if consolidation_type == DataloaderKW.TRAINING:
-            for dataset_filename_pairs in all_data.train_filename_pairs:
+            for dataset_filename_pairs in all_dataset_groups.train_filename_pairs:
                 filename_pairs.append(dataset_filename_pairs)
         elif consolidation_type == DataloaderKW.VALIDATION:
-            for dataset_filename_pairs in all_data.val_filename_pairs:
+            for dataset_filename_pairs in all_dataset_groups.val_filename_pairs:
                 filename_pairs.append(dataset_filename_pairs)
         elif consolidation_type == DataloaderKW.TEST:
-            for dataset_filename_pairs in all_data.test_filename_pairs:
+            for dataset_filename_pairs in all_dataset_groups.test_filename_pairs:
                 filename_pairs.append(dataset_filename_pairs)
         else:
             raise ValueError(f"Unknown consolidation type: {consolidation_type}")
 
-        return ConsolidatedDataset(filename_pairs, all_data.config)
+        return ConsolidatedDataset(filename_pairs, all_dataset_groups.config)
 
     @staticmethod
-    def consolidate_DatasetGroup_to_a_specific_filedataset_type(data_group: DatasetGroup, consolidation_type: str) -> ConsolidatedDataset:
-        """Consolidate the all data type under a dataset group ConsolidatedDataset.
+    def consolidate_DatasetGroup_to_a_specific_filedataset_type(
+            data_group: DatasetGroup,
+            consolidation_type: str
+    ) -> ConsolidatedDataset:
+        """
+        Consolidate data within a data_group under a ConsolidatedDataset object.
 
         Args:
             consolidation_type:
             data_group (DatasetGroup): A dataset group with many subsets of dataset.
 
         Returns:
-            AllDatasetGroups: A single dataset group.
+            ConsolidatedDataset: A single dataset group.
         """
+
         filename_pairs: List[Tuple[list, list, str, dict]] = []
+
         if consolidation_type == DataloaderKW.TRAINING:
             for dataset_filename_pairs in data_group.train_filename_pairs:
                 filename_pairs.append(dataset_filename_pairs)

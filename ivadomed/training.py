@@ -204,6 +204,7 @@ def train(model_params: dict,
         train_loss_total, train_dice_loss_total = 0.0, 0.0
         num_steps = 0
         for i, batch in enumerate(train_loader):
+
             # GET SAMPLES
             if model_params[ModelParamsKW.NAME] == ConfigKW.HEMIS_UNET:
                 input_samples = imed_utils.cuda(imed_utils.unstack_tensors(batch["input"]), cuda_available)

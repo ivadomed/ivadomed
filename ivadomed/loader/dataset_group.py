@@ -1,48 +1,18 @@
 from __future__ import annotations
-from pathlib import Path
 import typing
 from typing import List, Tuple
-from pprint import pformat, pprint
 from ivadomed.loader.files3d_dataset import Files3DDataset
 from ivadomed.loader.files_dataset import FilesDataset
-from ivadomed.loader.utils import ensure_absolute_path
 from loguru import logger
 if typing.TYPE_CHECKING:
     from ivadomed.loader.generalized_loader_configuration import (
         GeneralizedLoaderConfiguration,
     )
 
-from ivadomed.loader.mri2d_segmentation_dataset import MRI2DSegmentationDataset
-
 from ivadomed.keywords import (
     ModelParamsKW,
-    MetadataKW, DataloaderKW,
+    DataloaderKW,
 )
-
-example_DatasetGroup_json: dict = {
-    "datasetgroup_label": "DataSet1",
-    "training": [
-        {
-            "type": "FILES",
-            "subset_label": "Subset3",
-            "image_ground_truth": [
-                [["/Path to/subset_folder_2/sub1_T1.nii", "/Path to/subset_folder_2/sub1_T2.nii"],
-                 ["/Path to/subset_folder_2/gt1"]],
-                [["/Path to/subset_folder_2/sub2_T1.nii", "/Path to/subset_folder_2/sub1_T1.nii"],
-                 ["/Path to/subset_folder_2/gt2"]],
-                [["/Path to/subset_folder_2/sub3_T1.nii", "/Path to/subset_folder_2/sub1_T1.nii"],
-                 ["/Path to/subset_folder_2/gt3"]]
-            ],
-            "expected_input": 2,
-            "expected_gt": 1,
-            "missing_files_handle": "drop_subject",
-            "excessive_files_handle": "use_first_and_warn"
-            # "path_data": no path data key as absolute path required for image_ground_truth pairing
-        }
-    ],
-    "validation": "[ Same Above Dict struct]",
-    "test": "[Same Above Dict struct]",
-}
 
 
 class DatasetGroup:
@@ -71,44 +41,96 @@ class DatasetGroup:
         # DatasetGroup config
         self.config = config
 
+        # This sets the expected number of files at the dataset group level. Useful for validating subsequent filesets and whether they are compliant or not.
+        self.n_expected_input: int = int(dict_file_group_spec.get(DataloaderKW.EXPECTED_INPUT, 0))
+        if self.n_expected_input <= 0:
+            raise ValueError("At DataSetGroup level, Number of Expected Input must be > 0")
+
+        self.n_expected_gt: int = int(dict_file_group_spec.get(DataloaderKW.EXPECTED_GT, 0))
+        if self.n_expected_gt <= 0:
+            raise ValueError("At DataSetGroup level, Number of Expected Ground Truth must be > 0")
+
         # This is the key attribute that needs to be populated once data loading is complete.
-        if (ModelParamsKW.IS_2D in config.model_params and not config.model_params.get(ModelParamsKW.IS_2D)):
-            # Instantiate all the 3D Train/Val/Test Datasets
-            for a_train_dataset in dict_file_group_spec[DataloaderKW.TRAINING]:
-                if a_train_dataset[DataloaderKW.TYPE] == "FILES":
-                    train_set = Files3DDataset(a_train_dataset, config)
-                    self.train_dataset.append(train_set)
-                    self.train_filename_pairs.extend(train_set.filename_pairs)
-            for a_val_dataset in dict_file_group_spec[DataloaderKW.VALIDATION]:
-                if a_val_dataset[DataloaderKW.TYPE] == "FILES":
-                    val_set = Files3DDataset(a_val_dataset, config)
-                    self.val_dataset.append(val_set)
-                    self.val_filename_pairs.extend(val_set.filename_pairs)
-            for a_test_dataset in dict_file_group_spec[DataloaderKW.TEST]:
-                if a_test_dataset[DataloaderKW.TYPE] == "FILES":
-                    test_set = Files3DDataset(a_test_dataset, config)
-                    self.test_dataset.append(test_set)
-                    self.test_filename_pairs.extend(test_set.filename_pairs)
+        if (ModelParamsKW.IS_2D not in config.model_params and not config.model_params.get(ModelParamsKW.IS_2D)):
+            self.validate_update_3d_train_val_test_and_filename_pairs(config, dict_file_group_spec)
         else:
-            # Instantiate all the 2D Train/Val/Test Datasets
-            for a_train_dataset in dict_file_group_spec[DataloaderKW.TRAINING]:
-                if a_train_dataset[DataloaderKW.TYPE] == "FILES":
-                    train_set = FilesDataset(a_train_dataset, config)
-                    self.train_dataset.append(train_set)
-                    self.train_filename_pairs.extend(train_set.filename_pairs)
-            for a_val_dataset in dict_file_group_spec[DataloaderKW.VALIDATION]:
-                if a_val_dataset[DataloaderKW.TYPE] == "FILES":
-                    val_set = FilesDataset(a_val_dataset, config)
-                    self.val_dataset.append(val_set)
-                    self.val_filename_pairs.extend(val_set.filename_pairs)
-            for a_test_dataset in dict_file_group_spec[DataloaderKW.TEST]:
-                if a_test_dataset[DataloaderKW.TYPE] == "FILES":
-                    test_set = FilesDataset(a_test_dataset, config)
-                    self.test_dataset.append(test_set)
-                    self.test_filename_pairs.extend(test_set.filename_pairs)
+            self.validate_update_2d_train_val_test_dataset_and_filename_pairs(config, dict_file_group_spec)
 
         # Assign default labels if not provided.
-        self.filegroup_label: str = dict_file_group_spec.get(DataloaderKW.DATASET_GROUP_LABEL, "DefaultFileGroupLabel")
+        self.name: str = dict_file_group_spec.get(DataloaderKW.DATASET_GROUP_LABEL, "DefaultDatasetGroupLabel")
+
+    def validate_update_3d_train_val_test_and_filename_pairs(self, config, dict_file_group_spec):
+        # Instantiate all the 3D Train/Val/Test Datasets
+        for a_train_dataset in dict_file_group_spec[DataloaderKW.TRAINING]:
+            if a_train_dataset[DataloaderKW.TYPE] == "FILES":
+                train_set = Files3DDataset(a_train_dataset, config)
+                self.train_dataset.append(train_set)
+                self.train_filename_pairs.extend(train_set.filename_pairs)
+        for a_val_dataset in dict_file_group_spec[DataloaderKW.VALIDATION]:
+            if a_val_dataset[DataloaderKW.TYPE] == "FILES":
+                val_set = Files3DDataset(a_val_dataset, config)
+                self.val_dataset.append(val_set)
+                self.val_filename_pairs.extend(val_set.filename_pairs)
+        for a_test_dataset in dict_file_group_spec[DataloaderKW.TEST]:
+            if a_test_dataset[DataloaderKW.TYPE] == "FILES":
+                test_set = Files3DDataset(a_test_dataset, config)
+                self.test_dataset.append(test_set)
+                self.test_filename_pairs.extend(test_set.filename_pairs)
+
+    def validate_update_2d_train_val_test_dataset_and_filename_pairs(self, config, dict_file_group_spec):
+        # Instantiate all the 2D Train/Val/Test Datasets
+        for a_train_dataset in dict_file_group_spec[DataloaderKW.TRAINING]:
+
+            if a_train_dataset[DataloaderKW.TYPE] == "FILES":
+
+                train_set = FilesDataset(a_train_dataset, config)
+
+                if train_set.n_expected_input == self.n_expected_input and train_set.n_expected_gt == self.n_expected_gt:
+                    self.train_dataset.append(train_set)
+                    self.train_filename_pairs.extend(train_set.filename_pairs)
+                if train_set.n_expected_input != self.n_expected_input:
+                    logger.warning(f"Skipping handling of {train_set.name} as its Number of Expected Input in the "
+                                   f"Train Dataset {train_set.n_expected_input} does not match the number of "
+                                   f"Expected Input in the Train DatasetGroup {self.n_expected_input}")
+                if train_set.n_expected_gt != self.n_expected_gt:
+                    logger.warning(f"Skipping handling of {train_set.name} as its Number of Expected Ground Truth in the "
+                                   f"Train Dataset {train_set.n_expected_gt} does not match the number of "
+                                   f"Expected Ground Truth in the Train DatasetGroup {self.n_expected_gt}")
+
+        for a_val_dataset in dict_file_group_spec[DataloaderKW.VALIDATION]:
+
+            if a_val_dataset[DataloaderKW.TYPE] == "FILES":
+                val_set = FilesDataset(a_val_dataset, config)
+
+                if val_set.n_expected_input == self.n_expected_input and val_set.n_expected_gt == self.n_expected_gt:
+                    self.val_dataset.append(val_set)
+                    self.val_filename_pairs.extend(val_set.filename_pairs)
+                if val_set.n_expected_input != self.n_expected_input:
+                    logger.warning(f"Skipping handling of {val_set.name} as its Number of Expected Input in the "
+                                   f"Validation Dataset {val_set.n_expected_input} does not match the number of "
+                                   f"Expected Input in the Validation DatasetGroup {self.n_expected_input}")
+                if val_set.n_expected_gt != self.n_expected_gt:
+                    logger.warning(f"Skipping handling of {val_set.name} as its Number of Expected Ground Truth in the "
+                                   f"Validation Dataset {val_set.n_expected_gt} does not match the number of "
+                                   f"Expected Ground Truth in the Validation DatasetGroup {self.n_expected_gt}")
+
+        for a_test_dataset in dict_file_group_spec[DataloaderKW.TEST]:
+
+            if a_test_dataset[DataloaderKW.TYPE] == "FILES":
+                test_set = FilesDataset(a_test_dataset, config)
+
+                if test_set.n_expected_input == self.n_expected_input and test_set.n_expected_gt == self.n_expected_gt:
+                    self.test_dataset.append(test_set)
+                    self.test_filename_pairs.extend(test_set.filename_pairs)
+                if test_set.n_expected_input != self.n_expected_input:
+                    logger.warning(f"Skipping handling of {test_set.name} as its Number of Expected Input in the "
+                                   f"Test Dataset {test_set.n_expected_input} does not match the number of "
+                                   f"Expected Input in the Test DatasetGroup {self.n_expected_input}")
+                if test_set.n_expected_gt != self.n_expected_gt:
+                    logger.warning(f"Skipping handling of {test_set.name} as its Number of Expected Ground Truth in the "
+                                   f"Test Dataset {test_set.n_expected_gt} does not match the number of "
+                                   f"Expected Ground Truth in the Test DatasetGroup {self.n_expected_gt}")
+
 
     def preview(self, verbose=False):
         """
@@ -116,7 +138,7 @@ class DatasetGroup:
         Args:
             verbose: whether to print out the actual data path
         """
-        logger.info(f"DatasetGroup: {self.filegroup_label}")
+        logger.info(f"DatasetGroup: {self.name}")
 
         logger.info("\tTrain:")
         for train_set in self.train_dataset:

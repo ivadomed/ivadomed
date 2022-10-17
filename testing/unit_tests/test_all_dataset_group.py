@@ -1,4 +1,5 @@
-from ivadomed.loader.all_dataset_group import AllDatasetGroups, example_all_dataset_groups_config_json
+from ivadomed.loader.all_dataset_group import AllDatasetGroups
+from ivadomed.config.example_loader_v2_configs import example_all_dataset_groups_config_json
 from ivadomed.loader.dataset_group import DatasetGroup
 
 from testing.common_testing_util import remove_tmp_dir

@@ -22,7 +22,7 @@ from ivadomed import inference as imed_inference
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, film as imed_film
 from ivadomed.keywords import ConfigKW, ModelParamsKW, LoaderParamsKW, ContrastParamsKW, BalanceSamplesKW, \
     TrainingParamsKW, ObjectDetectionParamsKW, UncertaintyKW, PostprocessingKW, BinarizeProdictionKW, MetricsKW, \
-    MetadataKW, OptionKW, SplitDatasetKW, CommandKW, DataloaderKW
+    MetadataKW, OptionKW, SplitDatasetKW, CommandKW, DataloaderKW, DatasetTypeKW
 from loguru import logger
 from pathlib import Path
 
@@ -224,16 +224,27 @@ def set_model_params(context: dict, loader_params: dict) -> Tuple[dict, dict]:
     if loader_params[LoaderParamsKW.MULTICHANNEL]:
         model_params[ModelParamsKW.IN_CHANNEL] = \
             len(loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.CONTRAST_LST])
-    else:
+    # If new Loader V2
+    elif loader_params.get(DataloaderKW.DATASET_GROUPS):
         # todo: this needs to be determined based on the AllDataSet Spec
-        model_params[ModelParamsKW.IN_CHANNEL] = 2
+        model_params[ModelParamsKW.IN_CHANNEL] = context.get(DataloaderKW.EXPECTED_INPUT)
 
-    # Get out_channel from target_suffix
-    model_params[ModelParamsKW.OUT_CHANNEL] = len(loader_params[LoaderParamsKW.TARGET_SUFFIX])
+    # Old Loader V1
+    if loader_params[LoaderParamsKW.TARGET_SUFFIX]:
+        # Get out_channel from target_suffix
+        model_params[ModelParamsKW.OUT_CHANNEL] = len(loader_params[LoaderParamsKW.TARGET_SUFFIX])
+    # New loader V2
+    elif loader_params.get(DataloaderKW.DATASET_GROUPS):
+        # todo: this needs to be determined based on the AllDataSet Spec
+        model_params[ModelParamsKW.OUT_CHANNEL] = context.get(DataloaderKW.EXPECTED_GT)
 
     # If multi-class output, then add background class
     if model_params[ModelParamsKW.OUT_CHANNEL] > 1:
-        model_params.update({ModelParamsKW.OUT_CHANNEL: model_params[ModelParamsKW.OUT_CHANNEL] + 1})
+        model_params.update(
+            {
+                ModelParamsKW.OUT_CHANNEL: model_params[ModelParamsKW.OUT_CHANNEL] + 1
+            }
+        )
 
     # Display for spec' check
     imed_utils.display_selected_model_spec(params=model_params)
@@ -248,7 +259,6 @@ def set_model_params(context: dict, loader_params: dict) -> Tuple[dict, dict]:
     loader_params.update({LoaderParamsKW.MODEL_PARAMS: model_params})
 
     return model_params, loader_params
-
 
 def set_output_path(context: dict) -> str:
     """
@@ -494,10 +504,10 @@ def run_command(context: dict, n_gif=0, thr_increment=None, resume_training=Fals
 
     # Display transforms for the various subsets
     if command == CommandKW.TRAIN:
-        imed_utils.display_selected_transfoms(transform_train_params, dataset_type=["training"])
-        imed_utils.display_selected_transfoms(transform_valid_params, dataset_type=["validation"])
+        imed_utils.display_selected_transfoms(transform_train_params, dataset_type=[DatasetTypeKW.TRAINING])
+        imed_utils.display_selected_transfoms(transform_valid_params, dataset_type=[DatasetTypeKW.VALIDATION])
     elif command == CommandKW.TEST:
-        imed_utils.display_selected_transfoms(transformation_dict, dataset_type=["testing"])
+        imed_utils.display_selected_transfoms(transformation_dict, dataset_type=[DatasetTypeKW.TESTING])
 
     # Check if multiple raters
     check_multiple_raters(command==CommandKW.TRAIN, loader_params)
@@ -676,6 +686,8 @@ def execute_multi_path_training(context: dict,
     # Build simple dict
     all_data_groups_dict = {}
     all_data_groups_dict[DataloaderKW.DATASET_GROUPS] = context.get(DataloaderKW.DATASET_GROUPS)
+    all_data_groups_dict[DataloaderKW.EXPECTED_INPUT] = context.get(DataloaderKW.EXPECTED_INPUT)
+    all_data_groups_dict[DataloaderKW.EXPECTED_GT] = context.get(DataloaderKW.EXPECTED_GT)
 
     # Build the generalized configuration object
     # Build all dataset group object

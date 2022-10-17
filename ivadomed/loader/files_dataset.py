@@ -4,7 +4,7 @@ import typing
 from typing import List, Tuple
 from loguru import logger
 from ivadomed.loader.utils import ensure_absolute_path
-from pprint import pformat
+
 if typing.TYPE_CHECKING:
     from ivadomed.loader.generalized_loader_configuration import (
         GeneralizedLoaderConfiguration,
@@ -14,59 +14,8 @@ from ivadomed.loader.mri2d_segmentation_dataset import MRI2DSegmentationDataset
 
 from ivadomed.keywords import (
     ModelParamsKW,
-    MetadataKW,
+    MetadataKW, DataloaderKW, FileMissingHandleKW,
 )
-
-example_FileDataset_json: dict = {
-    "type": "FILES",
-    "subset_label": "Subset3",
-    "image_ground_truth": [
-        [
-            [
-                r"sub-02/ses-04/anat/sub-02_ses-04_acq-MToff_MTS.nii",
-                r"sub-02/ses-04/anat/sub-02_ses-04_acq-MTon_MTS.nii",
-            ],
-            [
-                "derivatives/labels/sub-02/ses-04/anat/sub-02_ses-04_mt-off_MTS_lesion-manual-rater1.nii"
-            ],
-        ],
-        [
-            [
-                r"sub-02/ses-05/anat/sub-02_ses-05_acq-MToff_MTS.nii",
-                r"sub-02/ses-05/anat/sub-02_ses-05_acq-MTon_MTS.nii",
-            ],
-            [
-                "derivatives/labels/sub-02/ses-05/anat/sub-02_ses-05_mt-off_MTS_lesion-manual-rater1.nii"
-            ],
-        ],
-        [
-            [
-                r"sub-02/ses-04/anat/sub-02_ses-04_flip-1_mt-off_MTS.nii",
-                r"sub-02/ses-04/anat/sub-02_ses-04_flip-1_mt-on_MTS.nii",
-            ],
-            [
-                "derivatives/labels/sub-02/ses-04/anat/sub-02_ses-04_mt-off_MTS_lesion-manual-rater1.nii"
-            ],
-        ],
-        [
-            [
-                r"sub-02/ses-04/anat/sub-02_ses-04_flip-1_mt-off_MTS.nii",
-                r"sub-02/ses-04/anat/sub-02_ses-04_flip-1_mt-on_MTS.nii",
-                r"sub-02/ses-04/anat/sub-02_ses-04_flip-2_mt-off_MTS.nii",
-                r"sub-02/ses-04/anat/sub-02_ses-04_flip-2_mt-on_MTS.nii",
-            ],
-            [
-                "derivatives/labels/sub-02/ses-04/anat/sub-02_ses-04_mt-off_MTS_lesion-manual-rater1.nii"
-            ],
-        ],
-    ],
-    "expected_input": 2,
-    "expected_gt": 1,
-    "meta_data_csv": "/metadata.csv",  # assumed to be the same shape as the default run.
-    "missing_files_handle": "drop_subject",
-    "excessive_files_handle": "use_first_and_warn",
-    "path_data": r"C:/Temp/Test",
-}
 
 
 class FilesDataset(MRI2DSegmentationDataset):
@@ -94,8 +43,18 @@ class FilesDataset(MRI2DSegmentationDataset):
                 "Manufacturer": [],
             }
 
-        if dict_files_pairing.get("missing_files_handle") == "drop_subject":
+        if dict_files_pairing.get(DataloaderKW.MISSING_FILES_HANDLE) == FileMissingHandleKW.SKIP:
             self.drop_missing = True
+
+        self.n_expected_input: int = int(dict_files_pairing.get(DataloaderKW.EXPECTED_INPUT, 0))
+        if self.n_expected_input <= 0:
+            raise ValueError("Number of Expected Input at File Dataset level must be > 0")
+
+        self.n_expected_gt: int = int(dict_files_pairing.get(DataloaderKW.EXPECTED_GT, 0))
+        if self.n_expected_gt <= 0:
+            raise ValueError("Number of Expected Ground Truth at File Dataset level must be > 0")
+
+        self.name: str = dict_files_pairing.get(DataloaderKW.SUBSET_LABEL, "DefaultFileDatasetLabel")
 
         # We assume user explicitly provide the subject lists so WE do not do any additional filtering
 
@@ -148,20 +107,17 @@ class FilesDataset(MRI2DSegmentationDataset):
     def parse_spec_json_and_update_filename_pairs(self, loader_json: dict) -> Tuple[str, list]:
         """Load the json file and return the dictionary"""
         # Given a JSON file, try to load the file pairing from it.
-        assert loader_json.get("type") == "FILES"
+        assert loader_json.get(DataloaderKW.TYPE) == "FILES"
 
-        self.path_data = loader_json.get("path_data", ".")
+        self.path_data = loader_json.get(DataloaderKW.PATH_DATA, ".")
 
-        n_expected_input: int = int(loader_json.get("expected_input", 0))
-        if n_expected_input <= 0:
-            raise ValueError("Number of Expected Input must be > 0")
-
-        n_expected_gt: int = int(loader_json.get("expected_gt", 0))
-        if n_expected_gt <= 0:
-            raise ValueError("Number of Expected Ground Truth must be > 0")
-
-        if "image_ground_truth" in loader_json.keys():
-            self.filename_pairs = self.validate_update_filename_pairs(loader_json, n_expected_gt, n_expected_input, self.path_data)
+        if DataloaderKW.IMAGE_GROUND_TRUTH in loader_json.keys():
+            self.filename_pairs = self.validate_update_filename_pairs(
+                loader_json,
+                self.n_expected_gt,
+                self.n_expected_input,
+                self.path_data
+            )
 
         return self.path_data, self.filename_pairs
 
@@ -183,7 +139,9 @@ class FilesDataset(MRI2DSegmentationDataset):
 
         """
         filename_pairs = []
-        list_image_ground_truth_pairs: list = loader_json.get("image_ground_truth")
+
+        list_image_ground_truth_pairs: list = loader_json.get(DataloaderKW.IMAGE_GROUND_TRUTH)
+
         # Go through each subject
         for subject_index, a_subject_image_ground_truth_pair in enumerate(
                 list_image_ground_truth_pairs

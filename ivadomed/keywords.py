@@ -306,3 +306,28 @@ class DataloaderKW:
     # Reserved keyword for future implementation
     MISSING_FILES_HANDLE: str = "missing_files_handle"
     EXCESSIVE_FILES_HANDLE: str = "excessive_files_handle"
+
+    SUBSET_LABEL: str = "subset_label"
+    PATH_DATA: str = "path_data"
+
+
+@dataclass(frozen=True)
+class DatasetTypeKW:
+    # Used to specify the datatype in the display_selected_transfoms
+    TRAINING = "training"
+    VALIDATION = "validation"
+    TESTING = "testing"
+
+@dataclass(frozen=True)
+class FileMissingHandleKW:
+    # Keywords used to specify the handling of missing files
+    SKIP = "skip"
+    RAISE = "raise"
+    IGNORE = "ignore"
+
+@dataclass(frozen=True)
+class FileExcessiveHandleKW:
+    # Keywords used to specify the handling of excessive files
+    USE_FIRST_AND_WARN = "use_first_and_warn"
+
+
