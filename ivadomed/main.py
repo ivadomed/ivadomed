@@ -166,7 +166,6 @@ def update_loader_params(context: dict, is_train: bool, loader_version: str):
             loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.CONTRAST_LST] =\
                 loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.TESTING]
 
-
     if ConfigKW.FILMED_UNET in context and context[ConfigKW.FILMED_UNET][ModelParamsKW.APPLIED]:
         loader_params.update({LoaderParamsKW.METADATA_TYPE: context[ConfigKW.FILMED_UNET][ModelParamsKW.METADATA]})
 
@@ -224,18 +223,16 @@ def set_model_params(context: dict, loader_params: dict) -> Tuple[dict, dict]:
     if loader_params[LoaderParamsKW.MULTICHANNEL]:
         model_params[ModelParamsKW.IN_CHANNEL] = \
             len(loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.CONTRAST_LST])
-    # If new Loader V2
-    elif loader_params.get(DataloaderKW.DATASET_GROUPS):
-        # todo: this needs to be determined based on the AllDataSet Spec
+    # If new Loader V2, this needs to be determined based on the AllDataSet Spec
+    elif context.get(DataloaderKW.DATASET_GROUPS):
         model_params[ModelParamsKW.IN_CHANNEL] = context.get(DataloaderKW.EXPECTED_INPUT)
 
     # Old Loader V1
     if loader_params[LoaderParamsKW.TARGET_SUFFIX]:
         # Get out_channel from target_suffix
         model_params[ModelParamsKW.OUT_CHANNEL] = len(loader_params[LoaderParamsKW.TARGET_SUFFIX])
-    # New loader V2
-    elif loader_params.get(DataloaderKW.DATASET_GROUPS):
-        # todo: this needs to be determined based on the AllDataSet Spec
+    # New loader V2, this needs to be determined based on the AllDataSet Spec
+    elif context.get(DataloaderKW.DATASET_GROUPS):
         model_params[ModelParamsKW.OUT_CHANNEL] = context.get(DataloaderKW.EXPECTED_GT)
 
     # If multi-class output, then add background class
@@ -246,7 +243,7 @@ def set_model_params(context: dict, loader_params: dict) -> Tuple[dict, dict]:
             }
         )
 
-    # Display for spec' check
+    # Display for spec check
     imed_utils.display_selected_model_spec(params=model_params)
 
     # Update loader params

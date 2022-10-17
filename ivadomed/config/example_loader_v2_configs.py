@@ -5,8 +5,11 @@ from ivadomed.keywords import DataloaderKW, FileMissingHandleKW, FileExcessiveHa
 """
 This is a centralized place to store all the example config files for the loader.
 Purpose is to provide an updated view of how the dictionary structures can be used to reflect latest examples
-
 """
+
+from testing.common_testing_util import path_temp
+
+path_mock_data = path_temp
 
 example_FileDataset_json: dict = {
     DataloaderKW.TYPE: "FILES",
@@ -56,7 +59,7 @@ example_FileDataset_json: dict = {
     "meta_data_csv": "/metadata.csv",  # assumed to be the same shape as the default run.
     DataloaderKW.MISSING_FILES_HANDLE: FileMissingHandleKW.SKIP,
     DataloaderKW.EXCESSIVE_FILES_HANDLE: FileExcessiveHandleKW.USE_FIRST_AND_WARN,
-    "path_data": r"C:/Temp/Test",
+    "path_data": path_mock_data,
 }
 
 example_DatasetGroup_json: dict = {
@@ -86,7 +89,7 @@ example_DatasetGroup_json: dict = {
     DataloaderKW.EXPECTED_GT: 1,
 }
 
-example_all_dataset_groups_config_json: dict = {
+example_2i1o_all_dataset_groups_config_json: dict = {
     DataloaderKW.DATASET_GROUPS: [
         {
             DataloaderKW.DATASET_GROUP_LABEL: "DataSetGroup1",
@@ -112,7 +115,7 @@ example_all_dataset_groups_config_json: dict = {
                     DataloaderKW.EXPECTED_GT: 1,
                     DataloaderKW.MISSING_FILES_HANDLE: FileMissingHandleKW.SKIP,
                     DataloaderKW.EXCESSIVE_FILES_HANDLE: FileExcessiveHandleKW.USE_FIRST_AND_WARN,
-                    DataloaderKW.PATH_DATA: r"C:\Temp\Test",
+                    DataloaderKW.PATH_DATA: path_mock_data,
                 },
             ],
             DataloaderKW.VALIDATION: [
@@ -137,7 +140,7 @@ example_all_dataset_groups_config_json: dict = {
                     DataloaderKW.EXPECTED_GT: 1,
                     DataloaderKW.MISSING_FILES_HANDLE: FileMissingHandleKW.SKIP,
                     DataloaderKW.EXCESSIVE_FILES_HANDLE: FileExcessiveHandleKW.USE_FIRST_AND_WARN,
-                    DataloaderKW.PATH_DATA: r"C:\Temp\Test",
+                    DataloaderKW.PATH_DATA: path_mock_data,
 
                 }
             ],
@@ -163,7 +166,7 @@ example_all_dataset_groups_config_json: dict = {
                     DataloaderKW.EXPECTED_GT: 1,
                     DataloaderKW.MISSING_FILES_HANDLE: FileMissingHandleKW.SKIP,
                     DataloaderKW.EXCESSIVE_FILES_HANDLE: FileExcessiveHandleKW.USE_FIRST_AND_WARN,
-                    DataloaderKW.PATH_DATA: r"C:\Temp\Test",
+                    DataloaderKW.PATH_DATA: path_mock_data,
                 }
             ],
             DataloaderKW.EXPECTED_INPUT: 2,
@@ -193,7 +196,7 @@ example_all_dataset_groups_config_json: dict = {
                     DataloaderKW.EXPECTED_GT: 1,
                     DataloaderKW.MISSING_FILES_HANDLE: FileMissingHandleKW.SKIP,
                     DataloaderKW.EXCESSIVE_FILES_HANDLE: FileExcessiveHandleKW.USE_FIRST_AND_WARN,
-                    DataloaderKW.PATH_DATA: r"C:\Temp\Test",
+                    DataloaderKW.PATH_DATA: path_mock_data,
                 },
             ],
             DataloaderKW.VALIDATION: [
@@ -218,7 +221,7 @@ example_all_dataset_groups_config_json: dict = {
                     DataloaderKW.EXPECTED_GT: 1,
                     DataloaderKW.MISSING_FILES_HANDLE: FileMissingHandleKW.SKIP,
                     DataloaderKW.EXCESSIVE_FILES_HANDLE: FileExcessiveHandleKW.USE_FIRST_AND_WARN,
-                    DataloaderKW.PATH_DATA: r"C:\Temp\Test",
+                    DataloaderKW.PATH_DATA: path_mock_data,
                 }
             ],
             DataloaderKW.TEST: [
@@ -243,7 +246,7 @@ example_all_dataset_groups_config_json: dict = {
                     DataloaderKW.EXPECTED_GT: 1,
                     DataloaderKW.MISSING_FILES_HANDLE: FileMissingHandleKW.SKIP,
                     DataloaderKW.EXCESSIVE_FILES_HANDLE: FileExcessiveHandleKW.USE_FIRST_AND_WARN,
-                    DataloaderKW.PATH_DATA: r"C:\Temp\Test",
+                    DataloaderKW.PATH_DATA: path_mock_data,
                 }
             ],
             DataloaderKW.EXPECTED_INPUT: 2,
@@ -254,7 +257,7 @@ example_all_dataset_groups_config_json: dict = {
     DataloaderKW.EXPECTED_GT: 1,
 }
 
-example_uni_channel_all_dataset_groups_config_json: dict = {
+example_1i1o_all_dataset_groups_config_json: dict = {
     DataloaderKW.DATASET_GROUPS: [
         {
             DataloaderKW.DATASET_GROUP_LABEL: "DataSetGroup1",
@@ -280,7 +283,7 @@ example_uni_channel_all_dataset_groups_config_json: dict = {
                     DataloaderKW.EXPECTED_GT: 1,
                     DataloaderKW.MISSING_FILES_HANDLE: "drop_subject",
                     DataloaderKW.EXCESSIVE_FILES_HANDLE: "use_first_and_warn",
-                    DataloaderKW.PATH_DATA: r"C:\Temp\Test",
+                    DataloaderKW.PATH_DATA: path_mock_data,
                 },
             ],
             DataloaderKW.VALIDATION: [
@@ -305,7 +308,7 @@ example_uni_channel_all_dataset_groups_config_json: dict = {
                     DataloaderKW.EXPECTED_GT: 1,
                     DataloaderKW.MISSING_FILES_HANDLE: "drop_subject",
                     DataloaderKW.EXCESSIVE_FILES_HANDLE: "use_first_and_warn",
-                    DataloaderKW.PATH_DATA: r"C:\Temp\Test",
+                    DataloaderKW.PATH_DATA: path_mock_data,
                 }
             ],
             DataloaderKW.TEST: [
@@ -330,7 +333,7 @@ example_uni_channel_all_dataset_groups_config_json: dict = {
                     DataloaderKW.EXPECTED_GT: 1,
                     DataloaderKW.MISSING_FILES_HANDLE: "drop_subject",
                     DataloaderKW.EXCESSIVE_FILES_HANDLE: "use_first_and_warn",
-                    DataloaderKW.PATH_DATA: r"C:\Temp\Test",
+                    DataloaderKW.PATH_DATA: path_mock_data,
                 }
             ],
             DataloaderKW.EXPECTED_INPUT: 1,
@@ -360,7 +363,7 @@ example_uni_channel_all_dataset_groups_config_json: dict = {
                     DataloaderKW.EXPECTED_GT: 1,
                     DataloaderKW.MISSING_FILES_HANDLE: "drop_subject",
                     DataloaderKW.EXCESSIVE_FILES_HANDLE: "use_first_and_warn",
-                    DataloaderKW.PATH_DATA: r"C:\Temp\Test",
+                    DataloaderKW.PATH_DATA: path_mock_data,
                 },
             ],
             DataloaderKW.VALIDATION: [
@@ -385,7 +388,7 @@ example_uni_channel_all_dataset_groups_config_json: dict = {
                     DataloaderKW.EXPECTED_GT: 1,
                     DataloaderKW.MISSING_FILES_HANDLE: "drop_subject",
                     DataloaderKW.EXCESSIVE_FILES_HANDLE: "use_first_and_warn",
-                    DataloaderKW.PATH_DATA: r"C:\Temp\Test",
+                    DataloaderKW.PATH_DATA: path_mock_data,
                 }
             ],
             DataloaderKW.TEST: [
@@ -410,7 +413,7 @@ example_uni_channel_all_dataset_groups_config_json: dict = {
                     DataloaderKW.EXPECTED_GT: 1,
                     DataloaderKW.MISSING_FILES_HANDLE: "drop_subject",
                     DataloaderKW.EXCESSIVE_FILES_HANDLE: "use_first_and_warn",
-                    DataloaderKW.PATH_DATA: r"C:\Temp\Test",
+                    DataloaderKW.PATH_DATA: path_mock_data,
                 }
             ],
             DataloaderKW.EXPECTED_INPUT: 1,

@@ -1,16 +1,19 @@
 import pytest
 from typing import List
 
-from create_derivatives import CreateBIDSDerivatives
-from create_subjects import CreateBIDSSubjects
+from testing.functional_tests.t_utils import create_tmp_dir
+from testing.mocker.create_derivatives import CreateBIDSDerivatives
+from testing.mocker.create_subjects import CreateBIDSSubjects
 
-
-def test_create_bids_projects_1():
+def create_mock_bids_file_structures(path_temp):
     """
     Nothing strange, subjects, sessions, plans.
     :return:
     """
-    path_mock_data = r"C:\Temp\Test\\"
+    # Ensure parent folder exists.
+    create_tmp_dir(copy_data_testing_dir=False)
+
+    path_mock_data = path_temp
 
     #######################
     # Subject Mock Section
@@ -47,7 +50,6 @@ def test_create_bids_projects_1():
             path_to_mock_data=path_mock_data,
             list_sessions=list_subject_sessions,
             list_bids_details=list_subject_specific_bids_dict,
-
         )
         bids_subject.run()
 

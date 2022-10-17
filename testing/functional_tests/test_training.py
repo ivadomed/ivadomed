@@ -4,21 +4,27 @@ import json
 from ivadomed.keywords import ConfigKW, LoaderParamsKW
 from testing.functional_tests.t_utils import create_tmp_dir, __data_testing_dir__, download_functional_test_files
 from testing.common_testing_util import remove_tmp_dir
+from testing.mocker.mocker_fixture import create_mock_bids_file_structures
 
 from loguru import logger
 import pytest
 from ivadomed.main import run_command
-from ivadomed.config.example_loader_v2_configs import example_all_dataset_groups_config_json, example_uni_channel_all_dataset_groups_config_json
+from ivadomed.config.example_loader_v2_configs import example_2i1o_all_dataset_groups_config_json, \
+    example_1i1o_all_dataset_groups_config_json, path_mock_data
+import ivadomed.config as config
 
 def setup_function():
-    create_tmp_dir()
+    create_tmp_dir(copy_data_testing_dir=False)
 
 @pytest.mark.parametrize('input_file_dataset', [
-    # example_all_dataset_groups_config_json,
-    example_uni_channel_all_dataset_groups_config_json,
+    example_2i1o_all_dataset_groups_config_json,
+    example_1i1o_all_dataset_groups_config_json,
 ])
-def test_training_with_filedataset(download_functional_test_files, input_file_dataset):
-
+def test_training_with_filedataset(
+        download_functional_test_files,  # pytest fixture, do not remove.
+        input_file_dataset
+):
+    create_mock_bids_file_structures(path_mock_data),  # pytest fixture, do not remove.
 
     # Build the config file
     path_default_config = os.path.join(__data_testing_dir__, 'automate_training_config.json')
@@ -26,11 +32,11 @@ def test_training_with_filedataset(download_functional_test_files, input_file_da
         json_data: dict = json.load(json_file)
 
     # Add the new key to JSON.
-    # json_data.update(example_uni_channel_all_dataset_groups_config_json)
+    # json_data.update(example_1i1o_all_dataset_groups_config_json)
     # Update three major keys.
 
     # update 1) dataset_groups, 2) expected_input, 3) expected_gt
-    json_data.update(example_all_dataset_groups_config_json)
+    json_data.update(input_file_dataset)
 
     # Popping out the contract key to enable it to AUTO using the new LoaderConfiguration
     json_data[ConfigKW.LOADER_PARAMETERS].pop(LoaderParamsKW.CONTRAST_PARAMS)
@@ -75,4 +81,4 @@ def test_training_with_consolidated_dataset(download_functional_test_files):
 
 
 def teardown_function():
-    remove_tmp_dir()
+     remove_tmp_dir()

@@ -6,8 +6,8 @@ from typing import List
 
 from nibabel import Nifti1Image
 
-from create_common import CreateSubject
-from nifti_mocker import (
+from testing.mocker.create_common import CreateSubject
+from testing.mocker.nifti_mocker import (
     create_mock_nifti1_object,
     create_mock_nifti2_object,
     check_nifty_data,
