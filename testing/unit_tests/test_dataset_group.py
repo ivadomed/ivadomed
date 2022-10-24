@@ -39,11 +39,11 @@ def test_dataset_group():
     # Get the mock JSON which has 2 inputs and 1 output, get their first DatasetGroup
     example_DatasetGroup_json = example_2i1o_all_dataset_groups_config_json.get(DataloaderKW.DATASET_GROUPS)[0]
 
-    all_dataset_group = DatasetGroup(example_DatasetGroup_json, loader_config)
-    all_dataset_group.preview(verbose=True)
+    a_dataset_group = DatasetGroup(example_DatasetGroup_json, loader_config)
+    a_dataset_group.preview(verbose=True)
 
     # Should have 4 files pairs, each of them should have 2 Input and 1 Output
-    for data in [all_dataset_group.train_filename_pairs, all_dataset_group.val_filename_pairs, all_dataset_group.test_filename_pairs]:
+    for data in [a_dataset_group.train_filename_pairs, a_dataset_group.val_filename_pairs, a_dataset_group.test_filename_pairs]:
         assert len(data) == 3
         for pair in data:
             assert len(pair[0]) == 2

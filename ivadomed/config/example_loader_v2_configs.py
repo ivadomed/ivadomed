@@ -62,33 +62,6 @@ example_FileDataset_json: dict = {
     "path_data": path_mock_data,
 }
 
-example_DatasetGroup_json: dict = {
-    DataloaderKW.DATASET_GROUP_LABEL: "DataSet1",
-    DataloaderKW.TRAINING: [
-        {
-            DataloaderKW.TYPE: "FILES",
-            DataloaderKW.SUBSET_LABEL: "Subset3",
-            DataloaderKW.IMAGE_GROUND_TRUTH: [
-                [["/Path to/subset_folder_2/sub1_T1.nii", "/Path to/subset_folder_2/sub1_T2.nii"],
-                 ["/Path to/subset_folder_2/gt1"]],
-                [["/Path to/subset_folder_2/sub2_T1.nii", "/Path to/subset_folder_2/sub1_T1.nii"],
-                 ["/Path to/subset_folder_2/gt2"]],
-                [["/Path to/subset_folder_2/sub3_T1.nii", "/Path to/subset_folder_2/sub1_T1.nii"],
-                 ["/Path to/subset_folder_2/gt3"]]
-            ],
-            DataloaderKW.EXPECTED_INPUT: 2,
-            DataloaderKW.EXPECTED_GT: 1,
-            DataloaderKW.MISSING_FILES_HANDLE: FileMissingHandleKW.SKIP,
-            DataloaderKW.EXCESSIVE_FILES_HANDLE: FileExcessiveHandleKW.USE_FIRST_AND_WARN
-            # "path_data": no path data key as absolute path required for image_ground_truth pairing
-        }
-    ],
-    DataloaderKW.VALIDATION: "[ Same Above Dict struct]",
-    DataloaderKW.TEST: "[Same Above Dict struct]",
-    DataloaderKW.EXPECTED_INPUT: 2,
-    DataloaderKW.EXPECTED_GT: 1,
-}
-
 example_2i1o_all_dataset_groups_config_json: dict = {
     DataloaderKW.DATASET_GROUPS: [
         {

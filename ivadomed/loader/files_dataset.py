@@ -140,6 +140,9 @@ class FilesDataset(MRI2DSegmentationDataset):
         """
         filename_pairs = []
 
+        if not loader_json.get(DataloaderKW.IMAGE_GROUND_TRUTH):
+            raise KeyError("Expected V2 loader configuration files but the Image/Groundtruth key was not found in the loader JSON.")
+
         list_image_ground_truth_pairs: list = loader_json.get(DataloaderKW.IMAGE_GROUND_TRUTH)
 
         # Go through each subject
