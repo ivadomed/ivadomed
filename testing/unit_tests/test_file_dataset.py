@@ -13,6 +13,7 @@ from ivadomed.loader.generalized_loader_configuration import (
 def setup_function():
     create_tmp_dir()
 
+
 def test_FilesDataset():
 
     create_mock_bids_file_structures(path_mock_data),  # pytest fixture, do not remove.
@@ -32,7 +33,12 @@ def test_FilesDataset():
     )
     a = FilesDataset(example_FileDataset_json, model_config_json)
     a.preview(verbose=True)
-    print(len(a))
+
+    # Should have 4 files pairs, each of them should have 2 Input and 1 Output
+    assert len(a.filename_pairs) == 4
+    for pair in a.filename_pairs:
+        assert len(pair[0]) == 2
+        assert len(pair[1]) == 1
 
 def teardown_function():
     remove_tmp_dir()

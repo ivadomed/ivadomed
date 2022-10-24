@@ -33,9 +33,16 @@ def test_all_dataset_group():
     loader_config: GeneralizedLoaderConfiguration = GeneralizedLoaderConfiguration(
         model_params=model_dict,
     )
-    a = AllDatasetGroups(example_2i1o_all_dataset_groups_config_json, loader_config)
-    a.preview(verbose=True)
+    all_dataset_groups = AllDatasetGroups(example_2i1o_all_dataset_groups_config_json, loader_config)
+    all_dataset_groups.preview(verbose=True)
 
+    for a_dataset_group in all_dataset_groups.list_dataset_groups:
+        # Should have 4 files pairs, each of them should have 2 Input and 1 Output
+        for data in [a_dataset_group.train_filename_pairs, a_dataset_group.val_filename_pairs, a_dataset_group.test_filename_pairs]:
+            assert len(data) == 3
+            for pair in data:
+                assert len(pair[0]) == 2
+                assert len(pair[1]) == 1
 
 def teardown_function():
     remove_tmp_dir()
