@@ -28,6 +28,8 @@ class DatasetGroup:
             dict_file_group_spec: An example shown above in example_json dict.
             config:
         """
+        print(dict_file_group_spec)
+
         # These are lists of either Files3DDataset or FilesDataset
         self.train_dataset = []
         self.val_dataset = []

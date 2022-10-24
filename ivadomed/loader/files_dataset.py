@@ -144,26 +144,21 @@ class FilesDataset(MRI2DSegmentationDataset):
             raise KeyError("Expected V2 loader configuration files but the Image/Groundtruth key was not found in the loader JSON.")
 
         list_image_ground_truth_pairs: list = loader_json.get(DataloaderKW.IMAGE_GROUND_TRUTH)
-
+        list_image_ground_truth_pairs_filtered: list = []
         # Go through each subject
-        for subject_index, a_subject_image_ground_truth_pair in enumerate(
-                list_image_ground_truth_pairs
-        ):
+        for a_subject_image_ground_truth_pair in list_image_ground_truth_pairs:
+
             skip_subject_flag = False
 
-            # 2 lists: Subject List + Ground Truth List
+            # 2 lists: Subject List + Ground Truth list
             assert len(a_subject_image_ground_truth_pair) == 2
 
-            # Validate and trim Subject List
-            list_subject_specific_images: list = a_subject_image_ground_truth_pair[
-                0
-            ]
+            # Validate and trim Subject files list
+            list_subject_specific_images: list = a_subject_image_ground_truth_pair[0]
             if len(list_subject_specific_images) > n_expected_input:
-                list_subject_specific_images = list_subject_specific_images[
-                                               :n_expected_input
-                                               ]
+                list_subject_specific_images = list_subject_specific_images[:n_expected_input]
 
-            # Validate and trim Ground Truth List
+            # Validate and trim Ground Truth files list
             list_subject_specific_gt: list = a_subject_image_ground_truth_pair[1]
             if len(list_subject_specific_gt) > n_expected_gt:
                 list_subject_specific_gt = list_subject_specific_gt[:n_expected_gt]
@@ -180,19 +175,20 @@ class FilesDataset(MRI2DSegmentationDataset):
 
             # Exclude current subject
             if skip_subject_flag:
-                list_image_ground_truth_pairs[subject_index] = None
                 continue
 
             if len(list_subject_specific_images) < n_expected_input:
-                logger.warning(f"Fewer input files found than expected for subject {subject_index}. Expected {n_expected_input} but found {len(list_subject_specific_images)} from {list_subject_specific_images}")
+                logger.warning(f"Fewer input files found than expected for subject specification "
+                               f"{a_subject_image_ground_truth_pair}. Expected {n_expected_input} "
+                               f"but found {len(list_subject_specific_images)} from {list_subject_specific_images}")
                 if self.drop_missing:
-                    list_image_ground_truth_pairs[subject_index] = None
                     continue
 
             if len(list_subject_specific_gt) < n_expected_gt:
-                logger.warning(f"Fewer ground truth files found than expected, for subject {subject_index}. Expected {n_expected_gt} but found {len(list_subject_specific_gt)} from {list_subject_specific_gt}")
+                logger.warning(f"Fewer ground truth files found than expected, for subject specification "
+                               f"{a_subject_image_ground_truth_pair}. Expected {n_expected_gt} "
+                               f"but found {len(list_subject_specific_gt)} from {list_subject_specific_gt}")
                 if self.drop_missing:
-                    list_image_ground_truth_pairs[subject_index] = None
                     continue
 
             for gt_index, path_file in enumerate(list_subject_specific_gt):
@@ -204,11 +200,12 @@ class FilesDataset(MRI2DSegmentationDataset):
 
             # Exclude current subject
             if skip_subject_flag:
-                list_image_ground_truth_pairs[subject_index] = None
                 continue
 
             # Generate simple meta data #todo: should load json if present.
             metadata: List[dict] = [{}]* len(list_subject_specific_images) # "data_specificiation_type": "file_dataset"
+
+            list_image_ground_truth_pairs_filtered.append((list_subject_specific_images, list_subject_specific_gt))
 
             # At this point, established ALL subject's related image and ground truth file exists.
             filename_pairs.append(
@@ -219,6 +216,9 @@ class FilesDataset(MRI2DSegmentationDataset):
                     metadata,  # No metadata for this dataset, Dict?
                 )
             )
+
+        loader_json[DataloaderKW.IMAGE_GROUND_TRUTH] = list_image_ground_truth_pairs_filtered
+
         return filename_pairs
 
     def preview(self, verbose: bool = False):
