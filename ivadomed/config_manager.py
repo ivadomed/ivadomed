@@ -9,52 +9,53 @@ from ivadomed.keywords import ConfigKW, LoaderParamsKW, SplitDatasetKW, DataTest
 import copy
 
 
-def update(d, u):
+def update(source_dict: dict, destination_dict: dict) -> dict:
     """Update dictionary and nested dictionaries.
 
     Args:
-        d (dict): Source dictionary that is updated by destination dictionary.
-        u (dict): Destination dictionary.
+        source_dict (dict): Source dictionary that is updated by destination dictionary.
+        destination_dict (dict): Destination dictionary.
 
     Returns:
         dict: updated dictionary
     """
-    for k, v in u.items():
-        if isinstance(v, collections.abc.Mapping):
-            d[k] = update(d.get(k, {}), v)
+    for key, value in destination_dict.items():
+        if isinstance(value, collections.abc.Mapping):
+            source_dict[key] = update(source_dict.get(key, {}), value)
         else:
             # If source dictionary has keys that the destination dict doesn't have, keep these keys
-            if k in d and isinstance(d[k], collections.abc.Mapping) and not isinstance(v, collections.abc.Mapping):
+            if key in source_dict and isinstance(source_dict[key], collections.abc.Mapping) and not isinstance(value,
+                                                                                                               collections.abc.Mapping):
                 pass
             else:
-                d[k] = v
-    return d
+                source_dict[key] = value
+    return source_dict
 
 
-def deep_dict_compare(source_dict, dest_dict, keyname=None):
+def deep_dict_compare(source_dict: dict, destination_dict: dict, keyname: str = None):
     """Compare and display differences between dictionaries (and nested dictionaries).
 
     Args:
         source_dict (dict): Source dictionary.
-        dest_dict (dict): Destination dictionary.
+        destination_dict (dict): Destination dictionary.
         keyname (str): Key name to indicate the path to nested parameter.
 
     """
-    for key in dest_dict:
+    for key in destination_dict:
         if key not in source_dict:
             key_str = key if keyname is None else keyname + key
-            logger.info(f'    {key_str}: {dest_dict[key]}')
+            logger.info(f'    {key_str}: {destination_dict[key]}')
 
         else:
-            if isinstance(dest_dict[key], collections.abc.Mapping):
+            if isinstance(destination_dict[key], collections.abc.Mapping):
                 if isinstance(source_dict[key], collections.abc.Mapping):
-                    deep_dict_compare(source_dict[key], dest_dict[key], key + ": ")
+                    deep_dict_compare(source_dict[key], destination_dict[key], key + ": ")
                 # In case a new dictionary appears in updated file
                 else:
-                    deep_dict_compare(source_dict, dest_dict[key], key + ": ")
+                    deep_dict_compare(source_dict, destination_dict[key], key + ": ")
 
 
-def load_json(config_path):
+def load_json(config_path: str) -> dict:
     """Load json file content
 
     Args:
@@ -87,7 +88,7 @@ class ConfigurationManager(object):
         config_updated (dict): Updated configuration file.
     """
 
-    def __init__(self, path_context: str) -> None:
+    def __init__(self, path_context: str):
         """
         Initialize the ConfigurationManager by validating the given path and loading the file.
         Also load the default configuration file.
@@ -115,7 +116,7 @@ class ConfigurationManager(object):
         return self._config_updated
 
     @config_updated.setter
-    def config_updated(self, config_updated: dict) -> None:
+    def config_updated(self, config_updated: dict):
         """
         If config_updated is empty we copy the loaded configuration into it and apply some changes (changing keys name,
         changing values, deleting key-value pair) to ensure retro-compatibility.
@@ -143,7 +144,7 @@ class ConfigurationManager(object):
         """
         return self.config_updated
 
-    def change_keys(self, context: Union[dict, collections.abc.Mapping], keys: List[str]) -> None:
+    def change_keys(self, context: Union[dict, collections.abc.Mapping], keys: List[str]):
         """
         This function changes the name of the keys of the context dictionary, that are also in the `key_change_dict`
         attribute, to the values that are associated with them in the `key_change_dict` attribute.
@@ -170,7 +171,7 @@ class ConfigurationManager(object):
                             context[self.key_change_dict[key]] = context[key]
                             del context[key]
 
-    def change_keys_values(self, config_updated: dict, keys: KeysView) -> None:
+    def change_keys_values(self, config_updated: dict, keys: List[str]):
         """
         This function sets DATA_TESTING->DATA_TYPE to "institution_id" if method value is per_center,
         DATA_TESTING->DATA_VALUE to the value of center_test.
@@ -178,7 +179,7 @@ class ConfigurationManager(object):
 
         Args:
             config_updated (dict): Configuration dictionary to update.
-            keys (KeysView): The keys to consider.
+            keys (List[str]): The keys to consider.
         """
         for key_to_change in self.key_split_dataset_change_lst:
             if key_to_change in keys:
@@ -195,14 +196,14 @@ class ConfigurationManager(object):
                 # Remove the value of the current key
                 del config_updated[key_to_change]
 
-    def _display_differing_keys(self) -> None:
+    def _display_differing_keys(self):
         """Display differences between dictionaries.
         """
         logger.info('Adding the following keys to the configuration file')
         deep_dict_compare(self.context_original, self.config_updated)
         logger.info('\n')
 
-    def _validate_path(self) -> None:
+    def _validate_path(self):
         """Ensure validity of configuration file path.
         """
         if not Path(self.path_context).exists():
