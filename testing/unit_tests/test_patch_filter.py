@@ -53,7 +53,6 @@ def test_patch_filter(download_data_testing_test_files, transforms_dict, train_l
         "requires_undo": False,
         "contrast_params": {"contrast_lst": ['SEM'], "balance": {}},
         "path_data": [os.path.join(__data_testing_dir__, "microscopy_png")],
-        "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
         "target_suffix": target_lst,
         "extensions": [".png"],
         "roi_params": {"suffix": None, "slice_filter_roi": None},
