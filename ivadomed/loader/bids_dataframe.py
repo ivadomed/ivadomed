@@ -81,9 +81,11 @@ class BidsDataframe:
             path_data = Path(path_data, '')
 
             # For CT-scan files:
-            # Force index of subject subfolders containing CT-scan files.
-            # As of 20221026: Implementation based on potential CT datatypes (anat or ct),
-            # extensions and modality suffixes discussed in BEP024 (https://bids.neuroimaging.io/bep024).
+            # Force indexing of subject subfolders containing CT-scan files.
+            # As of 20221026: Implementation based on potential CT datatypes (anat or ct), extensions and
+            # modality suffixes discussed in BEP024 (https://bids.neuroimaging.io/bep024).
+            # bids_config parameter with default config_bids.json must be used
+            # (see: https://ivadomed.org/configuration_file.html#bids-config)
             # TODO: remove force indexing of CT-scan files when BEP024 is merged in BIDS.
             extension_ct = ('.nii.gz', '.nii')
             suffix_ct = ('ct', 'CT')
