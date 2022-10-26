@@ -57,18 +57,6 @@ microscopy segmentation training.
 
      "path_data": ["data_axondeepseg_sem"]
 
-- ``loader_parameters:bids_config``: Location of the custom BIDS configuration file required for microscopy
-  file indexing.
-
-  .. note::
-
-     You will need to update the value ``"ivadomed/config/config_bids.json"`` to
-     ``"<PATH_TO_IVADOMED>/ivadomed/config/config_bids.json"``
-
-  .. code-block:: xml
-
-     "bids_config": "<PATH_TO_IVADOMED>/ivadomed/config/config_bids.json"
-
 - ``loader_parameters:target_suffix``: Suffix of the ground truth segmentations. The ground truths are located
   under the ``data_axondeepseg_sem/derivatives/labels`` folder. In our case, the suffix are ``_seg-axon-manual``
   and ``_seg-myelin-manual``:
