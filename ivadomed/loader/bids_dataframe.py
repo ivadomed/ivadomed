@@ -80,25 +80,26 @@ class BidsDataframe:
         for path_data in self.paths_data:
             path_data = Path(path_data, '')
 
-            # Initialize BIDSLayoutIndexer and BIDSLayout
-            # validate=True by default for both indexer and layout, BIDS-validator is not skipped
-            # Force index of subject subfolders containing CT-scan files under "anat" or "ct" folder based on extensions and modality suffix.
-            # TODO: remove force indexing of CT-scan files after BEP CT-scan is merged in BIDS
+            # For CT-scan files:
+            # Force index of subject subfolders containing CT-scan files.
+            # As of 20221026: Implementation based on potential CT datatypes (anat or ct),
+            # extensions and modality suffixes discussed in BEP024 (https://bids.neuroimaging.io/bep024).
+            # TODO: remove force indexing of CT-scan files when BEP024 is merged in BIDS.
             extension_ct = ('.nii.gz', '.nii')
             suffix_ct = ('ct', 'CT')
             force_index = []
             for path_object in path_data.glob('**/*'):
                 if path_object.is_file():
-                    # CT-scan
                     if (path_object.name.endswith(extension_ct) and path_object.name.split('.')[0].endswith(suffix_ct) and
                             (path_object.parent.name == "anat" or path_object.parent.name == "ct") and
                             subject_path.startswith('sub')):
                         force_index.append(str(Path(*path_object.parent.parts[subject_path_index:])))
-            indexer = pybids.BIDSLayoutIndexer(force_index=force_index, validate=self.bids_validate)
 
+            # Initialize BIDSLayoutIndexer and BIDSLayout
+            # validate=True by default for both indexer and layout, BIDS-validator is not skipped
+            indexer = pybids.BIDSLayoutIndexer(force_index=force_index, validate=self.bids_validate)
             if self.derivatives:
                 self.write_derivatives_dataset_description(path_data)
-
             layout = pybids.BIDSLayout(str(path_data), config=self.bids_config, indexer=indexer,
                                        derivatives=self.derivatives)
 
