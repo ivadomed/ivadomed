@@ -82,24 +82,13 @@ class BidsDataframe:
 
             # Initialize BIDSLayoutIndexer and BIDSLayout
             # validate=True by default for both indexer and layout, BIDS-validator is not skipped
-            # Force index for samples tsv and json files, and for subject subfolders containing microscopy files based on extensions.
             # Force index of subject subfolders containing CT-scan files under "anat" or "ct" folder based on extensions and modality suffix.
-            # TODO: remove force indexing of microscopy files after Microscopy-BIDS is integrated in pybids
             # TODO: remove force indexing of CT-scan files after BEP CT-scan is merged in BIDS
-            ext_microscopy = ('.png', '.tif', '.ome.tif', '.ome.btf')
             ext_ct = ('.nii.gz', '.nii')
             suffix_ct = ('ct', 'CT')
             force_index = []
             for path_object in path_data.glob('**/*'):
                 if path_object.is_file():
-                    # Microscopy
-                    subject_path_index = len(path_data.parts)
-                    subject_path = path_object.parts[subject_path_index]
-                    if path_object.name == "samples.tsv" or path_object.name == "samples.json":
-                        force_index.append(path_object.name)
-                    if (path_object.name.endswith(ext_microscopy) and path_object.parent.name == "micr" and
-                        subject_path.startswith('sub')):
-                        force_index.append(str(Path(*path_object.parent.parts[subject_path_index:])))
                     # CT-scan
                     if (path_object.name.endswith(ext_ct) and path_object.name.split('.')[0].endswith(suffix_ct) and
                             (path_object.parent.name == "anat" or path_object.parent.name == "ct") and
