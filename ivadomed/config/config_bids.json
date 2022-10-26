@@ -103,7 +103,7 @@
         },
         {
             "name": "datatype",
-            "pattern": "[/\\\\]+(anat|beh|dwi|eeg|fmap|func|ieeg|meg|micr|perf|pet)[/\\\\]+"
+            "pattern": "[/\\\\]+(anat|beh|dwi|eeg|fmap|func|ieeg|meg|micr|perf|pet|ct)[/\\\\]+"
         },
         {
             "name": "extension",
