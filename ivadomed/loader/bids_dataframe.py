@@ -84,13 +84,13 @@ class BidsDataframe:
             # validate=True by default for both indexer and layout, BIDS-validator is not skipped
             # Force index of subject subfolders containing CT-scan files under "anat" or "ct" folder based on extensions and modality suffix.
             # TODO: remove force indexing of CT-scan files after BEP CT-scan is merged in BIDS
-            ext_ct = ('.nii.gz', '.nii')
+            extension_ct = ('.nii.gz', '.nii')
             suffix_ct = ('ct', 'CT')
             force_index = []
             for path_object in path_data.glob('**/*'):
                 if path_object.is_file():
                     # CT-scan
-                    if (path_object.name.endswith(ext_ct) and path_object.name.split('.')[0].endswith(suffix_ct) and
+                    if (path_object.name.endswith(extension_ct) and path_object.name.split('.')[0].endswith(suffix_ct) and
                             (path_object.parent.name == "anat" or path_object.parent.name == "ct") and
                             subject_path.startswith('sub')):
                         force_index.append(str(Path(*path_object.parent.parts[subject_path_index:])))
