@@ -25,7 +25,6 @@ def setup_function():
 
 @pytest.mark.parametrize('loader_parameters', [{
     "path_data": [str(Path(__data_testing_dir__, "microscopy_png"))],
-    "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
     "target_suffix": [["_seg-myelin-manual", "_seg-axon-manual"]],
     "extensions": [".png"],
     "roi_params": {"suffix": None, "slice_filter_roi": None},
@@ -112,7 +111,6 @@ def test_bids_df_no_validate(download_data_testing_test_files, loader_parameters
 
 @pytest.mark.parametrize('loader_parameters', [{
     "path_data": [__data_testing_dir__, str(Path(__data_testing_dir__, "microscopy_png"))],
-    "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
     "target_suffix": ["_seg-manual", "seg-axon-manual"],
     "extensions": [".nii.gz", ".png"],
     "roi_params": {"suffix": None, "slice_filter_roi": None},
@@ -180,7 +178,6 @@ def test_dropout_input(seg_pair):
 
 @pytest.mark.parametrize('loader_parameters', [{
     "path_data": [str(Path(__data_testing_dir__, "microscopy_png"))],
-    "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
     "target_suffix": ["_seg-myelin-manual"],
     "extensions": [".png"],
     "roi_params": {"suffix": None, "slice_filter_roi": None},
@@ -223,7 +220,6 @@ def test_load_dataset_2d_png(download_data_testing_test_files,
 
 @pytest.mark.parametrize('loader_parameters', [{
     "path_data": [str(Path(__data_testing_dir__, "microscopy_png"))],
-    "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
     "target_suffix": ["_seg-myelin-manual"],
     "extensions": [".png"],
     "roi_params": {"suffix": None, "slice_filter_roi": None},
@@ -270,7 +266,6 @@ def test_2d_patches_and_resampling(download_data_testing_test_files,
 
 @pytest.mark.parametrize('loader_parameters', [{
     "path_data": [str(Path(__data_testing_dir__, "microscopy_png"))],
-    "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
     "target_suffix": ["_seg-myelin-manual", "_seg-axon-manual"],
     "extensions": [".png"],
     "roi_params": {"suffix": None, "slice_filter_roi": None},
@@ -307,7 +302,6 @@ def test_get_target_filename_list(loader_parameters, model_parameters, transform
 
 @pytest.mark.parametrize('loader_parameters', [{
     "path_data": [str(Path(__data_testing_dir__, "microscopy_png"))],
-    "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
     "target_suffix": [["_seg-myelin-manual", "_seg-axon-manual"], ["_seg-myelin-manual", "_seg-axon-manual"]],
     "extensions": [".png"],
     "roi_params": {"suffix": None, "slice_filter_roi": None},
@@ -346,7 +340,6 @@ def test_get_target_filename_list_multiple_raters(loader_parameters, model_param
 
 @pytest.mark.parametrize('loader_parameters', [{
     "path_data": [str(Path(__data_testing_dir__, "microscopy_png"))],
-    "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
     "target_suffix": ["_seg-myelin-manual"],
     "extensions": [".png"],
     "roi_params": {"suffix": None, "slice_filter_roi": None},
@@ -401,7 +394,6 @@ def test_microscopy_pixelsize(download_data_testing_test_files, loader_parameter
 
 @pytest.mark.parametrize('loader_parameters', [{
     "path_data": [str(Path(__data_testing_dir__, "data_test_png_tif"))],
-    "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
     "target_suffix": ["_seg-myelin-manual"],
     "extensions": [".png", ".tif"],
     "roi_params": {"suffix": None, "slice_filter_roi": None},
