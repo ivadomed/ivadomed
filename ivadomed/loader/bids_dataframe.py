@@ -90,6 +90,8 @@ class BidsDataframe:
             force_index = []
             for path_object in path_data.glob('**/*'):
                 if path_object.is_file():
+                    subject_path_index = len(path_data.parts)
+                    subject_path = path_object.parts[subject_path_index]
                     if (path_object.name.endswith(extension_ct) and path_object.name.split('.')[0].endswith(suffix_ct) and
                             (path_object.parent.name == "anat" or path_object.parent.name == "ct") and
                             subject_path.startswith('sub')):
