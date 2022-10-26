@@ -1,5 +1,5 @@
 {
-    "name": "bids",
+    "name": "config_bids",
     "entities": [
         {
             "name": "subject",
