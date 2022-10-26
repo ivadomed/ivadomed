@@ -214,7 +214,8 @@ class BidsDataframe:
 
         # Add metadata from 'samples.tsv' file if present
         # The 'participant_id' column is added only if not already present from the 'participants.tsv' file.
-        # TODO: use pybids function after Microscopy-BIDS is integrated in pybids
+        # TODO: update to pybids function when the indexing of samples.tsv is integrated in pybids
+        # (see: https://github.com/bids-standard/pybids/issues/843)
         fname_samples = Path(path_data, "samples.tsv")
         if fname_samples.exists():
             df_samples = pd.read_csv(str(fname_samples), sep='\t')
@@ -233,8 +234,8 @@ class BidsDataframe:
             df = pd.merge(df, df_sessions, on=['subject', 'session'], suffixes=("_x", None), how='left')
 
         # Add metadata from all _scans.tsv files, if present
-        # TODO: use pybids function after Microscopy-BIDS is integrated in pybids
-        # TODO: verify merge behavior with EEG and DWI scans files, tested with anat and microscopy only
+        # TODO: implement reading _scans.tsv files using pybids "layout.get_collections(level='session')"
+        # TODO: verify merge behavior with EEG and DWI scans files, tested with anat and micr only
         df_scans = pd.DataFrame()
         for path_object in Path(path_data).glob("**/*"):
             if path_object.is_file():
