@@ -221,7 +221,7 @@ def pred_to_png(pred_list: list, target_list: list, subj_path: str, suffix: str 
         subj_path (str): Path of the subject filename in output folder without extension
             (e.g. "path_output/pred_masks/sub-01_sample-01_SEM").
         suffix (str): additional suffix to append to the filename (e.g. "_pred.png")
-        max_value (int): Maximum mask value of the float mask to use during the converion to uint8.
+        max_value (int): Maximum mask value of the float mask to use during the conversion to uint8.
     """
     for pred, target in zip(pred_list, target_list):
         filename = subj_path + target + suffix
