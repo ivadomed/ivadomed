@@ -105,7 +105,7 @@ def evaluate(bids_df, path_output, target_suffix, eval_params):
                                            target_list,
                                            str(path_preds.joinpath(subj_acq)),
                                            suffix="_pred_painted.png",
-                                           max_value=len(target_list))
+                                           max_value=3) # painted data contain 3 float values [0.0, 1.0, 2.0, 3.0] corresponding to background, TP, FP and FN objects)
 
         # SAVE RESULTS FOR THIS PRED
         results_pred['image_id'] = subj_acq
