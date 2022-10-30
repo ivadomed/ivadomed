@@ -2278,8 +2278,28 @@ Postprocessing
 
 Evaluation Parameters
 ---------------------
-Dict. Parameters to get object detection metrics (true positive and false detection rates), and this, for defined
-object sizes.
+Dict. Parameters to get object detection metrics (lesions true positive rate, lesions false detection rate
+and Hausdorff score), and this, for defined object sizes.
+
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "object_detection_metrics",
+        "$$description": [
+            "Indicate if object detection metrics (lesions true positive rate, lesions false detection rate\n",
+            "and Hausdorff score) are computed or not at evaluation time. Default: ``true``",
+        ],
+        "type": "boolean"
+    }
+
+.. code-block:: JSON
+
+    {
+        "evaluation_parameters": {
+            "object_detection_metrics": true
+        }
+    }
 
 
 .. jsonschema::
@@ -2295,7 +2315,8 @@ object sizes.
                     "These values will create several consecutive target size bins. For instance\n",
                     "with a list of two values, we will have three target size bins: minimal size\n",
                     "to first list element, first list element to second list element, and second\n",
-                    "list element to infinity. Default: ``[20, 100]``."
+                    "list element to infinity. Default: ``[20, 100]``.\n",
+                    "``object_detection_metrics`` must be ``true`` for the target_size to apply."
                 ]
             },
             "unit": {
@@ -2329,7 +2350,10 @@ object sizes.
         "options": {
             "thr": {
                 "type": "int",
-                "description": "Minimal object size overlapping to be considered a TP, FP, or FN. Default: ``3``."
+                "$$description": [
+                    "Minimal object size overlapping to be considered a TP, FP, or FN. Default: ``3``.\n",
+                    "``object_detection_metrics`` must be ``true`` for the overlap to apply."
+                ]
             },
             "unit": {
                 "type": "string",
