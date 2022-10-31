@@ -75,7 +75,9 @@ def train(rank, model_params, dataset_train, dataset_val, training_params, path_
     if ddp_setup_detected:
         wandb_tracking = False
     elif no_ddp_setup_detected or rank == 0:
-        imed_utils.initialize_wandb(wandb_params)
+        wandb_tracking = imed_utils.initialize_wandb(wandb_params)
+    else:
+        wandb_tracking = False
 
     if wandb_tracking:
         # Collect all hyperparameters into a dictionary
