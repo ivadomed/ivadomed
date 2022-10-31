@@ -274,3 +274,14 @@ class SegmentationPairKW:
     INPUT_METADATA = "input_metadata"
     GT = "gt"
     INPUT = "input"
+
+
+@dataclass(frozen=True)
+class MultiGPUsKW:
+    # Address/Port information for DDP inter process communicaitons.
+    MASTER_ADDR: str = "MASTER_ADDR"
+    MASTER_PORT: str = "MASTER_PORT"
+    BEST_TRAINING_DICE: str = "best_training_dice"
+    BEST_TRAINING_LOSS: str = "best_training_loss"
+    BEST_VALIDATION_DICE: str = "best_validation_dice"
+    BEST_VALIDATION_LOSS: str = "best_validation_loss"
