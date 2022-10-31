@@ -1045,8 +1045,8 @@ class Modified3DUNet(nn.Module):
     https://github.com/ozan-oktay/Attention-Gated-Networks
 
     Args:
-        in_channels (int): Number of channels in the input image.
-        out_channels (int): Number of channels in the output image.
+        in_channel (int): Number of channels in the input image.
+        out_channel (int): Number of channels in the output image.
         depth (int): 
         n_filters (int): Number of base filters in the U-Net.
         attention (bool): Boolean indicating whether the attention module is on or not.
@@ -1062,7 +1062,7 @@ class Modified3DUNet(nn.Module):
 
     Note: All layers are defined as attributes and used in the forward method.
     """
-    def __init__(self, in_channels, out_channels, depth=4, n_filters=16, attention=False, dropout_rate=0.3, inst_momentum=0.1,
+    def __init__(self, in_channel, out_channel, depth=4, n_filters=16, attention=False, dropout_rate=0.3, inst_momentum=0.1,
                  final_activation="sigmoid", n_metadata=None, film_layers=None, **kwargs):
         super(Modified3DUNet, self).__init__()
 
@@ -1070,14 +1070,14 @@ class Modified3DUNet(nn.Module):
         self.attention_gate = Modified3DUNetAttentionGate(depth=depth, n_filters=n_filters, inst_momentum=inst_momentum) if attention else None
 
         # set the encoder path
-        self.encoder = Modified3DUNetEncoder(in_channel=in_channels, depth=depth, dropout_rate=dropout_rate, 
+        self.encoder = Modified3DUNetEncoder(in_channel=in_channel, depth=depth, dropout_rate=dropout_rate,
                                              inst_momentum=inst_momentum, n_metadata=n_metadata, film_layers=film_layers,
                                              n_filters=n_filters)
 
         # set the decoder path
-        self.decoder = Modified3DUNetDecoder(out_channel=out_channels, depth=depth, dropout_rate=dropout_rate,
-                                            inst_momentum=inst_momentum, n_metadata=n_metadata, film_layers=film_layers,
-                                            final_activation=final_activation)
+        self.decoder = Modified3DUNetDecoder(out_channel=out_channel, depth=depth, dropout_rate=dropout_rate,
+                                             inst_momentum=inst_momentum, n_metadata=n_metadata, film_layers=film_layers,
+                                             final_activation=final_activation)
 
     def forward(self, x):
         features, _ = self.encoder(x)
