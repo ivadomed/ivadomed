@@ -1,3 +1,70 @@
+## v2.9.7 (2022-10-31)
+[View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.9.6...release)
+
+**FEATURE**
+
+ - feat: update default args for `wandb.login()`.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1193)
+ - Add Config Parameter to Disable Validation When Loading BIDS Info.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1168)
+ - Add auto disk cache capability to mri2d and mri3d dataset classes.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1121)
+ - Segment 2D images without patches.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1101)
+
+**CI**
+
+ - chore: add an upper bound version specifier for pandas to prevent breaking the tests.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1194)
+ - Drop testing on macOS 10.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1190)
+ - Only run tests on code changes.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1186)
+ - chore: upgrade run_tests workflow.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1146)
+ - Don't install ivadomed just to run pre-commit checks..  [View pull request](https://github.com/ivadomed/ivadomed/pull/1145)
+
+**BUG**
+
+ - chore: add an upper bound version specifier for pandas to prevent breaking the tests.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1194)
+ - Drop testing on macOS 10.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1190)
+ - Resolve imageio v2->v3 imread deprecation warnings.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1181)
+ - fix: adapt the filenames of the predictions in pred_masks as per target_suffix.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1173)
+ - Fix long evaluation time on microscopy images.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1081)
+
+**INSTALLATION**
+
+ - chore: update installation for ivadomed tutorials.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1200)
+ - Remove deprecated torch and dev installation instructions.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1179)
+ - Get Rid of Python 3.6.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1149)
+ - Support python3.10.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1137)
+
+**DOCUMENTATION**
+
+ - fix: update link to contribution guidelines.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1196)
+ - Tests README: Add instructions to install testing-related packages.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1180)
+ - Remove deprecated torch and dev installation instructions.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1179)
+ - Add description and default values to some parameters..  [View pull request](https://github.com/ivadomed/ivadomed/pull/1174)
+ - Add Note in WandB.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1171)
+
+**DEPENDENCIES**
+
+ - chore: add an upper bound version specifier for pandas to prevent breaking the tests.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1194)
+ - Support python3.10.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1137)
+
+**ENHANCEMENT**
+
+ - feat: update default args for `wandb.login()`.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1193)
+ - Only run tests on code changes.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1186)
+ - Transformation on Subvolume for mri3d_subvolume_segmentation_dataset.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1169)
+ - Support python3.10.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1137)
+ - Add syntax highlighting and improve flow of the Colab tutorials.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1127)
+ - Add auto disk cache capability to mri2d and mri3d dataset classes.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1121)
+
+**TESTING**
+
+ - Drop testing on macOS 10.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1190)
+ - Only run tests on code changes.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1186)
+ - Add syntax highlighting and improve flow of the Colab tutorials.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1127)
+
+**REFACTORING**
+
+ - feat: update default args for `wandb.login()`.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1193)
+ - Convert pred data to uint8 prior to imwrite png.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1185)
+ - Minor correction to unsupported file extension error message.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1177)
+
 ## v2.9.6 (2022-06-02)
 [View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.9.5...release)
 
