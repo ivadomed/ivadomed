@@ -7,8 +7,9 @@ from loguru import logger
 from scipy import ndimage
 from pathlib import Path
 
+from ivadomed.transforms.compose import Compose
+from ivadomed.transforms.bouding_box_crop import BoundingBoxCrop
 from ivadomed import postprocessing as imed_postpro
-from ivadomed import transforms as imed_transforms
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.keywords import ObjectDetectionParamsKW, MetadataKW
 
@@ -171,7 +172,7 @@ def adjust_transforms(transforms, seg_pair, length=None, stride=None):
     """
     resample_idx = [-1, -1, -1]
     if transforms is None:
-        transforms = imed_transforms.Compose({})
+        transforms = Compose({})
     for i, img_type in enumerate(transforms.transform):
         for idx, transfo in enumerate(transforms.transform[img_type].transforms):
             if "BoundingBoxCrop" == transfo.__class__.__name__:
@@ -192,7 +193,7 @@ def adjust_transforms(transforms, seg_pair, length=None, stride=None):
             # Adjust size according to stride to avoid dimension mismatch
             size = resize_to_multiple(size, stride, length)
         index_shape.append(tuple(size))
-        transform_obj = imed_transforms.BoundingBoxCrop(size=size)
+        transform_obj = BoundingBoxCrop(size=size)
         transforms.transform[img_type].transforms.insert(resample_idx[i] + 1, transform_obj)
 
     for metadata in seg_pair['input_metadata']:
@@ -219,7 +220,7 @@ def adjust_undo_transforms(transforms, seg_pair, index=0):
                 transforms.transform[img_type].transforms.pop(idx)
         if "bounding_box" in seg_pair['input_metadata'][index][0]:
             size = list(seg_pair['input_metadata'][index][0]['index_shape'])
-            transform_obj = imed_transforms.BoundingBoxCrop(size=size)
+            transform_obj = BoundingBoxCrop(size=size)
             transforms.transform[img_type].transforms.insert(resample_idx + 1, transform_obj)
 
 

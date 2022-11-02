@@ -14,14 +14,14 @@ from torch import tensor
 
 from ivadomed.loader.mri3d_subvolume_segmentation_dataset import MRI3DSubVolumeSegmentationDataset
 from ivadomed.loader.mri2d_segmentation_dataset import MRI2DSegmentationDataset
-from ivadomed.transforms import UndoCompose
+from ivadomed.transforms.undo_compose import UndoCompose
 from ivadomed import config_manager as imed_config_manager
 from ivadomed import models as imed_models
 from ivadomed import postprocessing as imed_postpro
-from ivadomed import transforms as imed_transforms
 from ivadomed.loader import utils as imed_loader_utils, film as imed_film
 from ivadomed.loader.slice_filter import SliceFilter
 from ivadomed.object_detection import utils as imed_obj_detect
+from ivadomed.transforms.utils import get_subdatasets_transforms, prepare_transforms
 from ivadomed import utils as imed_utils
 from ivadomed import training as imed_training
 from ivadomed.keywords import ConfigKW, ModelParamsKW, ObjectDetectionParamsKW, TransformationKW, LoaderParamsKW, \
@@ -398,9 +398,9 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
         metadata = process_transformations(context, fname_roi, fname_prior, metadata, slice_axis, fname_images)
 
     # Compose transforms
-    _, _, transform_test_params = imed_transforms.get_subdatasets_transforms(context[ConfigKW.TRANSFORMATION])
+    _, _, transform_test_params = get_subdatasets_transforms(context[ConfigKW.TRANSFORMATION])
 
-    tranform_lst, undo_transforms = imed_transforms.prepare_transforms(transform_test_params)
+    tranform_lst, undo_transforms = prepare_transforms(transform_test_params)
 
     # Force filter_empty_mask to False if fname_roi = None
     if fname_roi is None and SliceFilterParamsKW.FILTER_EMPTY_MASK in loader_params[LoaderParamsKW.SLICE_FILTER_PARAMS]:

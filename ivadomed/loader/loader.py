@@ -1,12 +1,12 @@
 import copy
 from loguru import logger
-from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
 from ivadomed.loader.bids3d_dataset import Bids3DDataset
 from ivadomed.loader.bids_dataset import BidsDataset
 from ivadomed.keywords import ROIParamsKW, TransformationKW, ModelParamsKW, ConfigKW
 from ivadomed.loader.slice_filter import SliceFilter
 from ivadomed.loader.patch_filter import PatchFilter
+from ivadomed.transforms.utils import prepare_transforms
 
 
 def load_dataset(bids_df, data_list, transforms_params, model_params, target_suffix, roi_params,
@@ -48,7 +48,7 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
     """
 
     # Compose transforms
-    tranform_lst, _ = imed_transforms.prepare_transforms(copy.deepcopy(transforms_params), requires_undo)
+    tranform_lst, _ = prepare_transforms(copy.deepcopy(transforms_params), requires_undo)
 
     # If ROICrop is not part of the transforms, then enforce no slice filtering based on ROI data.
     if TransformationKW.ROICROP not in transforms_params:

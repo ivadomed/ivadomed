@@ -14,10 +14,12 @@ from ivadomed import evaluation as imed_evaluation
 from ivadomed import config_manager as imed_config_manager
 from ivadomed import testing as imed_testing
 from ivadomed import training as imed_training
-from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
 from ivadomed import metrics as imed_metrics
 from ivadomed import inference as imed_inference
+from ivadomed.transforms.utils import get_subdatasets_transforms
+from ivadomed.transforms.compose import Compose
+from ivadomed.transforms.undo_compose import UndoCompose
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, film as imed_film
 from ivadomed.keywords import ConfigKW, ModelParamsKW, LoaderParamsKW, ContrastParamsKW, BalanceSamplesKW, \
     TrainingParamsKW, ObjectDetectionParamsKW, UncertaintyKW, PostprocessingKW, BinarizeProdictionKW, MetricsKW, \
@@ -383,7 +385,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False, no_
 
     # Get transforms for each subdataset
     transform_train_params, transform_valid_params, transform_test_params = \
-        imed_transforms.get_subdatasets_transforms(context[ConfigKW.TRANSFORMATION])
+        get_subdatasets_transforms(context[ConfigKW.TRANSFORMATION])
 
     # MODEL PARAMETERS
     model_params, loader_params = set_model_params(context, loader_params)
@@ -415,7 +417,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False, no_
         transformation_dict = transform_train_params
     else:
         transformation_dict = transform_test_params
-    undo_transforms = imed_transforms.UndoCompose(imed_transforms.Compose(transformation_dict, requires_undo=True))
+    undo_transforms = UndoCompose(Compose(transformation_dict, requires_undo=True))
     testing_params = copy.deepcopy(context[ConfigKW.TRAINING_PARAMETERS])
     testing_params.update({ConfigKW.UNCERTAINTY: context[ConfigKW.UNCERTAINTY]})
     testing_params.update({LoaderParamsKW.TARGET_SUFFIX: loader_params[LoaderParamsKW.TARGET_SUFFIX],

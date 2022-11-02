@@ -11,7 +11,7 @@ from ivadomed.loader.bids_dataset import BidsDataset
 from ivadomed.loader.segmentation_pair import SegmentationPair
 from ivadomed import metrics as imed_metrics
 from ivadomed import postprocessing as imed_postpro
-from ivadomed import transforms as imed_transforms
+from ivadomed.transforms.utils import prepare_transforms
 from ivadomed.loader import loader as imed_loader, utils as imed_loader_utils
 from testing.unit_tests.t_utils import create_tmp_dir,  __data_testing_dir__, __tmp_dir__, download_data_testing_test_files
 from testing.common_testing_util import remove_tmp_dir
@@ -60,7 +60,7 @@ def test_image_orientation(download_data_testing_test_files, loader_parameters):
         "NormalizeInstance": {"applied_to": ['im']}
     }
 
-    tranform_lst, training_undo_transform = imed_transforms.prepare_transforms(training_transform_dict)
+    tranform_lst, training_undo_transform = prepare_transforms(training_transform_dict)
 
     model_params = {
             "name": "Modified3DUNet",

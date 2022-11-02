@@ -11,9 +11,10 @@ from loguru import logger
 from ivadomed import config_manager as imed_config_manager
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.loader.sample_meta_data import SampleMetadata
-from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
 from ivadomed import maths as imed_maths
+from ivadomed.transforms.utils import get_subdatasets_transforms
+from ivadomed.transforms.compose import Compose
 from ivadomed.keywords import ConfigKW, TransformationKW, LoaderParamsKW, MetadataKW
 
 
@@ -115,7 +116,7 @@ def run_visualization(input, config, number, output, roi):
     indexes = random.sample(range(0, input_data.shape[2]), number)
 
     # Get training transforms
-    training_transforms, _, _ = imed_transforms.get_subdatasets_transforms(context[ConfigKW.TRANSFORMATION])
+    training_transforms, _, _ = get_subdatasets_transforms(context[ConfigKW.TRANSFORMATION])
 
     if TransformationKW.ROICROP in training_transforms:
         if roi and Path(roi).is_file():
@@ -136,7 +137,7 @@ def run_visualization(input, config, number, output, roi):
 
         # Add new transform to Compose
         dict_transforms.update({transform_name: training_transforms[transform_name]})
-        composed_transforms = imed_transforms.Compose(dict_transforms)
+        composed_transforms = Compose(dict_transforms)
 
         # Loop across slices
         for i in indexes:

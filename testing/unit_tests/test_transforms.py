@@ -12,9 +12,18 @@ from ivadomed import maths as imed_maths
 
 from ivadomed.loader.sample_meta_data import SampleMetadata
 from ivadomed.metrics import dice_score
-from ivadomed.transforms import Clahe, AdditiveGaussianNoise, RandomAffine, RandomReverse, \
-    DilateGT, ElasticTransform, ROICrop, CenterCrop, NormalizeInstance, HistogramClipping, \
-    NumpyToTensor, Resample
+from ivadomed.transforms.clahe import Clahe
+from ivadomed.transforms.numpy_to_tensor import NumpyToTensor
+from ivadomed.transforms.additive_gaussian_noise import AdditiveGaussianNoise
+from ivadomed.transforms.random_affine import RandomAffine
+from ivadomed.transforms.random_reverse import RandomReverse
+from ivadomed.transforms.dilate_GT import DilateGT
+from ivadomed.transforms.elastic_transform import ElasticTransform
+from ivadomed.transforms.roi_crop import ROICrop
+from ivadomed.transforms.center_crop import CenterCrop
+from ivadomed.transforms.normalize_instance import NormalizeInstance
+from ivadomed.transforms.histogram_clipping import HistogramClipping
+from ivadomed.transforms.resample import Resample
 from ivadomed.keywords import MetadataKW
 
 DEBUGGING = False
