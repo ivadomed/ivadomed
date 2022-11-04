@@ -281,7 +281,7 @@ class SegmentationPair(object):
         extension = imed_loader_utils.get_file_extension(filename)
         # TODO: remove "ome" from condition when implementing OMETIFF support (#739)
         if (not extension) or ("ome" in extension):
-            raise RuntimeError(f"The input file extension '{extension}' of '{Path(filename).stem}' is not "
+            raise RuntimeError(f"The input file extension '{extension}' of '{Path(filename).name}' is not "
                                f"supported. ivadomed supports the following "
                                f"file extensions: '.nii', '.nii.gz', '.png', '.tif', '.tiff', '.jpg' and '.jpeg'.")
 
@@ -311,11 +311,11 @@ class SegmentationPair(object):
         # For '.png', '.tif', '.tiff', '.jpg' and 'jpeg' extentions
         # Read image as 8 bit grayscale in numpy array (behavior TBD in ivadomed for RGB, RBGA or higher bit depth)
         if "tif" in extension:
-            img = np.expand_dims(imageio.imread(filename, format='tiff-pil'), axis=-1).astype(np.uint8)
+            img = np.expand_dims(imageio.v2.imread(filename, format='tiff-pil'), axis=-1).astype(np.uint8)
             if len(img.shape) > 3:
-                img = np.expand_dims(imageio.imread(filename, format='tiff-pil', as_gray=True), axis=-1).astype(np.uint8)
+                img = np.expand_dims(imageio.v2.imread(filename, format='tiff-pil', as_gray=True), axis=-1).astype(np.uint8)
         else:
-            img = np.expand_dims(imageio.imread(filename, as_gray=True), axis=-1).astype(np.uint8)
+            img = np.expand_dims(imageio.v2.imread(filename, as_gray=True), axis=-1).astype(np.uint8)
 
         # Binarize ground-truth values (0-255) to 0 and 1 in uint8 with threshold 0.5
         if is_gt:
