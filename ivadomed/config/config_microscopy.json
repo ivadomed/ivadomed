@@ -91,6 +91,9 @@
     "postprocessing": {
         "binarize_maxpooling": {}
     },
+    "evaluation_parameters": {
+        "object_detection_metrics": false
+    },
     "transformation": {
         "Resample":
         {

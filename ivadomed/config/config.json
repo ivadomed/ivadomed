@@ -35,7 +35,8 @@
         },
         "slice_axis": "axial",
         "multichannel": false,
-        "soft_gt": false
+        "soft_gt": false,
+        "bids_validate": true
     },
     "split_dataset": {
         "fname_split": null,

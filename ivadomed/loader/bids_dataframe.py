@@ -52,6 +52,8 @@ class BidsDataframe:
         if self.roi_suffix is not None:
             self.target_suffix.append(self.roi_suffix)
 
+        self.bids_validate = loader_params.get('bids_validate', True)
+
         # extensions from loader parameters
         self.extensions = loader_params['extensions'] if loader_params['extensions'] else [".nii", ".nii.gz"]
 
@@ -103,7 +105,7 @@ class BidsDataframe:
                             (path_object.parent.name == "anat" or path_object.parent.name == "ct") and
                             subject_path.startswith('sub')):
                         force_index.append(str(Path(*path_object.parent.parts[subject_path_index:])))
-            indexer = pybids.BIDSLayoutIndexer(force_index=force_index)
+            indexer = pybids.BIDSLayoutIndexer(force_index=force_index, validate=self.bids_validate)
 
             if self.derivatives:
                 self.write_derivatives_dataset_description(path_data)
