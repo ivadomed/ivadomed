@@ -51,7 +51,7 @@ DICT_URL = {
         "url": ["https://github.com/ivadomed/model_find_disc_t2/archive/r20200928.zip"],
         "description": "Intervertebral disc detection model trained on T2-weighted images."},
     "data_functional_testing": {
-        "url": ["https://github.com/ivadomed/data_functional_testing/archive/r20210617.zip"],
+        "url": ["https://github.com/ivadomed/data_functional_testing/archive/r20211002.zip"],
         "description": "Data used for functional testing in Ivadomed."},
     "data_axondeepseg_sem": {
         "url": ["https://github.com/axondeepseg/data_axondeepseg_sem/archive/r20211130.zip"],

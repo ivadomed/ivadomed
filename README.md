@@ -41,10 +41,6 @@ cd ivadomed
 pip install -e .
 ```
 
-### Install from source
-
-Make sure to install Torch1.8 following commands [here](https://pytorch.org/get-started/previous-versions/#v180) as pip is not able to auto infer GPU/CPU support on your behalf.
-Again, the more comprehensive installation instruction is available [there](https://ivadomed.org/installation.html).
 
 ## Contributors
 <p float="left">
