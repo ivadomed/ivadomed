@@ -24,7 +24,7 @@ class BidsDataset(MRI2DSegmentationDataset):
         model_params (dict): Dictionary containing model parameters.
         slice_axis (int): Indicates the axis used to extract 2D slices from 3D NifTI files:
             "axial": 2, "sagittal": 0, "coronal": 1. 2D PNG/TIF/JPG files use default "axial": 2.
-        cache (bool): If the data should be cached in memory or not.
+        nibabel_cache (bool): If the data should be cached in memory or not by nibabel to reduce repetitive disk loading.
         transform (list): Transformation list (length 2) composed of preprocessing transforms (Compose) and transforms
             to apply during training (Compose).
         metadata_choice (str): Choice between "mri_params", "contrasts", the name of a column from the
@@ -52,7 +52,7 @@ class BidsDataset(MRI2DSegmentationDataset):
     """
 
     def __init__(self, bids_df: BidsDataframe, subject_file_lst: list, target_suffix: list, contrast_params: dict,
-                 model_params: dict, slice_axis: int = 2, cache: bool = True, transform: list = None,
+                 model_params: dict, slice_axis: int = 2, nibabel_cache: bool = True, transform: list = None,
                  metadata_choice: str = False, slice_filter_fn: SliceFilter = None, patch_filter_fn: PatchFilter = None,
                  roi_params: dict = None, multichannel: bool = False, object_detection_params: dict = None,
                  task: str = "segmentation", soft_gt: bool = False, is_input_dropout: bool = False):
@@ -136,7 +136,7 @@ class BidsDataset(MRI2DSegmentationDataset):
         length = model_params[ModelParamsKW.LENGTH_2D] if ModelParamsKW.LENGTH_2D in model_params else []
         stride = model_params[ModelParamsKW.STRIDE_2D] if ModelParamsKW.STRIDE_2D in model_params else []
 
-        super().__init__(self.filename_pairs, length, stride, slice_axis, cache, transform, slice_filter_fn, patch_filter_fn,
+        super().__init__(self.filename_pairs, length, stride, slice_axis, nibabel_cache, transform, slice_filter_fn, patch_filter_fn,
                          task, self.roi_params, self.soft_gt, is_input_dropout)
 
     def get_target_filename(self, target_suffix: any, target_filename: any, derivative: any) -> None:
