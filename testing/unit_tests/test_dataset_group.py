@@ -42,7 +42,7 @@ def test_dataset_group():
     a_dataset_group = DatasetGroup(example_DatasetGroup_json, loader_config)
     a_dataset_group.preview(verbose=True)
 
-    # Should have 4 files pairs, each of them should have 2 Input and 1 Output
+    # Should have 3 files pairs, each of them should have 2 Input and 1 Output
     for data in [a_dataset_group.train_filename_pairs, a_dataset_group.val_filename_pairs, a_dataset_group.test_filename_pairs]:
         assert len(data) == 3
         for pair in data:

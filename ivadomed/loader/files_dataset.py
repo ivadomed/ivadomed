@@ -56,7 +56,8 @@ class FilesDataset(MRI2DSegmentationDataset):
 
         self.name: str = dict_files_pairing.get(DataloaderKW.SUBSET_LABEL, "DefaultFileDatasetLabel")
 
-        # We assume user explicitly provide the subject lists so WE do not do any additional filtering
+        # Some key assumptions for this implementation going forard:
+        # 1. We assume user explicitly provide the subject lists so WE do not do any additional filtering
 
         # Currently does not support contrast balance (See BIDS Data 2D for reference implementation)
         # Create a dictionary with the number of subjects for each contrast of contrast_balance
@@ -91,17 +92,18 @@ class FilesDataset(MRI2DSegmentationDataset):
         # Call the parent class constructor for MRI2DSegmentationDataset
         super().__init__(
             self.filename_pairs,
-            length,
-            stride,
-            config.slice_axis,
-            config.nibabel_cache,
-            config.transform,
-            config.slice_filter_fn,
-            config.patch_filter_fn,
-            config.task,
-            config.roi_params,
-            config.soft_gt,
-            config.is_input_dropout,
+            length=length,
+            stride=stride,
+            slice_axis=config.slice_axis,
+            nibabel_cache=config.nibabel_cache,
+            transform=config.transform,
+            slice_filter_fn=config.slice_filter_fn,
+            patch_filter_fn=config.patch_filter_fn,
+            task=config.task,
+            roi_params=config.roi_params,
+            soft_gt=config.soft_gt,
+            is_input_dropout=config.is_input_dropout,
+            disk_cache=config.disk_cache,
         )
 
     def parse_spec_json_and_update_filename_pairs(self, loader_json: dict) -> Tuple[str, list]:

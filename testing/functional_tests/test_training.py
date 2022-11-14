@@ -1,8 +1,10 @@
 import os
 import json
+from pathlib import Path
 
 from ivadomed.keywords import ConfigKW, LoaderParamsKW
-from testing.functional_tests.t_utils import create_tmp_dir, __data_testing_dir__, download_functional_test_files
+from testing.functional_tests.t_utils import create_tmp_dir, __data_testing_dir__, download_functional_test_files, \
+    __tmp_dir__
 from testing.common_testing_util import remove_tmp_dir
 from testing.mocker.mocker_fixture import create_mock_bids_file_structures
 
@@ -27,7 +29,7 @@ def test_training_with_filedataset(
     create_mock_bids_file_structures(path_mock_data),  # pytest fixture, do not remove.
 
     # Build the config file
-    path_default_config = os.path.join(__data_testing_dir__, 'automate_training_config.json')
+    path_default_config = str(Path(__data_testing_dir__, 'automate_training_config.json'))
     with open(path_default_config) as json_file:
         json_data: dict = json.load(json_file)
 
@@ -63,6 +65,61 @@ def test_training_with_filedataset(
 
     # Call ivado cmd_train
     best_training_dice, best_training_loss, best_validation_dice, best_validation_loss = run_command(context=json_data)
+@pytest.mark.script_launch_mode('subprocess')
+@pytest.mark.parametrize('input_file_dataset', [
+    example_2i1o_all_dataset_groups_config_json,
+    # example_1i1o_all_dataset_groups_config_json,
+])
+def test_training_cli(
+        download_functional_test_files,  # pytest fixture, do not remove.
+        input_file_dataset,
+        script_runner
+):
+    create_mock_bids_file_structures(path_mock_data),  # pytest fixture, do not remove.
+
+    # Build the config file
+    path_default_config = os.path.join(__data_testing_dir__, 'automate_training_config.json')
+    path_default_config_patched = os.path.join(__data_testing_dir__, 'automate_training_config_patched.json')
+
+    with open(path_default_config, "r") as json_file:
+        json_data: dict = json.load(json_file)
+
+    # Add the new key to JSON.
+    # json_data.update(example_1i1o_all_dataset_groups_config_json)
+    # Update three major keys.
+
+    # update 1) dataset_groups, 2) expected_input, 3) expected_gt
+    json_data.update(input_file_dataset)
+
+    # Popping out the contract key to enable it to AUTO using the new LoaderConfiguration
+    json_data[ConfigKW.LOADER_PARAMETERS].pop(LoaderParamsKW.CONTRAST_PARAMS)
+
+    # Patching in the two required parameters.
+    json_data["path_output"] = "pytest_output_folder"
+    json_data["log_file"] = "log"
+    # Patching old automate_training_config.json to use the new balance_samples
+    json_data["training_parameters"]["balance_samples"] = {
+            "applied": False,
+            "type": "gt"}
+    # Patch default model to
+    json_data["default_model"]["is_2d"] = True
+
+    # Debug print out JSON
+    logger.trace(json.dumps(json_data, indent=4))
+
+    # Patch the existing file to code.
+    with open(path_default_config_patched, "w") as json_file:
+        json.dump(json_data, json_file)
+
+    __output_dir__ = Path(__tmp_dir__, 'results')
+
+    ret = script_runner.run('ivadomed', '--train', '-c', f'{path_default_config_patched}',
+                            '--path-data', f'{__data_testing_dir__}',
+                            '-po', f'{__output_dir__}')
+    logger.debug(f"{ret.stdout}")
+    logger.debug(f"{ret.stderr}")
+
+    assert ret.success
 
 
 @pytest.mark.skip(reason="To be Implemented")

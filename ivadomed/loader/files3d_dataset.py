@@ -35,4 +35,5 @@ class Files3DDataset(MRI3DSubVolumeSegmentationDataset):
             task=config.task,
             soft_gt=config.soft_gt,
             is_input_dropout=config.is_input_dropout,
+            disk_cache=config.disk_cache,
         )

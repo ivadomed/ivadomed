@@ -28,7 +28,6 @@ from pathlib import Path
 
 from ivadomed.loader.consolidation import ConsolidatedDataset
 from ivadomed.loader.generalized_loader_configuration import GeneralizedLoaderConfiguration
-from ivadomed.loader.loader_files import load_fileset
 
 cudnn.benchmark = True
 
@@ -421,17 +420,13 @@ def run_command(context: dict, n_gif=0, thr_increment=None, resume_training=Fals
     #################################
     #  Loader Version Determination:
     #################################
-    # If the "contrast_params" key is present, we utilize that new loader pathway.
-        # This is because the new loader no longer rely on the whole contrast_params key to specify
-        # training/validation/testing/balance etc.
-    if context.get(ConfigKW.LOADER_PARAMETERS) is not None:
-        CONTRAST_PARAMS: dict = context.get(ConfigKW.LOADER_PARAMETERS).get(LoaderParamsKW.CONTRAST_PARAMS)
-        if CONTRAST_PARAMS is not None:
-            loader_version: str = LoaderParamsKW.TRADITIONAL_BIDS_LOADER
-        else:
-            loader_version: str = LoaderParamsKW.MULTI_PATH_LOADER
-    else:
+    # If the new keywords are present, we use the new loader pathway. Ignoring all "contrast_params" keys etc fro now.
+    if context.get(DataloaderKW.DATASET_GROUPS) and context.get(DataloaderKW.EXPECTED_GT) and context.get(DataloaderKW.EXPECTED_INPUT):
         loader_version: str = LoaderParamsKW.MULTI_PATH_LOADER
+    else:
+        loader_version: str = LoaderParamsKW.TRADITIONAL_BIDS_LOADER
+        logger.info(f"Using {loader_version} loader version because new V2 loader keywords are not present in the context.")
+
     #################################
 
     # If the older loader parameters key, we default to use the old loader pathway relying on bids.
@@ -671,23 +666,16 @@ def execute_multi_path_training(context: dict,
 
     cuda_available, device = imed_utils.define_device(context.get(ConfigKW.GPU_IDS)[0])
 
-    # Probably need to invoke the aggregator around here.
-    # Parse the DataSets keys.
-    ####
-    # BIDS Data Set Section
-    ####
-
-    #
     from ivadomed.loader.all_dataset_group import AllDatasetGroups
 
-    # Build simple dict
+    # Build simple dict to contain key dictionary.
     all_data_groups_dict = {}
     all_data_groups_dict[DataloaderKW.DATASET_GROUPS] = context.get(DataloaderKW.DATASET_GROUPS)
     all_data_groups_dict[DataloaderKW.EXPECTED_INPUT] = context.get(DataloaderKW.EXPECTED_INPUT)
     all_data_groups_dict[DataloaderKW.EXPECTED_GT] = context.get(DataloaderKW.EXPECTED_GT)
 
     # Build the generalized configuration object
-    # Build all dataset group object
+    # Build all dataset group object (FileDataset, BIDSDataset, RegexDataset etc, all being taken care of by this constructor)
     all_data = AllDatasetGroups(
         all_data_groups_dict,
         GeneralizedLoaderConfiguration(model_params)
@@ -700,15 +688,6 @@ def execute_multi_path_training(context: dict,
     # Aggregate validation dataset across AllDatasetGroups
     ds_valid = ConsolidatedDataset.consolidate_AllDatasetGroups_to_a_specific_filedataset_type(all_data, DataloaderKW.VALIDATION)
     ds_valid.load_filenames()
-
-
-    ####
-    # File Data Set Section
-    ####
-
-    ####
-    # RegEx Data Set Section
-    ####
 
     metric_fns = imed_metrics.get_metric_fns(ds_train.task)
     # If FiLM, normalize data
