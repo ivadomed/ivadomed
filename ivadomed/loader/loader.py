@@ -4,21 +4,39 @@ from typing import List
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
 from ivadomed.loader.bids3d_dataset import Bids3DDataset
+from ivadomed.loader.bids_dataframe import BidsDataframe
 from ivadomed.loader.bids_dataset import BidsDataset
 from ivadomed.keywords import ROIParamsKW, TransformationKW, ModelParamsKW, ConfigKW
 from ivadomed.loader.slice_filter import SliceFilter
 from ivadomed.loader.patch_filter import PatchFilter
+import torch
 
 
-def load_dataset(bids_df: any, data_list: list, transforms_params: dict, model_params: dict, target_suffix: List[str],
-                 roi_params: dict, contrast_params: dict, slice_filter_params: dict, patch_filter_params: dict, slice_axis: str,
-                 multichannel: bool, dataset_type: str = "training", requires_undo: bool = False, metadata_type: str = None,
-                 object_detection_params: dict = None, soft_gt: bool = False, device: any = None,
-                 cuda_available: any = None, is_input_dropout: bool = False, **kwargs) -> Bids3DDataset:
+def load_dataset(bids_df: BidsDataframe,
+                 data_list: List[str],
+                 transforms_params: dict,
+                 model_params: dict,
+                 target_suffix: List[str],
+                 roi_params: dict,
+                 contrast_params: dict,
+                 slice_filter_params: dict,
+                 patch_filter_params: dict,
+                 slice_axis: str,
+                 multichannel: bool,
+                 dataset_type: str = "training",
+                 requires_undo: bool = False,
+                 metadata_type: str = None,
+                 object_detection_params: dict = None,
+                 soft_gt: bool = False,
+                 device: torch.device = None,
+                 cuda_available: bool = None,
+                 is_input_dropout: bool = False,
+                 **kwargs) -> Bids3DDataset:
     """Get loader appropriate loader according to model type. Available loaders are Bids3DDataset for 3D data,
     BidsDataset for 2D data and HDF5Dataset for HeMIS.
 
     Args:
+
         bids_df (BidsDataframe): Object containing dataframe with all BIDS image files and their metadata.
         data_list (list): Subject names list.
         transforms_params (dict): Dictionary containing transformations for "training", "validation", "testing" (keys),
@@ -39,6 +57,8 @@ def load_dataset(bids_df: any, data_list: list, transforms_params: dict, model_p
         object_detection_params (dict): Object dection parameters.
         soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
         truths are thresholded (0.5) after the data augmentation operations.
+        device (torch.device): Device to use for the model training.
+        cuda_available (bool): If True, cuda is available.
         is_input_dropout (bool): Return input with missing modalities.
 
     Returns:
@@ -70,21 +90,6 @@ def load_dataset(bids_df: any, data_list: list, transforms_params: dict, model_p
                                 object_detection_params=object_detection_params,
                                 soft_gt=soft_gt,
                                 is_input_dropout=is_input_dropout)
-    # elif model_params[ModelParamsKW.NAME] == ConfigKW.HEMIS_UNET:
-    #     dataset = imed_adaptative.HDF5Dataset(bids_df=bids_df,
-    #                                           subject_file_lst=data_list,
-    #                                           model_params=model_params,
-    #                                           contrast_params=contrast_params,
-    #                                           target_suffix=target_suffix,
-    #                                           slice_axis=imed_utils.AXIS_DCT[slice_axis],
-    #                                           transform=tranform_lst,
-    #                                           metadata_choice=metadata_type,
-    #                                           slice_filter_fn=SliceFilter(**slice_filter_params,
-    #                                                                                         device=device,
-    #                                                                                         cuda_available=cuda_available),
-    #                                           roi_params=roi_params,
-    #                                           object_detection_params=object_detection_params,
-    #                                           soft_gt=soft_gt)
     else:
         # Task selection
         task = imed_utils.get_task(model_params[ModelParamsKW.NAME])
