@@ -911,6 +911,11 @@ Split Dataset
         }
     }
 
+.. note::
+    .. line-block::
+            The fraction of the dataset used as validation set will correspond to ``1 - train_fraction - test_fraction``.
+            For example: ``1 - 0.6 - 0.2 = 0.2``.
+
 
 Training Parameters
 -------------------
