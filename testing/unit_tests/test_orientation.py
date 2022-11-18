@@ -12,7 +12,8 @@ from ivadomed.loader.segmentation_pair import SegmentationPair
 from ivadomed import metrics as imed_metrics
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
-from ivadomed.loader import loader as imed_loader, utils as imed_loader_utils
+from ivadomed.loader import loader as imed_loader
+from ivadomed.loader import utils as imed_loader_utils
 from testing.unit_tests.t_utils import create_tmp_dir,  __data_testing_dir__, __tmp_dir__, download_data_testing_test_files
 from testing.common_testing_util import remove_tmp_dir
 

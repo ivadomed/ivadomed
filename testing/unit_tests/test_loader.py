@@ -13,8 +13,8 @@ from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __t
 from testing.common_testing_util import remove_tmp_dir
 from ivadomed import utils as imed_utils
 from ivadomed.loader import loader as imed_loader
-import ivadomed.loader.utils as imed_loader_utils
 from ivadomed.loader import mri2d_segmentation_dataset as imed_loader_mri2dseg
+import ivadomed.loader.utils as imed_loader_utils
 from ivadomed.keywords import LoaderParamsKW, MetadataKW, ModelParamsKW, TransformationKW
 
 
@@ -117,7 +117,7 @@ def test_bids_df_no_validate(download_data_testing_test_files, loader_parameters
     "extensions": [".nii.gz", ".png"],
     "roi_params": {"suffix": None, "slice_filter_roi": None},
     "contrast_params": {"contrast_lst": ["T1w", "T2w", "SEM"]}
-    }])
+}])
 def test_bids_df_multi(download_data_testing_test_files, loader_parameters):
     """
     Test for multiple folders in path_data

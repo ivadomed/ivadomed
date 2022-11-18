@@ -8,6 +8,7 @@ import sys
 import platform
 import multiprocessing
 import re
+import numpy as np
 
 from ivadomed.loader.bids_dataframe import BidsDataframe
 from ivadomed import evaluation as imed_evaluation
@@ -20,8 +21,8 @@ from ivadomed import metrics as imed_metrics
 from ivadomed import inference as imed_inference
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, film as imed_film
 from ivadomed.keywords import ConfigKW, ModelParamsKW, LoaderParamsKW, ContrastParamsKW, BalanceSamplesKW, \
-    TrainingParamsKW, ObjectDetectionParamsKW, UncertaintyKW, PostprocessingKW, BinarizeProdictionKW, MetricsKW, \
-    MetadataKW, OptionKW, SplitDatasetKW
+    TrainingParamsKW, UncertaintyKW, PostprocessingKW, BinarizeProdictionKW, MetricsKW, \
+    MetadataKW, OptionKW, BidsDataFrameKW, ObjectDetectionParamsKW, SplitDatasetKW
 from loguru import logger
 from pathlib import Path
 
@@ -142,22 +143,32 @@ def save_config_file(context, path_output):
         json.dump(context, fp, indent=4)
 
 
-def set_loader_params(context, is_train):
+def set_loader_params(context: dict, is_train: bool):
+    """
+    Depending on if training vs other scenarios, SET the proper contrast list.
+    """
     loader_params = copy.deepcopy(context[ConfigKW.LOADER_PARAMETERS])
+    # Set the contrast list variable in the loader contrast_params sub dictionary
     if is_train:
-        loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.CONTRAST_LST] = \
+        loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.CONTRAST_LIST] = \
             loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.TRAINING_VALIDATION]
     else:
-        loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.CONTRAST_LST] =\
+        loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.CONTRAST_LIST] =\
             loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.TESTING]
-    if ConfigKW.FILMED_UNET in context and context[ConfigKW.FILMED_UNET][ModelParamsKW.APPLIED]:
-        loader_params.update({LoaderParamsKW.METADATA_TYPE: context[ConfigKW.FILMED_UNET][ModelParamsKW.METADATA]})
 
-    # Load metadata necessary to balance the loader
+    # FILMED U NET specific meta data type
+    if ConfigKW.FILMED_UNET in context and context[ConfigKW.FILMED_UNET][ModelParamsKW.APPLIED]:
+        loader_params.update({
+            LoaderParamsKW.METADATA_TYPE: context[ConfigKW.FILMED_UNET][ModelParamsKW.METADATA]
+        })
+
+    # Training Balance type, if load metadata is necessary to balance the loader
     if context[ConfigKW.TRAINING_PARAMETERS][TrainingParamsKW.BALANCE_SAMPLES][BalanceSamplesKW.APPLIED] and \
             context[ConfigKW.TRAINING_PARAMETERS][TrainingParamsKW.BALANCE_SAMPLES][BalanceSamplesKW.TYPE] != 'gt':
-        loader_params.update({LoaderParamsKW.METADATA_TYPE:
-                                  context[ConfigKW.TRAINING_PARAMETERS][TrainingParamsKW.BALANCE_SAMPLES][BalanceSamplesKW.TYPE]})
+        loader_params.update({
+            LoaderParamsKW.METADATA_TYPE:
+                context[ConfigKW.TRAINING_PARAMETERS][TrainingParamsKW.BALANCE_SAMPLES][BalanceSamplesKW.TYPE]
+        })
     return loader_params
 
 
@@ -182,11 +193,18 @@ def set_model_params(context, loader_params):
     model_params[ModelParamsKW.IS_2D] = False if ConfigKW.MODIFIED_3D_UNET in model_params[ModelParamsKW.NAME] \
         else model_params[ModelParamsKW.IS_2D]
     # Get in_channel from contrast_lst
-    if loader_params[LoaderParamsKW.MULTICHANNEL]:
-        model_params[ModelParamsKW.IN_CHANNEL] = \
-            len(loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.CONTRAST_LST])
+
+    # Multi Channels + Multi Sessions
+    if loader_params[LoaderParamsKW.MULTICHANNEL] and loader_params.get(LoaderParamsKW.TARGET_SESSIONS):
+        model_params[ModelParamsKW.IN_CHANNEL] = len(loader_params.get(LoaderParamsKW.TARGET_SESSIONS)) * \
+        len(loader_params.get(LoaderParamsKW.CONTRAST_PARAMS).get(ContrastParamsKW.CONTRAST_LIST))
+    # Multi Channels Only + Single Session
+    elif loader_params[LoaderParamsKW.MULTICHANNEL] and not loader_params.get(LoaderParamsKW.TARGET_SESSIONS):
+        model_params[ModelParamsKW.IN_CHANNEL] = len(loader_params.get(LoaderParamsKW.CONTRAST_PARAMS).get(ContrastParamsKW.CONTRAST_LIST))
+    # Single Channel + Single Session
     else:
         model_params[ModelParamsKW.IN_CHANNEL] = 1
+
     # Get out_channel from target_suffix
     model_params[ModelParamsKW.OUT_CHANNEL] = len(loader_params[LoaderParamsKW.TARGET_SUFFIX])
     # If multi-class output, then add background class
@@ -243,7 +261,7 @@ def run_segment_command(context, model_params, no_patch, overlap_2d):
     )
 
     # Append subjects filenames into a list
-    bids_subjects = sorted(bids_df.df.get('filename').to_list())
+    bids_subjects = sorted(bids_df.df.get(BidsDataFrameKW.FILENAME).to_list())
 
     # Add postprocessing to packaged model
     path_model = Path(context[ConfigKW.PATH_OUTPUT], context[ConfigKW.MODEL_NAME])
@@ -260,41 +278,66 @@ def run_segment_command(context, model_params, no_patch, overlap_2d):
     for subject in bids_subjects:
         if context.get(ConfigKW.LOADER_PARAMETERS).get(LoaderParamsKW.MULTICHANNEL):
             # Get subject_id for multichannel
-            df_sub = bids_df.df.loc[bids_df.df['filename'] == subject]
+            df_sub = bids_df.df.loc[bids_df.df[BidsDataFrameKW.FILENAME] == subject]
             subj_id = re.sub(r'_' + df_sub['suffix'].values[0] + '.*', '', subject)
+
+            if "ses-" in subj_id:
+                has_sessions = True
+                subj_id = subj_id.split("_")[0]
+            else:
+                has_sessions = False
+
             if subj_id not in seen_subj_ids:
                 # if subj_id has not been seen yet
                 fname_img = []
                 provided_contrasts = []
                 contrasts = context[ConfigKW.LOADER_PARAMETERS][LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.TESTING]
-                # Keep contrast order
-                for c in contrasts:
-                    df_tmp = bids_df.df[
-                        bids_df.df['filename'].str.contains(subj_id) & bids_df.df['suffix'].str.contains(c)]
-                    if ~df_tmp.empty:
-                        provided_contrasts.append(c)
-                        fname_img.append(df_tmp['path'].values[0])
-                seen_subj_ids.append(subj_id)
-                if len(fname_img) != len(contrasts):
-                    logger.warning(f"Missing contrast for subject {subj_id}. {provided_contrasts} were provided but "
-                                   f"{contrasts} are required. Skipping subject.")
-                    continue
+
+                if has_sessions:
+                    all_subject_images = [d for d in bids_df.df[BidsDataFrameKW.FILENAME] if subj_id in d]
+                    session_list = np.unique([d.split("_")[1] for d in all_subject_images])
+                    for session in session_list:
+                        # Keep contrast order
+                        for c in contrasts:
+                            df_tmp = bids_df.df[
+                                bids_df.df[BidsDataFrameKW.FILENAME].str.contains(subj_id) &
+                                bids_df.df[BidsDataFrameKW.SUFFIX].str.contains(c) &
+                                bids_df.df[BidsDataFrameKW.FILENAME].str.contains(session)]
+                            if ~df_tmp.empty:
+                                provided_contrasts.append(c)
+                                fname_img.append(df_tmp[BidsDataFrameKW.PATH].values[0])
+                    seen_subj_ids.append(subj_id)
+
+                else:
+                    # Keep contrast order
+                    for c in contrasts:
+                        df_tmp = bids_df.df[
+                            bids_df.df[BidsDataFrameKW.FILENAME].str.contains(subj_id) & bids_df.df[BidsDataFrameKW.SUFFIX].str.contains(c)]
+                        if ~df_tmp.empty:
+                            provided_contrasts.append(c)
+                            fname_img.append(df_tmp[BidsDataFrameKW.PATH].values[0])
+                    seen_subj_ids.append(subj_id)
+                    if len(fname_img) != len(contrasts):
+                        logger.warning(f"Missing contrast for subject {subj_id}. {provided_contrasts} were provided but {contrasts} are required. "
+                                       f"Skipping subject.")
+                        continue
+
             else:
                 # Returns an empty list for subj_id already seen
                 fname_img = []
         else:
-            fname_img = bids_df.df[bids_df.df['filename'] == subject]['path'].to_list()
+            fname_img = bids_df.df[bids_df.df[BidsDataFrameKW.FILENAME] == subject][BidsDataFrameKW.PATH].to_list()
 
         # Add film metadata to options for segment_volume
         if ModelParamsKW.FILM_LAYERS in model_params and any(model_params[ModelParamsKW.FILM_LAYERS]) \
                 and model_params[ModelParamsKW.METADATA]:
-            metadata = bids_df.df[bids_df.df['filename'] == subject][model_params[ModelParamsKW.METADATA]].values[0]
+            metadata = bids_df.df[bids_df.df[BidsDataFrameKW.FILENAME] == subject][model_params[ModelParamsKW.METADATA]].values[0]
             options[OptionKW.METADATA] = metadata
 
         # Add microscopy pixel size and pixel size units metadata to options for segment_volume
         if MetadataKW.PIXEL_SIZE in bids_df.df.columns:
             options[OptionKW.PIXEL_SIZE] = \
-                bids_df.df.loc[bids_df.df['filename'] == subject][MetadataKW.PIXEL_SIZE].values[0]
+            options[OptionKW.PIXEL_SIZE] = bids_df.df.loc[bids_df.df['filename'] == subject][MetadataKW.PIXEL_SIZE].values[0]
         if MetadataKW.PIXEL_SIZE_UNITS in bids_df.df.columns:
             options[OptionKW.PIXEL_SIZE_UNITS] = \
                 bids_df.df.loc[bids_df.df['filename'] == subject][MetadataKW.PIXEL_SIZE_UNITS].values[0]

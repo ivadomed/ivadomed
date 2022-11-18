@@ -6,9 +6,12 @@ from loguru import logger
 
 from ivadomed.loader.bids_dataframe import BidsDataframe
 from ivadomed import utils as imed_utils
-from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
-from testing.unit_tests.t_utils import create_tmp_dir,  __data_testing_dir__, __tmp_dir__, download_data_testing_test_files
+from ivadomed.loader import loader as imed_loader
+from ivadomed.loader import utils as imed_loader_utils
+from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__, \
+    download_data_testing_test_files
 from testing.common_testing_util import remove_tmp_dir
+from loguru import logger
 
 cudnn.benchmark = True
 
@@ -48,7 +51,8 @@ def _cmpt_slice(ds_loader):
 @pytest.mark.parametrize('roi_params', [
     {"suffix": "_seg-manual", "slice_filter_roi": 10},
     {"suffix": None, "slice_filter_roi": 0}])
-def test_slice_filter(download_data_testing_test_files, transforms_dict, train_lst, target_lst, roi_params, slice_filter_params):
+def test_slice_filter(download_data_testing_test_files, transforms_dict, train_lst, target_lst, roi_params,
+                      slice_filter_params):
     if "ROICrop" in transforms_dict and roi_params["suffix"] is None:
         return
 

@@ -9,11 +9,12 @@ from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
 from ivadomed import testing as imed_testing
 from ivadomed import models as imed_models
-from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
-import logging
+from ivadomed.loader import loader as imed_loader
+from ivadomed.loader import utils as imed_loader_utils
+
 from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__, download_data_testing_test_files, path_repo_root
 from testing.common_testing_util import remove_tmp_dir
-logger = logging.getLogger(__name__)
+from loguru import logger
 
 cudnn.benchmark = True
 
@@ -130,7 +131,9 @@ def test_inference(download_data_testing_test_files, transforms_dict, test_lst, 
         "NormalizeInstance": {"applied_to": ["im"]}
     }])
 @pytest.mark.parametrize('test_lst',
-    [['sub-rat3_ses-01_sample-data9_SEM.png', 'sub-rat3_ses-02_sample-data10_SEM.png']])
+    [[
+        'sub-rat3_ses-01_sample-data9_SEM.png',
+        'sub-rat3_ses-02_sample-data10_SEM.png']])
 @pytest.mark.parametrize('target_lst', [["_seg-axon-manual", "_seg-myelin-manual"]])
 @pytest.mark.parametrize('roi_params', [{"suffix": None, "slice_filter_roi": None}])
 @pytest.mark.parametrize('testing_params', [{
@@ -151,7 +154,6 @@ def test_inference_2d_microscopy(download_data_testing_test_files, transforms_di
     predictions is 2x the number of test subjects (2-class model, outputs 1 PNG per class per subject).
     """
     cuda_available, device = imed_utils.define_device(GPU_ID)
-
     model_params = {"name": "Unet", "is_2d": True, "out_channel": 3}
     loader_params = {
         "transforms_params": transforms_dict,

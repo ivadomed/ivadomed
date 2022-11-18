@@ -93,7 +93,7 @@ class BalanceSamplesKW:
 
 @dataclass
 class ContrastParamsKW:
-    CONTRAST_LST: str = "contrast_lst"  # The list help determine the number of model parameter inputs.
+    CONTRAST_LIST: str = "contrast_lst"  # The list help determine the number of model parameter inputs.
     BALANCE: str = "balance"
     TRAINING_VALIDATION: str = "training_validation"
     TESTING: str = "testing"
@@ -252,7 +252,6 @@ class MetricsKW:
 class MetadataParamsKW:
     CONTRAST = "contrast"
     BOUNDING_BOX = "bounding_box"
-
 @dataclass
 class MetadataChoiceKW:
     MRI_PARAMS = "mri_params"

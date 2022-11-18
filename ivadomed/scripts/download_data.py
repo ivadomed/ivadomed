@@ -7,7 +7,7 @@ import tarfile
 import zipfile
 import requests
 from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util import Retry
+from urllib3.util import Retry
 from pathlib import Path
 import argparse
 import textwrap
@@ -23,7 +23,7 @@ DICT_URL = {
             `Spine Generic <https://github.com/spine-generic/data-multi-subject>`_.
             Used for Tutorial and example in Ivadomed."""},
     "data_testing": {
-        "url": ["https://github.com/ivadomed/data-testing/archive/r20220328.zip"],
+        "url": ["https://github.com/MotionCorrect/data-testing/archive/refs/tags/r20220116.zip"],
         "description": "Data Used for integration/unit test in Ivadomed."},
     "data_multi_testing": {
         "url": ["https://github.com/MotionCorrect/data_multi-sessions-contrasts/archive/refs/tags/v2022-01-06.zip"],
