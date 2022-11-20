@@ -1,5 +1,13 @@
+from __future__ import annotations
 import torch
 import numpy as np
+import typing
+
+from typing import Union
+
+if typing.TYPE_CHECKING:
+    from ivadomed.loader.bids_dataset import BidsDataset
+    from ivadomed.loader.bids3d_dataset import Bids3DDataset
 
 
 class BalancedSampler(torch.utils.data.sampler.Sampler):
@@ -19,7 +27,7 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
         label_idx (int): Keeps track of the label indices already used for the metadata_dict.
     """
 
-    def __init__(self, dataset, metadata='gt'):
+    def __init__(self, dataset: Union[BidsDataset, Bids3DDataset], metadata: str = 'gt') -> None:
         self.indices = list(range(len(dataset)))
 
         self.nb_samples = len(self.indices)
@@ -39,7 +47,7 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
 
         self.weights = torch.DoubleTensor(weights)
 
-    def _get_label(self, dataset, idx, metadata):
+    def _get_label(self, dataset: Union[BidsDataset, Bids3DDataset], idx: int, metadata: str) -> int:
         """Returns 1 if sample is not empty, 0 if it is empty (only zeros).
 
         Args:
