@@ -2,11 +2,10 @@ import copy
 import random
 from pathlib import Path
 import pickle
-from typing import List
+from typing import List, Optional
 
 import numpy as np
-import torch
-import torchvision.transforms
+
 from torch.utils.data import Dataset
 from loguru import logger
 
@@ -17,6 +16,7 @@ from ivadomed.loader.segmentation_pair import SegmentationPair
 from ivadomed.object_detection import utils as imed_obj_detect
 from ivadomed.keywords import MetadataKW, SegmentationDatasetKW, SegmentationPairKW
 from ivadomed.utils import get_timestamp, get_system_memory
+from torchvision.transforms import Compose
 
 
 class MRI3DSubVolumeSegmentationDataset(Dataset):
@@ -42,9 +42,16 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         reloading and bypass memory cap.
     """
 
-    def __init__(self, filename_pairs: list, transform: torchvision.transforms.Compose = None,
-                 length: tuple = (64, 64, 64), stride: tuple = (0, 0, 0), slice_axis: int = 0,
-                 task: str = "segmentation", soft_gt: bool = False, is_input_dropout: bool = False, disk_cache: bool=True):
+    def __init__(self,
+                 filename_pairs: list,
+                 transform: List[Optional[Compose]] = None,
+                 length: tuple = (64, 64, 64),
+                 stride: tuple = (0, 0, 0),
+                 slice_axis: int = 0,
+                 task: str = "segmentation",
+                 soft_gt: bool = False,
+                 is_input_dropout: bool = False,
+                 disk_cache: bool=True):
         self.filename_pairs = filename_pairs
 
         # could be a list of tuple of objects OR path objects to the actual disk equivalent.
