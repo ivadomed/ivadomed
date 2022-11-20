@@ -379,7 +379,7 @@ def update_metadata(metadata_src_lst: list, metadata_dest_lst: list) -> list:
     return metadata_dest_lst
 
 
-def reorient_image(arr: np.ndarray, slice_axis: int, nib_ref: nib, nib_ref_canonical: nib) -> any:
+def reorient_image(arr: np.ndarray, slice_axis: int, nib_ref: nib, nib_ref_canonical: nib) -> nd.ndarray:
     """Reorient an image to match a reference image orientation.
 
     It reorients a array to a given orientation and convert it to a nibabel object using the
