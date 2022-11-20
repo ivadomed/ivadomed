@@ -33,7 +33,9 @@ class SliceFilter(object):
                  filter_absent_class: bool = False,
                  filter_empty_input: bool = True,
                  filter_classification: bool = False,
-                 classifier_path: any = None, device: any = None, cuda_available: bool = None):
+                 classifier_path: any = None,
+                 device: torch.device = None,
+                 cuda_available: bool = None):
         self.filter_empty_mask = filter_empty_mask
         self.filter_absent_class = filter_absent_class
         self.filter_empty_input = filter_empty_input
