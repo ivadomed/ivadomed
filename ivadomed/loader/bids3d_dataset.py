@@ -1,9 +1,14 @@
 from __future__ import annotations
+import typing
+
+from torchvision.transforms import Compose
+
 from ivadomed.loader.bids_dataset import BidsDataset
 from ivadomed.loader.mri3d_subvolume_segmentation_dataset import MRI3DSubVolumeSegmentationDataset
 from ivadomed.keywords import ModelParamsKW
-import typing
+
 if typing.TYPE_CHECKING:
+    from typing import List, Optional
     from ivadomed.loader.bids_dataframe import BidsDataframe
 
 
@@ -28,11 +33,23 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
         is_input_dropout (bool): Return input with missing modalities.
     """
 
-    def __init__(self, bids_df: BidsDataframe, subject_file_lst: list, target_suffix: list, model_params: dict,
-                 contrast_params: dict, slice_axis: int = 2, cache: bool = True, transform: list = None,
-                 metadata_choice: str | bool = False, roi_params: dict = None, multichannel: bool = False,
-                 object_detection_params: dict = None, task: str = "segmentation", soft_gt: bool = False,
+    def __init__(self,
+                 bids_df: BidsDataframe,
+                 subject_file_lst: List[str],
+                 target_suffix: List[str],
+                 model_params: dict,
+                 contrast_params: dict,
+                 slice_axis: int = 2,
+                 cache: bool = True,
+                 transform: List[Optional[Compose]] = None,
+                 metadata_choice: str | bool = False,
+                 roi_params: dict = None,
+                 multichannel: bool = False,
+                 object_detection_params: dict = None,
+                 task: str = "segmentation",
+                 soft_gt: bool = False,
                  is_input_dropout: bool = False):
+
         dataset = BidsDataset(bids_df=bids_df,
                               subject_file_lst=subject_file_lst,
                               target_suffix=target_suffix,
@@ -46,7 +63,11 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
                               object_detection_params=object_detection_params,
                               is_input_dropout=is_input_dropout)
 
-        super().__init__(dataset.filename_pairs, length=model_params[ModelParamsKW.LENGTH_3D],
+        super().__init__(dataset.filename_pairs,
+                         length=model_params[ModelParamsKW.LENGTH_3D],
                          stride=model_params[ModelParamsKW.STRIDE_3D],
-                         transform=transform, slice_axis=slice_axis, task=task, soft_gt=soft_gt,
+                         transform=transform,
+                         slice_axis=slice_axis,
+                         task=task,
+                         soft_gt=soft_gt,
                          is_input_dropout=is_input_dropout)
