@@ -8,7 +8,7 @@ from typing import Tuple
 
 import numpy as np
 import torch
-import torchvision.transforms
+from torchvision.transforms import Compose
 from torch.utils.data import Dataset
 from loguru import logger
 
@@ -19,11 +19,12 @@ from ivadomed.loader.segmentation_pair import SegmentationPair
 from ivadomed.object_detection import utils as imed_obj_detect
 from ivadomed.keywords import ROIParamsKW, MetadataKW
 import typing
+
 if typing.TYPE_CHECKING:
     from ivadomed.loader.slice_filter import SliceFilter
     from ivadomed.loader.patch_filter import PatchFilter
-    from typing import Dict
-    from typing import Optional
+    from typing import List, Dict, Optional
+
 from ivadomed.utils import get_timestamp, get_system_memory
 
 
@@ -80,10 +81,20 @@ class MRI2DSegmentationDataset(Dataset):
 
     """
 
-    def __init__(self, filename_pairs: list, length: list = None, stride: list = None, slice_axis: int = 2,
-                 nibabel_cache: bool = True, transform: torchvision.transforms.Compose = None,
-                 slice_filter_fn: SliceFilter = None, patch_filter_fn: PatchFilter = None, task: str = "segmentation",
-                 roi_params: dict = None, soft_gt: bool = False, is_input_dropout: bool = False, disk_cache=None) -> None:
+    def __init__(self,
+                 filename_pairs: list,
+                 length: list = None,
+                 stride: list = None,
+                 slice_axis: int = 2,
+                 nibabel_cache: bool = True,
+                 transform: List[Optional[Compose]] = None,
+                 slice_filter_fn: SliceFilter = None,
+                 patch_filter_fn: PatchFilter = None,
+                 task: str = "segmentation",
+                 roi_params: dict = None,
+                 soft_gt: bool = False,
+                 is_input_dropout: bool = False,
+                 disk_cache=None) -> None:
         if length is None:
             length = []
         if stride is None:
@@ -113,11 +124,19 @@ class MRI2DSegmentationDataset(Dataset):
     def load_filenames(self):
         """Load preprocessed pair data (input and gt) in handler."""
         for input_filenames, gt_filenames, roi_filename, metadata in self.filename_pairs:
-            roi_pair = SegmentationPair(input_filenames, roi_filename, metadata=metadata, slice_axis=self.slice_axis,
-                                        cache=self.cache, prepro_transforms=self.prepro_transforms)
+            roi_pair = SegmentationPair(input_filenames,
+                                        roi_filename,
+                                        metadata=metadata,
+                                        slice_axis=self.slice_axis,
+                                        cache=self.cache,
+                                        prepro_transforms=self.prepro_transforms)
 
-            seg_pair = SegmentationPair(input_filenames, gt_filenames, metadata=metadata, slice_axis=self.slice_axis,
-                                        cache=self.cache, prepro_transforms=self.prepro_transforms,
+            seg_pair = SegmentationPair(input_filenames,
+                                        gt_filenames,
+                                        metadata=metadata,
+                                        slice_axis=self.slice_axis,
+                                        cache=self.cache,
+                                        prepro_transforms=self.prepro_transforms,
                                         soft_gt=self.soft_gt)
 
             input_data_shape, _ = seg_pair.get_pair_shapes()
@@ -224,7 +243,7 @@ class MRI2DSegmentationDataset(Dataset):
                         'y_max': y_max,
                         'handler_index': i})
 
-    def set_transform(self, transform: torchvision.transforms.Compose) -> None:
+    def set_transform(self, transform: List[Optional[Compose]]) -> None:
         self.transform = transform
 
     def __len__(self) -> int:
