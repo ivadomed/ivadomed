@@ -55,6 +55,7 @@ class ConsolidatedDataset(MRI2DSegmentationDataset):
             config.roi_params,
             config.soft_gt,
             config.is_input_dropout,
+            config.disk_cache
         )
 
     @staticmethod

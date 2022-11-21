@@ -125,7 +125,7 @@ class ModelParamsKW:
     DEPTH: str = "depth"
     MISSING_PROBABILITY: str = "missing_probability"
     MISSING_PROBABILITY_GROWTH: str = "missing_probability_growth"
-
+    DROPOUT_RATE: str = "dropout_rate"
 
 @dataclass(frozen=True)
 class SubjectDictKW:
@@ -285,7 +285,7 @@ class CommandKW:
 
 @dataclass(frozen=True)
 class DataloaderKW:
-    # Most of these keywords are used in V2 Dataloader to suppor cross BIDS/Regex/File Dataset loading.
+    # Most of these keywords are used in V2 Dataloader to support cross BIDS/Regex/File Dataset loading.
 
     # AllDatasetGroups Level
     DATASET_GROUPS: str = "dataset_groups"

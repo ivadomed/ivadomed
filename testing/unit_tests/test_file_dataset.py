@@ -8,6 +8,7 @@ from testing.unit_tests.t_utils import (
 from ivadomed.loader.generalized_loader_configuration import (
     GeneralizedLoaderConfiguration,
 )
+from ivadomed.keywords import ModelParamsKW
 
 
 def setup_function():
@@ -19,8 +20,8 @@ def test_FilesDataset():
     create_mock_bids_file_structures(path_mock_data),  # pytest fixture, do not remove.
 
     model_dict = {
-        "name": "Unet",
-        "dropout_rate": 0.3,
+        ModelParamsKW.NAME: "Unet",
+        ModelParamsKW.DROPOUT_RATE: 0.3,
         "bn_momentum": 0.1,
         "final_activation": "sigmoid",
         "depth": 3,

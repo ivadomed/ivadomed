@@ -315,8 +315,8 @@
             "expected_gt": 1
         }
     ],
-    "expected_gt": 1,
     "expected_input": 2,
+    "expected_gt": 1,
     "loader_parameters": {
         "target_suffix": [
             "_lesion-manual"

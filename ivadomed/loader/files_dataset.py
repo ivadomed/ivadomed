@@ -109,7 +109,8 @@ class FilesDataset(MRI2DSegmentationDataset):
     def parse_spec_json_and_update_filename_pairs(self, loader_json: dict) -> Tuple[str, list]:
         """Load the json file and return the dictionary"""
         # Given a JSON file, try to load the file pairing from it.
-        assert loader_json.get(DataloaderKW.TYPE) == "FILES"
+        assert loader_json.get(DataloaderKW.TYPE).uppaer() == "FILES", \
+            f"Invalid DataLoader type specified: {loader_json.get(DataloaderKW.TYPE)}"
 
         self.path_data = loader_json.get(DataloaderKW.PATH_DATA, ".")
 
@@ -153,7 +154,8 @@ class FilesDataset(MRI2DSegmentationDataset):
             skip_subject_flag = False
 
             # 2 lists: Subject List + Ground Truth list
-            assert len(a_subject_image_ground_truth_pair) == 2
+            assert len(a_subject_image_ground_truth_pair) == 2, \
+                f"Either subject images list or groundtruth files list are missing!"
 
             # Validate and trim Subject files list
             list_subject_specific_images: list = a_subject_image_ground_truth_pair[0]
@@ -232,10 +234,10 @@ class FilesDataset(MRI2DSegmentationDataset):
         logger.info(f"\t\tFileDataset object from {self.path_data}, {len(self.filename_pairs)} pairs of data files")
 
         if verbose:
-            for pair_index, a_pair in enumerate(self.filename_pairs):
+            for pair_index, (image_files, gt_files, _, _) in enumerate(self.filename_pairs):
                 logger.info(f"\t\t\tImage Pair {pair_index}, Subject Image(s):")
-                for a_image in a_pair[0]:
+                for a_image in image_files:
                     logger.info(f"\t\t\t\t{a_image}")
                 logger.info(f"\t\t\tImage Pair {pair_index}, Ground Truth Image(s):")
-                for a_gt in a_pair[1]:
+                for a_gt in gt_files:
                     logger.info(f"\t\t\t\t{a_gt}")

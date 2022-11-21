@@ -420,7 +420,7 @@ def run_command(context: dict, n_gif=0, thr_increment=None, resume_training=Fals
     #################################
     #  Loader Version Determination:
     #################################
-    # If the new keywords are present, we use the new loader pathway. Ignoring all "contrast_params" keys etc fro now.
+    # If the new keywords are present, we use the new loader pathway. Ignoring all "contrast_params" keys etc for now.
     if context.get(DataloaderKW.DATASET_GROUPS) and context.get(DataloaderKW.EXPECTED_GT) and context.get(DataloaderKW.EXPECTED_INPUT):
         loader_version: str = LoaderParamsKW.MULTI_PATH_LOADER
     else:
@@ -429,7 +429,6 @@ def run_command(context: dict, n_gif=0, thr_increment=None, resume_training=Fals
 
     #################################
 
-    # If the older loader parameters key, we default to use the old loader pathway relying on bids.
     path_output = set_output_path(context)
     path_log: Path = Path(
         context.get('path_output'),
@@ -440,7 +439,7 @@ def run_command(context: dict, n_gif=0, thr_increment=None, resume_training=Fals
     logger.add(sys.stdout)
 
     # Create a log with the version of the Ivadomed software and the version of the Annexed dataset (if present)
-    # create_dataset_and_ivadomed_version_log(context)
+    create_dataset_and_ivadomed_version_log(context)
 
     cuda_available, device = imed_utils.define_device(context[ConfigKW.GPU_IDS][0])
 
