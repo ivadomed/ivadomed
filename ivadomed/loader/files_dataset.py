@@ -109,7 +109,7 @@ class FilesDataset(MRI2DSegmentationDataset):
     def parse_spec_json_and_update_filename_pairs(self, loader_json: dict) -> Tuple[str, list]:
         """Load the json file and return the dictionary"""
         # Given a JSON file, try to load the file pairing from it.
-        assert loader_json.get(DataloaderKW.TYPE).uppaer() == "FILES", \
+        assert loader_json.get(DataloaderKW.TYPE).upper() == "FILES", \
             f"Invalid DataLoader type specified: {loader_json.get(DataloaderKW.TYPE)}"
 
         self.path_data = loader_json.get(DataloaderKW.PATH_DATA, ".")
