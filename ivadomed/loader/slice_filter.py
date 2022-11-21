@@ -33,7 +33,9 @@ class SliceFilter(object):
                  filter_absent_class: bool = False,
                  filter_empty_input: bool = True,
                  filter_classification: bool = False,
-                 classifier_path=None, device=None, cuda_available=None):
+                 classifier_path: any = None,
+                 device: torch.device = None,
+                 cuda_available: bool = None):
         self.filter_empty_mask = filter_empty_mask
         self.filter_absent_class = filter_absent_class
         self.filter_empty_input = filter_empty_input
@@ -47,7 +49,7 @@ class SliceFilter(object):
             else:
                 self.classifier = torch.load(classifier_path, map_location='cpu')
 
-    def __call__(self, sample: dict):
+    def __call__(self, sample: dict) -> bool:
         """Extract input_data and gt_data lists from sample dict and discard them if they don't match certain
         conditions.
 
