@@ -1,3 +1,4 @@
+from __future__ import annotations
 from pathlib import Path
 import imageio
 import nibabel as nib
@@ -7,6 +8,10 @@ from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.loader.sample_meta_data import SampleMetadata
 from ivadomed import postprocessing as imed_postpro
 from ivadomed.keywords import MetadataKW
+import typing
+if typing.TYPE_CHECKING:
+    from typing import List
+    import nibabel.nifti1
 
 
 class SegmentationPair(object):
@@ -36,8 +41,8 @@ class SegmentationPair(object):
         gt_handle (list): List of gt (ground truth) NifTI data as 'nibabel.nifti1.Nifti1Image' object
     """
 
-    def __init__(self, input_filenames, gt_filenames, metadata=None, slice_axis=2, cache=True, prepro_transforms=None,
-                 soft_gt=False):
+    def __init__(self, input_filenames: List[str], gt_filenames: List[str], metadata: list = None, slice_axis: int = 2,
+                 cache: bool = True, prepro_transforms: dict = None, soft_gt: bool = False) -> None:
 
         self.input_filenames = input_filenames
         self.gt_filenames = gt_filenames
@@ -100,7 +105,7 @@ class SegmentationPair(object):
                 data[MetadataKW.GT_FILENAMES] = gt_filenames
                 self.metadata.append(data)
 
-    def get_pair_shapes(self):
+    def get_pair_shapes(self) -> (tuple, tuple):
         """Return the tuple (input, ground truth) representing both the input and ground truth shapes."""
         input_shape = []
         for handle in self.input_handle:
@@ -125,7 +130,7 @@ class SegmentationPair(object):
 
         return input_shape[0], gt_shape[0] if len(gt_shape) else None
 
-    def get_pair_data(self):
+    def get_pair_data(self) -> (list, list):
         """Return the tuple (input, ground truth) with the data content in numpy array."""
         cache_mode = 'fill' if self.cache else 'unchanged'
 
@@ -155,7 +160,7 @@ class SegmentationPair(object):
 
         return input_data, gt_data
 
-    def get_pair_metadata(self, slice_index=0, coord=None):
+    def get_pair_metadata(self, slice_index: int = 0, coord: tuple | list = None) -> dict:
         """Return dictionary containing input and gt metadata.
 
         Args:
@@ -219,7 +224,7 @@ class SegmentationPair(object):
 
         return dreturn
 
-    def get_pair_slice(self, slice_index, gt_type="segmentation"):
+    def get_pair_slice(self, slice_index: int, gt_type: str = "segmentation") -> dict:
         """Return the specified slice from (input, ground truth).
 
         Args:
@@ -268,7 +273,7 @@ class SegmentationPair(object):
 
         return dreturn
 
-    def read_file(self, filename, is_gt=False):
+    def read_file(self, filename: str, is_gt: bool = False) -> nibabel.nifti1.Nifti1Image:
         """Read file according to file extension and returns 'nibabel.nifti1.Nifti1Image' object.
 
         Args:
@@ -292,7 +297,7 @@ class SegmentationPair(object):
             img = self.convert_file_to_nifti(filename, extension, is_gt)
         return img
 
-    def convert_file_to_nifti(self, filename, extension, is_gt=False):
+    def convert_file_to_nifti(self, filename: str, extension: str, is_gt: bool = False) -> nibabel.nifti1.Nifti1Image:
         """
         Convert a non-NifTI image into a 'nibabel.nifti1.Nifti1Image' object and save to a file.
         This method is especially relevant for making microscopy data compatible with NifTI-only
@@ -339,7 +344,7 @@ class SegmentationPair(object):
         return img
 
 
-    def get_microscopy_pixelsize(self, filename):
+    def get_microscopy_pixelsize(self, filename: str) -> tuple:
         """
         Get the microscopy pixel size from the metadata and convert to millimeters.
 
