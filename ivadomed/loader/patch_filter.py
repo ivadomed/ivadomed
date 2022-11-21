@@ -28,13 +28,13 @@ class PatchFilter(object):
     def __init__(self, filter_empty_mask: bool = False,
                  filter_absent_class: bool = False,
                  filter_empty_input: bool = False,
-                 is_train: bool = False):
+                 is_train: bool = False) -> None:
         self.filter_empty_mask = filter_empty_mask
         self.filter_absent_class = filter_absent_class
         self.filter_empty_input = filter_empty_input
         self.is_train = is_train
 
-    def __call__(self, sample: dict):
+    def __call__(self, sample: dict) -> bool:
         """Extract input_data and gt_data lists from sample dict and discard them if they don't match certain
         conditions.
 
