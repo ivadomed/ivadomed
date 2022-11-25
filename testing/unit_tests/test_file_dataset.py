@@ -9,25 +9,23 @@ from ivadomed.loader.generalized_loader_configuration import (
     GeneralizedLoaderConfiguration,
 )
 from ivadomed.keywords import ModelParamsKW
-
+import pytest
 
 def setup_function():
     create_tmp_dir()
 
 
-def test_FilesDataset():
+@pytest.mark.parametrize('model_dict', [{
+    ModelParamsKW.NAME: "Unet",
+    ModelParamsKW.DROPOUT_RATE: 0.3,
+    "bn_momentum": 0.1,
+    "final_activation": "sigmoid",
+    "depth": 3,
+    "is_2d": True  # key params that must exist.
+}])
+def test_FilesDataset(model_dict: dict):
 
     create_mock_bids_file_structures(path_mock_data),  # pytest fixture, do not remove.
-
-    model_dict = {
-        ModelParamsKW.NAME: "Unet",
-        ModelParamsKW.DROPOUT_RATE: 0.3,
-        "bn_momentum": 0.1,
-        "final_activation": "sigmoid",
-        "depth": 3,
-        "is_2d": True # key params that must exist.
-    }
-
     # Build a GeneralizedLoaderConfiguration:
     model_config_json: GeneralizedLoaderConfiguration = GeneralizedLoaderConfiguration(
         model_params=model_dict,
