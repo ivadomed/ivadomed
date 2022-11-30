@@ -1,5 +1,5 @@
 from ivadomed.keywords import DataloaderKW
-from ivadomed.loader.dataset_group import DatasetGroup
+from ivadomed.loader.dataset_group import FileDatasetGroup
 from ivadomed.loader.files_dataset import FilesDataset
 from testing.common_testing_util import remove_tmp_dir
 from testing.mocker.mocker_fixture import create_mock_bids_file_structures
@@ -39,7 +39,7 @@ def test_dataset_group():
     # Get the mock JSON which has 2 inputs and 1 output, get their first DatasetGroup
     example_DatasetGroup_json = example_2i1o_all_dataset_groups_config_json.get(DataloaderKW.DATASET_GROUPS)[0]
 
-    a_dataset_group = DatasetGroup(example_DatasetGroup_json, loader_config)
+    a_dataset_group = FileDatasetGroup(example_DatasetGroup_json, loader_config)
     a_dataset_group.preview(verbose=True)
 
     # Should have 3 files pairs, each of them should have 2 Input and 1 Output

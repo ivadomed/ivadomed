@@ -3,7 +3,7 @@ import typing
 from typing import List, Tuple
 
 from ivadomed.keywords import ModelParamsKW, DataloaderKW
-from ivadomed.loader.dataset_group import DatasetGroup
+from ivadomed.loader.dataset_group import FileDatasetGroup
 
 if typing.TYPE_CHECKING:
     from ivadomed.loader.all_dataset_group import AllDatasetGroups
@@ -92,7 +92,7 @@ class ConsolidatedDataset(MRI2DSegmentationDataset):
 
     @staticmethod
     def consolidate_DatasetGroup_to_a_specific_filedataset_type(
-            data_group: DatasetGroup,
+            data_group: FileDatasetGroup,
             consolidation_type: str
     ) -> ConsolidatedDataset:
         """
@@ -100,7 +100,7 @@ class ConsolidatedDataset(MRI2DSegmentationDataset):
 
         Args:
             consolidation_type:
-            data_group (DatasetGroup): A dataset group with many subsets of dataset.
+            data_group (FileDatasetGroup): A dataset group with many subsets of dataset.
 
         Returns:
             ConsolidatedDataset: A single dataset group.

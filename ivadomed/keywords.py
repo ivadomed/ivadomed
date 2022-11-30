@@ -298,6 +298,7 @@ class DataloaderKW:
     # Reserved DatasetGroup to be implemented
     TRAINING_VALIDATION: str = "training_validation"
     TRAINING_TEST: str = "training_test"
+    TRAINING_VALIDATION_TEST: str = "training_validation_test"
 
     # Dataset Level
     TYPE: str = "type"

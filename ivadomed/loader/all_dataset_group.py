@@ -2,7 +2,7 @@ from __future__ import annotations
 import typing
 from typing import List, Tuple
 from ivadomed.keywords import DataloaderKW
-from ivadomed.loader.dataset_group import DatasetGroup
+from ivadomed.loader.dataset_group import FileDatasetGroup
 
 if typing.TYPE_CHECKING:
     from ivadomed.loader.generalized_loader_configuration import (
@@ -19,12 +19,12 @@ class AllDatasetGroups:
                  config: GeneralizedLoaderConfiguration
                  ):
         """
-        This contains all study related DatasetGroups and each DatasetGroup contain its own FileDataset
+        This contains all study related DatasetGroups and each FileDatasetGroup contain its own FileDataset
         Args:
             dict_all_datasets_group_spec: An example shown above in example_json dict.
             config:
         """
-        self.list_dataset_groups: List[DatasetGroup] = []
+        self.list_dataset_groups: List[FileDatasetGroup] = []
         self.list_dataset_groups_names: List[str] = []
 
         # These are lists of either Files3DDataset or FilesDataset, aggregated across all the DatasetGroups within.
@@ -53,19 +53,19 @@ class AllDatasetGroups:
         for dict_dataset_group_spec in dict_all_datasets_group_spec.get(DataloaderKW.DATASET_GROUPS):
 
             # Create a new Dataset Group
-            dataset_group = DatasetGroup(dict_dataset_group_spec, config)
+            dataset_group = FileDatasetGroup(dict_dataset_group_spec, config)
 
             # Conduct skip check for aggregation
             skip = False
             if dataset_group.n_expected_input != self.n_expected_input:
-                logger.warning(f"Skipping handling of DatasetGroup {dataset_group.name} as its Number of Expected Input in the "
+                logger.warning(f"Skipping handling of FileDatasetGroup {dataset_group.name} as its Number of Expected Input in the "
                                f"{dataset_group.n_expected_input} does not match the number of "
                                f"Expected Input in the AllDatasetGroup {self.n_expected_input}")
                 skip = True
             if dataset_group.n_expected_gt != self.n_expected_gt:
-                logger.warning(f"Skipping handling of DatasetGroup {dataset_group.name} as its Number of Expected Ground Truth in the "
+                logger.warning(f"Skipping handling of FileDatasetGroup {dataset_group.name} as its Number of Expected Ground Truth in the "
                                f"{dataset_group.n_expected_gt} does not match the number of "
-                               f"Expected Ground Truth in the Train DatasetGroup {self.n_expected_gt}")
+                               f"Expected Ground Truth in the Train FileDatasetGroup {self.n_expected_gt}")
                 skip = True
 
             if skip:
