@@ -37,3 +37,8 @@ data_multi_testing/
 
 # venv
 venv/
+
+# Ignore tutorial data
+data_example_spinegeneric/
+tutorial_*.json
+spineGeneric/

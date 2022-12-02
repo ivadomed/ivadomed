@@ -3,11 +3,14 @@ import argparse
 import copy
 import joblib
 import torch.backends.cudnn as cudnn
+from torch.cuda import device_count
+import torch.multiprocessing as mp
 import nibabel as nib
 import sys
 import platform
 import multiprocessing
 import re
+import os
 
 from ivadomed.loader.bids_dataframe import BidsDataframe
 from ivadomed import evaluation as imed_evaluation
@@ -21,9 +24,11 @@ from ivadomed import inference as imed_inference
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, film as imed_film
 from ivadomed.keywords import ConfigKW, ModelParamsKW, LoaderParamsKW, ContrastParamsKW, BalanceSamplesKW, \
     TrainingParamsKW, ObjectDetectionParamsKW, UncertaintyKW, PostprocessingKW, BinarizeProdictionKW, MetricsKW, \
-    MetadataKW, OptionKW, SplitDatasetKW
+    MetadataKW, OptionKW, SplitDatasetKW, MultiGPUsKW
 from loguru import logger
 from pathlib import Path
+
+from ivadomed.training import get_best_score_json
 
 cudnn.benchmark = True
 
@@ -454,19 +459,52 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False, no_
         save_config_file(context, path_output)
 
         # RUN TRAINING
-        best_training_dice, best_training_loss, best_validation_dice, best_validation_loss = imed_training.train(
-            model_params=model_params,
-            dataset_train=ds_train,
-            dataset_val=ds_valid,
-            training_params=context[ConfigKW.TRAINING_PARAMETERS],
-            wandb_params=context.get(ConfigKW.WANDB),
-            path_output=path_output,
-            device=device,
-            cuda_available=cuda_available,
-            metric_fns=metric_fns,
-            n_gif=n_gif,
-            resume_training=resume_training,
-            debugging=context[ConfigKW.DEBUGGING])
+        n_gpus = device_count()
+
+        # Note N == 1 DDP, vs n_gpu == 1 scenarios are different and are handled differently.
+        if n_gpus > 1:
+            logger.info(f"Training using Distributed Data Processing (DDP) Using {n_gpus} GPUs")
+
+            # Default os Environment Variable setup for DDP inter process communications.
+            os.environ[MultiGPUsKW.MASTER_ADDR] = context.get("master_addr", "localhost")
+            os.environ[MultiGPUsKW.MASTER_PORT] = context.get("master_port", "29500")
+            
+            logger.info(f"Spawning workers")
+            mp.spawn(imed_training.train, nprocs=n_gpus, args=(
+                # Rank is not part of the args because when mp.spawn generates a process, the function is called as
+                # fn(rank, *args) (see
+                # https://pytorch.org/docs/stable/multiprocessing.html?highlight=multiprocessing#spawning-subprocesses).
+                model_params,
+                ds_train,
+                ds_valid,
+                context.get(ConfigKW.TRAINING_PARAMETERS),
+                path_output,
+                device,
+                context.get(ConfigKW.WANDB),
+                cuda_available,
+                metric_fns,
+                n_gif,
+                resume_training,
+                context.get(ConfigKW.DEBUGGING),
+                n_gpus,
+            ))
+        else:
+            logger.info(f"Training without Distributed Data Processing (DDP)")
+            best_training_dice, best_training_loss, best_validation_dice, best_validation_loss = imed_training.train(
+                rank=-1,
+                model_params=model_params,
+                dataset_train=ds_train,
+                dataset_val=ds_valid,
+                training_params=context.get(ConfigKW.TRAINING_PARAMETERS),
+                path_output=path_output,
+                device=device,
+                wandb_params=context.get(ConfigKW.WANDB),
+                cuda_available=cuda_available,
+                metric_fns=metric_fns,
+                n_gif=n_gif,
+                resume_training=resume_training,
+                debugging=context.get(ConfigKW.DEBUGGING)
+            )
 
     if thr_increment:
         # LOAD DATASET
@@ -503,6 +541,22 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False, no_
         save_config_file(context, path_output)
 
     if command == 'train':
+
+        n_gpus = device_count()
+        ddp = n_gpus > 1
+
+        # if DDP is used, load the scores file
+        if ddp:
+
+            best_scores_path = get_best_score_json(model_params, path_output)
+            if os.path.isfile(best_scores_path):
+                with open(str(best_scores_path)) as best_scores:
+                    best_scores = json.load(best_scores)
+                    best_training_dice = best_scores.get(MultiGPUsKW.BEST_TRAINING_DICE)
+                    best_training_loss = best_scores.get(MultiGPUsKW.BEST_TRAINING_LOSS)
+                    best_validation_dice = best_scores.get(MultiGPUsKW.BEST_VALIDATION_DICE)
+                    best_validation_loss = best_scores.get(MultiGPUsKW.BEST_VALIDATION_LOSS)
+
         return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
 
     if command == 'test':

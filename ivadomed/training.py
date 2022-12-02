@@ -9,10 +9,13 @@ import torch.backends.cudnn as cudnn
 import wandb
 from loguru import logger
 from torch import optim
+import torch.nn as nn
 from torch.utils.data import DataLoader
+from torch.utils.data.distributed import DistributedSampler
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 from pathlib import Path
+import json
 
 from ivadomed import losses as imed_losses
 from ivadomed import mixup as imed_mixup
@@ -27,11 +30,16 @@ from ivadomed.keywords import ModelParamsKW, ConfigKW, BalanceSamplesKW, Trainin
 cudnn.benchmark = True
 
 
-def train(model_params, dataset_train, dataset_val, training_params, path_output, device, wandb_params=None,
-          cuda_available=True, metric_fns=None, n_gif=0, resume_training=False, debugging=False):
+def train(rank, model_params, dataset_train, dataset_val, training_params, path_output, device, wandb_params=None,
+          cuda_available=True, metric_fns=None, n_gif=0, resume_training=False, debugging=False,
+          n_process=1):
     """Main command to train the network.
 
     Args:
+        rank (int): the rank of the training function as a process. Default value is set to -1,
+                                indicating that Distributed Parallel Processing will not be used.
+            rank == 0 means single GPU usually
+
         model_params (dict): Model's parameters.
         dataset_train (imed_loader): Training dataset.
         dataset_val (imed_loader): Validation dataset.
@@ -48,6 +56,9 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
                                 directory.
         debugging (bool): If True, extended verbosity and intermediate outputs.
 
+        n_process (int): the total number of processes that will be used to run train. Default is set to 1,
+                                indicating that no other processes will be run in parallel.
+
     Returns:
         float, float, float, float: best_training_dice, best_training_loss, best_validation_dice,
             best_validation_loss.
@@ -55,8 +66,18 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
     # Write the metrics, images, etc to TensorBoard format
     writer = SummaryWriter(log_dir=path_output)
 
-    # Enable wandb tracking  if the required params are found in the config file and the api key is correct
-    wandb_tracking = imed_utils.initialize_wandb(wandb_params)
+    # Whether DDP is enabled or not. Single CPU or GPU does not enable DDP.
+    no_ddp_setup_detected: bool = (rank == -1 and torch.cuda.device_count() <= 1)
+    ddp_setup_detected: bool = (rank != -1 or torch.cuda.device_count() > 1)
+
+    # Enable wandb tracking if the required params are found in the config file and the api key is correct
+    # Also disable in DDP scenarios.
+    if ddp_setup_detected:
+        wandb_tracking = False
+    elif no_ddp_setup_detected or rank == 0:
+        wandb_tracking = imed_utils.initialize_wandb(wandb_params)
+    else:
+        wandb_tracking = False
 
     if wandb_tracking:
         # Collect all hyperparameters into a dictionary
@@ -76,23 +97,53 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
     # BALANCE SAMPLES AND PYTORCH LOADER
     conditions = all([training_params[TrainingParamsKW.BALANCE_SAMPLES][BalanceSamplesKW.APPLIED],
                       model_params[ModelParamsKW.NAME] != "HeMIS"])
-    sampler_train, shuffle_train = get_sampler(dataset_train, conditions,
-                                               training_params[TrainingParamsKW.BALANCE_SAMPLES][BalanceSamplesKW.TYPE])
 
-    train_loader = DataLoader(dataset_train, batch_size=training_params[TrainingParamsKW.BATCH_SIZE],
-                              shuffle=shuffle_train, pin_memory=True, sampler=sampler_train,
-                              collate_fn=imed_loader_utils.imed_collate,
-                              num_workers=0)
+    # set the local rank to be the rank    
+    local_rank = rank
 
-    gif_dict = {"image_path": [], "slice_id": [], "gif": []}
-    if dataset_val:
-        sampler_val, shuffle_val = get_sampler(dataset_val, conditions,
-                                               training_params[TrainingParamsKW.BALANCE_SAMPLES][BalanceSamplesKW.TYPE])
+    # initialize default process group
+    if local_rank == -1 and torch.cuda.is_available():
+        device = torch.device("cuda:0")
+    elif local_rank == -1 and not torch.cuda.is_available():
+        device = torch.device("cpu")
+    else:
+        torch.cuda.set_device(rank)
+        device = torch.device('cuda', rank)
+        # Use NCCL for GPU training, process must have exclusive access to GPUs
+        torch.distributed.init_process_group(backend='nccl', init_method='env://', rank=rank, world_size=n_process)
 
-        val_loader = DataLoader(dataset_val, batch_size=training_params[TrainingParamsKW.BATCH_SIZE],
-                                shuffle=shuffle_val, pin_memory=True, sampler=sampler_val,
+    # No DDP means use regular sampler instead of distributed Sampler.
+
+    if ddp_setup_detected:
+        sampler_train = DistributedSampler(dataset=dataset_train, rank=rank, num_replicas=n_process)
+        train_loader = DataLoader(dataset_train, batch_size=training_params[TrainingParamsKW.BATCH_SIZE],
+                            shuffle=False, pin_memory=True, sampler=sampler_train,
+                            collate_fn=imed_loader_utils.imed_collate,
+                            num_workers=0)
+    elif no_ddp_setup_detected:
+        sampler_train, shuffle_train = get_sampler(dataset_train, conditions, training_params[TrainingParamsKW.BALANCE_SAMPLES][BalanceSamplesKW.TYPE])
+        train_loader = DataLoader(dataset_train, batch_size=training_params[TrainingParamsKW.BATCH_SIZE],
+                                shuffle=shuffle_train, pin_memory=True, sampler=sampler_train,
                                 collate_fn=imed_loader_utils.imed_collate,
                                 num_workers=0)
+
+    gif_dict = {"image_path": [], "slice_id": [], "gif": []}
+
+    if dataset_val:
+        if ddp_setup_detected:
+            sampler_val = DistributedSampler(dataset=dataset_val, rank=rank, num_replicas=n_process)
+            val_loader = DataLoader(dataset_val, batch_size=training_params[TrainingParamsKW.BATCH_SIZE],
+                                shuffle=False, pin_memory=True, sampler=sampler_val,
+                                collate_fn=imed_loader_utils.imed_collate,
+                                num_workers=0)
+        else:
+            sampler_val, shuffle_val = get_sampler(dataset_val, conditions,
+                                                   training_params[TrainingParamsKW.BALANCE_SAMPLES][
+                                                       BalanceSamplesKW.TYPE])
+            val_loader = DataLoader(dataset_val, batch_size=training_params[TrainingParamsKW.BATCH_SIZE],
+                                    shuffle=shuffle_val, pin_memory=True, sampler=sampler_val,
+                                    collate_fn=imed_loader_utils.imed_collate,
+                                    num_workers=0)
 
         # Init GIF
         if n_gif > 0:
@@ -124,6 +175,15 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
         model = model_class(**model_params)
     if cuda_available:
         model.cuda()
+
+    if ddp_setup_detected:
+        logger.info("Using Distributed Data Parallel (DDP).")
+        model.to(device)
+        from torch.nn.parallel import DistributedDataParallel as DDP
+        logger.info("Using PyTorch DDP")
+        model = DDP(model, device_ids=[rank])
+    else:
+        model.to(device)
 
     num_epochs = training_params["training_time"]["num_epochs"]
 
@@ -163,8 +223,14 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
     logger.info("Selected Loss: {}".format(training_params["loss"]["name"]))
     logger.info("\twith the parameters: {}".format(
         [training_params["loss"][k] for k in training_params["loss"] if k != "name"]))
-    loss_fct = get_loss_function(copy.copy(training_params["loss"]))
-    loss_dice_fct = imed_losses.DiceLoss()  # For comparison when another loss is used
+
+    # DDP means must send to a SPECIFIC device.
+    if ddp_setup_detected:
+        loss_fct = get_loss_function(copy.copy(training_params["loss"])).cuda(device)
+        loss_dice_fct = imed_losses.DiceLoss().cuda(device)  # For comparison when another loss is used
+    else: # no_ddp_setup_detected:
+        loss_fct = get_loss_function(copy.copy(training_params["loss"]))
+        loss_dice_fct = imed_losses.DiceLoss()  # For comparison when another loss is used
 
     # INIT TRAINING VARIABLES
     best_training_dice, best_training_loss = float("inf"), float("inf")
@@ -333,7 +399,8 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
                          'scheduler': scheduler,
                          'patience_count': patience_count,
                          'validation_loss': val_loss_total_avg}
-                torch.save(state, resume_path)
+                if no_ddp_setup_detected or rank == 0:  # save state to cuda:0 if DDP, or the usual way if 1 GPU/CPU
+                    torch.save(state, resume_path)
 
                 # Save best model file
                 model_path = Path(path_output, "best_model.pt")
@@ -357,11 +424,19 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
     torch.save(model, final_model_path)
 
     # Save best model in output path
-    if resume_path.is_file():
-        state = torch.load(resume_path)
+    if resume_path.is_file() and (no_ddp_setup_detected or local_rank == 0):
+        # loading state changes based on CPU or DDP
+        if no_ddp_setup_detected:
+            state = torch.load(resume_path, map_location=torch.device('cpu'))
+        else:
+            location = f"cuda:{rank}"
+            state = torch.load(resume_path, map_location=location)
         model_path = Path(path_output, "best_model.pt")
         model.load_state_dict(state['state_dict'])
-        torch.save(model, model_path)
+        if no_ddp_setup_detected:  # if DDP is used, save the module of the DDP object
+            torch.save(model, model_path)
+        else:
+            torch.save(model.module.state_dict(), model_path)
         # Save best model as ONNX in the model directory
         try:
             # Convert best model to ONNX and save it in model directory
@@ -398,7 +473,43 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
           time.strftime('%H:%M:%S', time.localtime(final_time)) +
           "| duration " + str(datetime.timedelta(seconds=duration_time)))
 
+    # Cleanup DDP if applicable
+    if ddp_setup_detected:
+        torch.distributed.destroy_process_group()
+
+    # if DDP is used, store values in JSON file located with the best model
+    if ddp_setup_detected and rank == 0:
+        best_scores = dict(best_training_dice=best_training_dice,
+                           best_training_loss=best_training_loss,
+                           best_validation_dice=best_validation_dice,
+                           best_validation_loss=best_validation_loss)
+
+        best_scores_path = get_best_score_json(model_params, path_output)
+
+        with open(best_scores_path, 'w') as outfile:
+            json.dump(best_scores, outfile)
+
+        return
+
     return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
+
+
+def get_best_score_json(model_params: dict, path_output: str) -> Path:
+    """
+    Consistent method to obtain Path to a JSON which contain the best score of a DDP training.
+    Args:
+        model_params (dict): Model parameters dictionary extracted from "context"/user provided config JSON.
+        path_output (str): str path to the output directory.
+
+    Returns: the absolute Path object to the best score JSON file.
+
+    """
+    best_scores_path = Path(
+        path_output,
+        model_params[ModelParamsKW.FOLDER_NAME],
+        model_params[ModelParamsKW.FOLDER_NAME] + "_scores.json"
+    )
+    return best_scores_path
 
 
 def get_sampler(ds, balance_bool, metadata):
@@ -491,7 +602,7 @@ def get_metadata(metadata, model_params):
                 for k in range(len(metadata))]
 
 
-def load_checkpoint(model, optimizer, gif_dict, scheduler, fname):
+def load_checkpoint(model, optimizer, gif_dict, scheduler, fname, gpu=None):
     """Load checkpoint.
 
     This function check if a checkpoint is available. If so, it updates the state of the input objects.
@@ -502,6 +613,7 @@ def load_checkpoint(model, optimizer, gif_dict, scheduler, fname):
         gif_dict (dict): Dictionary containing a GIF of the training.
         scheduler (_LRScheduler): Learning rate scheduler.
         fname (str): Checkpoint filename.
+        gpu (int): Integer indication GPU being used
 
     Return:
         nn.Module, torch, dict, int, float, _LRScheduler, int
@@ -511,7 +623,11 @@ def load_checkpoint(model, optimizer, gif_dict, scheduler, fname):
     patience_count = 0
     try:
         logger.info("Loading checkpoint: {}".format(fname))
-        checkpoint = torch.load(fname)
+        if gpu is not None:
+            checkpoint = torch.load(fname, map_location=f"cuda:{gpu}")
+        else:
+            # map model to the specified gpu
+            checkpoint = torch.load(fname)
         start_epoch = checkpoint['epoch']
         model.load_state_dict(checkpoint['state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer'])
