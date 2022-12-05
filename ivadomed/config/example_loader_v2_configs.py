@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from copy import deepcopy
+
 from ivadomed.keywords import DataloaderKW, FileMissingHandleKW, FileExcessiveHandleKW
 
 """
@@ -11,65 +13,11 @@ from testing.common_testing_util import path_temp
 
 path_mock_data = path_temp
 
-example_FileDataset_json: dict = {
-    DataloaderKW.TYPE: "FILES",
-    DataloaderKW.SUBSET_LABEL: "Subset3",
-    DataloaderKW.IMAGE_GROUND_TRUTH: [
-        [
-            [
-                r"sub-02/ses-04/anat/sub-02_ses-04_acq-MToff_MTS.nii",
-                r"sub-02/ses-04/anat/sub-02_ses-04_acq-MTon_MTS.nii",
-            ],
-            [
-                "derivatives/labels/sub-02/ses-04/anat/sub-02_ses-04_mt-off_MTS_lesion-manual-rater1.nii"
-            ],
-        ],
-        [
-            [
-                r"sub-02/ses-05/anat/sub-02_ses-05_acq-MToff_MTS.nii",
-                r"sub-02/ses-05/anat/sub-02_ses-05_acq-MTon_MTS.nii",
-            ],
-            [
-                "derivatives/labels/sub-02/ses-05/anat/sub-02_ses-05_mt-off_MTS_lesion-manual-rater1.nii"
-            ],
-        ],
-        [
-            [
-                r"sub-02/ses-04/anat/sub-02_ses-04_flip-1_mt-off_MTS.nii",
-                r"sub-02/ses-04/anat/sub-02_ses-04_flip-1_mt-on_MTS.nii",
-            ],
-            [
-                "derivatives/labels/sub-02/ses-04/anat/sub-02_ses-04_mt-off_MTS_lesion-manual-rater1.nii"
-            ],
-        ],
-        [
-            [
-                r"sub-02/ses-04/anat/sub-02_ses-04_flip-1_mt-off_MTS.nii",
-                r"sub-02/ses-04/anat/sub-02_ses-04_flip-1_mt-on_MTS.nii",
-                r"sub-02/ses-04/anat/sub-02_ses-04_flip-2_mt-off_MTS.nii",
-                r"sub-02/ses-04/anat/sub-02_ses-04_flip-2_mt-on_MTS.nii",
-            ],
-            [
-                "derivatives/labels/sub-02/ses-04/anat/sub-02_ses-04_mt-off_MTS_lesion-manual-rater1.nii"
-            ],
-        ],
-    ],
-    DataloaderKW.EXPECTED_INPUT: 2,
-    DataloaderKW.EXPECTED_GT: 1,
-    "meta_data_csv": "/metadata.csv",  # assumed to be the same shape as the default run.
-    DataloaderKW.MISSING_FILES_HANDLE: FileMissingHandleKW.SKIP,
-    DataloaderKW.EXCESSIVE_FILES_HANDLE: FileExcessiveHandleKW.USE_FIRST_AND_WARN,
-    "path_data": path_mock_data,
-}
+example_file_dataset_group_config_json = {
 
-example_2i1o_all_dataset_groups_config_json: dict = {
-    DataloaderKW.DATASET_GROUPS: [
-        {
-            DataloaderKW.DATASET_GROUP_LABEL: "DataSetGroup1",
-            DataloaderKW.TRAINING: [
-                {
-                    DataloaderKW.TYPE: "FILES",
-                    DataloaderKW.SUBSET_LABEL: "TrainFileDataSet1",
+            DataloaderKW.DATASET_GROUP_LABEL: "FileDataSetGroup1",
+            DataloaderKW.TYPE: "FILES",
+            DataloaderKW.TRAINING: {
                     DataloaderKW.IMAGE_GROUND_TRUTH: [
                         [["sub-01/ses-01/anat/sub-01_ses-01_flip-1_mt-off_MTS.nii",
                           "sub-01/ses-01/anat/sub-01_ses-01_flip-1_mt-on_MTS.nii"],
@@ -84,17 +32,10 @@ example_2i1o_all_dataset_groups_config_json: dict = {
                         [["sub-01/ses-04/anat/sub-01_ses-04_flip-1_mt-off_MTS.nii", ],
                          ["derivatives/labels/sub-01/ses-04/anat/sub-01_ses-04_mt-off_MTS_lesion-manual-rater1.nii"]],
                     ],
-                    DataloaderKW.EXPECTED_INPUT: 2,
-                    DataloaderKW.EXPECTED_GT: 1,
                     DataloaderKW.MISSING_FILES_HANDLE: FileMissingHandleKW.SKIP,
                     DataloaderKW.EXCESSIVE_FILES_HANDLE: FileExcessiveHandleKW.USE_FIRST_AND_WARN,
-                    DataloaderKW.PATH_DATA: path_mock_data,
-                },
-            ],
-            DataloaderKW.VALIDATION: [
-                {
-                    DataloaderKW.TYPE: "FILES",
-                    DataloaderKW.SUBSET_LABEL: "ValFileDataSet1",
+            },
+            DataloaderKW.VALIDATION: {
                     DataloaderKW.IMAGE_GROUND_TRUTH: [
                         [["sub-02/ses-01/anat/sub-02_ses-01_flip-1_mt-off_MTS.nii",
                           "sub-02/ses-01/anat/sub-02_ses-01_flip-1_mt-on_MTS.nii"],
@@ -109,18 +50,10 @@ example_2i1o_all_dataset_groups_config_json: dict = {
                         [["sub-02/ses-04/anat/sub-02_ses-04_flip-1_mt-off_MTS.nii", ],
                          ["derivatives/labels/sub-02/ses-04/anat/sub-02_ses-04_mt-off_MTS_lesion-manual-rater1.nii"]],
                     ],
-                    DataloaderKW.EXPECTED_INPUT: 2,
-                    DataloaderKW.EXPECTED_GT: 1,
                     DataloaderKW.MISSING_FILES_HANDLE: FileMissingHandleKW.SKIP,
                     DataloaderKW.EXCESSIVE_FILES_HANDLE: FileExcessiveHandleKW.USE_FIRST_AND_WARN,
-                    DataloaderKW.PATH_DATA: path_mock_data,
-
-                }
-            ],
-            DataloaderKW.TEST: [
-                {
-                    DataloaderKW.TYPE: "FILES",
-                    DataloaderKW.SUBSET_LABEL: "TestFileDataSet1",
+            },
+            DataloaderKW.TEST: {
                     DataloaderKW.IMAGE_GROUND_TRUTH:  [
                         [["sub-03/ses-01/anat/sub-03_ses-01_flip-1_mt-off_MTS.nii",
                           "sub-03/ses-01/anat/sub-03_ses-01_flip-1_mt-on_MTS.nii"],
@@ -135,22 +68,22 @@ example_2i1o_all_dataset_groups_config_json: dict = {
                         [["sub-03/ses-04/anat/sub-03_ses-04_flip-1_mt-off_MTS.nii", ],
                          ["derivatives/labels/sub-03/ses-04/anat/sub-03_ses-04_mt-off_MTS_lesion-manual-rater1.nii"]],
                     ],
-                    DataloaderKW.EXPECTED_INPUT: 2,
-                    DataloaderKW.EXPECTED_GT: 1,
                     DataloaderKW.MISSING_FILES_HANDLE: FileMissingHandleKW.SKIP,
                     DataloaderKW.EXCESSIVE_FILES_HANDLE: FileExcessiveHandleKW.USE_FIRST_AND_WARN,
-                    DataloaderKW.PATH_DATA: path_mock_data,
-                }
-            ],
+            },
+            DataloaderKW.PATH_DATA: path_mock_data,
             DataloaderKW.EXPECTED_INPUT: 2,
             DataloaderKW.EXPECTED_GT: 1,
-        },
+
+}
+
+example_2i1o_all_dataset_groups_config_json: dict = {
+    DataloaderKW.DATASET_GROUPS: [
+        example_file_dataset_group_config_json,
         {
-            DataloaderKW.DATASET_GROUP_LABEL: "DataSetGroup2",
-            DataloaderKW.TRAINING: [
-                {
-                    DataloaderKW.TYPE: "FILES",
-                    DataloaderKW.SUBSET_LABEL: "TrainFileDataSet1",
+            DataloaderKW.DATASET_GROUP_LABEL: "FileDataSetGroup2",
+            DataloaderKW.TYPE: "FILES",
+            DataloaderKW.TRAINING: {
                     DataloaderKW.IMAGE_GROUND_TRUTH: [
                         [["sub-04/ses-01/anat/sub-04_ses-01_flip-1_mt-off_MTS.nii",
                           "sub-04/ses-01/anat/sub-04_ses-01_flip-1_mt-on_MTS.nii"],
@@ -165,17 +98,10 @@ example_2i1o_all_dataset_groups_config_json: dict = {
                         [["sub-04/ses-04/anat/sub-04_ses-04_flip-1_mt-off_MTS.nii", ],
                          ["derivatives/labels/sub-04/ses-04/anat/sub-04_ses-04_mt-off_MTS_lesion-manual-rater1.nii"]],
                     ],
-                    DataloaderKW.EXPECTED_INPUT: 2,
-                    DataloaderKW.EXPECTED_GT: 1,
                     DataloaderKW.MISSING_FILES_HANDLE: FileMissingHandleKW.SKIP,
                     DataloaderKW.EXCESSIVE_FILES_HANDLE: FileExcessiveHandleKW.USE_FIRST_AND_WARN,
-                    DataloaderKW.PATH_DATA: path_mock_data,
-                },
-            ],
-            DataloaderKW.VALIDATION: [
-                {
-                    DataloaderKW.TYPE: "FILES",
-                    DataloaderKW.SUBSET_LABEL: "ValFileDataSet1",
+            },
+            DataloaderKW.VALIDATION: {
                     DataloaderKW.IMAGE_GROUND_TRUTH: [
                         [["sub-05/ses-01/anat/sub-05_ses-01_flip-1_mt-off_MTS.nii",
                           "sub-05/ses-01/anat/sub-05_ses-01_flip-1_mt-on_MTS.nii"],
@@ -190,17 +116,10 @@ example_2i1o_all_dataset_groups_config_json: dict = {
                         [["sub-05/ses-04/anat/sub-05_ses-04_flip-1_mt-off_MTS.nii", ],
                          ["derivatives/labels/sub-05/ses-04/anat/sub-05_ses-04_mt-off_MTS_lesion-manual-rater1.nii"]],
                     ],
-                    DataloaderKW.EXPECTED_INPUT: 2,
-                    DataloaderKW.EXPECTED_GT: 1,
                     DataloaderKW.MISSING_FILES_HANDLE: FileMissingHandleKW.SKIP,
                     DataloaderKW.EXCESSIVE_FILES_HANDLE: FileExcessiveHandleKW.USE_FIRST_AND_WARN,
-                    DataloaderKW.PATH_DATA: path_mock_data,
-                }
-            ],
-            DataloaderKW.TEST: [
-                {
-                    DataloaderKW.TYPE: "FILES",
-                    DataloaderKW.SUBSET_LABEL: "TestFileDataSet1",
+            },
+            DataloaderKW.TEST: {
                     DataloaderKW.IMAGE_GROUND_TRUTH: [
                         [["sub-06/ses-01/anat/sub-06_ses-01_flip-1_mt-off_MTS.nii",
                           "sub-06/ses-01/anat/sub-06_ses-01_flip-1_mt-on_MTS.nii"],
@@ -215,13 +134,10 @@ example_2i1o_all_dataset_groups_config_json: dict = {
                         [["sub-06/ses-04/anat/sub-06_ses-04_flip-1_mt-off_MTS.nii", ],
                          ["derivatives/labels/sub-06/ses-04/anat/sub-06_ses-04_mt-off_MTS_lesion-manual-rater1.nii"]],
                     ],
-                    DataloaderKW.EXPECTED_INPUT: 2,
-                    DataloaderKW.EXPECTED_GT: 1,
                     DataloaderKW.MISSING_FILES_HANDLE: FileMissingHandleKW.SKIP,
                     DataloaderKW.EXCESSIVE_FILES_HANDLE: FileExcessiveHandleKW.USE_FIRST_AND_WARN,
-                    DataloaderKW.PATH_DATA: path_mock_data,
-                }
-            ],
+            },
+            DataloaderKW.PATH_DATA: path_mock_data,
             DataloaderKW.EXPECTED_INPUT: 2,
             DataloaderKW.EXPECTED_GT: 1,
         },
@@ -230,169 +146,23 @@ example_2i1o_all_dataset_groups_config_json: dict = {
     DataloaderKW.EXPECTED_GT: 1,
 }
 
-example_1i1o_all_dataset_groups_config_json: dict = {
-    DataloaderKW.DATASET_GROUPS: [
-        {
-            DataloaderKW.DATASET_GROUP_LABEL: "DataSetGroup1",
-            DataloaderKW.TRAINING: [
-                {
-                    DataloaderKW.TYPE: "FILES",
-                    DataloaderKW.SUBSET_LABEL: "TrainFileDataSet1",
-                    DataloaderKW.IMAGE_GROUND_TRUTH: [
-                        [["sub-01/ses-01/anat/sub-01_ses-01_flip-1_mt-off_MTS.nii",
-                          "sub-01/ses-01/anat/sub-01_ses-01_flip-1_mt-on_MTS.nii"],
-                         ["derivatives/labels/sub-01/ses-01/anat/sub-01_ses-01_mt-off_MTS_lesion-manual-rater1.nii"]],
-                        [["sub-01/ses-02/anat/sub-01_ses-02_flip-1_mt-off_MTS.nii",
-                          "sub-01/ses-02/anat/sub-01_ses-02_flip-1_mt-on_MTS.nii"],
-                         ["derivatives/labels/sub-01/ses-02/anat/sub-01_ses-02_mt-off_MTS_lesion-manual-rater1.nii"]],
-                        [["sub-01/ses-03/anat/sub-01_ses-03_flip-1_mt-off_MTS.nii",
-                          "sub-01/ses-03/anat/sub-01_ses-03_flip-1_mt-on_MTS.nii",
-                          "sub-01/ses-03/anat/sub-01_ses-03_flip-1_mt-on_MTS.nii"],
-                         ["derivatives/labels/sub-01/ses-03/anat/sub-01_ses-03_mt-off_MTS_lesion-manual-rater1.nii"]],
-                        [["sub-01/ses-04/anat/sub-01_ses-04_flip-1_mt-off_MTS.nii", ],
-                         ["derivatives/labels/sub-01/ses-04/anat/sub-01_ses-04_mt-off_MTS_lesion-manual-rater1.nii"]],
-                    ],
-                    DataloaderKW.EXPECTED_INPUT: 1,
-                    DataloaderKW.EXPECTED_GT: 1,
-                    DataloaderKW.MISSING_FILES_HANDLE: "drop_subject",
-                    DataloaderKW.EXCESSIVE_FILES_HANDLE: "use_first_and_warn",
-                    DataloaderKW.PATH_DATA: path_mock_data,
-                },
-            ],
-            DataloaderKW.VALIDATION: [
-                {
-                    DataloaderKW.TYPE: "FILES",
-                    DataloaderKW.SUBSET_LABEL: "ValFileDataSet1",
-                    DataloaderKW.IMAGE_GROUND_TRUTH: [
-                        [["sub-02/ses-01/anat/sub-02_ses-01_flip-1_mt-off_MTS.nii",
-                          "sub-02/ses-01/anat/sub-02_ses-01_flip-1_mt-on_MTS.nii"],
-                         ["derivatives/labels/sub-02/ses-01/anat/sub-02_ses-01_mt-off_MTS_lesion-manual-rater1.nii"]],
-                        [["sub-02/ses-02/anat/sub-02_ses-02_flip-1_mt-off_MTS.nii",
-                          "sub-02/ses-02/anat/sub-02_ses-02_flip-1_mt-on_MTS.nii"],
-                         ["derivatives/labels/sub-02/ses-02/anat/sub-02_ses-02_mt-off_MTS_lesion-manual-rater1.nii"]],
-                        [["sub-02/ses-03/anat/sub-02_ses-03_flip-1_mt-off_MTS.nii",
-                          "sub-02/ses-03/anat/sub-02_ses-03_flip-1_mt-on_MTS.nii",
-                          "sub-02/ses-03/anat/sub-02_ses-03_flip-1_mt-on_MTS.nii"],
-                         ["derivatives/labels/sub-02/ses-03/anat/sub-02_ses-03_mt-off_MTS_lesion-manual-rater1.nii"]],
-                        [["sub-02/ses-04/anat/sub-02_ses-04_flip-1_mt-off_MTS.nii", ],
-                         ["derivatives/labels/sub-02/ses-04/anat/sub-02_ses-04_mt-off_MTS_lesion-manual-rater1.nii"]],
-                    ],
-                    DataloaderKW.EXPECTED_INPUT: 1,
-                    DataloaderKW.EXPECTED_GT: 1,
-                    DataloaderKW.MISSING_FILES_HANDLE: "drop_subject",
-                    DataloaderKW.EXCESSIVE_FILES_HANDLE: "use_first_and_warn",
-                    DataloaderKW.PATH_DATA: path_mock_data,
-                }
-            ],
-            DataloaderKW.TEST: [
-                {
-                    DataloaderKW.TYPE: "FILES",
-                    DataloaderKW.SUBSET_LABEL: "TestFileDataSet1",
-                    DataloaderKW.IMAGE_GROUND_TRUTH: [
-                        [["sub-03/ses-01/anat/sub-03_ses-01_flip-1_mt-off_MTS.nii",
-                          "sub-03/ses-01/anat/sub-03_ses-01_flip-1_mt-on_MTS.nii"],
-                         ["derivatives/labels/sub-03/ses-01/anat/sub-03_ses-01_mt-off_MTS_lesion-manual-rater1.nii"]],
-                        [["sub-03/ses-02/anat/sub-03_ses-02_flip-1_mt-off_MTS.nii",
-                          "sub-03/ses-02/anat/sub-03_ses-02_flip-1_mt-on_MTS.nii"],
-                         ["derivatives/labels/sub-03/ses-02/anat/sub-03_ses-02_mt-off_MTS_lesion-manual-rater1.nii"]],
-                        [["sub-03/ses-03/anat/sub-03_ses-03_flip-1_mt-off_MTS.nii",
-                          "sub-03/ses-03/anat/sub-03_ses-03_flip-1_mt-on_MTS.nii",
-                          "sub-03/ses-03/anat/sub-03_ses-03_flip-1_mt-on_MTS.nii"],
-                         ["derivatives/labels/sub-03/ses-03/anat/sub-03_ses-03_mt-off_MTS_lesion-manual-rater1.nii"]],
-                        [["sub-03/ses-04/anat/sub-03_ses-04_flip-1_mt-off_MTS.nii", ],
-                         ["derivatives/labels/sub-03/ses-04/anat/sub-03_ses-04_mt-off_MTS_lesion-manual-rater1.nii"]],
-                    ],
-                    DataloaderKW.EXPECTED_INPUT: 1,
-                    DataloaderKW.EXPECTED_GT: 1,
-                    DataloaderKW.MISSING_FILES_HANDLE: "drop_subject",
-                    DataloaderKW.EXCESSIVE_FILES_HANDLE: "use_first_and_warn",
-                    DataloaderKW.PATH_DATA: path_mock_data,
-                }
-            ],
-            DataloaderKW.EXPECTED_INPUT: 1,
-            DataloaderKW.EXPECTED_GT: 1,
-        },
-        {
-            DataloaderKW.DATASET_GROUP_LABEL: "DataSetGroup2",
-            DataloaderKW.TRAINING: [
-                {
-                    DataloaderKW.TYPE: "FILES",
-                    DataloaderKW.SUBSET_LABEL: "TrainFileDataSet2",
-                    DataloaderKW.IMAGE_GROUND_TRUTH: [
-                        [["sub-04/ses-01/anat/sub-04_ses-01_flip-1_mt-off_MTS.nii",
-                          "sub-04/ses-01/anat/sub-04_ses-01_flip-1_mt-on_MTS.nii"],
-                         ["derivatives/labels/sub-04/ses-01/anat/sub-04_ses-01_mt-off_MTS_lesion-manual-rater1.nii"]],
-                        [["sub-04/ses-02/anat/sub-04_ses-02_flip-1_mt-off_MTS.nii",
-                          "sub-04/ses-02/anat/sub-04_ses-02_flip-1_mt-on_MTS.nii"],
-                         ["derivatives/labels/sub-04/ses-02/anat/sub-04_ses-02_mt-off_MTS_lesion-manual-rater1.nii"]],
-                        [["sub-04/ses-03/anat/sub-04_ses-03_flip-1_mt-off_MTS.nii",
-                          "sub-04/ses-03/anat/sub-04_ses-03_flip-1_mt-on_MTS.nii",
-                          "sub-04/ses-03/anat/sub-04_ses-03_flip-1_mt-on_MTS.nii"],
-                         ["derivatives/labels/sub-04/ses-03/anat/sub-04_ses-03_mt-off_MTS_lesion-manual-rater1.nii"]],
-                        [["sub-04/ses-04/anat/sub-04_ses-04_flip-1_mt-off_MTS.nii", ],
-                         ["derivatives/labels/sub-04/ses-04/anat/sub-04_ses-04_mt-off_MTS_lesion-manual-rater1.nii"]],
-                    ],
-                    DataloaderKW.EXPECTED_INPUT: 1,
-                    DataloaderKW.EXPECTED_GT: 1,
-                    DataloaderKW.MISSING_FILES_HANDLE: "drop_subject",
-                    DataloaderKW.EXCESSIVE_FILES_HANDLE: "use_first_and_warn",
-                    DataloaderKW.PATH_DATA: path_mock_data,
-                },
-            ],
-            DataloaderKW.VALIDATION: [
-                {
-                    DataloaderKW.TYPE: "FILES",
-                    DataloaderKW.SUBSET_LABEL: "ValFileDataSet2",
-                    DataloaderKW.IMAGE_GROUND_TRUTH: [
-                        [["sub-05/ses-01/anat/sub-05_ses-01_flip-1_mt-off_MTS.nii",
-                          "sub-05/ses-01/anat/sub-05_ses-01_flip-1_mt-on_MTS.nii"],
-                         ["derivatives/labels/sub-05/ses-01/anat/sub-05_ses-01_mt-off_MTS_lesion-manual-rater1.nii"]],
-                        [["sub-05/ses-02/anat/sub-05_ses-02_flip-1_mt-off_MTS.nii",
-                          "sub-05/ses-02/anat/sub-05_ses-02_flip-1_mt-on_MTS.nii"],
-                         ["derivatives/labels/sub-05/ses-02/anat/sub-05_ses-02_mt-off_MTS_lesion-manual-rater1.nii"]],
-                        [["sub-05/ses-03/anat/sub-05_ses-03_flip-1_mt-off_MTS.nii",
-                          "sub-05/ses-03/anat/sub-05_ses-03_flip-1_mt-on_MTS.nii",
-                          "sub-05/ses-03/anat/sub-05_ses-03_flip-1_mt-on_MTS.nii"],
-                         ["derivatives/labels/sub-05/ses-03/anat/sub-05_ses-03_mt-off_MTS_lesion-manual-rater1.nii"]],
-                        [["sub-05/ses-04/anat/sub-05_ses-04_flip-1_mt-off_MTS.nii", ],
-                         ["derivatives/labels/sub-05/ses-04/anat/sub-05_ses-04_mt-off_MTS_lesion-manual-rater1.nii"]],
-                    ],
-                    DataloaderKW.EXPECTED_INPUT: 1,
-                    DataloaderKW.EXPECTED_GT: 1,
-                    DataloaderKW.MISSING_FILES_HANDLE: "drop_subject",
-                    DataloaderKW.EXCESSIVE_FILES_HANDLE: "use_first_and_warn",
-                    DataloaderKW.PATH_DATA: path_mock_data,
-                }
-            ],
-            DataloaderKW.TEST: [
-                {
-                    DataloaderKW.TYPE: "FILES",
-                    DataloaderKW.SUBSET_LABEL: "TestFileDataSet2",
-                    DataloaderKW.IMAGE_GROUND_TRUTH: [
-                        [["sub-06/ses-01/anat/sub-06_ses-01_flip-1_mt-off_MTS.nii",
-                          "sub-06/ses-01/anat/sub-06_ses-01_flip-1_mt-on_MTS.nii"],
-                         ["derivatives/labels/sub-06/ses-01/anat/sub-06_ses-01_mt-off_MTS_lesion-manual-rater1.nii"]],
-                        [["sub-06/ses-02/anat/sub-06_ses-02_flip-1_mt-off_MTS.nii",
-                          "sub-06/ses-02/anat/sub-06_ses-02_flip-1_mt-on_MTS.nii"],
-                         ["derivatives/labels/sub-06/ses-02/anat/sub-06_ses-02_mt-off_MTS_lesion-manual-rater1.nii"]],
-                        [["sub-06/ses-03/anat/sub-06_ses-03_flip-1_mt-off_MTS.nii",
-                          "sub-06/ses-03/anat/sub-06_ses-03_flip-1_mt-on_MTS.nii",
-                          "sub-06/ses-03/anat/sub-06_ses-03_flip-1_mt-on_MTS.nii"],
-                         ["derivatives/labels/sub-06/ses-03/anat/sub-06_ses-03_mt-off_MTS_lesion-manual-rater1.nii"]],
-                        [["sub-06/ses-04/anat/sub-06_ses-04_flip-1_mt-off_MTS.nii", ],
-                         ["derivatives/labels/sub-06/ses-04/anat/sub-06_ses-04_mt-off_MTS_lesion-manual-rater1.nii"]],
-                    ],
-                    DataloaderKW.EXPECTED_INPUT: 1,
-                    DataloaderKW.EXPECTED_GT: 1,
-                    DataloaderKW.MISSING_FILES_HANDLE: "drop_subject",
-                    DataloaderKW.EXCESSIVE_FILES_HANDLE: "use_first_and_warn",
-                    DataloaderKW.PATH_DATA: path_mock_data,
-                }
-            ],
-            DataloaderKW.EXPECTED_INPUT: 1,
-            DataloaderKW.EXPECTED_GT: 1,
-        },
-    ],
-    DataloaderKW.EXPECTED_INPUT: 1,
-    DataloaderKW.EXPECTED_GT: 1,
-}
+# Create the example json after patchingg the 2i1o example
+example_1i1o_all_dataset_groups_config_json: dict = deepcopy(example_2i1o_all_dataset_groups_config_json)
+example_1i1o_all_dataset_groups_config_json.update(
+    {
+        DataloaderKW.EXPECTED_INPUT: 1,
+        DataloaderKW.EXPECTED_GT: 1,
+    }
+)
+example_1i1o_all_dataset_groups_config_json[DataloaderKW.DATASET_GROUPS][0].update(
+    {
+        DataloaderKW.EXPECTED_INPUT: 1,
+        DataloaderKW.EXPECTED_GT: 1,
+    }
+)
+example_1i1o_all_dataset_groups_config_json[DataloaderKW.DATASET_GROUPS][1].update(
+    {
+        DataloaderKW.EXPECTED_INPUT: 1,
+        DataloaderKW.EXPECTED_GT: 1,
+    }
+)

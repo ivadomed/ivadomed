@@ -38,6 +38,7 @@ class FileDatasetGroup:
         self.val_filename_pairs: List[Tuple[list, list, str, dict]] = []
         self.test_filename_pairs: List[Tuple[list, list, str, dict]] = []
 
+
         # FileDatasetGroup config
         self.config = config
 
@@ -67,21 +68,22 @@ class FileDatasetGroup:
         for a_train_dataset in dict_file_group_spec[DataloaderKW.TRAINING]:
             if a_train_dataset[DataloaderKW.TYPE] == "FILES":
                 train_set = Files3DDataset(a_train_dataset, config)
-                self.train_dataset.append(train_set)
                 self.train_filename_pairs.extend(train_set.filename_pairs)
         for a_val_dataset in dict_file_group_spec[DataloaderKW.VALIDATION]:
             if a_val_dataset[DataloaderKW.TYPE] == "FILES":
                 val_set = Files3DDataset(a_val_dataset, config)
-                self.val_dataset.append(val_set)
                 self.val_filename_pairs.extend(val_set.filename_pairs)
         for a_test_dataset in dict_file_group_spec[DataloaderKW.TEST]:
             if a_test_dataset[DataloaderKW.TYPE] == "FILES":
                 test_set = Files3DDataset(a_test_dataset, config)
-                self.test_dataset.append(test_set)
                 self.test_filename_pairs.extend(test_set.filename_pairs)
 
     def validate_update_2d_train_val_test_dataset_and_filename_pairs(self, dict_file_group_spec):
         # Instantiate all the 2D Train/Val/Test Datasets
+
+        # Given a JSON file, try to load the file pairing from it.
+        assert dict_file_group_spec.get(DataloaderKW.TYPE).upper() == "FILES", \
+            f"Invalid DataLoader type specified: {dict_file_group_spec.get(DataloaderKW.TYPE)}"
 
         # handle simple json specifications
         self.train_filename_pairs = self.parse_simple_spec_dict_for_filename_pairs(
@@ -151,10 +153,7 @@ class FileDatasetGroup:
             raise ValueError("Unknown Complex Data Loader Type")
 
     def parse_simple_spec_dict_for_filename_pairs(self, a_simple_loader_json: dict) -> list:
-        """Load the json file and return the dictionary"""
-        # Given a JSON file, try to load the file pairing from it.
-        assert a_simple_loader_json.get(DataloaderKW.TYPE).upper() == "FILES", \
-            f"Invalid DataLoader type specified: {a_simple_loader_json.get(DataloaderKW.TYPE)}"
+        """Load the sub dictionary within the json file and return the dictionary"""
 
         filename_pairs = []
 

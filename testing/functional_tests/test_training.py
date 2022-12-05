@@ -6,7 +6,7 @@ from ivadomed.keywords import ConfigKW, LoaderParamsKW
 from testing.functional_tests.t_utils import create_tmp_dir, __data_testing_dir__, download_functional_test_files, \
     __tmp_dir__
 from testing.common_testing_util import remove_tmp_dir
-from testing.mocker.mocker_fixture import create_mock_bids_file_structures
+from testing.mocker.mocker_fixture import create_mock_bids_file_structures, create_example_mock_bids_file_structures
 
 from loguru import logger
 import pytest
@@ -26,7 +26,7 @@ def test_training_with_filedataset(
         download_functional_test_files,  # pytest fixture, do not remove.
         input_file_dataset
 ):
-    create_mock_bids_file_structures(path_mock_data),  # pytest fixture, do not remove.
+    create_example_mock_bids_file_structures(path_mock_data),  # pytest fixture, do not remove.
 
     # Build the config file
     path_default_config = str(Path(__data_testing_dir__, 'automate_training_config.json'))
@@ -68,14 +68,14 @@ def test_training_with_filedataset(
 @pytest.mark.script_launch_mode('subprocess')
 @pytest.mark.parametrize('input_file_dataset', [
     example_2i1o_all_dataset_groups_config_json,
-    # example_1i1o_all_dataset_groups_config_json,
+    example_1i1o_all_dataset_groups_config_json,
 ])
 def test_training_cli(
         download_functional_test_files,  # pytest fixture, do not remove.
         input_file_dataset,
         script_runner
 ):
-    create_mock_bids_file_structures(path_mock_data),  # pytest fixture, do not remove.
+    create_example_mock_bids_file_structures(path_mock_data),  # pytest fixture, do not remove.
 
     # Build the config file
     path_default_config = os.path.join(__data_testing_dir__, 'automate_training_config.json')

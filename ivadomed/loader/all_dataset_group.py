@@ -74,11 +74,6 @@ class AllDatasetGroups:
             # Track the dataset group created.
             self.list_dataset_groups.append(dataset_group)
 
-            # These are lists of either Files3DDataset or FilesDataset, aggregated across all the DatasetGroups within.
-            self.train_flat_fileset.append(dataset_group.train_dataset)
-            self.val_flat_fileset.append(dataset_group.val_dataset)
-            self.test_flat_fileset.append(dataset_group.test_dataset)
-
             # These are lists of underlying pairing
             self.train_filename_pairs.extend(dataset_group.train_filename_pairs)
             self.val_filename_pairs.extend(dataset_group.val_filename_pairs)

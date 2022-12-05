@@ -3,7 +3,7 @@ from ivadomed.config.example_loader_v2_configs import example_2i1o_all_dataset_g
 from ivadomed.loader.dataset_group import FileDatasetGroup
 
 from testing.common_testing_util import remove_tmp_dir
-from testing.mocker.mocker_fixture import create_mock_bids_file_structures
+from testing.mocker.mocker_fixture import create_mock_bids_file_structures, create_example_mock_bids_file_structures
 from testing.unit_tests.t_utils import (
     create_tmp_dir
 )
@@ -18,7 +18,7 @@ def setup_function():
 
 def test_all_dataset_group():
 
-    create_mock_bids_file_structures(path_mock_data),  # pytest fixture, do not remove.
+    create_example_mock_bids_file_structures(path_mock_data),  # pytest fixture, do not remove.
 
     model_dict = {
         "name": "Unet",
