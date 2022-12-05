@@ -1,0 +1,847 @@
+2022-12-05 12:57:02.121 | INFO     | ivadomed.utils:define_device:161 - Cuda is not available.
+2022-12-05 12:57:02.122 | INFO     | ivadomed.utils:define_device:162 - Working on cpu.
+2022-12-05 12:57:02.122 | INFO     | ivadomed.utils:display_selected_model_spec:177 - Selected architecture: Unet, with the following parameters:
+2022-12-05 12:57:02.122 | INFO     | ivadomed.utils:display_selected_model_spec:180 - 	dropout_rate: 0.3
+2022-12-05 12:57:02.122 | INFO     | ivadomed.utils:display_selected_model_spec:180 - 	bn_momentum: 0.1
+2022-12-05 12:57:02.122 | INFO     | ivadomed.utils:display_selected_model_spec:180 - 	out_channel: 1
+2022-12-05 12:57:02.123 | INFO     | ivadomed.utils:display_selected_model_spec:180 - 	depth: 1
+2022-12-05 12:57:02.123 | INFO     | ivadomed.utils:display_selected_model_spec:180 - 	is_2d: True
+2022-12-05 12:57:02.123 | INFO     | ivadomed.utils:display_selected_model_spec:180 - 	folder_name: unit_test
+2022-12-05 12:57:02.124 | INFO     | ivadomed.utils:display_selected_model_spec:180 - 	in_channel: 2
+2022-12-05 12:57:02.124 | INFO     | ivadomed.transforms:__init__:135 - ElasticTransform transform not included since no undo_transform available for it.
+2022-12-05 12:57:02.124 | INFO     | ivadomed.utils:display_selected_transfoms:190 - Selected transformations for the ['training'] dataset:
+2022-12-05 12:57:02.124 | INFO     | ivadomed.utils:display_selected_transfoms:192 - 	Resample: {'wspace': 0.75, 'hspace': 0.75}
+2022-12-05 12:57:02.125 | INFO     | ivadomed.utils:display_selected_transfoms:192 - 	ElasticTransform: {'alpha_range': [28.0, 30.0], 'sigma_range': [3.5, 4.5], 'p': 0.1}
+2022-12-05 12:57:02.125 | INFO     | ivadomed.utils:display_selected_transfoms:192 - 	RandomAffine: {'degrees': 4.6, 'translate': [0.03, 0.03, 0.0], 'scale': [0.98, 1, 0.0]}
+2022-12-05 12:57:02.125 | INFO     | ivadomed.utils:display_selected_transfoms:192 - 	CenterCrop: {'size': [128, 128], 'preprocessing': True}
+2022-12-05 12:57:02.125 | INFO     | ivadomed.utils:display_selected_transfoms:192 - 	NormalizeInstance: {'applied_to': ['im']}
+2022-12-05 12:57:02.125 | INFO     | ivadomed.utils:display_selected_transfoms:190 - Selected transformations for the ['validation'] dataset:
+2022-12-05 12:57:02.125 | INFO     | ivadomed.utils:display_selected_transfoms:192 - 	Resample: {'wspace': 0.75, 'hspace': 0.75}
+2022-12-05 12:57:02.125 | INFO     | ivadomed.utils:display_selected_transfoms:192 - 	ElasticTransform: {'alpha_range': [28.0, 30.0], 'sigma_range': [3.5, 4.5], 'p': 0.1}
+2022-12-05 12:57:02.126 | INFO     | ivadomed.utils:display_selected_transfoms:192 - 	RandomAffine: {'degrees': 4.6, 'translate': [0.03, 0.03, 0.0], 'scale': [0.98, 1, 0.0]}
+2022-12-05 12:57:02.126 | INFO     | ivadomed.utils:display_selected_transfoms:192 - 	CenterCrop: {'size': [128, 128], 'preprocessing': True}
+2022-12-05 12:57:02.126 | INFO     | ivadomed.utils:display_selected_transfoms:192 - 	NormalizeInstance: {'applied_to': ['im']}
+2022-12-05 12:57:02.126 | INFO     | ivadomed.utils:define_device:161 - Cuda is not available.
+2022-12-05 12:57:02.126 | INFO     | ivadomed.utils:define_device:162 - Working on cpu.
+2022-12-05 12:57:02.129 | WARNING  | ivadomed.loader.dataset_group:validate_simple_dataset:220 - Fewer input files found than expected for subject specification [['C:\\git\\ivadomed\\tmp\\sub-01\\ses-04\\anat\\sub-01_ses-04_flip-1_mt-off_MTS.nii'], ['derivatives/labels/sub-01/ses-04/anat/sub-01_ses-04_mt-off_MTS_lesion-manual-rater1.nii']]. Expected 2 but found 1 from ['C:\\git\\ivadomed\\tmp\\sub-01\\ses-04\\anat\\sub-01_ses-04_flip-1_mt-off_MTS.nii']
+2022-12-05 12:57:02.131 | WARNING  | ivadomed.loader.dataset_group:validate_simple_dataset:220 - Fewer input files found than expected for subject specification [['C:\\git\\ivadomed\\tmp\\sub-02\\ses-04\\anat\\sub-02_ses-04_flip-1_mt-off_MTS.nii'], ['derivatives/labels/sub-02/ses-04/anat/sub-02_ses-04_mt-off_MTS_lesion-manual-rater1.nii']]. Expected 2 but found 1 from ['C:\\git\\ivadomed\\tmp\\sub-02\\ses-04\\anat\\sub-02_ses-04_flip-1_mt-off_MTS.nii']
+2022-12-05 12:57:02.133 | WARNING  | ivadomed.loader.dataset_group:validate_simple_dataset:220 - Fewer input files found than expected for subject specification [['C:\\git\\ivadomed\\tmp\\sub-03\\ses-04\\anat\\sub-03_ses-04_flip-1_mt-off_MTS.nii'], ['derivatives/labels/sub-03/ses-04/anat/sub-03_ses-04_mt-off_MTS_lesion-manual-rater1.nii']]. Expected 2 but found 1 from ['C:\\git\\ivadomed\\tmp\\sub-03\\ses-04\\anat\\sub-03_ses-04_flip-1_mt-off_MTS.nii']
+2022-12-05 12:57:02.135 | WARNING  | ivadomed.loader.dataset_group:validate_simple_dataset:220 - Fewer input files found than expected for subject specification [['C:\\git\\ivadomed\\tmp\\sub-04\\ses-04\\anat\\sub-04_ses-04_flip-1_mt-off_MTS.nii'], ['derivatives/labels/sub-04/ses-04/anat/sub-04_ses-04_mt-off_MTS_lesion-manual-rater1.nii']]. Expected 2 but found 1 from ['C:\\git\\ivadomed\\tmp\\sub-04\\ses-04\\anat\\sub-04_ses-04_flip-1_mt-off_MTS.nii']
+2022-12-05 12:57:02.137 | WARNING  | ivadomed.loader.dataset_group:validate_simple_dataset:220 - Fewer input files found than expected for subject specification [['C:\\git\\ivadomed\\tmp\\sub-05\\ses-04\\anat\\sub-05_ses-04_flip-1_mt-off_MTS.nii'], ['derivatives/labels/sub-05/ses-04/anat/sub-05_ses-04_mt-off_MTS_lesion-manual-rater1.nii']]. Expected 2 but found 1 from ['C:\\git\\ivadomed\\tmp\\sub-05\\ses-04\\anat\\sub-05_ses-04_flip-1_mt-off_MTS.nii']
+2022-12-05 12:57:02.138 | WARNING  | ivadomed.loader.dataset_group:validate_simple_dataset:220 - Fewer input files found than expected for subject specification [['C:\\git\\ivadomed\\tmp\\sub-06\\ses-04\\anat\\sub-06_ses-04_flip-1_mt-off_MTS.nii'], ['derivatives/labels/sub-06/ses-04/anat/sub-06_ses-04_mt-off_MTS_lesion-manual-rater1.nii']]. Expected 2 but found 1 from ['C:\\git\\ivadomed\\tmp\\sub-06\\ses-04\\anat\\sub-06_ses-04_flip-1_mt-off_MTS.nii']
+2022-12-05 12:57:02.527 | INFO     | ivadomed.main:create_path_model:102 - Model directory already exists: pytest_output_folder\unit_test
+2022-12-05 12:57:02.536 | INFO     | ivadomed.utils:initialize_wandb:49 - No WandB parameters found! Continuing with Tensorboard Logging
+2022-12-05 12:57:02.536 | INFO     | ivadomed.training:train:139 - Initialising model's weights from scratch.
+2022-12-05 12:57:02.539 | INFO     | ivadomed.training:train:155 - Scheduler parameters: {'name': 'CosineAnnealingLR', 'base_lr': 1e-05, 'max_lr': 0.01}
+2022-12-05 12:57:02.540 | INFO     | ivadomed.training:train:180 - Selected Loss: DiceLoss
+2022-12-05 12:57:02.540 | INFO     | ivadomed.training:train:181 - 	with the parameters: []
+2022-12-05 12:57:02.662 | INFO     | ivadomed.training:train:259 - Epoch 1 training loss: -0.4852.
+2022-12-05 12:57:02.808 | INFO     | ivadomed.training:train:341 - Epoch 1 validation loss: -0.5269.
+2022-12-05 12:57:02.808 | INFO     | ivadomed.training:train:345 - Epoch 1 took 0.27 seconds.
+2022-12-05 12:57:03.110 | INFO     | ivadomed.training:train:392 - Model saved as '.onnx': pytest_output_folder\unit_test\unit_test.onnx
+2022-12-05 12:57:03.115 | INFO     | ivadomed.training:train:400 - Model saved as '.pt': pytest_output_folder\unit_test\unit_test.pt
+2022-12-05 12:57:03.117 | INFO     | ivadomed.training:train:418 - begin 12:57:02| End 12:57:03| duration 0:00:00.576979
+2022-12-05 12:57:04.953 | INFO     | ivadomed.main:set_output_path:268 - Output path already exists: pytest_output_folder
+2022-12-05 12:57:04.957 | INFO     | ivadomed.utils:define_device:161 - Cuda is not available.
+2022-12-05 12:57:04.957 | INFO     | ivadomed.utils:define_device:162 - Working on cpu.
+2022-12-05 12:57:04.957 | INFO     | ivadomed.utils:display_selected_model_spec:177 - Selected architecture: Unet, with the following parameters:
+2022-12-05 12:57:04.958 | INFO     | ivadomed.utils:display_selected_model_spec:180 - 	dropout_rate: 0.3
+2022-12-05 12:57:04.958 | INFO     | ivadomed.utils:display_selected_model_spec:180 - 	bn_momentum: 0.1
+2022-12-05 12:57:04.958 | INFO     | ivadomed.utils:display_selected_model_spec:180 - 	out_channel: 1
+2022-12-05 12:57:04.958 | INFO     | ivadomed.utils:display_selected_model_spec:180 - 	depth: 1
+2022-12-05 12:57:04.958 | INFO     | ivadomed.utils:display_selected_model_spec:180 - 	is_2d: True
+2022-12-05 12:57:04.958 | INFO     | ivadomed.utils:display_selected_model_spec:180 - 	folder_name: unit_test
+2022-12-05 12:57:04.958 | INFO     | ivadomed.utils:display_selected_model_spec:180 - 	in_channel: 1
+2022-12-05 12:57:04.959 | INFO     | ivadomed.transforms:__init__:135 - ElasticTransform transform not included since no undo_transform available for it.
+2022-12-05 12:57:04.959 | INFO     | ivadomed.utils:display_selected_transfoms:190 - Selected transformations for the ['training'] dataset:
+2022-12-05 12:57:04.959 | INFO     | ivadomed.utils:display_selected_transfoms:192 - 	Resample: {'wspace': 0.75, 'hspace': 0.75}
+2022-12-05 12:57:04.959 | INFO     | ivadomed.utils:display_selected_transfoms:192 - 	ElasticTransform: {'alpha_range': [28.0, 30.0], 'sigma_range': [3.5, 4.5], 'p': 0.1}
+2022-12-05 12:57:04.959 | INFO     | ivadomed.utils:display_selected_transfoms:192 - 	RandomAffine: {'degrees': 4.6, 'translate': [0.03, 0.03, 0.0], 'scale': [0.98, 1, 0.0]}
+2022-12-05 12:57:04.959 | INFO     | ivadomed.utils:display_selected_transfoms:192 - 	CenterCrop: {'size': [128, 128], 'preprocessing': True}
+2022-12-05 12:57:04.960 | INFO     | ivadomed.utils:display_selected_transfoms:192 - 	NormalizeInstance: {'applied_to': ['im']}
+2022-12-05 12:57:04.960 | INFO     | ivadomed.utils:display_selected_transfoms:190 - Selected transformations for the ['validation'] dataset:
+2022-12-05 12:57:04.960 | INFO     | ivadomed.utils:display_selected_transfoms:192 - 	Resample: {'wspace': 0.75, 'hspace': 0.75}
+2022-12-05 12:57:04.960 | INFO     | ivadomed.utils:display_selected_transfoms:192 - 	ElasticTransform: {'alpha_range': [28.0, 30.0], 'sigma_range': [3.5, 4.5], 'p': 0.1}
+2022-12-05 12:57:04.960 | INFO     | ivadomed.utils:display_selected_transfoms:192 - 	RandomAffine: {'degrees': 4.6, 'translate': [0.03, 0.03, 0.0], 'scale': [0.98, 1, 0.0]}
+2022-12-05 12:57:04.960 | INFO     | ivadomed.utils:display_selected_transfoms:192 - 	CenterCrop: {'size': [128, 128], 'preprocessing': True}
+2022-12-05 12:57:04.960 | INFO     | ivadomed.utils:display_selected_transfoms:192 - 	NormalizeInstance: {'applied_to': ['im']}
+2022-12-05 12:57:04.960 | INFO     | ivadomed.utils:define_device:161 - Cuda is not available.
+2022-12-05 12:57:04.961 | INFO     | ivadomed.utils:define_device:162 - Working on cpu.
+2022-12-05 12:57:05.265 | INFO     | ivadomed.main:create_path_model:102 - Model directory already exists: pytest_output_folder\unit_test
+2022-12-05 12:57:05.271 | INFO     | ivadomed.utils:initialize_wandb:49 - No WandB parameters found! Continuing with Tensorboard Logging
+2022-12-05 12:57:05.271 | INFO     | ivadomed.training:train:139 - Initialising model's weights from scratch.
+2022-12-05 12:57:05.275 | INFO     | ivadomed.training:train:155 - Scheduler parameters: {'name': 'CosineAnnealingLR', 'base_lr': 1e-05, 'max_lr': 0.01}
+2022-12-05 12:57:05.275 | INFO     | ivadomed.training:train:180 - Selected Loss: DiceLoss
+2022-12-05 12:57:05.276 | INFO     | ivadomed.training:train:181 - 	with the parameters: []
+2022-12-05 12:57:05.721 | INFO     | ivadomed.training:train:259 - Epoch 1 training loss: -0.4850.
+2022-12-05 12:57:06.158 | INFO     | ivadomed.training:train:341 - Epoch 1 validation loss: -0.5028.
+2022-12-05 12:57:06.159 | INFO     | ivadomed.training:train:345 - Epoch 1 took 0.88 seconds.
+2022-12-05 12:57:07.223 | INFO     | ivadomed.training:train:392 - Model saved as '.onnx': pytest_output_folder\unit_test\unit_test.onnx
+2022-12-05 12:57:07.247 | INFO     | ivadomed.training:train:400 - Model saved as '.pt': pytest_output_folder\unit_test\unit_test.pt
+2022-12-05 12:57:07.250 | INFO     | ivadomed.training:train:418 - begin 12:57:05| End 12:57:07| duration 0:00:01.974370
+2022-12-05 12:57:23.032 | DEBUG    | testing.functional_tests.test_training:test_training_cli:119 - 2022-12-05 12:57:21.392 | INFO     | ivadomed.utils:define_device:161 - Cuda is not available.
+2022-12-05 12:57:21.392 | INFO     | ivadomed.utils:define_device:162 - Working on cpu.
+2022-12-05 12:57:21.392 | INFO     | ivadomed.utils:display_selected_model_spec:177 - Selected architecture: Unet, with the following parameters:
+2022-12-05 12:57:21.393 | INFO     | ivadomed.utils:display_selected_model_spec:180 - 	dropout_rate: 0.3
+2022-12-05 12:57:21.393 | INFO     | ivadomed.utils:display_selected_model_spec:180 - 	bn_momentum: 0.1
+2022-12-05 12:57:21.393 | INFO     | ivadomed.utils:display_selected_model_spec:180 - 	depth: 1
+2022-12-05 12:57:21.393 | INFO     | ivadomed.utils:display_selected_model_spec:180 - 	is_2d: True
+2022-12-05 12:57:21.393 | INFO     | ivadomed.utils:display_selected_model_spec:180 - 	out_channel: 1
+2022-12-05 12:57:21.394 | INFO     | ivadomed.utils:display_selected_model_spec:180 - 	folder_name: unit_test
+2022-12-05 12:57:21.394 | INFO     | ivadomed.utils:display_selected_model_spec:180 - 	in_channel: 2
+2022-12-05 12:57:21.395 | INFO     | ivadomed.transforms:__init__:135 - ElasticTransform transform not included since no undo_transform available for it.
+2022-12-05 12:57:21.395 | INFO     | ivadomed.utils:display_selected_transfoms:190 - Selected transformations for the ['training'] dataset:
+2022-12-05 12:57:21.395 | INFO     | ivadomed.utils:display_selected_transfoms:192 - 	Resample: {'wspace': 0.75, 'hspace': 0.75}
+2022-12-05 12:57:21.395 | INFO     | ivadomed.utils:display_selected_transfoms:192 - 	ElasticTransform: {'alpha_range': [28.0, 30.0], 'sigma_range': [3.5, 4.5], 'p': 0.1}
+2022-12-05 12:57:21.395 | INFO     | ivadomed.utils:display_selected_transfoms:192 - 	RandomAffine: {'degrees': 4.6, 'translate': [0.03, 0.03, 0.0], 'scale': [0.98, 1, 0.0]}
+2022-12-05 12:57:21.395 | INFO     | ivadomed.utils:display_selected_transfoms:192 - 	CenterCrop: {'size': [128, 128], 'preprocessing': True}
+2022-12-05 12:57:21.396 | INFO     | ivadomed.utils:display_selected_transfoms:192 - 	NormalizeInstance: {'applied_to': ['im']}
+2022-12-05 12:57:21.396 | INFO     | ivadomed.utils:display_selected_transfoms:190 - Selected transformations for the ['validation'] dataset:
+2022-12-05 12:57:21.396 | INFO     | ivadomed.utils:display_selected_transfoms:192 - 	Resample: {'wspace': 0.75, 'hspace': 0.75}
+2022-12-05 12:57:21.396 | INFO     | ivadomed.utils:display_selected_transfoms:192 - 	ElasticTransform: {'alpha_range': [28.0, 30.0], 'sigma_range': [3.5, 4.5], 'p': 0.1}
+2022-12-05 12:57:21.396 | INFO     | ivadomed.utils:display_selected_transfoms:192 - 	RandomAffine: {'degrees': 4.6, 'translate': [0.03, 0.03, 0.0], 'scale': [0.98, 1, 0.0]}
+2022-12-05 12:57:21.396 | INFO     | ivadomed.utils:display_selected_transfoms:192 - 	CenterCrop: {'size': [128, 128], 'preprocessing': True}
+2022-12-05 12:57:21.397 | INFO     | ivadomed.utils:display_selected_transfoms:192 - 	NormalizeInstance: {'applied_to': ['im']}
+2022-12-05 12:57:21.397 | INFO     | ivadomed.utils:define_device:161 - Cuda is not available.
+2022-12-05 12:57:21.397 | INFO     | ivadomed.utils:define_device:162 - Working on cpu.
+{'dataset_group_label': 'FileDataSetGroup1', 'type': 'FILES', 'training': {'image_ground_truth': [[['C:\\git\\ivadomed\\tmp\\sub-01\\ses-01\\anat\\sub-01_ses-01_flip-1_mt-off_MTS.nii', 'C:\\git\\ivadomed\\tmp\\sub-01\\ses-01\\anat\\sub-01_ses-01_flip-1_mt-on_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-01\\ses-01\\anat\\sub-01_ses-01_mt-off_MTS_lesion-manual-rater1.nii']], [['C:\\git\\ivadomed\\tmp\\sub-01\\ses-02\\anat\\sub-01_ses-02_flip-1_mt-off_MTS.nii', 'C:\\git\\ivadomed\\tmp\\sub-01\\ses-02\\anat\\sub-01_ses-02_flip-1_mt-on_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-01\\ses-02\\anat\\sub-01_ses-02_mt-off_MTS_lesion-manual-rater1.nii']], [['C:\\git\\ivadomed\\tmp\\sub-01\\ses-03\\anat\\sub-01_ses-03_flip-1_mt-off_MTS.nii', 'C:\\git\\ivadomed\\tmp\\sub-01\\ses-03\\anat\\sub-01_ses-03_flip-1_mt-on_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-01\\ses-03\\anat\\sub-01_ses-03_mt-off_MTS_lesion-manual-rater1.nii']]], 'missing_files_handle': 'skip', 'excessive_files_handle': 'use_first_and_warn'}, 'validation': {'image_ground_truth': [[['C:\\git\\ivadomed\\tmp\\sub-02\\ses-01\\anat\\sub-02_ses-01_flip-1_mt-off_MTS.nii', 'C:\\git\\ivadomed\\tmp\\sub-02\\ses-01\\anat\\sub-02_ses-01_flip-1_mt-on_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-02\\ses-01\\anat\\sub-02_ses-01_mt-off_MTS_lesion-manual-rater1.nii']], [['C:\\git\\ivadomed\\tmp\\sub-02\\ses-02\\anat\\sub-02_ses-02_flip-1_mt-off_MTS.nii', 'C:\\git\\ivadomed\\tmp\\sub-02\\ses-02\\anat\\sub-02_ses-02_flip-1_mt-on_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-02\\ses-02\\anat\\sub-02_ses-02_mt-off_MTS_lesion-manual-rater1.nii']], [['C:\\git\\ivadomed\\tmp\\sub-02\\ses-03\\anat\\sub-02_ses-03_flip-1_mt-off_MTS.nii', 'C:\\git\\ivadomed\\tmp\\sub-02\\ses-03\\anat\\sub-02_ses-03_flip-1_mt-on_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-02\\ses-03\\anat\\sub-02_ses-03_mt-off_MTS_lesion-manual-rater1.nii']]], 'missing_files_handle': 'skip', 'excessive_files_handle': 'use_first_and_warn'}, 'test': {'image_ground_truth': [[['C:\\git\\ivadomed\\tmp\\sub-03\\ses-01\\anat\\sub-03_ses-01_flip-1_mt-off_MTS.nii', 'C:\\git\\ivadomed\\tmp\\sub-03\\ses-01\\anat\\sub-03_ses-01_flip-1_mt-on_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-03\\ses-01\\anat\\sub-03_ses-01_mt-off_MTS_lesion-manual-rater1.nii']], [['C:\\git\\ivadomed\\tmp\\sub-03\\ses-02\\anat\\sub-03_ses-02_flip-1_mt-off_MTS.nii', 'C:\\git\\ivadomed\\tmp\\sub-03\\ses-02\\anat\\sub-03_ses-02_flip-1_mt-on_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-03\\ses-02\\anat\\sub-03_ses-02_mt-off_MTS_lesion-manual-rater1.nii']], [['C:\\git\\ivadomed\\tmp\\sub-03\\ses-03\\anat\\sub-03_ses-03_flip-1_mt-off_MTS.nii', 'C:\\git\\ivadomed\\tmp\\sub-03\\ses-03\\anat\\sub-03_ses-03_flip-1_mt-on_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-03\\ses-03\\anat\\sub-03_ses-03_mt-off_MTS_lesion-manual-rater1.nii']]], 'missing_files_handle': 'skip', 'excessive_files_handle': 'use_first_and_warn'}, 'path_data': 'C:\\git\\ivadomed\\tmp', 'expected_input': 2, 'expected_gt': 1}
+{'dataset_group_label': 'FileDataSetGroup2', 'type': 'FILES', 'training': {'image_ground_truth': [[['C:\\git\\ivadomed\\tmp\\sub-04\\ses-01\\anat\\sub-04_ses-01_flip-1_mt-off_MTS.nii', 'C:\\git\\ivadomed\\tmp\\sub-04\\ses-01\\anat\\sub-04_ses-01_flip-1_mt-on_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-04\\ses-01\\anat\\sub-04_ses-01_mt-off_MTS_lesion-manual-rater1.nii']], [['C:\\git\\ivadomed\\tmp\\sub-04\\ses-02\\anat\\sub-04_ses-02_flip-1_mt-off_MTS.nii', 'C:\\git\\ivadomed\\tmp\\sub-04\\ses-02\\anat\\sub-04_ses-02_flip-1_mt-on_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-04\\ses-02\\anat\\sub-04_ses-02_mt-off_MTS_lesion-manual-rater1.nii']], [['C:\\git\\ivadomed\\tmp\\sub-04\\ses-03\\anat\\sub-04_ses-03_flip-1_mt-off_MTS.nii', 'C:\\git\\ivadomed\\tmp\\sub-04\\ses-03\\anat\\sub-04_ses-03_flip-1_mt-on_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-04\\ses-03\\anat\\sub-04_ses-03_mt-off_MTS_lesion-manual-rater1.nii']]], 'missing_files_handle': 'skip', 'excessive_files_handle': 'use_first_and_warn'}, 'validation': {'image_ground_truth': [[['C:\\git\\ivadomed\\tmp\\sub-05\\ses-01\\anat\\sub-05_ses-01_flip-1_mt-off_MTS.nii', 'C:\\git\\ivadomed\\tmp\\sub-05\\ses-01\\anat\\sub-05_ses-01_flip-1_mt-on_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-05\\ses-01\\anat\\sub-05_ses-01_mt-off_MTS_lesion-manual-rater1.nii']], [['C:\\git\\ivadomed\\tmp\\sub-05\\ses-02\\anat\\sub-05_ses-02_flip-1_mt-off_MTS.nii', 'C:\\git\\ivadomed\\tmp\\sub-05\\ses-02\\anat\\sub-05_ses-02_flip-1_mt-on_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-05\\ses-02\\anat\\sub-05_ses-02_mt-off_MTS_lesion-manual-rater1.nii']], [['C:\\git\\ivadomed\\tmp\\sub-05\\ses-03\\anat\\sub-05_ses-03_flip-1_mt-off_MTS.nii', 'C:\\git\\ivadomed\\tmp\\sub-05\\ses-03\\anat\\sub-05_ses-03_flip-1_mt-on_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-05\\ses-03\\anat\\sub-05_ses-03_mt-off_MTS_lesion-manual-rater1.nii']]], 'missing_files_handle': 'skip', 'excessive_files_handle': 'use_first_and_warn'}, 'test': {'image_ground_truth': [[['C:\\git\\ivadomed\\tmp\\sub-06\\ses-01\\anat\\sub-06_ses-01_flip-1_mt-off_MTS.nii', 'C:\\git\\ivadomed\\tmp\\sub-06\\ses-01\\anat\\sub-06_ses-01_flip-1_mt-on_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-06\\ses-01\\anat\\sub-06_ses-01_mt-off_MTS_lesion-manual-rater1.nii']], [['C:\\git\\ivadomed\\tmp\\sub-06\\ses-02\\anat\\sub-06_ses-02_flip-1_mt-off_MTS.nii', 'C:\\git\\ivadomed\\tmp\\sub-06\\ses-02\\anat\\sub-06_ses-02_flip-1_mt-on_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-06\\ses-02\\anat\\sub-06_ses-02_mt-off_MTS_lesion-manual-rater1.nii']], [['C:\\git\\ivadomed\\tmp\\sub-06\\ses-03\\anat\\sub-06_ses-03_flip-1_mt-off_MTS.nii', 'C:\\git\\ivadomed\\tmp\\sub-06\\ses-03\\anat\\sub-06_ses-03_flip-1_mt-on_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-06\\ses-03\\anat\\sub-06_ses-03_mt-off_MTS_lesion-manual-rater1.nii']]], 'missing_files_handle': 'skip', 'excessive_files_handle': 'use_first_and_warn'}, 'path_data': 'C:\\git\\ivadomed\\tmp', 'expected_input': 2, 'expected_gt': 1}
+2022-12-05 12:57:21.563 | INFO     | ivadomed.main:create_path_model:93 - Creating model directory: C:\git\ivadomed\tmp\results\unit_test
+2022-12-05 12:57:21.709 | INFO     | ivadomed.utils:initialize_wandb:46 - Incorrect WandB API Key! Please re-check the entered API key.
+2022-12-05 12:57:21.709 | INFO     | ivadomed.utils:initialize_wandb:47 - Disabling WandB Tracking, continuing with Tensorboard Logging
+2022-12-05 12:57:21.710 | INFO     | ivadomed.training:train:139 - Initialising model's weights from scratch.
+2022-12-05 12:57:21.714 | INFO     | ivadomed.training:train:155 - Scheduler parameters: {'name': 'CosineAnnealingLR', 'base_lr': 1e-05, 'max_lr': 0.01}
+2022-12-05 12:57:21.714 | INFO     | ivadomed.training:train:180 - Selected Loss: DiceLoss
+2022-12-05 12:57:21.714 | INFO     | ivadomed.training:train:181 - 	with the parameters: []
+2022-12-05 12:57:21.847 | INFO     | ivadomed.training:train:259 - Epoch 1 training loss: -0.4986.
+Epoch 1 training loss: -0.4986.
+2022-12-05 12:57:21.988 | INFO     | ivadomed.training:train:341 - Epoch 1 validation loss: -0.4977.
+2022-12-05 12:57:21.989 | INFO     | ivadomed.training:train:345 - Epoch 1 took 0.27 seconds.
+2022-12-05 12:57:22.365 | INFO     | ivadomed.training:train:392 - Model saved as '.onnx': C:\git\ivadomed\tmp\results\unit_test\unit_test.onnx
+2022-12-05 12:57:22.373 | INFO     | ivadomed.training:train:400 - Model saved as '.pt': C:\git\ivadomed\tmp\results\unit_test\unit_test.pt
+2022-12-05 12:57:22.375 | INFO     | ivadomed.training:train:418 - begin 12:57:21| End 12:57:22| duration 0:00:00.660327
+
+2022-12-05 12:57:23.032 | DEBUG    | testing.functional_tests.test_training:test_training_cli:120 - C:\ProgramData\Anaconda3\envs\ivadomed\lib\site-packages\numpy\_distributor_init.py:30: UserWarning: loaded more than 1 DLL from .libs:
+C:\ProgramData\Anaconda3\envs\ivadomed\lib\site-packages\numpy\.libs\libopenblas.EL2C6PLE4ZYW3ECEVIV3OXXGRN2NRFM2.gfortran-win_amd64.dll
+C:\ProgramData\Anaconda3\envs\ivadomed\lib\site-packages\numpy\.libs\libopenblas.GK7GX5KEQ4F6UYO3P26ULGBQYHGQO7J4.gfortran-win_amd64.dll
+  warnings.warn("loaded more than 1 DLL from .libs:"
+2022-12-05 12:57:21.377 | INFO     | ivadomed.utils:init_ivadomed:455 - 
+ivadomed (2.9.7)
+
+2022-12-05 12:57:21.387 | INFO     | ivadomed.main:set_output_path:265 - Creating output path: C:\git\ivadomed\tmp\results
+
+Training: 100%|##########| 1/1 [00:00<?, ?it/s]
+                                               
+
+Training: 100%|##########| 1/1 [00:00<?, ?it/s]
+Training: 2it [00:00,  3.47it/s]               
+Training: 2it [00:00,  3.47it/s]
+
+2022-12-05 12:57:36.810 | DEBUG    | testing.functional_tests.test_training:test_training_cli:119 - 2022-12-05 12:57:34.929 | INFO     | ivadomed.utils:define_device:161 - Cuda is not available.
+2022-12-05 12:57:34.930 | INFO     | ivadomed.utils:define_device:162 - Working on cpu.
+2022-12-05 12:57:34.930 | INFO     | ivadomed.utils:display_selected_model_spec:177 - Selected architecture: Unet, with the following parameters:
+2022-12-05 12:57:34.930 | INFO     | ivadomed.utils:display_selected_model_spec:180 - 	dropout_rate: 0.3
+2022-12-05 12:57:34.930 | INFO     | ivadomed.utils:display_selected_model_spec:180 - 	bn_momentum: 0.1
+2022-12-05 12:57:34.931 | INFO     | ivadomed.utils:display_selected_model_spec:180 - 	depth: 1
+2022-12-05 12:57:34.931 | INFO     | ivadomed.utils:display_selected_model_spec:180 - 	is_2d: True
+2022-12-05 12:57:34.931 | INFO     | ivadomed.utils:display_selected_model_spec:180 - 	out_channel: 1
+2022-12-05 12:57:34.931 | INFO     | ivadomed.utils:display_selected_model_spec:180 - 	folder_name: unit_test
+2022-12-05 12:57:34.931 | INFO     | ivadomed.utils:display_selected_model_spec:180 - 	in_channel: 1
+2022-12-05 12:57:34.931 | INFO     | ivadomed.transforms:__init__:135 - ElasticTransform transform not included since no undo_transform available for it.
+2022-12-05 12:57:34.932 | INFO     | ivadomed.utils:display_selected_transfoms:190 - Selected transformations for the ['training'] dataset:
+2022-12-05 12:57:34.932 | INFO     | ivadomed.utils:display_selected_transfoms:192 - 	Resample: {'wspace': 0.75, 'hspace': 0.75}
+2022-12-05 12:57:34.932 | INFO     | ivadomed.utils:display_selected_transfoms:192 - 	ElasticTransform: {'alpha_range': [28.0, 30.0], 'sigma_range': [3.5, 4.5], 'p': 0.1}
+2022-12-05 12:57:34.932 | INFO     | ivadomed.utils:display_selected_transfoms:192 - 	RandomAffine: {'degrees': 4.6, 'translate': [0.03, 0.03, 0.0], 'scale': [0.98, 1, 0.0]}
+2022-12-05 12:57:34.932 | INFO     | ivadomed.utils:display_selected_transfoms:192 - 	CenterCrop: {'size': [128, 128], 'preprocessing': True}
+2022-12-05 12:57:34.932 | INFO     | ivadomed.utils:display_selected_transfoms:192 - 	NormalizeInstance: {'applied_to': ['im']}
+2022-12-05 12:57:34.933 | INFO     | ivadomed.utils:display_selected_transfoms:190 - Selected transformations for the ['validation'] dataset:
+2022-12-05 12:57:34.933 | INFO     | ivadomed.utils:display_selected_transfoms:192 - 	Resample: {'wspace': 0.75, 'hspace': 0.75}
+2022-12-05 12:57:34.933 | INFO     | ivadomed.utils:display_selected_transfoms:192 - 	ElasticTransform: {'alpha_range': [28.0, 30.0], 'sigma_range': [3.5, 4.5], 'p': 0.1}
+2022-12-05 12:57:34.933 | INFO     | ivadomed.utils:display_selected_transfoms:192 - 	RandomAffine: {'degrees': 4.6, 'translate': [0.03, 0.03, 0.0], 'scale': [0.98, 1, 0.0]}
+2022-12-05 12:57:34.933 | INFO     | ivadomed.utils:display_selected_transfoms:192 - 	CenterCrop: {'size': [128, 128], 'preprocessing': True}
+2022-12-05 12:57:34.933 | INFO     | ivadomed.utils:display_selected_transfoms:192 - 	NormalizeInstance: {'applied_to': ['im']}
+2022-12-05 12:57:34.933 | INFO     | ivadomed.utils:define_device:161 - Cuda is not available.
+2022-12-05 12:57:34.934 | INFO     | ivadomed.utils:define_device:162 - Working on cpu.
+{'dataset_group_label': 'FileDataSetGroup1', 'type': 'FILES', 'training': {'image_ground_truth': [[['C:\\git\\ivadomed\\tmp\\sub-01\\ses-01\\anat\\sub-01_ses-01_flip-1_mt-off_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-01\\ses-01\\anat\\sub-01_ses-01_mt-off_MTS_lesion-manual-rater1.nii']], [['C:\\git\\ivadomed\\tmp\\sub-01\\ses-02\\anat\\sub-01_ses-02_flip-1_mt-off_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-01\\ses-02\\anat\\sub-01_ses-02_mt-off_MTS_lesion-manual-rater1.nii']], [['C:\\git\\ivadomed\\tmp\\sub-01\\ses-03\\anat\\sub-01_ses-03_flip-1_mt-off_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-01\\ses-03\\anat\\sub-01_ses-03_mt-off_MTS_lesion-manual-rater1.nii']], [['C:\\git\\ivadomed\\tmp\\sub-01\\ses-04\\anat\\sub-01_ses-04_flip-1_mt-off_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-01\\ses-04\\anat\\sub-01_ses-04_mt-off_MTS_lesion-manual-rater1.nii']]], 'missing_files_handle': 'skip', 'excessive_files_handle': 'use_first_and_warn'}, 'validation': {'image_ground_truth': [[['C:\\git\\ivadomed\\tmp\\sub-02\\ses-01\\anat\\sub-02_ses-01_flip-1_mt-off_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-02\\ses-01\\anat\\sub-02_ses-01_mt-off_MTS_lesion-manual-rater1.nii']], [['C:\\git\\ivadomed\\tmp\\sub-02\\ses-02\\anat\\sub-02_ses-02_flip-1_mt-off_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-02\\ses-02\\anat\\sub-02_ses-02_mt-off_MTS_lesion-manual-rater1.nii']], [['C:\\git\\ivadomed\\tmp\\sub-02\\ses-03\\anat\\sub-02_ses-03_flip-1_mt-off_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-02\\ses-03\\anat\\sub-02_ses-03_mt-off_MTS_lesion-manual-rater1.nii']], [['C:\\git\\ivadomed\\tmp\\sub-02\\ses-04\\anat\\sub-02_ses-04_flip-1_mt-off_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-02\\ses-04\\anat\\sub-02_ses-04_mt-off_MTS_lesion-manual-rater1.nii']]], 'missing_files_handle': 'skip', 'excessive_files_handle': 'use_first_and_warn'}, 'test': {'image_ground_truth': [[['C:\\git\\ivadomed\\tmp\\sub-03\\ses-01\\anat\\sub-03_ses-01_flip-1_mt-off_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-03\\ses-01\\anat\\sub-03_ses-01_mt-off_MTS_lesion-manual-rater1.nii']], [['C:\\git\\ivadomed\\tmp\\sub-03\\ses-02\\anat\\sub-03_ses-02_flip-1_mt-off_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-03\\ses-02\\anat\\sub-03_ses-02_mt-off_MTS_lesion-manual-rater1.nii']], [['C:\\git\\ivadomed\\tmp\\sub-03\\ses-03\\anat\\sub-03_ses-03_flip-1_mt-off_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-03\\ses-03\\anat\\sub-03_ses-03_mt-off_MTS_lesion-manual-rater1.nii']], [['C:\\git\\ivadomed\\tmp\\sub-03\\ses-04\\anat\\sub-03_ses-04_flip-1_mt-off_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-03\\ses-04\\anat\\sub-03_ses-04_mt-off_MTS_lesion-manual-rater1.nii']]], 'missing_files_handle': 'skip', 'excessive_files_handle': 'use_first_and_warn'}, 'path_data': 'C:\\git\\ivadomed\\tmp', 'expected_input': 1, 'expected_gt': 1}
+{'dataset_group_label': 'FileDataSetGroup2', 'type': 'FILES', 'training': {'image_ground_truth': [[['C:\\git\\ivadomed\\tmp\\sub-04\\ses-01\\anat\\sub-04_ses-01_flip-1_mt-off_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-04\\ses-01\\anat\\sub-04_ses-01_mt-off_MTS_lesion-manual-rater1.nii']], [['C:\\git\\ivadomed\\tmp\\sub-04\\ses-02\\anat\\sub-04_ses-02_flip-1_mt-off_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-04\\ses-02\\anat\\sub-04_ses-02_mt-off_MTS_lesion-manual-rater1.nii']], [['C:\\git\\ivadomed\\tmp\\sub-04\\ses-03\\anat\\sub-04_ses-03_flip-1_mt-off_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-04\\ses-03\\anat\\sub-04_ses-03_mt-off_MTS_lesion-manual-rater1.nii']], [['C:\\git\\ivadomed\\tmp\\sub-04\\ses-04\\anat\\sub-04_ses-04_flip-1_mt-off_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-04\\ses-04\\anat\\sub-04_ses-04_mt-off_MTS_lesion-manual-rater1.nii']]], 'missing_files_handle': 'skip', 'excessive_files_handle': 'use_first_and_warn'}, 'validation': {'image_ground_truth': [[['C:\\git\\ivadomed\\tmp\\sub-05\\ses-01\\anat\\sub-05_ses-01_flip-1_mt-off_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-05\\ses-01\\anat\\sub-05_ses-01_mt-off_MTS_lesion-manual-rater1.nii']], [['C:\\git\\ivadomed\\tmp\\sub-05\\ses-02\\anat\\sub-05_ses-02_flip-1_mt-off_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-05\\ses-02\\anat\\sub-05_ses-02_mt-off_MTS_lesion-manual-rater1.nii']], [['C:\\git\\ivadomed\\tmp\\sub-05\\ses-03\\anat\\sub-05_ses-03_flip-1_mt-off_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-05\\ses-03\\anat\\sub-05_ses-03_mt-off_MTS_lesion-manual-rater1.nii']], [['C:\\git\\ivadomed\\tmp\\sub-05\\ses-04\\anat\\sub-05_ses-04_flip-1_mt-off_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-05\\ses-04\\anat\\sub-05_ses-04_mt-off_MTS_lesion-manual-rater1.nii']]], 'missing_files_handle': 'skip', 'excessive_files_handle': 'use_first_and_warn'}, 'test': {'image_ground_truth': [[['C:\\git\\ivadomed\\tmp\\sub-06\\ses-01\\anat\\sub-06_ses-01_flip-1_mt-off_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-06\\ses-01\\anat\\sub-06_ses-01_mt-off_MTS_lesion-manual-rater1.nii']], [['C:\\git\\ivadomed\\tmp\\sub-06\\ses-02\\anat\\sub-06_ses-02_flip-1_mt-off_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-06\\ses-02\\anat\\sub-06_ses-02_mt-off_MTS_lesion-manual-rater1.nii']], [['C:\\git\\ivadomed\\tmp\\sub-06\\ses-03\\anat\\sub-06_ses-03_flip-1_mt-off_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-06\\ses-03\\anat\\sub-06_ses-03_mt-off_MTS_lesion-manual-rater1.nii']], [['C:\\git\\ivadomed\\tmp\\sub-06\\ses-04\\anat\\sub-06_ses-04_flip-1_mt-off_MTS.nii'], ['C:\\git\\ivadomed\\tmp\\derivatives\\labels\\sub-06\\ses-04\\anat\\sub-06_ses-04_mt-off_MTS_lesion-manual-rater1.nii']]], 'missing_files_handle': 'skip', 'excessive_files_handle': 'use_first_and_warn'}, 'path_data': 'C:\\git\\ivadomed\\tmp', 'expected_input': 1, 'expected_gt': 1}
+2022-12-05 12:57:35.317 | INFO     | ivadomed.main:create_path_model:93 - Creating model directory: C:\git\ivadomed\tmp\results\unit_test
+2022-12-05 12:57:35.626 | INFO     | ivadomed.utils:initialize_wandb:46 - Incorrect WandB API Key! Please re-check the entered API key.
+2022-12-05 12:57:35.626 | INFO     | ivadomed.utils:initialize_wandb:47 - Disabling WandB Tracking, continuing with Tensorboard Logging
+2022-12-05 12:57:35.627 | INFO     | ivadomed.training:train:139 - Initialising model's weights from scratch.
+2022-12-05 12:57:35.631 | INFO     | ivadomed.training:train:155 - Scheduler parameters: {'name': 'CosineAnnealingLR', 'base_lr': 1e-05, 'max_lr': 0.01}
+2022-12-05 12:57:35.631 | INFO     | ivadomed.training:train:180 - Selected Loss: DiceLoss
+2022-12-05 12:57:35.631 | INFO     | ivadomed.training:train:181 - 	with the parameters: []
+2022-12-05 12:57:35.822 | INFO     | ivadomed.training:train:259 - Epoch 1 training loss: -0.4935.
+Epoch 1 training loss: -0.4935.
+2022-12-05 12:57:36.016 | INFO     | ivadomed.training:train:341 - Epoch 1 validation loss: -0.5055.
+2022-12-05 12:57:36.017 | INFO     | ivadomed.training:train:345 - Epoch 1 took 0.38 seconds.
+2022-12-05 12:57:36.342 | INFO     | ivadomed.training:train:392 - Model saved as '.onnx': C:\git\ivadomed\tmp\results\unit_test\unit_test.onnx
+2022-12-05 12:57:36.349 | INFO     | ivadomed.training:train:400 - Model saved as '.pt': C:\git\ivadomed\tmp\results\unit_test\unit_test.pt
+2022-12-05 12:57:36.350 | INFO     | ivadomed.training:train:418 - begin 12:57:35| End 12:57:36| duration 0:00:00.718821
+
+2022-12-05 12:57:36.811 | DEBUG    | testing.functional_tests.test_training:test_training_cli:120 - C:\ProgramData\Anaconda3\envs\ivadomed\lib\site-packages\numpy\_distributor_init.py:30: UserWarning: loaded more than 1 DLL from .libs:
+C:\ProgramData\Anaconda3\envs\ivadomed\lib\site-packages\numpy\.libs\libopenblas.EL2C6PLE4ZYW3ECEVIV3OXXGRN2NRFM2.gfortran-win_amd64.dll
+C:\ProgramData\Anaconda3\envs\ivadomed\lib\site-packages\numpy\.libs\libopenblas.GK7GX5KEQ4F6UYO3P26ULGBQYHGQO7J4.gfortran-win_amd64.dll
+  warnings.warn("loaded more than 1 DLL from .libs:"
+2022-12-05 12:57:34.917 | INFO     | ivadomed.utils:init_ivadomed:455 - 
+ivadomed (2.9.7)
+
+2022-12-05 12:57:34.925 | INFO     | ivadomed.main:set_output_path:265 - Creating output path: C:\git\ivadomed\tmp\results
+
+Training: 100%|##########| 1/1 [00:00<?, ?it/s]
+                                               
+
+Training: 100%|##########| 1/1 [00:00<?, ?it/s]
+Training: 2it [00:00,  2.51it/s]               
+Training: 2it [00:00,  2.51it/s]
+
+2022-12-05 12:57:37.037 | WARNING  | testing.common_testing_util:download_dataset:51 - 
+Testing data files appear to already exist at C:\git\ivadomed\data_functional_testing, aborting download
+2022-12-05 12:57:37.187 | INFO     | ivadomed.utils:init_ivadomed:455 - 
+ivadomed (2.9.7)
+
+2022-12-05 12:57:37.188 | INFO     | ivadomed.scripts.training_curve:run_plot_training_curves:175 - Creating output folder: C:\git\ivadomed\tmp\output_training_curve.
+2022-12-05 12:57:39.407 | WARNING  | testing.common_testing_util:download_dataset:51 - 
+Testing data files appear to already exist at C:\git\ivadomed\data_functional_testing, aborting download
+2022-12-05 12:57:39.548 | INFO     | ivadomed.utils:init_ivadomed:455 - 
+ivadomed (2.9.7)
+
+2022-12-05 12:57:39.582 | DEBUG    | ivadomed.scripts.visualize_transforms:run_visualization:159 - Fname out: C:\git\ivadomed\tmp\output_visualize_transforms_n_1\Resample_slice1.png.
+2022-12-05 12:57:39.582 | DEBUG    | ivadomed.scripts.visualize_transforms:run_visualization:160 - 	{'zooms': array([1.       , 1.       , 0.9999999], dtype=float32), 'data_type': 'im', 'crop_params': {}, 'preresample_shape': (131, 141, 1)}
+2022-12-05 12:57:39.998 | DEBUG    | ivadomed.scripts.visualize_transforms:run_visualization:159 - Fname out: C:\git\ivadomed\tmp\output_visualize_transforms_n_1\Resample_ElasticTransform_slice1.png.
+2022-12-05 12:57:39.998 | DEBUG    | ivadomed.scripts.visualize_transforms:run_visualization:160 - 	{'zooms': array([1.       , 1.       , 0.9999999], dtype=float32), 'data_type': 'im', 'crop_params': {}, 'preresample_shape': (131, 141, 1), 'elastic': [29.207217042669875, 4.233230141356581]}
+2022-12-05 12:57:40.388 | DEBUG    | ivadomed.scripts.visualize_transforms:run_visualization:159 - Fname out: C:\git\ivadomed\tmp\output_visualize_transforms_n_1\Resample_ElasticTransform_RandomAffine_slice1.png.
+2022-12-05 12:57:40.388 | DEBUG    | ivadomed.scripts.visualize_transforms:run_visualization:160 - 	{'zooms': array([1.       , 1.       , 0.9999999], dtype=float32), 'data_type': 'im', 'crop_params': {}, 'preresample_shape': (131, 141, 1), 'elastic': [None, None], 'rotation': [-0.07097763495298992, [0, 1]], 'scale': [0.3062955522851466, 1.3779819243668745, 1.0], 'translation': (-3.0, 2.0, 0.0)}
+2022-12-05 12:57:40.740 | DEBUG    | ivadomed.scripts.visualize_transforms:run_visualization:159 - Fname out: C:\git\ivadomed\tmp\output_visualize_transforms_n_1\Resample_ElasticTransform_RandomAffine_CenterCrop_slice1.png.
+2022-12-05 12:57:40.740 | DEBUG    | ivadomed.scripts.visualize_transforms:run_visualization:160 - 	{'zooms': array([1.       , 1.       , 0.9999999], dtype=float32), 'data_type': 'im', 'crop_params': {'CenterCrop': (24, 30, 0, 175, 188, 1)}, 'preresample_shape': (131, 141, 1), 'elastic': [None, None], 'rotation': [-0.009390208973129349, [0, 1]], 'scale': [1.4123261199083872, 0.048803586354299267, 1.0], 'translation': (-5.0, 5.0, 0.0)}
+2022-12-05 12:57:41.100 | DEBUG    | ivadomed.scripts.visualize_transforms:run_visualization:159 - Fname out: C:\git\ivadomed\tmp\output_visualize_transforms_n_1\Resample_ElasticTransform_RandomAffine_CenterCrop_NormalizeInstance_slice1.png.
+2022-12-05 12:57:41.101 | DEBUG    | ivadomed.scripts.visualize_transforms:run_visualization:160 - 	{'zooms': array([1.       , 1.       , 0.9999999], dtype=float32), 'data_type': 'im', 'crop_params': {'CenterCrop': (24, 30, 0, 175, 188, 1)}, 'preresample_shape': (131, 141, 1), 'elastic': [None, None], 'rotation': [-0.04888772864543572, [0, 1]], 'scale': [0.5107373536593098, 0.8337914942352129, 1.0], 'translation': (-1.0, -4.0, 0.0)}
+2022-12-05 12:57:41.581 | INFO     | ivadomed.utils:init_ivadomed:455 - 
+ivadomed (2.9.7)
+
+2022-12-05 12:57:41.612 | DEBUG    | ivadomed.scripts.visualize_transforms:run_visualization:159 - Fname out: C:\git\ivadomed\tmp\output_visualize_transforms_n_2\Resample_slice8.png.
+2022-12-05 12:57:41.613 | DEBUG    | ivadomed.scripts.visualize_transforms:run_visualization:160 - 	{'zooms': array([1.       , 1.       , 0.9999999], dtype=float32), 'data_type': 'im', 'crop_params': {}, 'preresample_shape': (131, 141, 1)}
+2022-12-05 12:57:41.983 | DEBUG    | ivadomed.scripts.visualize_transforms:run_visualization:159 - Fname out: C:\git\ivadomed\tmp\output_visualize_transforms_n_2\Resample_slice2.png.
+2022-12-05 12:57:41.984 | DEBUG    | ivadomed.scripts.visualize_transforms:run_visualization:160 - 	{'zooms': array([1.       , 1.       , 0.9999999], dtype=float32), 'data_type': 'im', 'crop_params': {}, 'preresample_shape': (131, 141, 1)}
+2022-12-05 12:57:42.361 | DEBUG    | ivadomed.scripts.visualize_transforms:run_visualization:159 - Fname out: C:\git\ivadomed\tmp\output_visualize_transforms_n_2\Resample_ElasticTransform_slice8.png.
+2022-12-05 12:57:42.362 | DEBUG    | ivadomed.scripts.visualize_transforms:run_visualization:160 - 	{'zooms': array([1.       , 1.       , 0.9999999], dtype=float32), 'data_type': 'im', 'crop_params': {}, 'preresample_shape': (131, 141, 1), 'elastic': [None, None]}
+2022-12-05 12:57:42.727 | DEBUG    | ivadomed.scripts.visualize_transforms:run_visualization:159 - Fname out: C:\git\ivadomed\tmp\output_visualize_transforms_n_2\Resample_ElasticTransform_slice2.png.
+2022-12-05 12:57:42.728 | DEBUG    | ivadomed.scripts.visualize_transforms:run_visualization:160 - 	{'zooms': array([1.       , 1.       , 0.9999999], dtype=float32), 'data_type': 'im', 'crop_params': {}, 'preresample_shape': (131, 141, 1), 'elastic': [28.924900324812988, 4.234542995297249]}
+2022-12-05 12:57:43.072 | DEBUG    | ivadomed.scripts.visualize_transforms:run_visualization:159 - Fname out: C:\git\ivadomed\tmp\output_visualize_transforms_n_2\Resample_ElasticTransform_RandomAffine_slice8.png.
+2022-12-05 12:57:43.073 | DEBUG    | ivadomed.scripts.visualize_transforms:run_visualization:160 - 	{'zooms': array([1.       , 1.       , 0.9999999], dtype=float32), 'data_type': 'im', 'crop_params': {}, 'preresample_shape': (131, 141, 1), 'elastic': [None, None], 'rotation': [-0.06428680353247364, [0, 1]], 'scale': [0.32376006814765373, 1.413522784513783, 1.0], 'translation': (1.0, 3.0, 0.0)}
+2022-12-05 12:57:43.597 | DEBUG    | ivadomed.scripts.visualize_transforms:run_visualization:159 - Fname out: C:\git\ivadomed\tmp\output_visualize_transforms_n_2\Resample_ElasticTransform_RandomAffine_slice2.png.
+2022-12-05 12:57:43.597 | DEBUG    | ivadomed.scripts.visualize_transforms:run_visualization:160 - 	{'zooms': array([1.       , 1.       , 0.9999999], dtype=float32), 'data_type': 'im', 'crop_params': {}, 'preresample_shape': (131, 141, 1), 'elastic': [None, None], 'rotation': [0.01806100882690043, [0, 1]], 'scale': [1.2093148539851661, 0.9777014597728562, 1.0], 'translation': (-4.0, 1.0, 0.0)}
+2022-12-05 12:57:43.954 | DEBUG    | ivadomed.scripts.visualize_transforms:run_visualization:159 - Fname out: C:\git\ivadomed\tmp\output_visualize_transforms_n_2\Resample_ElasticTransform_RandomAffine_CenterCrop_slice8.png.
+2022-12-05 12:57:43.954 | DEBUG    | ivadomed.scripts.visualize_transforms:run_visualization:160 - 	{'zooms': array([1.       , 1.       , 0.9999999], dtype=float32), 'data_type': 'im', 'crop_params': {'CenterCrop': (24, 30, 0, 175, 188, 1)}, 'preresample_shape': (131, 141, 1), 'elastic': [None, None], 'rotation': [-0.030867141769616267, [0, 1]], 'scale': [1.9093973977720313, 1.6504583365277208, 1.0], 'translation': (2.0, 5.0, 0.0)}
+2022-12-05 12:57:44.332 | DEBUG    | ivadomed.scripts.visualize_transforms:run_visualization:159 - Fname out: C:\git\ivadomed\tmp\output_visualize_transforms_n_2\Resample_ElasticTransform_RandomAffine_CenterCrop_slice2.png.
+2022-12-05 12:57:44.333 | DEBUG    | ivadomed.scripts.visualize_transforms:run_visualization:160 - 	{'zooms': array([1.       , 1.       , 0.9999999], dtype=float32), 'data_type': 'im', 'crop_params': {'CenterCrop': (24, 30, 0, 175, 188, 1)}, 'preresample_shape': (131, 141, 1), 'elastic': [None, None], 'rotation': [-0.07530152465654127, [0, 1]], 'scale': [1.3728743211245036, 1.3610070461063593, 1.0], 'translation': (3.0, -2.0, 0.0)}
+2022-12-05 12:57:44.698 | DEBUG    | ivadomed.scripts.visualize_transforms:run_visualization:159 - Fname out: C:\git\ivadomed\tmp\output_visualize_transforms_n_2\Resample_ElasticTransform_RandomAffine_CenterCrop_NormalizeInstance_slice8.png.
+2022-12-05 12:57:44.699 | DEBUG    | ivadomed.scripts.visualize_transforms:run_visualization:160 - 	{'zooms': array([1.       , 1.       , 0.9999999], dtype=float32), 'data_type': 'im', 'crop_params': {'CenterCrop': (24, 30, 0, 175, 188, 1)}, 'preresample_shape': (131, 141, 1), 'elastic': [None, None], 'rotation': [0.023032897390145215, [0, 1]], 'scale': [0.6359294758742701, 1.4106423714056338, 1.0], 'translation': (4.0, -3.0, 0.0)}
+2022-12-05 12:57:45.106 | DEBUG    | ivadomed.scripts.visualize_transforms:run_visualization:159 - Fname out: C:\git\ivadomed\tmp\output_visualize_transforms_n_2\Resample_ElasticTransform_RandomAffine_CenterCrop_NormalizeInstance_slice2.png.
+2022-12-05 12:57:45.106 | DEBUG    | ivadomed.scripts.visualize_transforms:run_visualization:160 - 	{'zooms': array([1.       , 1.       , 0.9999999], dtype=float32), 'data_type': 'im', 'crop_params': {'CenterCrop': (24, 30, 0, 175, 188, 1)}, 'preresample_shape': (131, 141, 1), 'elastic': [None, None], 'rotation': [0.04469037514549817, [0, 1]], 'scale': [1.123259677877432, 1.9909645851007605, 1.0], 'translation': (1.0, -2.0, 0.0)}
+2022-12-05 12:57:47.960 | INFO     | ivadomed.loader.all_dataset_group:preview:102 - AllDatasetGroups(['FileDataSetGroup1', 'FileDataSetGroup2'])
+2022-12-05 12:57:47.961 | INFO     | ivadomed.loader.dataset_group:preview:269 - FileDatasetGroup: FileDataSetGroup1
+2022-12-05 12:57:47.961 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:285 - 	Train Files:
+2022-12-05 12:57:47.961 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:286 - 		File Train data set object has 3 pairs of data files
+2022-12-05 12:57:47.962 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:290 - 			Image Pair 0, Subject Image(s):
+2022-12-05 12:57:47.962 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-01\ses-01\anat\sub-01_ses-01_flip-1_mt-off_MTS.nii
+2022-12-05 12:57:47.962 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-01\ses-01\anat\sub-01_ses-01_flip-1_mt-on_MTS.nii
+2022-12-05 12:57:47.962 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:293 - 			Image Pair 0, Ground Truth Image(s):
+2022-12-05 12:57:47.962 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:295 - 				C:\git\ivadomed\tmp\derivatives\labels\sub-01\ses-01\anat\sub-01_ses-01_mt-off_MTS_lesion-manual-rater1.nii
+2022-12-05 12:57:47.963 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:290 - 			Image Pair 1, Subject Image(s):
+2022-12-05 12:57:47.963 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-01\ses-02\anat\sub-01_ses-02_flip-1_mt-off_MTS.nii
+2022-12-05 12:57:47.963 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-01\ses-02\anat\sub-01_ses-02_flip-1_mt-on_MTS.nii
+2022-12-05 12:57:47.963 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:293 - 			Image Pair 1, Ground Truth Image(s):
+2022-12-05 12:57:47.963 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:295 - 				C:\git\ivadomed\tmp\derivatives\labels\sub-01\ses-02\anat\sub-01_ses-02_mt-off_MTS_lesion-manual-rater1.nii
+2022-12-05 12:57:47.964 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:290 - 			Image Pair 2, Subject Image(s):
+2022-12-05 12:57:47.964 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-01\ses-03\anat\sub-01_ses-03_flip-1_mt-off_MTS.nii
+2022-12-05 12:57:47.964 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-01\ses-03\anat\sub-01_ses-03_flip-1_mt-on_MTS.nii
+2022-12-05 12:57:47.964 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:293 - 			Image Pair 2, Ground Truth Image(s):
+2022-12-05 12:57:47.964 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:295 - 				C:\git\ivadomed\tmp\derivatives\labels\sub-01\ses-03\anat\sub-01_ses-03_mt-off_MTS_lesion-manual-rater1.nii
+2022-12-05 12:57:47.965 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:285 - 	Val Files:
+2022-12-05 12:57:47.965 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:286 - 		File Val data set object has 3 pairs of data files
+2022-12-05 12:57:47.965 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:290 - 			Image Pair 0, Subject Image(s):
+2022-12-05 12:57:47.965 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-02\ses-01\anat\sub-02_ses-01_flip-1_mt-off_MTS.nii
+2022-12-05 12:57:47.966 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-02\ses-01\anat\sub-02_ses-01_flip-1_mt-on_MTS.nii
+2022-12-05 12:57:47.966 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:293 - 			Image Pair 0, Ground Truth Image(s):
+2022-12-05 12:57:47.966 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:295 - 				C:\git\ivadomed\tmp\derivatives\labels\sub-02\ses-01\anat\sub-02_ses-01_mt-off_MTS_lesion-manual-rater1.nii
+2022-12-05 12:57:47.966 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:290 - 			Image Pair 1, Subject Image(s):
+2022-12-05 12:57:47.966 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-02\ses-02\anat\sub-02_ses-02_flip-1_mt-off_MTS.nii
+2022-12-05 12:57:47.966 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-02\ses-02\anat\sub-02_ses-02_flip-1_mt-on_MTS.nii
+2022-12-05 12:57:47.967 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:293 - 			Image Pair 1, Ground Truth Image(s):
+2022-12-05 12:57:47.967 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:295 - 				C:\git\ivadomed\tmp\derivatives\labels\sub-02\ses-02\anat\sub-02_ses-02_mt-off_MTS_lesion-manual-rater1.nii
+2022-12-05 12:57:47.967 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:290 - 			Image Pair 2, Subject Image(s):
+2022-12-05 12:57:47.967 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-02\ses-03\anat\sub-02_ses-03_flip-1_mt-off_MTS.nii
+2022-12-05 12:57:47.967 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-02\ses-03\anat\sub-02_ses-03_flip-1_mt-on_MTS.nii
+2022-12-05 12:57:47.967 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:293 - 			Image Pair 2, Ground Truth Image(s):
+2022-12-05 12:57:47.968 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:295 - 				C:\git\ivadomed\tmp\derivatives\labels\sub-02\ses-03\anat\sub-02_ses-03_mt-off_MTS_lesion-manual-rater1.nii
+2022-12-05 12:57:47.968 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:285 - 	Test Files:
+2022-12-05 12:57:47.969 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:286 - 		File Test data set object has 3 pairs of data files
+2022-12-05 12:57:47.969 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:290 - 			Image Pair 0, Subject Image(s):
+2022-12-05 12:57:47.969 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-03\ses-01\anat\sub-03_ses-01_flip-1_mt-off_MTS.nii
+2022-12-05 12:57:47.970 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-03\ses-01\anat\sub-03_ses-01_flip-1_mt-on_MTS.nii
+2022-12-05 12:57:47.970 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:293 - 			Image Pair 0, Ground Truth Image(s):
+2022-12-05 12:57:47.970 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:295 - 				C:\git\ivadomed\tmp\derivatives\labels\sub-03\ses-01\anat\sub-03_ses-01_mt-off_MTS_lesion-manual-rater1.nii
+2022-12-05 12:57:47.970 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:290 - 			Image Pair 1, Subject Image(s):
+2022-12-05 12:57:47.971 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-03\ses-02\anat\sub-03_ses-02_flip-1_mt-off_MTS.nii
+2022-12-05 12:57:47.971 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-03\ses-02\anat\sub-03_ses-02_flip-1_mt-on_MTS.nii
+2022-12-05 12:57:47.971 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:293 - 			Image Pair 1, Ground Truth Image(s):
+2022-12-05 12:57:47.971 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:295 - 				C:\git\ivadomed\tmp\derivatives\labels\sub-03\ses-02\anat\sub-03_ses-02_mt-off_MTS_lesion-manual-rater1.nii
+2022-12-05 12:57:47.972 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:290 - 			Image Pair 2, Subject Image(s):
+2022-12-05 12:57:47.972 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-03\ses-03\anat\sub-03_ses-03_flip-1_mt-off_MTS.nii
+2022-12-05 12:57:47.972 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-03\ses-03\anat\sub-03_ses-03_flip-1_mt-on_MTS.nii
+2022-12-05 12:57:47.972 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:293 - 			Image Pair 2, Ground Truth Image(s):
+2022-12-05 12:57:47.972 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:295 - 				C:\git\ivadomed\tmp\derivatives\labels\sub-03\ses-03\anat\sub-03_ses-03_mt-off_MTS_lesion-manual-rater1.nii
+2022-12-05 12:57:47.972 | INFO     | ivadomed.loader.dataset_group:preview:269 - FileDatasetGroup: FileDataSetGroup2
+2022-12-05 12:57:47.973 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:285 - 	Train Files:
+2022-12-05 12:57:47.973 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:286 - 		File Train data set object has 3 pairs of data files
+2022-12-05 12:57:47.973 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:290 - 			Image Pair 0, Subject Image(s):
+2022-12-05 12:57:47.973 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-04\ses-01\anat\sub-04_ses-01_flip-1_mt-off_MTS.nii
+2022-12-05 12:57:47.973 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-04\ses-01\anat\sub-04_ses-01_flip-1_mt-on_MTS.nii
+2022-12-05 12:57:47.974 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:293 - 			Image Pair 0, Ground Truth Image(s):
+2022-12-05 12:57:47.974 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:295 - 				C:\git\ivadomed\tmp\derivatives\labels\sub-04\ses-01\anat\sub-04_ses-01_mt-off_MTS_lesion-manual-rater1.nii
+2022-12-05 12:57:47.974 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:290 - 			Image Pair 1, Subject Image(s):
+2022-12-05 12:57:47.974 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-04\ses-02\anat\sub-04_ses-02_flip-1_mt-off_MTS.nii
+2022-12-05 12:57:47.974 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-04\ses-02\anat\sub-04_ses-02_flip-1_mt-on_MTS.nii
+2022-12-05 12:57:47.975 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:293 - 			Image Pair 1, Ground Truth Image(s):
+2022-12-05 12:57:47.975 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:295 - 				C:\git\ivadomed\tmp\derivatives\labels\sub-04\ses-02\anat\sub-04_ses-02_mt-off_MTS_lesion-manual-rater1.nii
+2022-12-05 12:57:47.975 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:290 - 			Image Pair 2, Subject Image(s):
+2022-12-05 12:57:47.976 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-04\ses-03\anat\sub-04_ses-03_flip-1_mt-off_MTS.nii
+2022-12-05 12:57:47.976 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-04\ses-03\anat\sub-04_ses-03_flip-1_mt-on_MTS.nii
+2022-12-05 12:57:47.976 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:293 - 			Image Pair 2, Ground Truth Image(s):
+2022-12-05 12:57:47.976 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:295 - 				C:\git\ivadomed\tmp\derivatives\labels\sub-04\ses-03\anat\sub-04_ses-03_mt-off_MTS_lesion-manual-rater1.nii
+2022-12-05 12:57:47.977 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:285 - 	Val Files:
+2022-12-05 12:57:47.977 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:286 - 		File Val data set object has 3 pairs of data files
+2022-12-05 12:57:47.977 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:290 - 			Image Pair 0, Subject Image(s):
+2022-12-05 12:57:47.977 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-05\ses-01\anat\sub-05_ses-01_flip-1_mt-off_MTS.nii
+2022-12-05 12:57:47.978 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-05\ses-01\anat\sub-05_ses-01_flip-1_mt-on_MTS.nii
+2022-12-05 12:57:47.978 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:293 - 			Image Pair 0, Ground Truth Image(s):
+2022-12-05 12:57:47.978 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:295 - 				C:\git\ivadomed\tmp\derivatives\labels\sub-05\ses-01\anat\sub-05_ses-01_mt-off_MTS_lesion-manual-rater1.nii
+2022-12-05 12:57:47.978 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:290 - 			Image Pair 1, Subject Image(s):
+2022-12-05 12:57:47.979 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-05\ses-02\anat\sub-05_ses-02_flip-1_mt-off_MTS.nii
+2022-12-05 12:57:47.979 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-05\ses-02\anat\sub-05_ses-02_flip-1_mt-on_MTS.nii
+2022-12-05 12:57:47.979 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:293 - 			Image Pair 1, Ground Truth Image(s):
+2022-12-05 12:57:47.979 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:295 - 				C:\git\ivadomed\tmp\derivatives\labels\sub-05\ses-02\anat\sub-05_ses-02_mt-off_MTS_lesion-manual-rater1.nii
+2022-12-05 12:57:47.979 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:290 - 			Image Pair 2, Subject Image(s):
+2022-12-05 12:57:47.979 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-05\ses-03\anat\sub-05_ses-03_flip-1_mt-off_MTS.nii
+2022-12-05 12:57:47.980 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-05\ses-03\anat\sub-05_ses-03_flip-1_mt-on_MTS.nii
+2022-12-05 12:57:47.980 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:293 - 			Image Pair 2, Ground Truth Image(s):
+2022-12-05 12:57:47.980 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:295 - 				C:\git\ivadomed\tmp\derivatives\labels\sub-05\ses-03\anat\sub-05_ses-03_mt-off_MTS_lesion-manual-rater1.nii
+2022-12-05 12:57:47.980 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:285 - 	Test Files:
+2022-12-05 12:57:47.980 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:286 - 		File Test data set object has 3 pairs of data files
+2022-12-05 12:57:47.981 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:290 - 			Image Pair 0, Subject Image(s):
+2022-12-05 12:57:47.981 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-06\ses-01\anat\sub-06_ses-01_flip-1_mt-off_MTS.nii
+2022-12-05 12:57:47.981 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-06\ses-01\anat\sub-06_ses-01_flip-1_mt-on_MTS.nii
+2022-12-05 12:57:47.981 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:293 - 			Image Pair 0, Ground Truth Image(s):
+2022-12-05 12:57:47.982 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:295 - 				C:\git\ivadomed\tmp\derivatives\labels\sub-06\ses-01\anat\sub-06_ses-01_mt-off_MTS_lesion-manual-rater1.nii
+2022-12-05 12:57:47.982 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:290 - 			Image Pair 1, Subject Image(s):
+2022-12-05 12:57:47.982 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-06\ses-02\anat\sub-06_ses-02_flip-1_mt-off_MTS.nii
+2022-12-05 12:57:47.982 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-06\ses-02\anat\sub-06_ses-02_flip-1_mt-on_MTS.nii
+2022-12-05 12:57:47.982 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:293 - 			Image Pair 1, Ground Truth Image(s):
+2022-12-05 12:57:47.983 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:295 - 				C:\git\ivadomed\tmp\derivatives\labels\sub-06\ses-02\anat\sub-06_ses-02_mt-off_MTS_lesion-manual-rater1.nii
+2022-12-05 12:57:47.985 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:290 - 			Image Pair 2, Subject Image(s):
+2022-12-05 12:57:47.985 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-06\ses-03\anat\sub-06_ses-03_flip-1_mt-off_MTS.nii
+2022-12-05 12:57:47.985 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-06\ses-03\anat\sub-06_ses-03_flip-1_mt-on_MTS.nii
+2022-12-05 12:57:47.986 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:293 - 			Image Pair 2, Ground Truth Image(s):
+2022-12-05 12:57:47.986 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:295 - 				C:\git\ivadomed\tmp\derivatives\labels\sub-06\ses-03\anat\sub-06_ses-03_mt-off_MTS_lesion-manual-rater1.nii
+2022-12-05 12:57:49.919 | WARNING  | testing.common_testing_util:download_dataset:51 - 
+Testing data files appear to already exist at C:\git\ivadomed\data_testing, aborting download
+2022-12-05 12:57:50.225 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json.
+2022-12-05 12:57:51.955 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf02_T2w.nii.gz. Skipping file.
+2022-12-05 12:57:51.956 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf03_T2w.nii.gz. Skipping file.
+2022-12-05 12:57:51.961 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:57:52.004 | WARNING  | testing.common_testing_util:download_dataset:51 - 
+Testing data files appear to already exist at C:\git\ivadomed\data_testing, aborting download
+2022-12-05 12:57:52.196 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json.
+2022-12-05 12:57:53.118 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf02_T2w.nii.gz. Skipping file.
+2022-12-05 12:57:53.118 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf03_T2w.nii.gz. Skipping file.
+2022-12-05 12:57:53.123 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:57:53.276 | INFO     | ivadomed.loader.mri2d_segmentation_dataset:determine_cache_need:383 - Estimated 2D dataset size is 0.00019824504852294922 GB, which is smaller than 16.0 GB. File cache will not be used
+2022-12-05 12:57:53.285 | INFO     | ivadomed.loader.loader:load_dataset:122 - Loaded 16 axial slices for the training set.
+2022-12-05 12:57:53.526 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json.
+2022-12-05 12:57:54.472 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf02_T2w.nii.gz. Skipping file.
+2022-12-05 12:57:54.472 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf03_T2w.nii.gz. Skipping file.
+2022-12-05 12:57:54.476 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:57:54.516 | INFO     | ivadomed.loader.loader:load_dataset:118 - Loaded 2750 volumes of shape [16, 16, 16] for the training set.
+2022-12-05 12:57:54.862 | INFO     | ivadomed.object_detection.utils:compute_bb_statistics:325 - Mean height: 379 +/- 0.0, min: 379, max: 379
+2022-12-05 12:57:54.863 | INFO     | ivadomed.object_detection.utils:compute_bb_statistics:326 - Mean width: 118 +/- 0.0, min: 118, max: 118
+2022-12-05 12:57:54.863 | INFO     | ivadomed.object_detection.utils:compute_bb_statistics:327 - Mean depth: 15 +/- 0.0, min: 15, max: 15
+2022-12-05 12:57:54.863 | INFO     | ivadomed.object_detection.utils:compute_bb_statistics:328 - Mean volume: 670830 +/- 0.0, min: 670830, max: 670830
+2022-12-05 12:57:56.740 | INFO     | ivadomed.loader.dataset_group:preview:269 - FileDatasetGroup: FileDataSetGroup1
+2022-12-05 12:57:56.740 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:285 - 	Train Files:
+2022-12-05 12:57:56.740 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:286 - 		File Train data set object has 3 pairs of data files
+2022-12-05 12:57:56.740 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:290 - 			Image Pair 0, Subject Image(s):
+2022-12-05 12:57:56.740 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-01\ses-01\anat\sub-01_ses-01_flip-1_mt-off_MTS.nii
+2022-12-05 12:57:56.741 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-01\ses-01\anat\sub-01_ses-01_flip-1_mt-on_MTS.nii
+2022-12-05 12:57:56.741 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:293 - 			Image Pair 0, Ground Truth Image(s):
+2022-12-05 12:57:56.741 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:295 - 				C:\git\ivadomed\tmp\derivatives\labels\sub-01\ses-01\anat\sub-01_ses-01_mt-off_MTS_lesion-manual-rater1.nii
+2022-12-05 12:57:56.741 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:290 - 			Image Pair 1, Subject Image(s):
+2022-12-05 12:57:56.741 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-01\ses-02\anat\sub-01_ses-02_flip-1_mt-off_MTS.nii
+2022-12-05 12:57:56.741 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-01\ses-02\anat\sub-01_ses-02_flip-1_mt-on_MTS.nii
+2022-12-05 12:57:56.742 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:293 - 			Image Pair 1, Ground Truth Image(s):
+2022-12-05 12:57:56.742 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:295 - 				C:\git\ivadomed\tmp\derivatives\labels\sub-01\ses-02\anat\sub-01_ses-02_mt-off_MTS_lesion-manual-rater1.nii
+2022-12-05 12:57:56.742 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:290 - 			Image Pair 2, Subject Image(s):
+2022-12-05 12:57:56.742 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-01\ses-03\anat\sub-01_ses-03_flip-1_mt-off_MTS.nii
+2022-12-05 12:57:56.742 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-01\ses-03\anat\sub-01_ses-03_flip-1_mt-on_MTS.nii
+2022-12-05 12:57:56.742 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:293 - 			Image Pair 2, Ground Truth Image(s):
+2022-12-05 12:57:56.743 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:295 - 				C:\git\ivadomed\tmp\derivatives\labels\sub-01\ses-03\anat\sub-01_ses-03_mt-off_MTS_lesion-manual-rater1.nii
+2022-12-05 12:57:56.743 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:285 - 	Val Files:
+2022-12-05 12:57:56.743 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:286 - 		File Val data set object has 3 pairs of data files
+2022-12-05 12:57:56.743 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:290 - 			Image Pair 0, Subject Image(s):
+2022-12-05 12:57:56.743 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-02\ses-01\anat\sub-02_ses-01_flip-1_mt-off_MTS.nii
+2022-12-05 12:57:56.743 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-02\ses-01\anat\sub-02_ses-01_flip-1_mt-on_MTS.nii
+2022-12-05 12:57:56.744 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:293 - 			Image Pair 0, Ground Truth Image(s):
+2022-12-05 12:57:56.744 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:295 - 				C:\git\ivadomed\tmp\derivatives\labels\sub-02\ses-01\anat\sub-02_ses-01_mt-off_MTS_lesion-manual-rater1.nii
+2022-12-05 12:57:56.744 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:290 - 			Image Pair 1, Subject Image(s):
+2022-12-05 12:57:56.744 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-02\ses-02\anat\sub-02_ses-02_flip-1_mt-off_MTS.nii
+2022-12-05 12:57:56.744 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-02\ses-02\anat\sub-02_ses-02_flip-1_mt-on_MTS.nii
+2022-12-05 12:57:56.744 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:293 - 			Image Pair 1, Ground Truth Image(s):
+2022-12-05 12:57:56.745 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:295 - 				C:\git\ivadomed\tmp\derivatives\labels\sub-02\ses-02\anat\sub-02_ses-02_mt-off_MTS_lesion-manual-rater1.nii
+2022-12-05 12:57:56.745 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:290 - 			Image Pair 2, Subject Image(s):
+2022-12-05 12:57:56.745 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-02\ses-03\anat\sub-02_ses-03_flip-1_mt-off_MTS.nii
+2022-12-05 12:57:56.745 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-02\ses-03\anat\sub-02_ses-03_flip-1_mt-on_MTS.nii
+2022-12-05 12:57:56.745 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:293 - 			Image Pair 2, Ground Truth Image(s):
+2022-12-05 12:57:56.745 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:295 - 				C:\git\ivadomed\tmp\derivatives\labels\sub-02\ses-03\anat\sub-02_ses-03_mt-off_MTS_lesion-manual-rater1.nii
+2022-12-05 12:57:56.746 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:285 - 	Test Files:
+2022-12-05 12:57:56.746 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:286 - 		File Test data set object has 3 pairs of data files
+2022-12-05 12:57:56.746 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:290 - 			Image Pair 0, Subject Image(s):
+2022-12-05 12:57:56.746 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-03\ses-01\anat\sub-03_ses-01_flip-1_mt-off_MTS.nii
+2022-12-05 12:57:56.746 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-03\ses-01\anat\sub-03_ses-01_flip-1_mt-on_MTS.nii
+2022-12-05 12:57:56.747 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:293 - 			Image Pair 0, Ground Truth Image(s):
+2022-12-05 12:57:56.747 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:295 - 				C:\git\ivadomed\tmp\derivatives\labels\sub-03\ses-01\anat\sub-03_ses-01_mt-off_MTS_lesion-manual-rater1.nii
+2022-12-05 12:57:56.747 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:290 - 			Image Pair 1, Subject Image(s):
+2022-12-05 12:57:56.747 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-03\ses-02\anat\sub-03_ses-02_flip-1_mt-off_MTS.nii
+2022-12-05 12:57:56.747 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-03\ses-02\anat\sub-03_ses-02_flip-1_mt-on_MTS.nii
+2022-12-05 12:57:56.748 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:293 - 			Image Pair 1, Ground Truth Image(s):
+2022-12-05 12:57:56.748 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:295 - 				C:\git\ivadomed\tmp\derivatives\labels\sub-03\ses-02\anat\sub-03_ses-02_mt-off_MTS_lesion-manual-rater1.nii
+2022-12-05 12:57:56.748 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:290 - 			Image Pair 2, Subject Image(s):
+2022-12-05 12:57:56.748 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-03\ses-03\anat\sub-03_ses-03_flip-1_mt-off_MTS.nii
+2022-12-05 12:57:56.748 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:292 - 				C:\git\ivadomed\tmp\sub-03\ses-03\anat\sub-03_ses-03_flip-1_mt-on_MTS.nii
+2022-12-05 12:57:56.748 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:293 - 			Image Pair 2, Ground Truth Image(s):
+2022-12-05 12:57:56.749 | INFO     | ivadomed.loader.dataset_group:preview_simple_object_print:295 - 				C:\git\ivadomed\tmp\derivatives\labels\sub-03\ses-03\anat\sub-03_ses-03_mt-off_MTS_lesion-manual-rater1.nii
+2022-12-05 12:57:57.012 | WARNING  | testing.common_testing_util:download_dataset:51 - 
+Testing data files appear to already exist at C:\git\ivadomed\data_testing, aborting download
+2022-12-05 12:57:57.184 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\microscopy_png\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\microscopy_png\derivatives\dataset_description.json.
+2022-12-05 12:57:57.881 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:57:58.189 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json.
+2022-12-05 12:57:59.395 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf02_T1w.nii.gz. Skipping file.
+2022-12-05 12:57:59.395 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf02_T2w.nii.gz. Skipping file.
+2022-12-05 12:57:59.396 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf03_T1w.nii.gz. Skipping file.
+2022-12-05 12:57:59.396 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf03_T2w.nii.gz. Skipping file.
+2022-12-05 12:57:59.402 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:57:59.607 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\ct_scan\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\ct_scan\derivatives\dataset_description.json.
+2022-12-05 12:58:00.037 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:58:00.260 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json.
+2022-12-05 12:58:01.222 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\microscopy_png\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\microscopy_png\derivatives\dataset_description.json.
+2022-12-05 12:58:01.787 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:281 - Missing target_suffix seg-axon-manual for sub-unf01_T1w.nii.gz
+2022-12-05 12:58:01.788 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:281 - Missing target_suffix seg-axon-manual for sub-unf01_T2w.nii.gz
+2022-12-05 12:58:01.788 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf02_T1w.nii.gz. Skipping file.
+2022-12-05 12:58:01.788 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf02_T2w.nii.gz. Skipping file.
+2022-12-05 12:58:01.789 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf03_T1w.nii.gz. Skipping file.
+2022-12-05 12:58:01.789 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf03_T2w.nii.gz. Skipping file.
+2022-12-05 12:58:01.789 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:281 - Missing target_suffix _seg-manual for sub-rat2_sample-data5_SEM.png
+2022-12-05 12:58:01.789 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:281 - Missing target_suffix _seg-manual for sub-rat3_ses-01_sample-data9_SEM.png
+2022-12-05 12:58:01.789 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:281 - Missing target_suffix _seg-manual for sub-rat3_ses-02_sample-data10_SEM.png
+2022-12-05 12:58:01.790 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:281 - Missing target_suffix _seg-manual for sub-rat3_ses-02_sample-data11_run-1_SEM.png
+2022-12-05 12:58:01.790 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:281 - Missing target_suffix _seg-manual for sub-rat3_ses-02_sample-data11_run-2_SEM.png
+2022-12-05 12:58:01.796 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:58:01.996 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\ct_scan\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\ct_scan\derivatives\dataset_description.json.
+2022-12-05 12:58:02.364 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:58:02.738 | WARNING  | ivadomed.loader.utils:dropout_input:478 - 
+ Impossible to apply input-level dropout since input is not multi-channel.
+2022-12-05 12:58:03.516 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\microscopy_png\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\microscopy_png\derivatives\dataset_description.json.
+2022-12-05 12:58:04.077 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:58:04.275 | INFO     | ivadomed.loader.mri2d_segmentation_dataset:determine_cache_need:383 - Estimated 2D dataset size is 7.443130016326904e-06 GB, which is smaller than 16.0 GB. File cache will not be used
+2022-12-05 12:58:04.275 | INFO     | ivadomed.loader.loader:load_dataset:122 - Loaded 1 axial slices for the training set.
+2022-12-05 12:58:04.499 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\microscopy_png\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\microscopy_png\derivatives\dataset_description.json.
+2022-12-05 12:58:05.015 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:58:05.497 | INFO     | ivadomed.loader.mri2d_segmentation_dataset:determine_cache_need:383 - Estimated 2D dataset size is 7.633119821548462e-06 GB, which is smaller than 16.0 GB. File cache will not be used
+2022-12-05 12:58:05.529 | INFO     | ivadomed.loader.loader:load_dataset:120 - Loaded 28 axial patches of shape [256, 128] for the training set.
+2022-12-05 12:58:05.733 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\microscopy_png\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\microscopy_png\derivatives\dataset_description.json.
+2022-12-05 12:58:06.224 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:58:06.439 | INFO     | ivadomed.loader.mri2d_segmentation_dataset:determine_cache_need:383 - Estimated 2D dataset size is 8.775852620601654e-06 GB, which is smaller than 16.0 GB. File cache will not be used
+2022-12-05 12:58:06.439 | INFO     | ivadomed.loader.loader:load_dataset:122 - Loaded 1 axial slices for the training set.
+2022-12-05 12:58:06.632 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\microscopy_png\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\microscopy_png\derivatives\dataset_description.json.
+2022-12-05 12:58:07.128 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:58:07.373 | INFO     | ivadomed.loader.mri2d_segmentation_dataset:determine_cache_need:383 - Estimated 2D dataset size is 1.1055730283260345e-05 GB, which is smaller than 16.0 GB. File cache will not be used
+2022-12-05 12:58:07.374 | INFO     | ivadomed.loader.loader:load_dataset:122 - Loaded 1 axial slices for the training set.
+2022-12-05 12:58:07.544 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\microscopy_png\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\microscopy_png\derivatives\dataset_description.json.
+2022-12-05 12:58:08.262 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:58:08.646 | INFO     | ivadomed.loader.mri2d_segmentation_dataset:determine_cache_need:383 - Estimated 2D dataset size is 7.381662726402283e-06 GB, which is smaller than 16.0 GB. File cache will not be used
+2022-12-05 12:58:08.647 | INFO     | ivadomed.loader.loader:load_dataset:122 - Loaded 1 axial slices for the training set.
+2022-12-05 12:58:09.094 | INFO     | ivadomed.loader.mri2d_segmentation_dataset:determine_cache_need:383 - Estimated 2D dataset size is 7.961876690387726e-06 GB, which is smaller than 16.0 GB. File cache will not be used
+2022-12-05 12:58:09.095 | INFO     | ivadomed.loader.loader:load_dataset:122 - Loaded 1 axial slices for the training set.
+2022-12-05 12:58:09.533 | INFO     | ivadomed.loader.mri2d_segmentation_dataset:determine_cache_need:383 - Estimated 2D dataset size is 7.623806595802307e-06 GB, which is smaller than 16.0 GB. File cache will not be used
+2022-12-05 12:58:09.534 | INFO     | ivadomed.loader.loader:load_dataset:122 - Loaded 1 axial slices for the training set.
+2022-12-05 12:58:09.905 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:58:10.368 | INFO     | ivadomed.loader.mri2d_segmentation_dataset:determine_cache_need:383 - Estimated 2D dataset size is 2.0563602447509766e-05 GB, which is smaller than 16.0 GB. File cache will not be used
+2022-12-05 12:58:10.584 | WARNING  | testing.common_testing_util:download_dataset:51 - 
+Testing data files appear to already exist at C:\git\ivadomed\data_testing, aborting download
+2022-12-05 12:58:10.745 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\microscopy_png\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\microscopy_png\derivatives\dataset_description.json.
+2022-12-05 12:58:11.288 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:58:11.493 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json.
+2022-12-05 12:58:12.469 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf02_T1w.nii.gz. Skipping file.
+2022-12-05 12:58:12.470 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf02_T2w.nii.gz. Skipping file.
+2022-12-05 12:58:12.470 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf03_T1w.nii.gz. Skipping file.
+2022-12-05 12:58:12.470 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf03_T2w.nii.gz. Skipping file.
+2022-12-05 12:58:12.474 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:58:12.652 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\ct_scan\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\ct_scan\derivatives\dataset_description.json.
+2022-12-05 12:58:12.993 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:58:13.259 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json.
+2022-12-05 12:58:14.218 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\microscopy_png\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\microscopy_png\derivatives\dataset_description.json.
+2022-12-05 12:58:14.721 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:281 - Missing target_suffix seg-axon-manual for sub-unf01_T1w.nii.gz
+2022-12-05 12:58:14.721 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:281 - Missing target_suffix seg-axon-manual for sub-unf01_T2w.nii.gz
+2022-12-05 12:58:14.721 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf02_T1w.nii.gz. Skipping file.
+2022-12-05 12:58:14.721 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf02_T2w.nii.gz. Skipping file.
+2022-12-05 12:58:14.722 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf03_T1w.nii.gz. Skipping file.
+2022-12-05 12:58:14.722 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf03_T2w.nii.gz. Skipping file.
+2022-12-05 12:58:14.723 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:281 - Missing target_suffix _seg-manual for sub-rat2_sample-data5_SEM.png
+2022-12-05 12:58:14.723 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:281 - Missing target_suffix _seg-manual for sub-rat3_ses-01_sample-data9_SEM.png
+2022-12-05 12:58:14.723 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:281 - Missing target_suffix _seg-manual for sub-rat3_ses-02_sample-data10_SEM.png
+2022-12-05 12:58:14.723 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:281 - Missing target_suffix _seg-manual for sub-rat3_ses-02_sample-data11_run-1_SEM.png
+2022-12-05 12:58:14.724 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:281 - Missing target_suffix _seg-manual for sub-rat3_ses-02_sample-data11_run-2_SEM.png
+2022-12-05 12:58:14.728 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:58:14.902 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\ct_scan\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\ct_scan\derivatives\dataset_description.json.
+2022-12-05 12:58:15.248 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:58:15.655 | WARNING  | ivadomed.loader.utils:dropout_input:478 - 
+ Impossible to apply input-level dropout since input is not multi-channel.
+2022-12-05 12:58:16.343 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\microscopy_png\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\microscopy_png\derivatives\dataset_description.json.
+2022-12-05 12:58:16.847 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:58:17.031 | INFO     | ivadomed.loader.mri2d_segmentation_dataset:determine_cache_need:383 - Estimated 2D dataset size is 7.443130016326904e-06 GB, which is smaller than 16.0 GB. File cache will not be used
+2022-12-05 12:58:17.031 | INFO     | ivadomed.loader.loader:load_dataset:122 - Loaded 1 axial slices for the training set.
+2022-12-05 12:58:17.246 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\microscopy_png\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\microscopy_png\derivatives\dataset_description.json.
+2022-12-05 12:58:17.761 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:58:18.194 | INFO     | ivadomed.loader.mri2d_segmentation_dataset:determine_cache_need:383 - Estimated 2D dataset size is 7.633119821548462e-06 GB, which is smaller than 16.0 GB. File cache will not be used
+2022-12-05 12:58:18.221 | INFO     | ivadomed.loader.loader:load_dataset:120 - Loaded 28 axial patches of shape [256, 128] for the training set.
+2022-12-05 12:58:18.410 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\microscopy_png\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\microscopy_png\derivatives\dataset_description.json.
+2022-12-05 12:58:18.879 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:58:19.101 | INFO     | ivadomed.loader.mri2d_segmentation_dataset:determine_cache_need:383 - Estimated 2D dataset size is 8.775852620601654e-06 GB, which is smaller than 16.0 GB. File cache will not be used
+2022-12-05 12:58:19.101 | INFO     | ivadomed.loader.loader:load_dataset:122 - Loaded 1 axial slices for the training set.
+2022-12-05 12:58:19.310 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\microscopy_png\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\microscopy_png\derivatives\dataset_description.json.
+2022-12-05 12:58:19.888 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:58:20.130 | INFO     | ivadomed.loader.mri2d_segmentation_dataset:determine_cache_need:383 - Estimated 2D dataset size is 1.1055730283260345e-05 GB, which is smaller than 16.0 GB. File cache will not be used
+2022-12-05 12:58:20.131 | INFO     | ivadomed.loader.loader:load_dataset:122 - Loaded 1 axial slices for the training set.
+2022-12-05 12:58:20.317 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\microscopy_png\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\microscopy_png\derivatives\dataset_description.json.
+2022-12-05 12:58:21.049 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:58:21.460 | INFO     | ivadomed.loader.mri2d_segmentation_dataset:determine_cache_need:383 - Estimated 2D dataset size is 7.381662726402283e-06 GB, which is smaller than 16.0 GB. File cache will not be used
+2022-12-05 12:58:21.460 | INFO     | ivadomed.loader.loader:load_dataset:122 - Loaded 1 axial slices for the training set.
+2022-12-05 12:58:21.959 | INFO     | ivadomed.loader.mri2d_segmentation_dataset:determine_cache_need:383 - Estimated 2D dataset size is 7.961876690387726e-06 GB, which is smaller than 16.0 GB. File cache will not be used
+2022-12-05 12:58:21.960 | INFO     | ivadomed.loader.loader:load_dataset:122 - Loaded 1 axial slices for the training set.
+2022-12-05 12:58:22.377 | INFO     | ivadomed.loader.mri2d_segmentation_dataset:determine_cache_need:383 - Estimated 2D dataset size is 7.623806595802307e-06 GB, which is smaller than 16.0 GB. File cache will not be used
+2022-12-05 12:58:22.378 | INFO     | ivadomed.loader.loader:load_dataset:122 - Loaded 1 axial slices for the training set.
+2022-12-05 12:58:22.735 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:58:23.042 | INFO     | ivadomed.loader.mri2d_segmentation_dataset:determine_cache_need:383 - Estimated 2D dataset size is 2.0563602447509766e-05 GB, which is smaller than 16.0 GB. File cache will not be used
+2022-12-05 12:58:23.366 | INFO     | ivadomed.main:check_multiple_raters:107 - Annotations from multiple raters will be used during model training, one annotation from one rater randomly selected at each iteration.
+
+2022-12-05 12:58:23.367 | ERROR    | ivadomed.main:check_multiple_raters:111 - Please provide only one annotation per class in 'target_suffix' when not training a model.
+
+2022-12-05 12:58:31.625 | WARNING  | testing.common_testing_util:download_dataset:51 - 
+Testing data files appear to already exist at C:\git\ivadomed\data_testing, aborting download
+2022-12-05 12:58:34.155 | WARNING  | testing.common_testing_util:download_dataset:51 - 
+Testing data files appear to already exist at C:\git\ivadomed\data_testing, aborting download
+2022-12-05 12:58:34.322 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json.
+2022-12-05 12:58:35.328 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf02_T1w.nii.gz. Skipping file.
+2022-12-05 12:58:35.329 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf03_T1w.nii.gz. Skipping file.
+2022-12-05 12:58:35.332 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:58:35.459 | INFO     | ivadomed.loader.mri2d_segmentation_dataset:determine_cache_need:383 - Estimated 2D dataset size is 0.0018581096082925797 GB, which is smaller than 16.0 GB. File cache will not be used
+2022-12-05 12:58:41.694 | INFO     | ivadomed.loader.mri2d_segmentation_dataset:determine_cache_need:383 - Estimated 2D dataset size is 0.001999950036406517 GB, which is smaller than 16.0 GB. File cache will not be used
+2022-12-05 12:58:47.696 | INFO     | ivadomed.loader.mri2d_segmentation_dataset:determine_cache_need:383 - Estimated 2D dataset size is 0.0002269446849822998 GB, which is smaller than 16.0 GB. File cache will not be used
+2022-12-05 12:59:09.195 | WARNING  | testing.common_testing_util:download_dataset:51 - 
+Testing data files appear to already exist at C:\git\ivadomed\data_testing, aborting download
+2022-12-05 12:59:09.361 | INFO     | ivadomed.utils:define_device:161 - Cuda is not available.
+2022-12-05 12:59:09.361 | INFO     | ivadomed.utils:define_device:162 - Working on cpu.
+2022-12-05 12:59:09.368 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\microscopy_png\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\microscopy_png\derivatives\dataset_description.json.
+2022-12-05 12:59:09.836 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:59:10.037 | INFO     | ivadomed.loader.mri2d_segmentation_dataset:determine_cache_need:383 - Estimated 2D dataset size is 9.025447070598602e-06 GB, which is smaller than 16.0 GB. File cache will not be used
+2022-12-05 12:59:10.039 | INFO     | ivadomed.loader.loader:load_dataset:120 - Loaded 16 axial patches of shape [32, 32] for the training set.
+2022-12-05 12:59:10.039 | INFO     | testing.unit_tests.test_patch_filter:test_patch_filter:70 - 	Number of loaded patches: 16
+2022-12-05 12:59:10.039 | INFO     | testing.unit_tests.test_patch_filter:test_patch_filter:76 - 	Number of Neg/Pos patches in GT.
+2022-12-05 12:59:10.057 | DEBUG    | testing.unit_tests.test_patch_filter:_cmpt_slice:33 - {0: 2, 1: 14}
+2022-12-05 12:59:10.229 | INFO     | ivadomed.utils:define_device:161 - Cuda is not available.
+2022-12-05 12:59:10.230 | INFO     | ivadomed.utils:define_device:162 - Working on cpu.
+2022-12-05 12:59:10.235 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\microscopy_png\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\microscopy_png\derivatives\dataset_description.json.
+2022-12-05 12:59:10.710 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:59:10.901 | INFO     | ivadomed.loader.mri2d_segmentation_dataset:determine_cache_need:383 - Estimated 2D dataset size is 9.025447070598602e-06 GB, which is smaller than 16.0 GB. File cache will not be used
+2022-12-05 12:59:10.903 | INFO     | ivadomed.loader.loader:load_dataset:120 - Loaded 14 axial patches of shape [32, 32] for the training set.
+2022-12-05 12:59:10.904 | INFO     | testing.unit_tests.test_patch_filter:test_patch_filter:70 - 	Number of loaded patches: 14
+2022-12-05 12:59:10.904 | INFO     | testing.unit_tests.test_patch_filter:test_patch_filter:76 - 	Number of Neg/Pos patches in GT.
+2022-12-05 12:59:10.917 | DEBUG    | testing.unit_tests.test_patch_filter:_cmpt_slice:33 - {0: 0, 1: 14}
+2022-12-05 12:59:11.070 | INFO     | ivadomed.utils:define_device:161 - Cuda is not available.
+2022-12-05 12:59:11.070 | INFO     | ivadomed.utils:define_device:162 - Working on cpu.
+2022-12-05 12:59:11.076 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\microscopy_png\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\microscopy_png\derivatives\dataset_description.json.
+2022-12-05 12:59:11.575 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:59:11.775 | INFO     | ivadomed.loader.mri2d_segmentation_dataset:determine_cache_need:383 - Estimated 2D dataset size is 9.025447070598602e-06 GB, which is smaller than 16.0 GB. File cache will not be used
+2022-12-05 12:59:11.776 | INFO     | ivadomed.loader.loader:load_dataset:120 - Loaded 16 axial patches of shape [32, 32] for the testing set.
+2022-12-05 12:59:11.777 | INFO     | testing.unit_tests.test_patch_filter:test_patch_filter:70 - 	Number of loaded patches: 16
+2022-12-05 12:59:11.777 | INFO     | testing.unit_tests.test_patch_filter:test_patch_filter:76 - 	Number of Neg/Pos patches in GT.
+2022-12-05 12:59:11.791 | DEBUG    | testing.unit_tests.test_patch_filter:_cmpt_slice:33 - {0: 2, 1: 14}
+2022-12-05 12:59:11.949 | INFO     | ivadomed.utils:define_device:161 - Cuda is not available.
+2022-12-05 12:59:11.950 | INFO     | ivadomed.utils:define_device:162 - Working on cpu.
+2022-12-05 12:59:11.955 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\microscopy_png\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\microscopy_png\derivatives\dataset_description.json.
+2022-12-05 12:59:12.427 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:59:12.628 | INFO     | ivadomed.loader.mri2d_segmentation_dataset:determine_cache_need:383 - Estimated 2D dataset size is 9.025447070598602e-06 GB, which is smaller than 16.0 GB. File cache will not be used
+2022-12-05 12:59:12.629 | INFO     | ivadomed.loader.loader:load_dataset:120 - Loaded 16 axial patches of shape [32, 32] for the testing set.
+2022-12-05 12:59:12.629 | INFO     | testing.unit_tests.test_patch_filter:test_patch_filter:70 - 	Number of loaded patches: 16
+2022-12-05 12:59:12.629 | INFO     | testing.unit_tests.test_patch_filter:test_patch_filter:76 - 	Number of Neg/Pos patches in GT.
+2022-12-05 12:59:12.646 | DEBUG    | testing.unit_tests.test_patch_filter:_cmpt_slice:33 - {0: 2, 1: 14}
+2022-12-05 12:59:13.885 | WARNING  | testing.common_testing_util:download_dataset:51 - 
+Testing data files appear to already exist at C:\git\ivadomed\data_testing, aborting download
+2022-12-05 12:59:14.070 | WARNING  | testing.common_testing_util:download_dataset:51 - 
+Testing data files appear to already exist at C:\git\ivadomed\data_testing, aborting download
+2022-12-05 12:59:14.423 | WARNING  | testing.common_testing_util:download_dataset:51 - 
+Testing data files appear to already exist at C:\git\ivadomed\data_testing, aborting download
+2022-12-05 12:59:14.575 | INFO     | ivadomed.utils:define_device:161 - Cuda is not available.
+2022-12-05 12:59:14.575 | INFO     | ivadomed.utils:define_device:162 - Working on cpu.
+2022-12-05 12:59:14.593 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json.
+2022-12-05 12:59:15.598 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf02_T2w.nii.gz. Skipping file.
+2022-12-05 12:59:15.599 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf03_T2w.nii.gz. Skipping file.
+2022-12-05 12:59:15.603 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:59:15.853 | INFO     | ivadomed.loader.mri2d_segmentation_dataset:determine_cache_need:383 - Estimated 2D dataset size is 0.00019794702529907227 GB, which is smaller than 16.0 GB. File cache will not be used
+2022-12-05 12:59:16.200 | INFO     | ivadomed.loader.loader:load_dataset:122 - Loaded 16 axial slices for the training set.
+2022-12-05 12:59:16.202 | INFO     | testing.unit_tests.test_sampler:test_sampler:79 - 
+Loading without sampling
+2022-12-05 12:59:16.229 | INFO     | testing.unit_tests.test_sampler:_cmpt_label:36 - {'neg_sample_ratio': 12.5, 'pos_sample_ratio': 87.5}
+2022-12-05 12:59:16.231 | INFO     | testing.unit_tests.test_sampler:test_sampler:87 - 
+Loading with sampling
+2022-12-05 12:59:16.302 | INFO     | testing.unit_tests.test_sampler:_cmpt_label:36 - {'neg_sample_ratio': 37.5, 'pos_sample_ratio': 62.5}
+2022-12-05 12:59:16.451 | WARNING  | testing.common_testing_util:download_dataset:51 - 
+Testing data files appear to already exist at C:\git\ivadomed\data_testing, aborting download
+2022-12-05 12:59:16.849 | INFO     | ivadomed.utils:define_device:161 - Cuda is not available.
+2022-12-05 12:59:16.849 | INFO     | ivadomed.utils:define_device:162 - Working on cpu.
+2022-12-05 12:59:16.872 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json.
+2022-12-05 12:59:18.957 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf02_T2w.nii.gz. Skipping file.
+2022-12-05 12:59:18.957 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf03_T2w.nii.gz. Skipping file.
+2022-12-05 12:59:18.961 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:59:19.102 | INFO     | ivadomed.loader.mri2d_segmentation_dataset:determine_cache_need:383 - Estimated 2D dataset size is 0.00019794702529907227 GB, which is smaller than 16.0 GB. File cache will not be used
+2022-12-05 12:59:19.374 | INFO     | ivadomed.loader.loader:load_dataset:122 - Loaded 16 axial slices for the training set.
+2022-12-05 12:59:19.375 | INFO     | testing.unit_tests.test_slice_filter:test_slice_filter:77 - 	Number of loaded slices: 16
+2022-12-05 12:59:19.386 | DEBUG    | testing.unit_tests.test_slice_filter:_cmpt_slice:32 - {0: 2, 1: 14}
+2022-12-05 12:59:19.387 | INFO     | testing.unit_tests.test_slice_filter:test_slice_filter:90 - 	Number of Neg/Pos slices in GT: 0.14285714285714285
+2022-12-05 12:59:19.566 | INFO     | ivadomed.utils:define_device:161 - Cuda is not available.
+2022-12-05 12:59:19.567 | INFO     | ivadomed.utils:define_device:162 - Working on cpu.
+2022-12-05 12:59:19.581 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json.
+2022-12-05 12:59:20.584 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf02_T2w.nii.gz. Skipping file.
+2022-12-05 12:59:20.584 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf03_T2w.nii.gz. Skipping file.
+2022-12-05 12:59:20.589 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:59:20.725 | INFO     | ivadomed.loader.mri2d_segmentation_dataset:determine_cache_need:383 - Estimated 2D dataset size is 0.00019699335098266602 GB, which is smaller than 16.0 GB. File cache will not be used
+2022-12-05 12:59:20.935 | INFO     | ivadomed.loader.loader:load_dataset:122 - Loaded 16 axial slices for the training set.
+2022-12-05 12:59:20.936 | INFO     | testing.unit_tests.test_slice_filter:test_slice_filter:77 - 	Number of loaded slices: 16
+2022-12-05 12:59:20.947 | DEBUG    | testing.unit_tests.test_slice_filter:_cmpt_slice:32 - {0: 2, 1: 14}
+2022-12-05 12:59:20.948 | INFO     | testing.unit_tests.test_slice_filter:test_slice_filter:90 - 	Number of Neg/Pos slices in GT: 0.14285714285714285
+2022-12-05 12:59:21.108 | INFO     | ivadomed.utils:define_device:161 - Cuda is not available.
+2022-12-05 12:59:21.109 | INFO     | ivadomed.utils:define_device:162 - Working on cpu.
+2022-12-05 12:59:21.124 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json.
+2022-12-05 12:59:22.078 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf02_T2w.nii.gz. Skipping file.
+2022-12-05 12:59:22.079 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf03_T2w.nii.gz. Skipping file.
+2022-12-05 12:59:22.083 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:59:22.220 | INFO     | ivadomed.loader.mri2d_segmentation_dataset:determine_cache_need:383 - Estimated 2D dataset size is 0.00019794702529907227 GB, which is smaller than 16.0 GB. File cache will not be used
+2022-12-05 12:59:22.444 | INFO     | ivadomed.loader.loader:load_dataset:122 - Loaded 14 axial slices for the training set.
+2022-12-05 12:59:22.445 | INFO     | testing.unit_tests.test_slice_filter:test_slice_filter:77 - 	Number of loaded slices: 14
+2022-12-05 12:59:22.455 | DEBUG    | testing.unit_tests.test_slice_filter:_cmpt_slice:32 - {0: 0, 1: 14}
+2022-12-05 12:59:22.455 | INFO     | testing.unit_tests.test_slice_filter:test_slice_filter:90 - 	Number of Neg/Pos slices in GT: 0.0
+2022-12-05 12:59:22.625 | INFO     | ivadomed.utils:define_device:161 - Cuda is not available.
+2022-12-05 12:59:22.626 | INFO     | ivadomed.utils:define_device:162 - Working on cpu.
+2022-12-05 12:59:22.640 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json.
+2022-12-05 12:59:23.559 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf02_T2w.nii.gz. Skipping file.
+2022-12-05 12:59:23.560 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf03_T2w.nii.gz. Skipping file.
+2022-12-05 12:59:23.564 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:59:23.696 | INFO     | ivadomed.loader.mri2d_segmentation_dataset:determine_cache_need:383 - Estimated 2D dataset size is 0.00019699335098266602 GB, which is smaller than 16.0 GB. File cache will not be used
+2022-12-05 12:59:23.878 | INFO     | ivadomed.loader.loader:load_dataset:122 - Loaded 14 axial slices for the training set.
+2022-12-05 12:59:23.878 | INFO     | testing.unit_tests.test_slice_filter:test_slice_filter:77 - 	Number of loaded slices: 14
+2022-12-05 12:59:23.890 | DEBUG    | testing.unit_tests.test_slice_filter:_cmpt_slice:32 - {0: 0, 1: 14}
+2022-12-05 12:59:23.890 | INFO     | testing.unit_tests.test_slice_filter:test_slice_filter:90 - 	Number of Neg/Pos slices in GT: 0.0
+2022-12-05 12:59:24.233 | INFO     | ivadomed.utils:define_device:161 - Cuda is not available.
+2022-12-05 12:59:24.233 | INFO     | ivadomed.utils:define_device:162 - Working on cpu.
+2022-12-05 12:59:24.249 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json.
+2022-12-05 12:59:25.194 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf02_T2w.nii.gz. Skipping file.
+2022-12-05 12:59:25.194 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf03_T2w.nii.gz. Skipping file.
+2022-12-05 12:59:25.198 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:59:25.328 | INFO     | ivadomed.loader.mri2d_segmentation_dataset:determine_cache_need:383 - Estimated 2D dataset size is 0.00022810697555541992 GB, which is smaller than 16.0 GB. File cache will not be used
+2022-12-05 12:59:25.519 | INFO     | ivadomed.loader.loader:load_dataset:122 - Loaded 16 axial slices for the training set.
+2022-12-05 12:59:25.519 | INFO     | testing.unit_tests.test_slice_filter:test_slice_filter:77 - 	Number of loaded slices: 16
+2022-12-05 12:59:25.532 | DEBUG    | testing.unit_tests.test_slice_filter:_cmpt_slice:32 - {0: 2, 1: 14}
+2022-12-05 12:59:25.532 | INFO     | testing.unit_tests.test_slice_filter:test_slice_filter:90 - 	Number of Neg/Pos slices in GT: 0.14285714285714285
+2022-12-05 12:59:25.867 | INFO     | ivadomed.utils:define_device:161 - Cuda is not available.
+2022-12-05 12:59:25.867 | INFO     | ivadomed.utils:define_device:162 - Working on cpu.
+2022-12-05 12:59:25.881 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json.
+2022-12-05 12:59:26.787 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf02_T2w.nii.gz. Skipping file.
+2022-12-05 12:59:26.787 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf03_T2w.nii.gz. Skipping file.
+2022-12-05 12:59:26.790 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:59:26.913 | INFO     | ivadomed.loader.mri2d_segmentation_dataset:determine_cache_need:383 - Estimated 2D dataset size is 0.00022810697555541992 GB, which is smaller than 16.0 GB. File cache will not be used
+2022-12-05 12:59:27.085 | INFO     | ivadomed.loader.loader:load_dataset:122 - Loaded 14 axial slices for the training set.
+2022-12-05 12:59:27.086 | INFO     | testing.unit_tests.test_slice_filter:test_slice_filter:77 - 	Number of loaded slices: 14
+2022-12-05 12:59:27.096 | DEBUG    | testing.unit_tests.test_slice_filter:_cmpt_slice:32 - {0: 0, 1: 14}
+2022-12-05 12:59:27.096 | INFO     | testing.unit_tests.test_slice_filter:test_slice_filter:90 - 	Number of Neg/Pos slices in GT: 0.0
+2022-12-05 12:59:27.296 | WARNING  | ivadomed.loader.utils:split_dataset:111 - After splitting: train, validation and test fractions are respectively 0.6, 0.2 and 0.2 of participant_id.
+2022-12-05 12:59:27.494 | WARNING  | ivadomed.loader.utils:split_dataset:111 - After splitting: train, validation and test fractions are respectively 0.2, 0.4 and 0.4 of participant_id.
+2022-12-05 12:59:27.675 | WARNING  | ivadomed.loader.utils:split_dataset:111 - After splitting: train, validation and test fractions are respectively 0.45, 0.2 and 0.35 of participant_id.
+2022-12-05 12:59:27.859 | WARNING  | ivadomed.loader.utils:split_dataset:111 - After splitting: train, validation and test fractions are respectively 0.6, 0.4 and 0.0 of participant_id.
+2022-12-05 12:59:28.059 | WARNING  | ivadomed.loader.utils:split_dataset:111 - After splitting: train, validation and test fractions are respectively 0.448, 0.209 and 0.343 of participant_id.
+2022-12-05 12:59:28.064 | WARNING  | ivadomed.loader.utils:split_dataset:111 - After splitting: train, validation and test fractions are respectively 0.448, 0.209 and 0.343 of participant_id.
+2022-12-05 12:59:28.068 | WARNING  | ivadomed.loader.utils:split_dataset:111 - After splitting: train, validation and test fractions are respectively 0.439, 0.212 and 0.348 of participant_id.
+2022-12-05 12:59:28.250 | WARNING  | ivadomed.loader.utils:split_dataset:111 - After splitting: train, validation and test fractions are respectively 0.388, 0.403 and 0.209 of participant_id.
+2022-12-05 12:59:28.254 | WARNING  | ivadomed.loader.utils:split_dataset:111 - After splitting: train, validation and test fractions are respectively 0.388, 0.418 and 0.194 of participant_id.
+2022-12-05 12:59:28.258 | WARNING  | ivadomed.loader.utils:split_dataset:111 - After splitting: train, validation and test fractions are respectively 0.394, 0.409 and 0.197 of participant_id.
+2022-12-05 12:59:28.504 | WARNING  | testing.common_testing_util:download_dataset:51 - 
+Testing data files appear to already exist at C:\git\ivadomed\data_testing, aborting download
+2022-12-05 12:59:28.754 | INFO     | ivadomed.utils:define_device:161 - Cuda is not available.
+2022-12-05 12:59:28.755 | INFO     | ivadomed.utils:define_device:162 - Working on cpu.
+2022-12-05 12:59:28.770 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json.
+2022-12-05 12:59:29.943 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf02_T2w.nii.gz. Skipping file.
+2022-12-05 12:59:29.944 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf03_T2w.nii.gz. Skipping file.
+2022-12-05 12:59:29.961 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:59:30.191 | INFO     | ivadomed.loader.mri2d_segmentation_dataset:determine_cache_need:383 - Estimated 2D dataset size is 0.00019794702529907227 GB, which is smaller than 16.0 GB. File cache will not be used
+2022-12-05 12:59:30.486 | INFO     | ivadomed.loader.loader:load_dataset:122 - Loaded 16 axial slices for the testing set.
+2022-12-05 12:59:32.483 | INFO     | ivadomed.utils:define_device:161 - Cuda is not available.
+2022-12-05 12:59:32.483 | INFO     | ivadomed.utils:define_device:162 - Working on cpu.
+2022-12-05 12:59:32.499 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json.
+2022-12-05 12:59:33.573 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf02_T2w.nii.gz. Skipping file.
+2022-12-05 12:59:33.573 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf03_T2w.nii.gz. Skipping file.
+2022-12-05 12:59:33.578 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:59:33.744 | INFO     | ivadomed.loader.mri2d_segmentation_dataset:determine_cache_need:383 - Estimated 2D dataset size is 0.00019781291484832764 GB, which is smaller than 16.0 GB. File cache will not be used
+2022-12-05 12:59:34.040 | INFO     | ivadomed.loader.loader:load_dataset:122 - Loaded 16 axial slices for the testing set.
+2022-12-05 12:59:35.892 | INFO     | ivadomed.utils:define_device:161 - Cuda is not available.
+2022-12-05 12:59:35.893 | INFO     | ivadomed.utils:define_device:162 - Working on cpu.
+2022-12-05 12:59:35.901 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\microscopy_png\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\microscopy_png\derivatives\dataset_description.json.
+2022-12-05 12:59:36.684 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:59:36.915 | INFO     | ivadomed.loader.mri2d_segmentation_dataset:determine_cache_need:383 - Estimated 2D dataset size is 1.8050894141197205e-05 GB, which is smaller than 16.0 GB. File cache will not be used
+2022-12-05 12:59:37.050 | INFO     | ivadomed.loader.loader:load_dataset:122 - Loaded 2 axial slices for the testing set.
+2022-12-05 12:59:37.543 | WARNING  | ivadomed.testing:run_inference:249 - No color labels saved due to a temporary issue. For more details see:https://github.com/ivadomed/ivadomed/issues/720
+2022-12-05 12:59:37.726 | WARNING  | ivadomed.testing:run_inference:249 - No color labels saved due to a temporary issue. For more details see:https://github.com/ivadomed/ivadomed/issues/720
+2022-12-05 12:59:38.123 | INFO     | ivadomed.utils:define_device:161 - Cuda is not available.
+2022-12-05 12:59:38.124 | INFO     | ivadomed.utils:define_device:162 - Working on cpu.
+2022-12-05 12:59:38.148 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\microscopy_png\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\microscopy_png\derivatives\dataset_description.json.
+2022-12-05 12:59:38.803 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:59:39.041 | INFO     | ivadomed.loader.mri2d_segmentation_dataset:determine_cache_need:383 - Estimated 2D dataset size is 1.8050894141197205e-05 GB, which is smaller than 16.0 GB. File cache will not be used
+2022-12-05 12:59:39.180 | INFO     | ivadomed.loader.loader:load_dataset:122 - Loaded 2 axial slices for the testing set.
+2022-12-05 12:59:39.669 | WARNING  | ivadomed.testing:run_inference:249 - No color labels saved due to a temporary issue. For more details see:https://github.com/ivadomed/ivadomed/issues/720
+2022-12-05 12:59:39.831 | WARNING  | ivadomed.testing:run_inference:249 - No color labels saved due to a temporary issue. For more details see:https://github.com/ivadomed/ivadomed/issues/720
+2022-12-05 12:59:39.931 | WARNING  | testing.common_testing_util:download_dataset:51 - 
+Testing data files appear to already exist at C:\git\ivadomed\data_testing, aborting download
+2022-12-05 12:59:40.096 | INFO     | ivadomed.utils:define_device:161 - Cuda is not available.
+2022-12-05 12:59:40.096 | INFO     | ivadomed.utils:define_device:162 - Working on cpu.
+2022-12-05 12:59:40.119 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json.
+2022-12-05 12:59:41.160 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf02_T2w.nii.gz. Skipping file.
+2022-12-05 12:59:41.161 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf03_T2w.nii.gz. Skipping file.
+2022-12-05 12:59:41.165 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:59:41.311 | INFO     | ivadomed.loader.mri2d_segmentation_dataset:determine_cache_need:383 - Estimated 2D dataset size is 0.00019794702529907227 GB, which is smaller than 16.0 GB. File cache will not be used
+2022-12-05 12:59:41.604 | INFO     | ivadomed.loader.loader:load_dataset:122 - Loaded 16 axial slices for the training set.
+2022-12-05 12:59:41.648 | DEBUG    | testing.unit_tests.test_training_time:test_unet_time:133 - Training Unet
+2022-12-05 12:59:57.843 | INFO     | testing.unit_tests.test_training_time:test_unet_time:204 - Mean SD init 0.00025010108947753906 -- 0.00025010108947753906
+2022-12-05 12:59:57.844 | INFO     | testing.unit_tests.test_training_time:test_unet_time:205 - Mean SD load 0.0 -- 0.0
+2022-12-05 12:59:57.844 | INFO     | testing.unit_tests.test_training_time:test_unet_time:206 - Mean SD pred 0.29891282320022583 -- 0.0577026795091485
+2022-12-05 12:59:57.844 | INFO     | testing.unit_tests.test_training_time:test_unet_time:207 - Mean SDopt 0.569009006023407 --  0.09963973590849018
+2022-12-05 12:59:57.844 | INFO     | testing.unit_tests.test_training_time:test_unet_time:208 - Mean SD gen 0.0009957551956176758 -- 1.0728836059570312e-06
+2022-12-05 12:59:57.845 | INFO     | testing.unit_tests.test_training_time:test_unet_time:209 - Mean SD scheduler 0.0002497434616088867 -- 0.0002497434616088867
+2022-12-05 12:59:58.047 | INFO     | ivadomed.utils:define_device:161 - Cuda is not available.
+2022-12-05 12:59:58.048 | INFO     | ivadomed.utils:define_device:162 - Working on cpu.
+2022-12-05 12:59:58.063 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json.
+2022-12-05 12:59:59.047 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf02_T1w.nii.gz. Skipping file.
+2022-12-05 12:59:59.047 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf02_T2w.nii.gz. Skipping file.
+2022-12-05 12:59:59.048 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf03_T1w.nii.gz. Skipping file.
+2022-12-05 12:59:59.048 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf03_T2w.nii.gz. Skipping file.
+2022-12-05 12:59:59.053 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 12:59:59.253 | INFO     | ivadomed.loader.mri2d_segmentation_dataset:determine_cache_need:383 - Estimated 2D dataset size is 0.0003246814012527466 GB, which is smaller than 16.0 GB. File cache will not be used
+2022-12-05 12:59:59.690 | INFO     | ivadomed.loader.loader:load_dataset:122 - Loaded 16 axial slices for the training set.
+2022-12-05 12:59:59.724 | DEBUG    | testing.unit_tests.test_training_time:test_unet_time:133 - Training Unet
+2022-12-05 13:00:14.736 | INFO     | testing.unit_tests.test_training_time:test_unet_time:204 - Mean SD init 0.000496983528137207 -- 2.9802322387695312e-06
+2022-12-05 13:00:14.737 | INFO     | testing.unit_tests.test_training_time:test_unet_time:205 - Mean SD load 0.0 -- 0.0
+2022-12-05 13:00:14.737 | INFO     | testing.unit_tests.test_training_time:test_unet_time:206 - Mean SD pred 0.23815453052520752 -- 0.009580411625216927
+2022-12-05 13:00:14.737 | INFO     | testing.unit_tests.test_training_time:test_unet_time:207 - Mean SDopt 0.4587389826774597 --  0.06411285370544836
+2022-12-05 13:00:14.737 | INFO     | testing.unit_tests.test_training_time:test_unet_time:208 - Mean SD gen 0.0017501115798950195 -- 0.0002511739730834961
+2022-12-05 13:00:14.737 | INFO     | testing.unit_tests.test_training_time:test_unet_time:209 - Mean SD scheduler 0.00025010108947753906 -- 0.00025010108947753906
+2022-12-05 13:00:14.955 | INFO     | ivadomed.utils:define_device:161 - Cuda is not available.
+2022-12-05 13:00:14.955 | INFO     | ivadomed.utils:define_device:162 - Working on cpu.
+2022-12-05 13:00:14.973 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json.
+2022-12-05 13:00:16.015 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf02_T1w.nii.gz. Skipping file.
+2022-12-05 13:00:16.016 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf02_T2w.nii.gz. Skipping file.
+2022-12-05 13:00:16.016 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf03_T1w.nii.gz. Skipping file.
+2022-12-05 13:00:16.016 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf03_T2w.nii.gz. Skipping file.
+2022-12-05 13:00:16.021 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 13:00:16.106 | INFO     | ivadomed.loader.loader:load_dataset:118 - Loaded 2 volumes of shape [96, 96, 16] for the training set.
+2022-12-05 13:00:16.127 | DEBUG    | testing.unit_tests.test_training_time:test_unet_time:133 - Training Modified3DUNet
+2022-12-05 13:00:32.556 | INFO     | testing.unit_tests.test_training_time:test_unet_time:204 - Mean SD init 0.0005017518997192383 -- 3.4570693969726562e-06
+2022-12-05 13:00:32.556 | INFO     | testing.unit_tests.test_training_time:test_unet_time:205 - Mean SD load 0.00012677907943725586 -- 0.00021958780692213787
+2022-12-05 13:00:32.557 | INFO     | testing.unit_tests.test_training_time:test_unet_time:206 - Mean SD pred 0.23777329921722412 -- 0.05511028591376614
+2022-12-05 13:00:32.557 | INFO     | testing.unit_tests.test_training_time:test_unet_time:207 - Mean SDopt 0.5890213251113892 --  0.08247040581906924
+2022-12-05 13:00:32.557 | INFO     | testing.unit_tests.test_training_time:test_unet_time:208 - Mean SD gen 0.0007538795471191406 -- 0.00025391578674316406
+2022-12-05 13:00:32.558 | INFO     | testing.unit_tests.test_training_time:test_unet_time:209 - Mean SD scheduler 0.0 -- 0.0
+2022-12-05 13:00:32.805 | INFO     | ivadomed.utils:define_device:161 - Cuda is not available.
+2022-12-05 13:00:32.805 | INFO     | ivadomed.utils:define_device:162 - Working on cpu.
+2022-12-05 13:00:32.825 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json.
+2022-12-05 13:00:34.006 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf02_T1w.nii.gz. Skipping file.
+2022-12-05 13:00:34.006 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf02_T2w.nii.gz. Skipping file.
+2022-12-05 13:00:34.006 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf03_T1w.nii.gz. Skipping file.
+2022-12-05 13:00:34.006 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf03_T2w.nii.gz. Skipping file.
+2022-12-05 13:00:34.012 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 13:00:34.089 | INFO     | ivadomed.loader.loader:load_dataset:118 - Loaded 2 volumes of shape [96, 96, 16] for the training set.
+2022-12-05 13:00:34.105 | DEBUG    | testing.unit_tests.test_training_time:test_unet_time:133 - Training Modified3DUNet
+2022-12-05 13:00:49.291 | INFO     | testing.unit_tests.test_training_time:test_unet_time:204 - Mean SD init 0.00024819374084472656 -- 0.00024819374084472656
+2022-12-05 13:00:49.291 | INFO     | testing.unit_tests.test_training_time:test_unet_time:205 - Mean SD load 0.00024878978729248047 -- 0.00024879121528658006
+2022-12-05 13:00:49.291 | INFO     | testing.unit_tests.test_training_time:test_unet_time:206 - Mean SD pred 0.22101736068725586 -- 0.012456777648632475
+2022-12-05 13:00:49.292 | INFO     | testing.unit_tests.test_training_time:test_unet_time:207 - Mean SDopt 0.6379448771476746 --  0.2308750390956831
+2022-12-05 13:00:49.292 | INFO     | testing.unit_tests.test_training_time:test_unet_time:208 - Mean SD gen 0.0002504587173461914 -- 0.0002504587173461914
+2022-12-05 13:00:49.292 | INFO     | testing.unit_tests.test_training_time:test_unet_time:209 - Mean SD scheduler 0.0 -- 0.0
+2022-12-05 13:00:49.494 | INFO     | ivadomed.utils:define_device:161 - Cuda is not available.
+2022-12-05 13:00:49.494 | INFO     | ivadomed.utils:define_device:162 - Working on cpu.
+2022-12-05 13:00:49.516 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json.
+2022-12-05 13:00:50.624 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf02_T1w.nii.gz. Skipping file.
+2022-12-05 13:00:50.624 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf02_T2w.nii.gz. Skipping file.
+2022-12-05 13:00:50.624 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf03_T1w.nii.gz. Skipping file.
+2022-12-05 13:00:50.624 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf03_T2w.nii.gz. Skipping file.
+2022-12-05 13:00:50.629 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 13:00:50.714 | INFO     | ivadomed.loader.loader:load_dataset:118 - Loaded 2 volumes of shape [96, 96, 16] for the training set.
+2022-12-05 13:00:50.736 | DEBUG    | testing.unit_tests.test_training_time:test_unet_time:133 - Training Modified3DUNet
+2022-12-05 13:01:06.528 | INFO     | testing.unit_tests.test_training_time:test_unet_time:204 - Mean SD init 0.001010894775390625 -- 0.0005133152008056641
+2022-12-05 13:01:06.529 | INFO     | testing.unit_tests.test_training_time:test_unet_time:205 - Mean SD load 0.0001246929168701172 -- 0.00021597446736300535
+2022-12-05 13:01:06.529 | INFO     | testing.unit_tests.test_training_time:test_unet_time:206 - Mean SD pred 0.22571295499801636 -- 0.050885122360270235
+2022-12-05 13:01:06.529 | INFO     | testing.unit_tests.test_training_time:test_unet_time:207 - Mean SDopt 0.6325278878211975 --  0.08235139076010027
+2022-12-05 13:01:06.530 | INFO     | testing.unit_tests.test_training_time:test_unet_time:208 - Mean SD gen 0.000500798225402832 -- 3.2186508178710938e-06
+2022-12-05 13:01:06.530 | INFO     | testing.unit_tests.test_training_time:test_unet_time:209 - Mean SD scheduler 0.00024831295013427734 -- 0.00024831295013427734
+2022-12-05 13:01:06.808 | INFO     | ivadomed.utils:define_device:161 - Cuda is not available.
+2022-12-05 13:01:06.808 | INFO     | ivadomed.utils:define_device:162 - Working on cpu.
+2022-12-05 13:01:06.825 | WARNING  | ivadomed.loader.bids_dataframe:write_derivatives_dataset_description:342 - C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json not found. Will attempt to create a place holder description file for now at C:\git\ivadomed\tmp\data_testing\derivatives\dataset_description.json.
+2022-12-05 13:01:08.051 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf02_T2w.nii.gz. Skipping file.
+2022-12-05 13:01:08.051 | WARNING  | ivadomed.loader.bids_dataframe:get_subjects_with_derivatives:283 - Missing derivatives for sub-unf03_T2w.nii.gz. Skipping file.
+2022-12-05 13:01:08.056 | INFO     | ivadomed.loader.bids_dataframe:save:324 - Dataframe has been saved in C:\git\ivadomed\tmp\bids_dataframe.csv.
+2022-12-05 13:01:08.101 | INFO     | ivadomed.loader.loader:load_dataset:120 - Loaded 1 axial patches of shape [96, 96, 16] for the training set.
+2022-12-05 13:01:08.106 | DEBUG    | testing.unit_tests.test_training_time:test_unet_time:133 - Training Unet
+2022-12-05 13:01:21.567 | INFO     | testing.unit_tests.test_training_time:test_unet_time:204 - Mean SD init 0.0002529621124267578 -- 0.0002529621124267578
+2022-12-05 13:01:21.568 | INFO     | testing.unit_tests.test_training_time:test_unet_time:205 - Mean SD load 0.000247955322265625 -- 0.000247955322265625
+2022-12-05 13:01:21.568 | INFO     | testing.unit_tests.test_training_time:test_unet_time:206 - Mean SD pred 0.1719721555709839 -- 0.0025397539138793945
+2022-12-05 13:01:21.568 | INFO     | testing.unit_tests.test_training_time:test_unet_time:207 - Mean SDopt 0.5921045541763306 --  0.15275752544403076
+2022-12-05 13:01:21.569 | INFO     | testing.unit_tests.test_training_time:test_unet_time:208 - Mean SD gen nan -- nan
+2022-12-05 13:01:21.569 | INFO     | testing.unit_tests.test_training_time:test_unet_time:209 - Mean SD scheduler 0.0 -- 0.0
+2022-12-05 13:01:21.628 | WARNING  | testing.common_testing_util:download_dataset:51 - 
+Testing data files appear to already exist at C:\git\ivadomed\data_testing, aborting download
+2022-12-05 13:01:21.837 | INFO     | testing.unit_tests.test_transfer_learning:test_transfer_learning:25 - Working on cpu.
+2022-12-05 13:01:21.838 | INFO     | testing.unit_tests.test_transfer_learning:test_transfer_learning:26 - C:\git\ivadomed\tmp\data_testing
+2022-12-05 13:01:21.922 | INFO     | testing.unit_tests.test_transfer_learning:test_transfer_learning:34 - 
+Set fraction to retrain: 0.1
+2022-12-05 13:01:21.922 | DEBUG    | testing.unit_tests.test_transfer_learning:test_transfer_learning:39 - 
+Measure: retrained fraction of the model: 0.1
+2022-12-05 13:01:21.923 | INFO     | testing.unit_tests.test_transfer_learning:test_transfer_learning:44 - 1306 total parameters.
+2022-12-05 13:01:21.923 | INFO     | testing.unit_tests.test_transfer_learning:test_transfer_learning:47 - 22 parameters to retrain.
+2022-12-05 13:01:21.929 | INFO     | testing.unit_tests.test_transfer_learning:test_transfer_learning:54 - 
+Measure: reset fraction of the model: 0.1
+2022-12-05 13:01:22.168 | INFO     | testing.unit_tests.test_transfer_learning:test_transfer_learning:25 - Working on cpu.
+2022-12-05 13:01:22.169 | INFO     | testing.unit_tests.test_transfer_learning:test_transfer_learning:26 - C:\git\ivadomed\tmp\data_testing
+2022-12-05 13:01:22.247 | INFO     | testing.unit_tests.test_transfer_learning:test_transfer_learning:34 - 
+Set fraction to retrain: 0.2
+2022-12-05 13:01:22.248 | DEBUG    | testing.unit_tests.test_transfer_learning:test_transfer_learning:39 - 
+Measure: retrained fraction of the model: 0.2
+2022-12-05 13:01:22.248 | INFO     | testing.unit_tests.test_transfer_learning:test_transfer_learning:44 - 1306 total parameters.
+2022-12-05 13:01:22.249 | INFO     | testing.unit_tests.test_transfer_learning:test_transfer_learning:47 - 56 parameters to retrain.
+2022-12-05 13:01:22.252 | INFO     | testing.unit_tests.test_transfer_learning:test_transfer_learning:54 - 
+Measure: reset fraction of the model: 0.1
+2022-12-05 13:01:22.446 | INFO     | testing.unit_tests.test_transfer_learning:test_transfer_learning:25 - Working on cpu.
+2022-12-05 13:01:22.447 | INFO     | testing.unit_tests.test_transfer_learning:test_transfer_learning:26 - C:\git\ivadomed\tmp\data_testing
+2022-12-05 13:01:22.517 | INFO     | testing.unit_tests.test_transfer_learning:test_transfer_learning:34 - 
+Set fraction to retrain: 0.3
+2022-12-05 13:01:22.517 | DEBUG    | testing.unit_tests.test_transfer_learning:test_transfer_learning:39 - 
+Measure: retrained fraction of the model: 0.3
+2022-12-05 13:01:22.518 | INFO     | testing.unit_tests.test_transfer_learning:test_transfer_learning:44 - 1306 total parameters.
+2022-12-05 13:01:22.519 | INFO     | testing.unit_tests.test_transfer_learning:test_transfer_learning:47 - 208 parameters to retrain.
+2022-12-05 13:01:22.521 | INFO     | testing.unit_tests.test_transfer_learning:test_transfer_learning:54 - 
+Measure: reset fraction of the model: 0.2
+2022-12-05 13:01:30.385 | DEBUG    | testing.unit_tests.test_utils:test_timestamp:15 - 2022-12-05T130130.385114

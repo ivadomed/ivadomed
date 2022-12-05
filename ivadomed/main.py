@@ -439,7 +439,7 @@ def run_command(context: dict, n_gif=0, thr_increment=None, resume_training=Fals
     logger.add(sys.stdout)
 
     # Create a log with the version of the Ivadomed software and the version of the Annexed dataset (if present)
-    # create_dataset_and_ivadomed_version_log(context)
+    create_dataset_and_ivadomed_version_log(context)
 
     cuda_available, device = imed_utils.define_device(context[ConfigKW.GPU_IDS][0])
 
