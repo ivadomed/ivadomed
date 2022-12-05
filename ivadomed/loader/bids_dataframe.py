@@ -80,36 +80,30 @@ class BidsDataframe:
         for path_data in self.paths_data:
             path_data = Path(path_data, '')
 
-            # Initialize BIDSLayoutIndexer and BIDSLayout
-            # validate=True by default for both indexer and layout, BIDS-validator is not skipped
-            # Force index for samples tsv and json files, and for subject subfolders containing microscopy files based on extensions.
-            # Force index of subject subfolders containing CT-scan files under "anat" or "ct" folder based on extensions and modality suffix.
-            # TODO: remove force indexing of microscopy files after Microscopy-BIDS is integrated in pybids
-            # TODO: remove force indexing of CT-scan files after BEP CT-scan is merged in BIDS
-            ext_microscopy = ('.png', '.tif', '.ome.tif', '.ome.btf')
-            ext_ct = ('.nii.gz', '.nii')
+            # For CT-scan files:
+            # Force indexing of subject subfolders containing CT-scan files.
+            # As of 20221026: Implementation based on potential CT datatypes (anat or ct), extensions and
+            # modality suffixes discussed in BEP024 (https://bids.neuroimaging.io/bep024).
+            # bids_config parameter with default config_bids.json must be used
+            # (see: https://ivadomed.org/configuration_file.html#bids-config)
+            # TODO: remove force indexing of CT-scan files when BEP024 is merged in BIDS.
+            extension_ct = ('.nii.gz', '.nii')
             suffix_ct = ('ct', 'CT')
             force_index = []
             for path_object in path_data.glob('**/*'):
                 if path_object.is_file():
-                    # Microscopy
                     subject_path_index = len(path_data.parts)
                     subject_path = path_object.parts[subject_path_index]
-                    if path_object.name == "samples.tsv" or path_object.name == "samples.json":
-                        force_index.append(path_object.name)
-                    if (path_object.name.endswith(ext_microscopy) and path_object.parent.name == "micr" and
-                        subject_path.startswith('sub')):
-                        force_index.append(str(Path(*path_object.parent.parts[subject_path_index:])))
-                    # CT-scan
-                    if (path_object.name.endswith(ext_ct) and path_object.name.split('.')[0].endswith(suffix_ct) and
+                    if (path_object.name.endswith(extension_ct) and path_object.name.split('.')[0].endswith(suffix_ct) and
                             (path_object.parent.name == "anat" or path_object.parent.name == "ct") and
                             subject_path.startswith('sub')):
                         force_index.append(str(Path(*path_object.parent.parts[subject_path_index:])))
-            indexer = pybids.BIDSLayoutIndexer(force_index=force_index, validate=self.bids_validate)
 
+            # Initialize BIDSLayoutIndexer and BIDSLayout
+            # validate=True by default for both indexer and layout, BIDS-validator is not skipped
+            indexer = pybids.BIDSLayoutIndexer(force_index=force_index, validate=self.bids_validate)
             if self.derivatives:
                 self.write_derivatives_dataset_description(path_data)
-
             layout = pybids.BIDSLayout(str(path_data), config=self.bids_config, indexer=indexer,
                                        derivatives=self.derivatives)
 
@@ -220,7 +214,8 @@ class BidsDataframe:
 
         # Add metadata from 'samples.tsv' file if present
         # The 'participant_id' column is added only if not already present from the 'participants.tsv' file.
-        # TODO: use pybids function after Microscopy-BIDS is integrated in pybids
+        # TODO: update to pybids function when the indexing of samples.tsv is integrated in pybids
+        # (see: https://github.com/bids-standard/pybids/issues/843)
         fname_samples = Path(path_data, "samples.tsv")
         if fname_samples.exists():
             df_samples = pd.read_csv(str(fname_samples), sep='\t')
@@ -239,8 +234,8 @@ class BidsDataframe:
             df = pd.merge(df, df_sessions, on=['subject', 'session'], suffixes=("_x", None), how='left')
 
         # Add metadata from all _scans.tsv files, if present
-        # TODO: use pybids function after Microscopy-BIDS is integrated in pybids
-        # TODO: verify merge behavior with EEG and DWI scans files, tested with anat and microscopy only
+        # TODO: implement reading _scans.tsv files using pybids "layout.get_collections(level='session')"
+        # TODO: verify merge behavior with EEG and DWI scans files, tested with anat and micr only
         df_scans = pd.DataFrame()
         for path_object in Path(path_data).glob("**/*"):
             if path_object.is_file():
