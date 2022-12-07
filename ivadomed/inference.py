@@ -5,6 +5,7 @@ import torch
 import imageio
 import joblib
 from typing import List
+from tqdm import tqdm
 from pathlib import Path
 
 from loguru import logger
@@ -492,7 +493,7 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
     # Loop across batches
     preds_list, slice_idx_list = [], []
     last_sample_bool, weight_matrix, volume, image = False, None, None, None
-    for i_batch, batch in enumerate(data_loader):
+    for i_batch, batch in enumerate(tqdm(data_loader, desc="Inference", position=0)):
         preds = get_preds(context, fname_model, model_params, gpu_id, batch)
 
         # Set datatype to gt since prediction should be processed the same way as gt
