@@ -45,21 +45,20 @@ def onnx_inference(model_path: str, inputs: tensor) -> tensor:
     return torch.tensor(ort_outs[0])
 
 
-def get_preds(context: dict, fname_model: str, model_params: dict, gpu_id: int, batch: dict) -> tensor:
+def get_preds(context: dict, fname_model: str, model_params: dict, cuda_available: bool, device: torch.device, batch: dict) -> tensor:
     """Returns the predictions from the given model.
 
     Args:
         context (dict): configuration dict.
         fname_model (str): name of file containing model.
         model_params (dict): dictionary containing model parameters.
-        gpu_id (int): Number representing gpu number if available. Currently does NOT support multiple GPU segmentation.
+        cuda_available (bool): True if cuda is available.
+        device (torch.device): Device used for prediction.
         batch (dict): dictionary containing input, gt and metadata
 
     Returns:
         tensor: predictions from the model.
     """
-    # Define device
-    cuda_available, device = imed_utils.define_device(gpu_id)
 
     with torch.no_grad():
 
@@ -367,6 +366,9 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
 
     """
 
+    # Define device
+    cuda_available, device = imed_utils.define_device(gpu_id)
+
     # Check if model folder exists and get filenames to be stored as string
     fname_model: str
     fname_model_metadata: str
@@ -493,7 +495,7 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
     preds_list, slice_idx_list = [], []
     last_sample_bool, weight_matrix, volume, image = False, None, None, None
     for i_batch, batch in enumerate(data_loader):
-        preds = get_preds(context, fname_model, model_params, gpu_id, batch)
+        preds = get_preds(context, fname_model, model_params, cuda_available, device, batch)
 
         # Set datatype to gt since prediction should be processed the same way as gt
         for b in batch[MetadataKW.INPUT_METADATA]:
