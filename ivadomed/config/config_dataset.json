@@ -12,51 +12,10 @@
   "dataset_groups": [
     {
       "dataset_group_label": "FileDataSetGroup1",
+      "type": "FILES",
+      "path_data": "C:\\git\\ivadomed\\tmp",
       "expected_gt": 1,
       "expected_input": 2,
-      "path_data": "C:\\git\\ivadomed\\tmp",
-      "test": {
-        "excessive_files_handle": "use_first_and_warn",
-        "image_ground_truth": [
-          [
-            [
-              "sub-03/ses-01/anat/sub-03_ses-01_flip-1_mt-off_MTS.nii",
-              "sub-03/ses-01/anat/sub-03_ses-01_flip-1_mt-on_MTS.nii"
-            ],
-            [
-              "derivatives/labels/sub-03/ses-01/anat/sub-03_ses-01_mt-off_MTS_lesion-manual-rater1.nii"
-            ]
-          ],
-          [
-            [
-              "sub-03/ses-02/anat/sub-03_ses-02_flip-1_mt-off_MTS.nii",
-              "sub-03/ses-02/anat/sub-03_ses-02_flip-1_mt-on_MTS.nii"
-            ],
-            [
-              "derivatives/labels/sub-03/ses-02/anat/sub-03_ses-02_mt-off_MTS_lesion-manual-rater1.nii"
-            ]
-          ],
-          [
-            [
-              "sub-03/ses-03/anat/sub-03_ses-03_flip-1_mt-off_MTS.nii",
-              "sub-03/ses-03/anat/sub-03_ses-03_flip-1_mt-on_MTS.nii",
-              "sub-03/ses-03/anat/sub-03_ses-03_flip-1_mt-on_MTS.nii"
-            ],
-            [
-              "derivatives/labels/sub-03/ses-03/anat/sub-03_ses-03_mt-off_MTS_lesion-manual-rater1.nii"
-            ]
-          ],
-          [
-            [
-              "sub-03/ses-04/anat/sub-03_ses-04_flip-1_mt-off_MTS.nii"
-            ],
-            [
-              "derivatives/labels/sub-03/ses-04/anat/sub-03_ses-04_mt-off_MTS_lesion-manual-rater1.nii"
-            ]
-          ]
-        ],
-        "missing_files_handle": "skip"
-      },
       "training": {
         "excessive_files_handle": "use_first_and_warn",
         "image_ground_truth": [
@@ -99,7 +58,6 @@
         ],
         "missing_files_handle": "skip"
       },
-      "type": "FILES",
       "validation": {
         "excessive_files_handle": "use_first_and_warn",
         "image_ground_truth": [
@@ -141,57 +99,57 @@
           ]
         ],
         "missing_files_handle": "skip"
-      }
-    },
-    {
-      "dataset_group_label": "FileDataSetGroup2",
-      "expected_gt": 1,
-      "expected_input": 2,
-      "path_data": "C:\\git\\ivadomed\\tmp",
+      },
       "test": {
         "excessive_files_handle": "use_first_and_warn",
         "image_ground_truth": [
           [
             [
-              "sub-06/ses-01/anat/sub-06_ses-01_flip-1_mt-off_MTS.nii",
-              "sub-06/ses-01/anat/sub-06_ses-01_flip-1_mt-on_MTS.nii"
+              "sub-03/ses-01/anat/sub-03_ses-01_flip-1_mt-off_MTS.nii",
+              "sub-03/ses-01/anat/sub-03_ses-01_flip-1_mt-on_MTS.nii"
             ],
             [
-              "derivatives/labels/sub-06/ses-01/anat/sub-06_ses-01_mt-off_MTS_lesion-manual-rater1.nii"
+              "derivatives/labels/sub-03/ses-01/anat/sub-03_ses-01_mt-off_MTS_lesion-manual-rater1.nii"
             ]
           ],
           [
             [
-              "sub-06/ses-02/anat/sub-06_ses-02_flip-1_mt-off_MTS.nii",
-              "sub-06/ses-02/anat/sub-06_ses-02_flip-1_mt-on_MTS.nii"
+              "sub-03/ses-02/anat/sub-03_ses-02_flip-1_mt-off_MTS.nii",
+              "sub-03/ses-02/anat/sub-03_ses-02_flip-1_mt-on_MTS.nii"
             ],
             [
-              "derivatives/labels/sub-06/ses-02/anat/sub-06_ses-02_mt-off_MTS_lesion-manual-rater1.nii"
+              "derivatives/labels/sub-03/ses-02/anat/sub-03_ses-02_mt-off_MTS_lesion-manual-rater1.nii"
             ]
           ],
           [
             [
-              "sub-06/ses-03/anat/sub-06_ses-03_flip-1_mt-off_MTS.nii",
-              "sub-06/ses-03/anat/sub-06_ses-03_flip-1_mt-on_MTS.nii",
-              "sub-06/ses-03/anat/sub-06_ses-03_flip-1_mt-on_MTS.nii"
+              "sub-03/ses-03/anat/sub-03_ses-03_flip-1_mt-off_MTS.nii",
+              "sub-03/ses-03/anat/sub-03_ses-03_flip-1_mt-on_MTS.nii",
+              "sub-03/ses-03/anat/sub-03_ses-03_flip-1_mt-on_MTS.nii"
             ],
             [
-              "derivatives/labels/sub-06/ses-03/anat/sub-06_ses-03_mt-off_MTS_lesion-manual-rater1.nii"
+              "derivatives/labels/sub-03/ses-03/anat/sub-03_ses-03_mt-off_MTS_lesion-manual-rater1.nii"
             ]
           ],
           [
             [
-              "sub-06/ses-04/anat/sub-06_ses-04_flip-1_mt-off_MTS.nii"
+              "sub-03/ses-04/anat/sub-03_ses-04_flip-1_mt-off_MTS.nii"
             ],
             [
-              "derivatives/labels/sub-06/ses-04/anat/sub-06_ses-04_mt-off_MTS_lesion-manual-rater1.nii"
+              "derivatives/labels/sub-03/ses-04/anat/sub-03_ses-04_mt-off_MTS_lesion-manual-rater1.nii"
             ]
           ]
         ],
         "missing_files_handle": "skip"
       },
+    },
+    {
+      "dataset_group_label": "FileDataSetGroup2",
+      "type": "FILES",
+      "path_data": "C:\\git\\ivadomed\\tmp",
+      "expected_gt": 1,
+      "expected_input": 2,
       "training": {
-        "excessive_files_handle": "use_first_and_warn",
         "image_ground_truth": [
           [
             [
@@ -230,11 +188,10 @@
             ]
           ]
         ],
-        "missing_files_handle": "skip"
+        "missing_files_handle": "skip",
+        "excessive_files_handle": "use_first_and_warn"
       },
-      "type": "FILES",
       "validation": {
-        "excessive_files_handle": "use_first_and_warn",
         "image_ground_truth": [
           [
             [
@@ -273,7 +230,50 @@
             ]
           ]
         ],
-        "missing_files_handle": "skip"
+        "missing_files_handle": "skip",
+        "excessive_files_handle": "use_first_and_warn",
+      },
+      "test": {
+        "image_ground_truth": [
+          [
+            [
+              "sub-06/ses-01/anat/sub-06_ses-01_flip-1_mt-off_MTS.nii",
+              "sub-06/ses-01/anat/sub-06_ses-01_flip-1_mt-on_MTS.nii"
+            ],
+            [
+              "derivatives/labels/sub-06/ses-01/anat/sub-06_ses-01_mt-off_MTS_lesion-manual-rater1.nii"
+            ]
+          ],
+          [
+            [
+              "sub-06/ses-02/anat/sub-06_ses-02_flip-1_mt-off_MTS.nii",
+              "sub-06/ses-02/anat/sub-06_ses-02_flip-1_mt-on_MTS.nii"
+            ],
+            [
+              "derivatives/labels/sub-06/ses-02/anat/sub-06_ses-02_mt-off_MTS_lesion-manual-rater1.nii"
+            ]
+          ],
+          [
+            [
+              "sub-06/ses-03/anat/sub-06_ses-03_flip-1_mt-off_MTS.nii",
+              "sub-06/ses-03/anat/sub-06_ses-03_flip-1_mt-on_MTS.nii",
+              "sub-06/ses-03/anat/sub-06_ses-03_flip-1_mt-on_MTS.nii"
+            ],
+            [
+              "derivatives/labels/sub-06/ses-03/anat/sub-06_ses-03_mt-off_MTS_lesion-manual-rater1.nii"
+            ]
+          ],
+          [
+            [
+              "sub-06/ses-04/anat/sub-06_ses-04_flip-1_mt-off_MTS.nii"
+            ],
+            [
+              "derivatives/labels/sub-06/ses-04/anat/sub-06_ses-04_mt-off_MTS_lesion-manual-rater1.nii"
+            ]
+          ]
+        ],
+        "missing_files_handle": "skip",
+        "excessive_files_handle": "use_first_and_warn"
       }
     }
   ],

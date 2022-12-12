@@ -84,6 +84,15 @@ class AllDatasetGroups:
                 dataset_group.name
             )
 
+        # Validate that at least SOME train/val/test pairs are specified
+        if not self.train_filename_pairs:
+            raise ValueError("No training data specified. Please ensure at least one dataset group has training data.")
+        if not self.val_filename_pairs:
+            raise ValueError("No validation data specified. Please ensure at least one dataset group has validation data.")
+        if not self.test_filename_pairs:
+            raise ValueError("No testing data specified. Please ensure at least one dataset group has testing data.")
+
+
     def validate_IO_across_datagroups(self):
         """
         Future stub to use to either clean up excessive files dataset groups or drop insufficient number

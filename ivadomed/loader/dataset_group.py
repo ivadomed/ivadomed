@@ -2,7 +2,6 @@ from __future__ import annotations
 import typing
 from typing import List, Tuple
 from ivadomed.loader.files3d_dataset import Files3DDataset
-from ivadomed.loader.files_dataset import FilesDataset
 from loguru import logger
 
 from ivadomed.loader.utils import ensure_absolute_path

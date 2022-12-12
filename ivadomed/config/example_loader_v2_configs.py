@@ -14,9 +14,11 @@ from testing.common_testing_util import path_temp
 path_mock_data = path_temp
 
 example_file_dataset_group_config_json = {
-
             DataloaderKW.DATASET_GROUP_LABEL: "FileDataSetGroup1",
             DataloaderKW.TYPE: "FILES",
+            DataloaderKW.PATH_DATA: path_mock_data,
+            DataloaderKW.EXPECTED_INPUT: 2,
+            DataloaderKW.EXPECTED_GT: 1,
             DataloaderKW.TRAINING: {
                     DataloaderKW.IMAGE_GROUND_TRUTH: [
                         [["sub-01/ses-01/anat/sub-01_ses-01_flip-1_mt-off_MTS.nii",
@@ -71,10 +73,6 @@ example_file_dataset_group_config_json = {
                     DataloaderKW.MISSING_FILES_HANDLE: FileMissingHandleKW.SKIP,
                     DataloaderKW.EXCESSIVE_FILES_HANDLE: FileExcessiveHandleKW.USE_FIRST_AND_WARN,
             },
-            DataloaderKW.PATH_DATA: path_mock_data,
-            DataloaderKW.EXPECTED_INPUT: 2,
-            DataloaderKW.EXPECTED_GT: 1,
-
 }
 
 example_2i1o_all_dataset_groups_config_json: dict = {
@@ -83,6 +81,9 @@ example_2i1o_all_dataset_groups_config_json: dict = {
         {
             DataloaderKW.DATASET_GROUP_LABEL: "FileDataSetGroup2",
             DataloaderKW.TYPE: "FILES",
+            DataloaderKW.PATH_DATA: path_mock_data,
+            DataloaderKW.EXPECTED_INPUT: 2,
+            DataloaderKW.EXPECTED_GT: 1,
             DataloaderKW.TRAINING: {
                     DataloaderKW.IMAGE_GROUND_TRUTH: [
                         [["sub-04/ses-01/anat/sub-04_ses-01_flip-1_mt-off_MTS.nii",
@@ -137,9 +138,6 @@ example_2i1o_all_dataset_groups_config_json: dict = {
                     DataloaderKW.MISSING_FILES_HANDLE: FileMissingHandleKW.SKIP,
                     DataloaderKW.EXCESSIVE_FILES_HANDLE: FileExcessiveHandleKW.USE_FIRST_AND_WARN,
             },
-            DataloaderKW.PATH_DATA: path_mock_data,
-            DataloaderKW.EXPECTED_INPUT: 2,
-            DataloaderKW.EXPECTED_GT: 1,
         },
     ],
     DataloaderKW.EXPECTED_INPUT: 2,
