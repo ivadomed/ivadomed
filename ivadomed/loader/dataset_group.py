@@ -203,7 +203,7 @@ class FileDatasetGroup:
             if len(list_subject_specific_images) > self.n_expected_input:
                 logger.warning(f"HIGHER number of image files found than expected, for subject specification "
                                f"{a_subject_image_ground_truth_pair}. Expected {self.n_expected_input} "
-                               f"but found {len(list_subject_specific_images)} from {list_subject_specific_images}")
+                               f"but found {len(list_subject_specific_images)}. Using image files {list_subject_specific_images[:self.n_expected_input]}.")
                 list_subject_specific_images = list_subject_specific_images[:self.n_expected_input]
 
             # Validate and trim Ground Truth files list
