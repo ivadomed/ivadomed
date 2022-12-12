@@ -211,7 +211,7 @@ class FileDatasetGroup:
             if len(list_subject_specific_gt) > self.n_expected_gt:
                 logger.warning(f"HIGHER number of ground truth files found than expected, for subject specification "
                                f"{a_subject_image_ground_truth_pair}. Expected {self.n_expected_gt} "
-                               f"but found {len(list_subject_specific_gt)} from {list_subject_specific_gt}")
+                               f"but found {len(list_subject_specific_images)}. Using ground truth files {list_subject_specific_images[:self.n_expected_gt]}.")
                 list_subject_specific_gt = list_subject_specific_gt[:self.n_expected_gt]
 
             # Go check every file and if any of them don't exist, skip the subject
