@@ -98,6 +98,9 @@ class FileDatasetGroup:
             dict_file_group_spec.get(DataloaderKW.TEST)
         )
 
+        if not self.train_filename_pairs and not self.val_filename_pairs and not self.test_filename_pairs:
+            raise ValueError("After parsing the loader dictionary, no valid file pairs were found in the dataset group.")
+
         # handle complex jSON specifications
         self.parse_complex_spec_dict_for_filename_pairs(
             dict_file_group_spec, DataloaderKW.TRAINING_TEST
@@ -157,6 +160,9 @@ class FileDatasetGroup:
 
         filename_pairs = []
 
+        if a_simple_loader_json is None:
+            return filename_pairs
+
         if a_simple_loader_json.get(DataloaderKW.MISSING_FILES_HANDLE) == FileMissingHandleKW.SKIP:
             drop_missing = True
         else:
@@ -195,11 +201,17 @@ class FileDatasetGroup:
             # Validate and trim Subject files list
             list_subject_specific_images: list = a_subject_image_ground_truth_pair[0]
             if len(list_subject_specific_images) > self.n_expected_input:
+                logger.warning(f"HIGHER number of image files found than expected, for subject specification "
+                               f"{a_subject_image_ground_truth_pair}. Expected {self.n_expected_input} "
+                               f"but found {len(list_subject_specific_images)} from {list_subject_specific_images}")
                 list_subject_specific_images = list_subject_specific_images[:self.n_expected_input]
 
             # Validate and trim Ground Truth files list
             list_subject_specific_gt: list = a_subject_image_ground_truth_pair[1]
             if len(list_subject_specific_gt) > self.n_expected_gt:
+                logger.warning(f"HIGHER number of ground truth files found than expected, for subject specification "
+                               f"{a_subject_image_ground_truth_pair}. Expected {self.n_expected_gt} "
+                               f"but found {len(list_subject_specific_gt)} from {list_subject_specific_gt}")
                 list_subject_specific_gt = list_subject_specific_gt[:self.n_expected_gt]
 
             # Go check every file and if any of them don't exist, skip the subject

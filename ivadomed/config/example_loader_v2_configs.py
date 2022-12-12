@@ -166,3 +166,9 @@ example_1i1o_all_dataset_groups_config_json[DataloaderKW.DATASET_GROUPS][1].upda
         DataloaderKW.EXPECTED_GT: 1,
     }
 )
+
+if __name__=="__main__":
+
+    import pprint
+
+    pprint.pprint(example_2i1o_all_dataset_groups_config_json)
