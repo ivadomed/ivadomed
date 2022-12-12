@@ -1,5 +1,5 @@
 from ivadomed.keywords import DataloaderKW
-from ivadomed.loader.dataset_group import FileDatasetGroup
+from ivadomed.loader.files_dataset_group import FileDatasetGroup
 from testing.common_testing_util import remove_tmp_dir
 from testing.mocker.mocker_fixture import create_mock_bids_file_structures, create_example_mock_bids_file_structures
 from testing.unit_tests.t_utils import (

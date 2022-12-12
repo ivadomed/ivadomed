@@ -2,7 +2,7 @@ from __future__ import annotations
 import typing
 from typing import List, Tuple
 from ivadomed.keywords import DataloaderKW
-from ivadomed.loader.dataset_group import FileDatasetGroup
+from ivadomed.loader.files_dataset_group import FileDatasetGroup
 
 if typing.TYPE_CHECKING:
     from ivadomed.loader.generalized_loader_configuration import (

@@ -3,7 +3,7 @@ import typing
 from typing import List, Tuple
 
 from ivadomed.keywords import ModelParamsKW, DataloaderKW
-from ivadomed.loader.dataset_group import FileDatasetGroup
+from ivadomed.loader.files_dataset_group import FileDatasetGroup
 
 if typing.TYPE_CHECKING:
     from ivadomed.loader.all_dataset_group import AllDatasetGroups

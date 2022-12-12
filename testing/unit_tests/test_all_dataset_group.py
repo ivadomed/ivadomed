@@ -1,6 +1,6 @@
 from ivadomed.loader.all_dataset_group import AllDatasetGroups
 from ivadomed.config.example_loader_v2_configs import example_2i1o_all_dataset_groups_config_json, path_mock_data
-from ivadomed.loader.dataset_group import FileDatasetGroup
+from ivadomed.loader.files_dataset_group import FileDatasetGroup
 
 from testing.common_testing_util import remove_tmp_dir
 from testing.mocker.mocker_fixture import create_mock_bids_file_structures, create_example_mock_bids_file_structures
