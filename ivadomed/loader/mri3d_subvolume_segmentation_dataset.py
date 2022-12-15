@@ -164,10 +164,6 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
             subvolume_index (int): Subvolume index.
         """
 
-        # copy.deepcopy is used to have different coordinates for reconstruction for a given handler,
-        # to allow a different rater at each iteration of training, and to clean transforms params from previous
-        # transforms i.e. remove params from previous iterations so that the coming transforms are different
-
         # Get the tuple that defines the boundaries for the subsample
         coord: dict = self.indexes[subvolume_index]
         x_min = coord.get(SegmentationDatasetKW.X_MIN)
@@ -181,6 +177,9 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         tuple_seg_roi_pair: tuple = self.handlers[coord.get(SegmentationDatasetKW.HANDLER_INDEX)]
 
         # Disk Cache handling, either, load the seg_pair, not using ROI pair here.
+        # copy.deepcopy is used to have different coordinates for reconstruction for a given handler,
+        # to allow a different rater at each iteration of training, and to clean transforms params from previous
+        # transforms i.e. remove params from previous iterations so that the coming transforms are different
         if self.disk_cache:
             with tuple_seg_roi_pair[0].open(mode='rb') as f:
                 seg_pair = pickle.load(f)
@@ -207,7 +206,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         else:
             metadata_gt = []
 
-        # Extract image and gt slices or patches from coordinates
+        # Extract subvolume and gt from coordinates
         stack_input = np.asarray(seg_pair[SegmentationPairKW.INPUT])[
                       :,
                       x_min:x_max,
@@ -225,14 +224,14 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         else:
             stack_gt = []
 
-        # Run transforms on image slices
+        # Run transforms on subvolume
         stack_input, metadata_input = self.transform(sample=list(stack_input),
                                                      metadata=metadata_input,
                                                      data_type="im")
         # Update metadata_gt with metadata_input
         metadata_gt = imed_loader_utils.update_metadata(metadata_input, metadata_gt)
 
-        # Run transforms on gt slices
+        # Run transforms on gt
         stack_gt, metadata_gt = self.transform(sample=list(stack_gt),
                                                metadata=metadata_gt,
                                                data_type="gt")
