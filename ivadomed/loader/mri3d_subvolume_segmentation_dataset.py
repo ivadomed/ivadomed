@@ -226,14 +226,14 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
             stack_gt = []
 
         # Run transforms on image slices
-        stack_input, metadata_input = self.transform(sample=stack_input,
+        stack_input, metadata_input = self.transform(sample=list(stack_input),
                                                      metadata=metadata_input,
                                                      data_type="im")
         # Update metadata_gt with metadata_input
         metadata_gt = imed_loader_utils.update_metadata(metadata_input, metadata_gt)
 
         # Run transforms on gt slices
-        stack_gt, metadata_gt = self.transform(sample=stack_gt,
+        stack_gt, metadata_gt = self.transform(sample=list(stack_gt),
                                                metadata=metadata_gt,
                                                data_type="gt")
         # Make sure stack_gt is binarized
