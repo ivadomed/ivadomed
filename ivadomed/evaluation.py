@@ -88,7 +88,7 @@ def evaluate(bids_df, path_output, target_suffix, eval_params):
 
         if eval_params['object_detection_metrics']:
             # SAVE PAINTED DATA, TP FP FN
-            fname_paint = str(fname_pred).split('.nii.gz')[0] + '_painted.nii.gz'
+            fname_paint = str(fname_pred).split('.nii.gz')[0] + '_TP-FP-FN.nii.gz'
             nib_painted = nib.Nifti1Image(
                 dataobj=data_painted,
                 affine=nib_pred.header.get_best_affine(),
@@ -104,7 +104,7 @@ def evaluate(bids_df, path_output, target_suffix, eval_params):
                 imed_inference.pred_to_png(painted_list,
                                            target_list,
                                            str(path_preds.joinpath(subj_acq)),
-                                           suffix="_pred_painted.png",
+                                           suffix="_pred_TP-FP-FN.png",
                                            max_value=3) # painted data contain 3 float values [0.0, 1.0, 2.0, 3.0] corresponding to background, TP, FP and FN objects)
 
         # SAVE RESULTS FOR THIS PRED
