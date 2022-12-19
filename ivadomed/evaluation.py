@@ -90,7 +90,7 @@ def evaluate(bids_df, path_output, target_suffix, eval_params):
             # SAVE PAINTED DATA, TP FP FN
             fname_paint = str(fname_pred).split('.nii.gz')[0] + '_TP-FP-FN.nii.gz'
             nib_painted = nib.Nifti1Image(
-                dataobj=data_painted,
+                dataobj=data_painted.astype(int),
                 affine=nib_pred.header.get_best_affine(),
                 header=nib_pred.header.copy()
             )
