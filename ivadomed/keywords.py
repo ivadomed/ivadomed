@@ -83,6 +83,7 @@ class TransformationKW:
     ROICROP: str = "ROICrop"
     CENTERCROP: str = "CenterCrop"
     RESAMPLE: str = "Resample"
+    RANDOM_AFFINE: str = "RandomAffine"
 
 
 @dataclass
@@ -123,6 +124,7 @@ class ModelParamsKW:
     DEPTH: str = "depth"
     MISSING_PROBABILITY: str = "missing_probability"
     MISSING_PROBABILITY_GROWTH: str = "missing_probability_growth"
+    N_FILTERS: str = "n_filters"
 
 
 @dataclass
