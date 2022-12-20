@@ -71,7 +71,7 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
             logger.info("{PROJECT/GROUP/RUN} name not found, initializing as {'temp_project'/'temp_group'/'temp_run'}")
 
         # Initialize WandB with metrics and hyperparameters
-        wandb.init(project=project_name, group=group_name, name=run_name, config=cfg)
+        wandb.init(project=project_name, group=group_name, name=run_name, config=cfg, dir=path_output)
 
     # BALANCE SAMPLES AND PYTORCH LOADER
     conditions = all([training_params[TrainingParamsKW.BALANCE_SAMPLES][BalanceSamplesKW.APPLIED],
