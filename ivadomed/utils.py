@@ -38,7 +38,7 @@ def initialize_wandb(wandb_params):
     try:
         # Log on to WandB (assuming that the API Key is correct)
         # if not, login would raise an exception for the cases invalid API key and not found
-        wandb.login(key=wandb_params[WandbKW.WANDB_API_KEY], anonymous='allow', timeout=60)
+        wandb.login(key=wandb_params[WandbKW.WANDB_API_KEY], anonymous='allow', timeout=60, force=True)
 
     except Exception as e:
         # log error mssg for unsuccessful wandb authentication
