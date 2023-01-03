@@ -1,30 +1,33 @@
 #!/usr/bin/env python
 """
 This script applies a trained model on a single image. Output are generated in the current directory.
-
-Usage:
-
-```
-python scripts/segment_image.py -m <FOLDER_MODEL> -i <IMAGE>
-```
-Where:
-- FOLDER_MODEL: Path to folder that contains ONNX and/or PT model and ivadomed JSON config file.
-- IMAGE: Path to image in NIfTI or PNG format.
 """
 
 # TODO: create entry_points in setup.py and update docstrings usage
 # TODO: 'add_suffix' and 'splitext' should be moved to utils library (if it makes sense).
 
+import argparse
 import os
 import nibabel as nib
 
 from ivadomed import inference as imed_inference
+from ivadomed import utils as imed_utils
 
 
-# TODO: make it input params
-path_model = "/Users/julien/temp/rosenberg_nvme/model_seg_lesion_mp2rage_20230102_145722/model_seg_lesion_mp2rage"
-input_filenames = ["/Users/julien/data.neuro/basel-mp2rage/sub-P005/anat/sub-P005_UNIT1.nii.gz"]
-suffix_out = '_pred'
+def get_parser():
+    parser = argparse.ArgumentParser(
+        prog='segment_image',
+        description='Applies a trained model on a single image. Output are generated in the current directory.')
+    parser.add_argument("-i", "--image", nargs='+', required=True,
+                        help="Image(s) to segment. You can specify more than one image (separate with space).",
+                        metavar=imed_utils.Metavar.file)
+    parser.add_argument("-m", "--model", required=True,
+                        help="Path to folder that contains ONNX and/or PT model and ivadomed JSON config file.",
+                        metavar=imed_utils.Metavar.folder)
+    parser.add_argument("-s", "--suffix", default="_pred",
+                        help="Suffix to add to the input image. Default: '_pred'",
+                        metavar=imed_utils.Metavar.str)
+    return parser
 
 
 def add_suffix(fname, suffix):
@@ -62,17 +65,32 @@ def splitext(fname):
 
     return os.path.join(dir_, stem), ext
 
-# options = {"pixel_size": [0.13, 0.13], "overlap_2D": [48, 48], "binarize_maxpooling": True}
-# TODO: the 'no_patch' option does not seem to work as expected, because only a fraction of the image is segmented.
-options = {"no_patch": True}
 
-nii_lst, target_lst = imed_inference.segment_volume(path_model, input_filenames, options=options)
+def main(args=None):
+    imed_utils.init_ivadomed()
+    parser = get_parser()
+    args = imed_utils.get_arguments(parser, args)
+    fname_images = args.image
+    path_model = args.model
+    suffix_out = args.suffix
+    # options = {"pixel_size": [0.13, 0.13], "overlap_2D": [48, 48], "binarize_maxpooling": True}
+    # TODO: the 'no_patch' option does not seem to work as expected, because only a fraction of the image is segmented.
+    # options = {"no_patch": True}
+    options = {}
 
-for i in range(len(nii_lst)):
-    # TODO (minor): make path_out output images in the same dir as the input image.
-    path_out = './'
-    file_out = add_suffix(os.path.basename(input_filenames[i]), suffix_out)
-    nib.save(nii_lst[i], os.path.join(path_out, file_out))
+    nii_lst, target_lst = imed_inference.segment_volume(path_model, fname_images, options=options)
 
-# TODO: add to support PNG
-# imed_inference.pred_to_png(nii_lst, target_lst, "<path_to_the_source_file>/image")
+    for i in range(len(nii_lst)):
+        # TODO (minor): make path_out output images in the same dir as the input image.
+        path_out = './'
+        file_out = add_suffix(os.path.basename(fname_images[i]), suffix_out)
+        nib.save(nii_lst[i], os.path.join(path_out, file_out))
+
+    # TODO: add to support PNG
+    # imed_inference.pred_to_png(nii_lst, target_lst, "<path_to_the_source_file>/image")
+
+    # TODO: display a nice message at the end with syntax for FSLeyes if input is a NIfTI file.
+
+
+if __name__ == '__main__':
+    main()
