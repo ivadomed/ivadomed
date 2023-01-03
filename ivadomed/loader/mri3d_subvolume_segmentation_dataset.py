@@ -14,6 +14,7 @@ from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.loader.utils import dropout_input, create_temp_directory, get_obj_size
 from ivadomed.loader.segmentation_pair import SegmentationPair
 from ivadomed.object_detection import utils as imed_obj_detect
+from ivadomed.loader.patch_filter import PatchFilter
 from ivadomed.keywords import MetadataKW, SegmentationDatasetKW, SegmentationPairKW
 from ivadomed.utils import get_timestamp, get_system_memory
 from torchvision.transforms import Compose
@@ -49,7 +50,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
                  length: tuple = (64, 64, 64),
                  stride: tuple = (0, 0, 0),
                  slice_axis: int = 0,
-                 subvolume_filter_fn=None,
+                 subvolume_filter_fn: PatchFilter = None,
                  task: str = "segmentation",
                  soft_gt: bool = False,
                  is_input_dropout: bool = False,
