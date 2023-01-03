@@ -1,9 +1,16 @@
+from __future__ import annotations
 from tqdm import tqdm
 
 from ivadomed.loader import film as imed_film
 from ivadomed.loader.mri2d_segmentation_dataset import MRI2DSegmentationDataset
 from ivadomed.object_detection import utils as imed_obj_detect
 from ivadomed.keywords import ROIParamsKW, ContrastParamsKW, ModelParamsKW, MetadataKW, SubjectDictKW
+import typing
+if typing.TYPE_CHECKING:
+    from ivadomed.loader.bids_dataframe import BidsDataframe
+    from ivadomed.loader.slice_filter import SliceFilter
+    from ivadomed.loader.patch_filter import PatchFilter
+    import pandas as pd
 
 
 class BidsDataset(MRI2DSegmentationDataset):
@@ -17,7 +24,7 @@ class BidsDataset(MRI2DSegmentationDataset):
         model_params (dict): Dictionary containing model parameters.
         slice_axis (int): Indicates the axis used to extract 2D slices from 3D NifTI files:
             "axial": 2, "sagittal": 0, "coronal": 1. 2D PNG/TIF/JPG files use default "axial": 2.
-        cache (bool): If the data should be cached in memory or not.
+        nibabel_cache (bool): If the data should be cached in memory or not by nibabel to reduce repetitive disk loading.
         transform (list): Transformation list (length 2) composed of preprocessing transforms (Compose) and transforms
             to apply during training (Compose).
         metadata_choice (str): Choice between "mri_params", "contrasts", the name of a column from the
@@ -44,10 +51,11 @@ class BidsDataset(MRI2DSegmentationDataset):
 
     """
 
-    def __init__(self, bids_df, subject_file_lst, target_suffix, contrast_params, model_params, slice_axis=2,
-                 cache=True, transform=None, metadata_choice=False, slice_filter_fn=None, patch_filter_fn=None,
-                 roi_params=None, multichannel=False, object_detection_params=None, task="segmentation",
-                 soft_gt=False, is_input_dropout=False):
+    def __init__(self, bids_df: BidsDataframe, subject_file_lst: list, target_suffix: list, contrast_params: dict,
+                 model_params: dict, slice_axis: int = 2, nibabel_cache: bool = True, transform: list = None,
+                 metadata_choice: str = False, slice_filter_fn: SliceFilter = None, patch_filter_fn: PatchFilter = None,
+                 roi_params: dict = None, multichannel: bool = False, object_detection_params: dict = None,
+                 task: str = "segmentation", soft_gt: bool = False, is_input_dropout: bool = False):
 
         self.roi_params = roi_params if roi_params is not None else \
             {ROIParamsKW.SUFFIX: None, ROIParamsKW.SLICE_FILTER_ROI: None}
@@ -128,10 +136,10 @@ class BidsDataset(MRI2DSegmentationDataset):
         length = model_params[ModelParamsKW.LENGTH_2D] if ModelParamsKW.LENGTH_2D in model_params else []
         stride = model_params[ModelParamsKW.STRIDE_2D] if ModelParamsKW.STRIDE_2D in model_params else []
 
-        super().__init__(self.filename_pairs, length, stride, slice_axis, cache, transform, slice_filter_fn, patch_filter_fn,
+        super().__init__(self.filename_pairs, length, stride, slice_axis, nibabel_cache, transform, slice_filter_fn, patch_filter_fn,
                          task, self.roi_params, self.soft_gt, is_input_dropout)
 
-    def get_target_filename(self, target_suffix, target_filename, derivative):
+    def get_target_filename(self, target_suffix: any, target_filename: any, derivative: any) -> None:
         for idx, suffix_list in enumerate(target_suffix):
             # If suffix_list is a string, then only one rater annotation per class is available.
             # Otherwise, multiple raters segmented the same class.
@@ -143,7 +151,7 @@ class BidsDataset(MRI2DSegmentationDataset):
                 target_filename[idx] = derivative
 
 
-    def create_metadata_dict(self, metadata, metadata_choice, df_sub, bids_df):
+    def create_metadata_dict(self, metadata: dict, metadata_choice: any, df_sub: pd.DataFrame, bids_df: BidsDataframe) -> None:
         # add custom data to metadata
         if metadata_choice not in df_sub.columns:
             raise ValueError("The following metadata cannot be found: {}. "
@@ -156,7 +164,8 @@ class BidsDataset(MRI2DSegmentationDataset):
             metadata_dict[data] = idx
         metadata[MetadataKW.METADATA_DICT] = metadata_dict
 
-    def fill_multichannel_dict(self, multichannel_subjects, subject, idx_dict, df_sub, roi_filename, target_filename, metadata):
+    def fill_multichannel_dict(self, multichannel_subjects: dict, subject: str, idx_dict: dict, df_sub: pd.DataFrame,
+                               roi_filename: str, target_filename: str, metadata: any) -> dict:
         idx = idx_dict[df_sub['suffix'].values[0]]
         subj_id = subject.split('.')[0].split('_')[0]
         multichannel_subjects[subj_id]["absolute_paths"][idx] = df_sub['path'].values[0]
@@ -167,8 +176,9 @@ class BidsDataset(MRI2DSegmentationDataset):
         return multichannel_subjects
 
 
-    def create_filename_pair(self, multichannel_subjects, subject, c, tot, multichannel, df_subjects, contrast_params,
-                            target_suffix, all_deriv, bids_df, bounding_box_dict, idx_dict, metadata_choice):
+    def create_filename_pair(self, multichannel_subjects: dict, subject: str, c: dict, tot: dict, multichannel: any,
+                             df_subjects: pd.DataFrame, contrast_params: dict, target_suffix: any, all_deriv: any,
+                             bids_df: pd.DataFrame, bounding_box_dict: dict, idx_dict: dict, metadata_choice: str):
         df_sub = df_subjects.loc[df_subjects['filename'] == subject]
 
         # Training & Validation: do not consider the contrasts over the threshold contained in contrast_balance

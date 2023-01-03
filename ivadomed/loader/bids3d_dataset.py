@@ -1,6 +1,15 @@
+from __future__ import annotations
+import typing
+
+from torchvision.transforms import Compose
+
 from ivadomed.loader.bids_dataset import BidsDataset
 from ivadomed.loader.mri3d_subvolume_segmentation_dataset import MRI3DSubVolumeSegmentationDataset
 from ivadomed.keywords import ModelParamsKW
+
+if typing.TYPE_CHECKING:
+    from typing import List, Optional
+    from ivadomed.loader.bids_dataframe import BidsDataframe
 
 
 class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
@@ -25,10 +34,24 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
         is_input_dropout (bool): Return input with missing modalities.
     """
 
-    def __init__(self, bids_df, subject_file_lst, target_suffix, model_params, contrast_params, slice_axis=2,
-                 cache=True, transform=None, metadata_choice=False, roi_params=None, subvolume_filter_fn=None,
-                 multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False,
-                 is_input_dropout=False):
+    def __init__(self,
+                 bids_df: BidsDataframe,
+                 subject_file_lst: List[str],
+                 target_suffix: List[str],
+                 model_params: dict,
+                 contrast_params: dict,
+                 slice_axis: int = 2,
+                 cache: bool = True,
+                 transform: List[Optional[Compose]] = None,
+                 metadata_choice: str | bool = False,
+                 roi_params: dict = None,
+                 subvolume_filter_fn=None,
+                 multichannel: bool = False,
+                 object_detection_params: dict = None,
+                 task: str = "segmentation",
+                 soft_gt: bool = False,
+                 is_input_dropout: bool = False):
+
         dataset = BidsDataset(bids_df=bids_df,
                               subject_file_lst=subject_file_lst,
                               target_suffix=target_suffix,

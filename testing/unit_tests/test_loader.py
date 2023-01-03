@@ -1,7 +1,12 @@
+import os
+from pathlib import Path
+import shutil
+
 import pytest
 import csv_diff
 import torch
 import numpy as np
+from loguru import logger
 
 from ivadomed.loader.bids_dataframe import BidsDataframe
 from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__, download_data_testing_test_files, path_repo_root
@@ -11,7 +16,7 @@ from ivadomed.loader import loader as imed_loader
 import ivadomed.loader.utils as imed_loader_utils
 from ivadomed.loader import mri2d_segmentation_dataset as imed_loader_mri2dseg
 from ivadomed.keywords import LoaderParamsKW, MetadataKW, ModelParamsKW, TransformationKW
-from pathlib import Path
+
 
 
 def setup_function():
@@ -20,7 +25,6 @@ def setup_function():
 
 @pytest.mark.parametrize('loader_parameters', [{
     "path_data": [str(Path(__data_testing_dir__, "microscopy_png"))],
-    "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
     "target_suffix": [["_seg-myelin-manual", "_seg-axon-manual"]],
     "extensions": [".png"],
     "roi_params": {"suffix": None, "slice_filter_roi": None},
@@ -71,8 +75,42 @@ def test_bids_df_anat(download_data_testing_test_files, loader_parameters):
 
 
 @pytest.mark.parametrize('loader_parameters', [{
-    "path_data": [__data_testing_dir__, str(Path(__data_testing_dir__, "microscopy_png"))],
+    "path_data": [str(Path(__data_testing_dir__, "ct_scan"))],
     "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
+    "target_suffix": ["_seg-manual"],
+    "extensions": [".nii.gz"],
+    "roi_params": {"suffix": None, "slice_filter_roi": None},
+    "contrast_params": {"contrast_lst": ["ct"]},
+    "bids_validate": False
+    }])
+def test_bids_df_no_validate(download_data_testing_test_files, loader_parameters):
+    """
+    Test for ct-scan nii.gz file format
+    Test for when validate_BIDS is set to False for the loader
+    """
+
+    # Rename files so the loader won't pick them up if validate_BIDS is true
+    Path(loader_parameters[LoaderParamsKW.PATH_DATA][0], "sub-spleen2").rename(
+         Path(loader_parameters[LoaderParamsKW.PATH_DATA][0], "ssub-spleen2"))
+
+    bids_df = BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
+    df_test = bids_df.df.drop(columns=['path'])
+    df_test = df_test.sort_values(by=['filename']).reset_index(drop=True)
+    csv_ref = Path(loader_parameters[LoaderParamsKW.PATH_DATA][0], "df_ref.csv")
+    csv_test = Path(loader_parameters[LoaderParamsKW.PATH_DATA][0], "df_test.csv")
+    df_test.to_csv(csv_test, index=False)
+    diff = csv_diff.compare(
+        csv_diff.load_csv(open(csv_ref)),
+        csv_diff.load_csv(open(csv_test))
+    )
+
+    Path(loader_parameters[LoaderParamsKW.PATH_DATA][0], "ssub-spleen2").rename(
+         Path(loader_parameters[LoaderParamsKW.PATH_DATA][0], "sub-spleen2"))
+    assert diff == {'added': [], 'removed': [], 'changed': [], 'columns_added': [], 'columns_removed': []}
+
+
+@pytest.mark.parametrize('loader_parameters', [{
+    "path_data": [__data_testing_dir__, str(Path(__data_testing_dir__, "microscopy_png"))],
     "target_suffix": ["_seg-manual", "seg-axon-manual"],
     "extensions": [".nii.gz", ".png"],
     "roi_params": {"suffix": None, "slice_filter_roi": None},
@@ -140,7 +178,6 @@ def test_dropout_input(seg_pair):
 
 @pytest.mark.parametrize('loader_parameters', [{
     "path_data": [str(Path(__data_testing_dir__, "microscopy_png"))],
-    "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
     "target_suffix": ["_seg-myelin-manual"],
     "extensions": [".png"],
     "roi_params": {"suffix": None, "slice_filter_roi": None},
@@ -183,7 +220,6 @@ def test_load_dataset_2d_png(download_data_testing_test_files,
 
 @pytest.mark.parametrize('loader_parameters', [{
     "path_data": [str(Path(__data_testing_dir__, "microscopy_png"))],
-    "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
     "target_suffix": ["_seg-myelin-manual"],
     "extensions": [".png"],
     "roi_params": {"suffix": None, "slice_filter_roi": None},
@@ -230,7 +266,6 @@ def test_2d_patches_and_resampling(download_data_testing_test_files,
 
 @pytest.mark.parametrize('loader_parameters', [{
     "path_data": [str(Path(__data_testing_dir__, "microscopy_png"))],
-    "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
     "target_suffix": ["_seg-myelin-manual", "_seg-axon-manual"],
     "extensions": [".png"],
     "roi_params": {"suffix": None, "slice_filter_roi": None},
@@ -267,7 +302,6 @@ def test_get_target_filename_list(loader_parameters, model_parameters, transform
 
 @pytest.mark.parametrize('loader_parameters', [{
     "path_data": [str(Path(__data_testing_dir__, "microscopy_png"))],
-    "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
     "target_suffix": [["_seg-myelin-manual", "_seg-axon-manual"], ["_seg-myelin-manual", "_seg-axon-manual"]],
     "extensions": [".png"],
     "roi_params": {"suffix": None, "slice_filter_roi": None},
@@ -306,7 +340,6 @@ def test_get_target_filename_list_multiple_raters(loader_parameters, model_param
 
 @pytest.mark.parametrize('loader_parameters', [{
     "path_data": [str(Path(__data_testing_dir__, "microscopy_png"))],
-    "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
     "target_suffix": ["_seg-myelin-manual"],
     "extensions": [".png"],
     "roi_params": {"suffix": None, "slice_filter_roi": None},
@@ -361,7 +394,6 @@ def test_microscopy_pixelsize(download_data_testing_test_files, loader_parameter
 
 @pytest.mark.parametrize('loader_parameters', [{
     "path_data": [str(Path(__data_testing_dir__, "data_test_png_tif"))],
-    "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
     "target_suffix": ["_seg-myelin-manual"],
     "extensions": [".png", ".tif"],
     "roi_params": {"suffix": None, "slice_filter_roi": None},
@@ -393,11 +425,20 @@ def test_read_png_tif(download_data_testing_test_files, loader_parameters, model
     slice_axis = imed_utils.AXIS_DCT[loader_parameters[LoaderParamsKW.SLICE_AXIS]]
     ds = imed_loader_mri2dseg.MRI2DSegmentationDataset(filename_pairs,
                                                        slice_axis=slice_axis,
-                                                       cache=True,
+                                                       nibabel_cache=True,
                                                        transform=[None, None],
                                                        slice_filter_fn=None)
     ds.load_filenames()
 
+def test_create_cache_folder():
+    """
+    Test to make sure the cache folder is created when it doesn't exist, remove it afterwards.
+    NOTE: this means this test cannot be parallelized with other tests that utilize this folder!
+    """
+    path_cache = imed_loader_utils.create_temp_directory()
+    print(path_cache)
+    assert(os.path.exists(path_cache))
+    shutil.rmtree(path_cache)
 
 def teardown_function():
     remove_tmp_dir()

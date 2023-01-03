@@ -83,6 +83,7 @@ class TransformationKW:
     ROICROP: str = "ROICrop"
     CENTERCROP: str = "CenterCrop"
     RESAMPLE: str = "Resample"
+    RANDOM_AFFINE: str = "RandomAffine"
 
 
 @dataclass
@@ -123,6 +124,7 @@ class ModelParamsKW:
     DEPTH: str = "depth"
     MISSING_PROBABILITY: str = "missing_probability"
     MISSING_PROBABILITY_GROWTH: str = "missing_probability_growth"
+    N_FILTERS: str = "n_filters"
 
 
 @dataclass
@@ -151,6 +153,7 @@ class OptionKW:
     OVERLAP_2D: str = "overlap_2D"
     PIXEL_SIZE: str = "pixel_size"
     PIXEL_SIZE_UNITS: str = "pixel_size_units"
+    NO_PATCH: str = "no_patch"
 
 
 @dataclass
@@ -256,3 +259,20 @@ class MetadataParamsKW:
 class MetadataChoiceKW:
     MRI_PARAMS = "mri_params"
     CONTRASTS = "contrasts"
+
+@dataclass
+class SegmentationDatasetKW:
+    X_MIN: str = 'x_min'
+    X_MAX: str = 'x_max'
+    Y_MIN: str = 'y_min'
+    Y_MAX: str = 'y_max'
+    Z_MIN: str = 'z_min'
+    Z_MAX: str = 'z_max'
+    HANDLER_INDEX: str = 'handler_index'
+
+@dataclass
+class SegmentationPairKW:
+    GT_METADATA = "gt_metadata"
+    INPUT_METADATA = "input_metadata"
+    GT = "gt"
+    INPUT = "input"

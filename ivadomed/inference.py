@@ -45,21 +45,20 @@ def onnx_inference(model_path: str, inputs: tensor) -> tensor:
     return torch.tensor(ort_outs[0])
 
 
-def get_preds(context: dict, fname_model: str, model_params: dict, gpu_id: int, batch: dict) -> tensor:
+def get_preds(context: dict, fname_model: str, model_params: dict, cuda_available: bool, device: torch.device, batch: dict) -> tensor:
     """Returns the predictions from the given model.
 
     Args:
         context (dict): configuration dict.
         fname_model (str): name of file containing model.
         model_params (dict): dictionary containing model parameters.
-        gpu_id (int): Number representing gpu number if available. Currently does NOT support multiple GPU segmentation.
+        cuda_available (bool): True if cuda is available.
+        device (torch.device): Device used for prediction.
         batch (dict): dictionary containing input, gt and metadata
 
     Returns:
         tensor: predictions from the model.
     """
-    # Define device
-    cuda_available, device = imed_utils.define_device(gpu_id)
 
     with torch.no_grad():
 
@@ -212,7 +211,7 @@ def pred_to_nib(data_lst: List[np.ndarray], z_lst: List[int], fname_ref: str, fn
     return nib_pred
 
 
-def pred_to_png(pred_list: list, target_list: list, subj_path: str, suffix: str = ''):
+def pred_to_png(pred_list: list, target_list: list, subj_path: str, suffix: str = '', max_value: int = 1):
     """Save the network predictions as PNG files with suffix "_target_pred".
 
     Args:
@@ -221,11 +220,12 @@ def pred_to_png(pred_list: list, target_list: list, subj_path: str, suffix: str 
         subj_path (str): Path of the subject filename in output folder without extension
             (e.g. "path_output/pred_masks/sub-01_sample-01_SEM").
         suffix (str): additional suffix to append to the filename (e.g. "_pred.png")
+        max_value (int): Maximum mask value of the float mask to use during the conversion to uint8.
     """
     for pred, target in zip(pred_list, target_list):
         filename = subj_path + target + suffix
         data = pred.get_fdata()
-        imageio.imwrite(filename, data, format='png')
+        imageio.imwrite(filename, (data*255/max_value).astype(np.uint8), format='png')
 
 
 def process_transformations(context: dict, fname_roi: str, fname_prior: str, metadata: dict, slice_axis: int,
@@ -349,6 +349,9 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
                             Length equals 2 [PixelSizeX, PixelSizeY] for 2D or 3 [PixelSizeX, PixelSizeY, PixelSizeZ] for 3D, \
                             where X is the width, Y the height and Z the depth of the image.
             * 'pixel_size_units': (str) Units of pixel size (Must be either "mm", "um" or "nm")
+            * 'no_patch': (bool) 2D patches are not used while segmenting with models trained with patches. \
+                          The "no_patch" option supersedes the "overlap_2D" option. \
+                          This option may not be suitable with large images depending on computer RAM capacity.
             * 'overlap_2D': (list of int) List of overlaps in pixels for 2D patching. Length equals 2 [OverlapX, OverlapY], \
                             where X is the width and Y the height of the image.
             * 'metadata': (str) Film metadata.
@@ -362,6 +365,9 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
             List of target suffix associated with each prediction in `pred_list`
 
     """
+
+    # Define device
+    cuda_available, device = imed_utils.define_device(gpu_id)
 
     # Check if model folder exists and get filenames to be stored as string
     fname_model: str
@@ -411,15 +417,35 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
         ModelParamsKW.LENGTH_2D in context[ConfigKW.DEFAULT_MODEL] else []
     stride_2D = context[ConfigKW.DEFAULT_MODEL][ModelParamsKW.STRIDE_2D] if \
         ModelParamsKW.STRIDE_2D in context[ConfigKW.DEFAULT_MODEL] else []
-    is_2d_patch = bool(length_2D)
 
-    if is_2d_patch and (options is not None) and (OptionKW.OVERLAP_2D in options):
-        overlap_2D = options.get(OptionKW.OVERLAP_2D)
-        # Swap OverlapX and OverlapY resulting in an array in order [OverlapY, OverlapX]
-        # to match length_2D and stride_2D in [Height, Width] orientation.
-        overlap_2D[1], overlap_2D[0] = overlap_2D[0], overlap_2D[1]
-        # Adjust stride_2D with overlap_2D
-        stride_2D = [x1 - x2 for (x1, x2) in zip(length_2D, overlap_2D)]
+    is_2d_patch = bool(length_2D)
+    if (options is not None) and (OptionKW.NO_PATCH in options):
+        if is_2d_patch:
+            is_2d_patch = not options.get(OptionKW.NO_PATCH)
+            length_2D = []
+            stride_2D = []
+        else:
+            logger.warning(f"The 'no_patch' option is provided but the model has no 'length_2D' and "
+                               f"'stride_2D' parameters in its configuration file "
+                               f"'{fname_model_metadata.split('/')[-1]}'. 2D patching is ignored, the segmentation "
+                               f"'is done on the entire image without patches.")
+        if OptionKW.OVERLAP_2D in options:
+            logger.warning(f"The 'no_patch' option is provided along with the 'overlap_2D' option. "
+                           f"2D patching is ignored, the segmentation is done on the entire image without patches.")
+    else:
+        if (options is not None) and (OptionKW.OVERLAP_2D in options):
+            if (length_2D and stride_2D):
+                overlap_2D = options.get(OptionKW.OVERLAP_2D)
+                # Swap OverlapX and OverlapY resulting in an array in order [OverlapY, OverlapX]
+                # to match length_2D and stride_2D in [Height, Width] orientation.
+                overlap_2D[1], overlap_2D[0] = overlap_2D[0], overlap_2D[1]
+                # Adjust stride_2D with overlap_2D
+                stride_2D = [x1 - x2 for (x1, x2) in zip(length_2D, overlap_2D)]
+            else:
+                logger.warning(f"The 'overlap_2D' option is provided but the model has no 'length_2D' and "
+                               f"'stride_2D' parameters in its configuration file "
+                               f"'{fname_model_metadata.split('/')[-1]}'. 2D patching is ignored, the segmentation "
+                               f"is done on the entire image without patches.")
 
     # Add microscopy pixel size and pixel size units from options to metadata for filenames_pairs
     if (options is not None) and (OptionKW.PIXEL_SIZE in options):
@@ -442,7 +468,7 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
                                       length=length_2D,
                                       stride=stride_2D,
                                       slice_axis=slice_axis,
-                                      cache=True,
+                                      nibabel_cache=True,
                                       transform=tranform_lst,
                                       slice_filter_fn=SliceFilter(
                                           **loader_params[LoaderParamsKW.SLICE_FILTER_PARAMS]))
@@ -469,7 +495,7 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
     preds_list, slice_idx_list = [], []
     last_sample_bool, weight_matrix, volume, image = False, None, None, None
     for i_batch, batch in enumerate(data_loader):
-        preds = get_preds(context, fname_model, model_params, gpu_id, batch)
+        preds = get_preds(context, fname_model, model_params, cuda_available, device, batch)
 
         # Set datatype to gt since prediction should be processed the same way as gt
         for b in batch[MetadataKW.INPUT_METADATA]:
@@ -516,7 +542,7 @@ def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompo
         preds (tensor): Subvolume predictions
         preds_list (list of tensor): list of subvolume predictions.
         kernel_3D (bool): true when using 3D kernel.
-        is_2d_patch (bool): True if length in default model params.
+        is_2d_patch (bool): Indicates if 2d patching is used.
         slice_axis (int): Indicates the axis used for the 2D slice extraction: Sagittal: 0, Coronal: 1, Axial: 2.
         slice_idx_list (list of int): list of indices for the axis slices.
         data_loader (DataLoader): DataLoader object containing batches using in object construction.
