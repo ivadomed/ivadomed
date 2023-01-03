@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-This script applies a trained model on a single image.
+This script applies a trained model on a single image. Output are generated in the current directory.
 
 Usage:
 
@@ -24,6 +24,7 @@ from ivadomed import inference as imed_inference
 # TODO: make it input params
 path_model = "/Users/julien/temp/rosenberg_nvme/model_seg_lesion_mp2rage_20230102_145722/model_seg_lesion_mp2rage"
 input_filenames = ["/Users/julien/data.neuro/basel-mp2rage/sub-P005/anat/sub-P005_UNIT1.nii.gz"]
+suffix_out = '_pred'
 
 
 def add_suffix(fname, suffix):
@@ -68,7 +69,10 @@ options = {"no_patch": True}
 nii_lst, target_lst = imed_inference.segment_volume(path_model, input_filenames, options=options)
 
 for i in range(len(nii_lst)):
-    nib.save(nii_lst[i], add_suffix(input_filenames[i], '_pred'))
+    # TODO (minor): make path_out output images in the same dir as the input image.
+    path_out = './'
+    file_out = add_suffix(os.path.basename(input_filenames[i]), suffix_out)
+    nib.save(nii_lst[i], os.path.join(path_out, file_out))
 
 # TODO: add to support PNG
 # imed_inference.pred_to_png(nii_lst, target_lst, "<path_to_the_source_file>/image")
