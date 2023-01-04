@@ -541,7 +541,7 @@ Evaluate model
 
 
     The test image segmentations are stored in ``<PATH_TO_OUT_DIR>/pred_masks/`` and have the same name as the input image
-    with the suffix ``_pred``. To visualize the segmentation of a given subject, you can use any Nifti image viewer.
+    with the suffix ``_pred``. To visualize the segmentation of a given subject, you can use any NIfTI image viewer.
     For `FSLeyes <https://open.win.ox.ac.uk/pages/fsl/fsleyes/fsleyes/userdoc/>`_ users, this command will open the
     input image with the overlaid prediction (segmentation) for one of the test subject:
 
@@ -559,3 +559,6 @@ Evaluate model
 
     .. image:: https://raw.githubusercontent.com/ivadomed/doc-figures/main/tutorials/one_class_segmentation_2d_unet/sc_prediction.png
        :align: center
+
+
+Another set of test image segmentations are also present in ``<PATH_TO_OUT_DIR>/pred_masks/`` with the suffix ``_pred-TP-FP-FN`` when the ``evaluation_parameters:object_detection_metrics`` is set to ``true`` (Default: ``true``). These files include 3 possible values depending if each object detected in the prediction compared to the ground-truth is a True Positive (TP), False Positive (FP) or False Negative (FN). In NIfTI  files (``.nii.gz``), the respective values for TP, FP and FN are 1, 2 and 3.
