@@ -66,7 +66,7 @@ def splitext(fname):
     return os.path.join(dir_, stem), ext
 
 
-def segment_image(fname_images, path_model, suffix_out, options):
+def segment_image(fname_images: str, path_model: str, suffix_out: str, options: dict):
     """
     Applies a trained model on image(s). Output predictions are generated in the current directory.
 
