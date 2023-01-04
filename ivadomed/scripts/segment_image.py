@@ -66,18 +66,19 @@ def splitext(fname):
     return os.path.join(dir_, stem), ext
 
 
-def main(args=None):
-    imed_utils.init_ivadomed()
-    parser = get_parser()
-    args = imed_utils.get_arguments(parser, args)
-    fname_images = args.image
-    path_model = args.model
-    suffix_out = args.suffix
-    # options = {"pixel_size": [0.13, 0.13], "overlap_2D": [48, 48], "binarize_maxpooling": True}
-    # TODO: the 'no_patch' option does not seem to work as expected, because only a fraction of the image is segmented.
-    # options = {"no_patch": True}
-    options = {}
+def segment_image(fname_images, path_model, suffix_out, options):
+    """
+    Applies a trained model on image(s). Output predictions are generated in the current directory.
 
+    Args:
+        fname_images (str): Image(s) to segment. You can specify more than one image (separate with space).
+        path_model (str): Path to folder that contains ONNX and/or PT model and ivadomed JSON config file.
+        suffix_out (str): Suffix to add to the input image. Default: '_pred'.
+        options (dict): Options to pass to `imed_inference.segment_volume`.
+
+    Returns:
+        None
+    """
     nii_lst, target_lst = imed_inference.segment_volume(path_model, fname_images, options=options)
 
     for i in range(len(nii_lst)):
@@ -90,6 +91,17 @@ def main(args=None):
     # imed_inference.pred_to_png(nii_lst, target_lst, "<path_to_the_source_file>/image")
 
     # TODO: display a nice message at the end with syntax for FSLeyes if input is a NIfTI file.
+
+
+def main(args=None):
+    imed_utils.init_ivadomed()
+    parser = get_parser()
+    args = imed_utils.get_arguments(parser, args)
+    # options = {"pixel_size": [0.13, 0.13], "overlap_2D": [48, 48], "binarize_maxpooling": True}
+    # TODO: the 'no_patch' option does not seem to work as expected, because only a fraction of the image is segmented.
+    # options = {"no_patch": True}
+    options = {}
+    segment_image(args.image, args.model, args.suffix, options)
 
 
 if __name__ == '__main__':
