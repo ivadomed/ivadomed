@@ -1,4 +1,48 @@
-## v2.9.7 (2022-10-31)
+ ## v2.9.8 (2023-01-04)
+[View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.9.7...release)
+
+**CI**
+
+ - chore: remove numpy related deprecations in support of v1.24.0 .  [View pull request](https://github.com/ivadomed/ivadomed/pull/1246)
+
+**BUG**
+
+ - Fix 3D training with data augmentation.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1222)
+ - Fix GPU behavior in segment_volume.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1209)
+
+**DOCUMENTATION**
+
+ - Clarify testing output files.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1244)
+ - doc: clarify validation fraction.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1207)
+
+**DEPENDENCIES**
+
+ - chore: remove numpy related deprecations in support of v1.24.0 .  [View pull request](https://github.com/ivadomed/ivadomed/pull/1246)
+
+**ENHANCEMENT**
+
+ - fix/feat: update the path for wandb logs.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1237)
+
+**REFACTORING**
+
+ - Clarify testing output files.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1244)
+ - Remove force indexing of microscopy and update ct.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1203)
+ - Refactoring in ConfigurationManager class (config_manager.py).  [View pull request](https://github.com/ivadomed/ivadomed/pull/1195)
+ - Type Hint for utils.py.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1162)
+ - Type Hint for slice_filter.py.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1161)
+ - Type Hint for segmentation_pair.py.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1160)
+ - Type Hint for sample_meta_data.py.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1159)
+ - Type Hint for patch_filter.py.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1158)
+ - Type Hint for mri3d_subvolume_segmentation_dataset.py.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1157)
+ - Type Hint for mri2d_segmentation_dataset.py.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1156)
+ - type hinting for bids_dataset.py.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1155)
+ - Type Hint for bids_dataframe.py.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1154)
+ - Type Hint for bids3d_dataset.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1153)
+ - Type Hinting for balanced_sampler.py.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1152)
+ - Typehint for loader/film.py.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1151)
+ - Type Hinting for loader.py.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1150)
+
+ ## v2.9.7 (2022-10-31)
 [View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.9.6...release)
 
 **FEATURE**
