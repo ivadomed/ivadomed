@@ -51,7 +51,7 @@ class PatchFilter(object):
                 if not np.all([np.any(mask) for mask in gt_data]):
                     return False
             if self.filter_empty_input:
-                # Discard set of 2D patches if one of them is empty or filled with constant value
+                # Discard set of 2D or 3D patches if one of them is empty or filled with constant value
                 # (i.e. std == 0) at training time
                 if np.any([img.std() == 0 for img in input_data]):
                     return False
