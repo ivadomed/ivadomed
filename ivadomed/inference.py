@@ -436,7 +436,7 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
                            f"'stride_2D' parameters in its configuration file "
                            f"'{fname_model_metadata.split('/')[-1]}'. 2D patching is ignored, the segmentation "
                            f"is done on the entire image without patches.")
-        if OptionKW.OVERLAP_2D in options and not kernel_3D:
+        if OptionKW.OVERLAP_2D in options:
             logger.warning(f"The 'no-patch' option is provided along with the 'overlap-2D' option. "
                            f"2D patching is ignored, the segmentation is done on the entire image without patches.")
     else:
