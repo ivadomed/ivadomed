@@ -565,7 +565,11 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "slice_filter_params",
-        "description": "Discard a slice from the dataset if it meets a condition, see below.",
+        "$$description": [
+            "Discard a slice from the dataset if it meets a condition, defined below.\n",
+            "A slice is an entire 2D image taken from a 3D volume (e.g. an image of size 128x128 taken from a volume of size 128x128x16).\n",
+            "Therefore, the parameter ``slice_filter_params`` is applicable for 2D models only.",
+        ],
         "type": "dict",
         "options": {
             "filter_empty_input": {
@@ -612,8 +616,12 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
         "title": "patch_filter_params",
         "$$description": [
             "Discard a 2D or 3D patch from the dataset if it meets a condition at training time, defined below.\n",
-            "Contrary to the field ``slice_filter_params`` which applies at training and testing time and is only for 2D,\n",
-            "this parameter only applies during training time and is for 2D and 3D."
+            "A 2D patch is a portion of a 2D image (e.g. a patch of size 32x32 taken inside an image of size 128x128).\n",
+            "A 3D patch is a portion of a 3D volume (e.g. a patch of size 32x32x16 from a volume of size 128x128x16).\n",
+            "Therefore, the parameter ``patch_filter_params`` is applicable for 2D or 3D models.\n",
+            "In addition, contrary to ``slice_filter_params`` which applies at training and testing time, ``patch_filter_params``\n",
+            "is applied only at training time. This is because the reconstruction algorithm for predictions from patches\n",
+            "needs to have the predictions for all patches at testing time."
         ],
         "type": "dict",
         "options": {
