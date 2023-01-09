@@ -34,10 +34,16 @@ def train(model_params: dict,
           training_params: dict,
           path_output: str,
           device: str,
-          wandb_params=None, cuda_available=True, metric_fns=None, n_gif=0, resume_training=False, debugging=False):
+          wandb_params: dict = None,
+          cuda_available: bool = True,
+          metric_fns: list = None,
+          n_gif: int = 0,
+          resume_training: bool = False,
+          debugging: bool = False):
     """Main command to train the network.
 
     Args:
+        wandb_params (dict): Weights and Biases Parameters
         model_params (dict): Model's parameters.
         dataset_train (imed_loader): Training dataset.
         dataset_val (imed_loader): Validation dataset.
@@ -80,7 +86,7 @@ def train(model_params: dict,
         wandb.init(project=project_name, group=group_name, name=run_name, config=cfg, dir=path_output)
 
     # If balance sampler is applied and not using HeMIS model,
-    # Then use provide a sampler.
+    # Then use a sampler.
     use_sampler: bool = all(
         [training_params[TrainingParamsKW.BALANCE_SAMPLES][BalanceSamplesKW.APPLIED],
          model_params[ModelParamsKW.NAME] != "HeMIS"]
@@ -210,9 +216,6 @@ def train(model_params: dict,
                 input_samples = imed_utils.cuda(imed_utils.unstack_tensors(batch["input"]), cuda_available)
             else:
                 input_samples = imed_utils.cuda(batch["input"], cuda_available)
-
-
-
             gt_samples = imed_utils.cuda(batch["gt"], cuda_available, non_blocking=True)
 
             # MIXUP

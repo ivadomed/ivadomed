@@ -1,7 +1,8 @@
 from ivadomed.loader.generalized_loader_configuration import GeneralizedLoaderConfiguration
+from loguru import logger
 
 
-def test_generalized_loader_configuration():
+def test_generalized_loading_configuration():
     model_dict = {
         "name": "Unet",
         "dropout_rate": 0.3,
@@ -14,6 +15,5 @@ def test_generalized_loader_configuration():
     config: GeneralizedLoaderConfiguration = GeneralizedLoaderConfiguration(
         model_params=model_dict,
     )
-    print(config)
-
-
+    assert config.model_params == model_dict
+    logger.info(config)

@@ -14,11 +14,10 @@
       "dataset_group_label": "FileDataSetGroup1",
       "type": "FILES",
       "path_data": "C:\\git\\ivadomed\\tmp",
-      "expected_gt": 1,
       "expected_input": 2,
+      "expected_gt": 1,
       "training": {
-        "excessive_files_handle": "use_first_and_warn",
-        "image_ground_truth": [
+        "input_gt": [
           [
             [
               "sub-01/ses-01/anat/sub-01_ses-01_flip-1_mt-off_MTS.nii",
@@ -56,11 +55,11 @@
             ]
           ]
         ],
-        "missing_files_handle": "skip"
+        "missing_files_handle": "skip",
+        "excessive_files_handle": "use_first_and_warn"
       },
       "validation": {
-        "excessive_files_handle": "use_first_and_warn",
-        "image_ground_truth": [
+        "input_gt": [
           [
             [
               "sub-02/ses-01/anat/sub-02_ses-01_flip-1_mt-off_MTS.nii",
@@ -98,11 +97,11 @@
             ]
           ]
         ],
-        "missing_files_handle": "skip"
+        "missing_files_handle": "skip",
+        "excessive_files_handle": "use_first_and_warn"
       },
-      "test": {
-        "excessive_files_handle": "use_first_and_warn",
-        "image_ground_truth": [
+      "testing": {
+        "input_gt": [
           [
             [
               "sub-03/ses-01/anat/sub-03_ses-01_flip-1_mt-off_MTS.nii",
@@ -140,17 +139,18 @@
             ]
           ]
         ],
-        "missing_files_handle": "skip"
-      },
+        "missing_files_handle": "skip",
+        "excessive_files_handle": "use_first_and_warn"
+      }
     },
     {
       "dataset_group_label": "FileDataSetGroup2",
       "type": "FILES",
       "path_data": "C:\\git\\ivadomed\\tmp",
-      "expected_gt": 1,
       "expected_input": 2,
+      "expected_gt": 1,
       "training": {
-        "image_ground_truth": [
+        "input_gt": [
           [
             [
               "sub-04/ses-01/anat/sub-04_ses-01_flip-1_mt-off_MTS.nii",
@@ -192,7 +192,7 @@
         "excessive_files_handle": "use_first_and_warn"
       },
       "validation": {
-        "image_ground_truth": [
+        "input_gt": [
           [
             [
               "sub-05/ses-01/anat/sub-05_ses-01_flip-1_mt-off_MTS.nii",
@@ -231,10 +231,10 @@
           ]
         ],
         "missing_files_handle": "skip",
-        "excessive_files_handle": "use_first_and_warn",
+        "excessive_files_handle": "use_first_and_warn"
       },
-      "test": {
-        "image_ground_truth": [
+      "testing": {
+        "input_gt": [
           [
             [
               "sub-06/ses-01/anat/sub-06_ses-01_flip-1_mt-off_MTS.nii",

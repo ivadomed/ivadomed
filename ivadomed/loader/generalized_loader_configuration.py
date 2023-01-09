@@ -37,8 +37,8 @@ class GeneralizedLoaderConfiguration:
             patch_filter_fn: callable = None,
             roi_params: dict = None,
             task: str = "segmentation",
-            length: Tuple[int, int, int] = (64, 64, 64),
-            stride: Tuple[int, int, int] = (0, 0, 0),
+            length: list or Tuple[int, int, int] = None,
+            stride: list or Tuple[int, int, int] = None,
             # Bids specific
             bids_df: dict = None,
             subject_file_lst=None,
