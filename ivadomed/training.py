@@ -77,7 +77,7 @@ def train(model_params: dict,
             logger.info("{PROJECT/GROUP/RUN} name not found, initializing as {'temp_project'/'temp_group'/'temp_run'}")
 
         # Initialize WandB with metrics and hyperparameters
-        wandb.init(project=project_name, group=group_name, name=run_name, config=cfg)
+        wandb.init(project=project_name, group=group_name, name=run_name, config=cfg, dir=path_output)
 
     # If balance sampler is applied and not using HeMIS model,
     # Then use provide a sampler.

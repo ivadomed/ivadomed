@@ -85,6 +85,7 @@ class TransformationKW:
     ROICROP: str = "ROICrop"
     CENTERCROP: str = "CenterCrop"
     RESAMPLE: str = "Resample"
+    RANDOM_AFFINE: str = "RandomAffine"
 
 
 @dataclass(frozen=True)
@@ -126,6 +127,7 @@ class ModelParamsKW:
     MISSING_PROBABILITY: str = "missing_probability"
     MISSING_PROBABILITY_GROWTH: str = "missing_probability_growth"
     DROPOUT_RATE: str = "dropout_rate"
+    N_FILTERS: str = "n_filters"
 
 @dataclass(frozen=True)
 class SubjectDictKW:
