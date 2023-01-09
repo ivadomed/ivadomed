@@ -192,7 +192,7 @@ def structurewise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
                 if i_mc_label > 0:
                     data_tmp[mc_dict["mc_labeled"][i_mc][i_class] == i_mc_label] = 1.
 
-                data_class_obj_mc.append(data_tmp.astype(np.bool))
+                data_class_obj_mc.append(data_tmp.astype(bool))
 
             # COMPUTE IoU
             # Init intersection and union

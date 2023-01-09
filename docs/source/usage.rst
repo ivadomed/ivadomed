@@ -37,7 +37,7 @@ If not set via CLI, then you MUST specify this field in the configuration file.
 
 Please see section ``TUTORIALS`` to run this command on an example dataset.
 
-Additional optional flags with ``--segment`` command for models trained with 2D patches:
+Additional optional flags with ``--segment`` command for models trained with 2D patches (not available for 3D models):
 
     ``--no-patch``: 2D patches are not used while segmenting with models trained with patches. The ``--no-patch`` flag supersedes the
     ``--overlap-2d`` flag. This option may not be suitable with large images depending on computer RAM capacity.
