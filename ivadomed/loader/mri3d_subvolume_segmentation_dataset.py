@@ -241,10 +241,6 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         if stack_gt is not None and not self.soft_gt:
             stack_gt = imed_postpro.threshold_predictions(stack_gt, thr=0.5).astype(np.uint8)
 
-        shape_x = x_max - x_min
-        shape_y = y_max - y_min
-        shape_z = z_max - z_min
-
         # Add coordinates to metadata to reconstruct volume
         for metadata in metadata_input:
             metadata[MetadataKW.COORD] = [
