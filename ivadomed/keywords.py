@@ -274,5 +274,7 @@ class SegmentationDatasetKW:
 class SegmentationPairKW:
     GT_METADATA = "gt_metadata"
     INPUT_METADATA = "input_metadata"
+    ROI_METADATA = "roi_metadata"
     GT = "gt"
     INPUT = "input"
+    ROI = "roi"
