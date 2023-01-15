@@ -301,7 +301,12 @@ class NormalizeInstance(ImedTransform):
 
     @multichannel_capable
     def __call__(self, sample, metadata=None):
-        data_out = (sample - sample.mean()) / sample.std()
+        # if sample uniform: do mean-subtraction
+        if sample.std() < 1e-5:
+            data_out = (sample - sample.mean())
+        # else: normalize sample
+        else:
+            data_out = (sample - sample.mean()) / sample.std()
         return data_out, metadata
 
 
