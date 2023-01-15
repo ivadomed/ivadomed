@@ -79,6 +79,7 @@ setup(
             'ivadomed_convert_to_onnx=ivadomed.scripts.convert_to_onnx:main',
             'ivadomed_extract_small_dataset=ivadomed.scripts.extract_small_dataset:main',
             'ivadomed_download_data=ivadomed.scripts.download_data:main',
+            'ivadomed_segment_image=ivadomed.scripts.segment_image:main',
             'ivadomed_training_curve=ivadomed.scripts.training_curve:main',
             'ivadomed_visualize_and_compare_testing_models=ivadomed.scripts.visualize_and_compare_testing_models:main'
         ],

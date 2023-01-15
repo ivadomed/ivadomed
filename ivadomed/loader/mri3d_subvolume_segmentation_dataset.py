@@ -105,6 +105,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
 
             if self.disk_cache:
                 # Write SegPair and ROIPair to disk cache with timestamp to avoid collisions
+                # 'self.handler' is now a list of a FILES instead of actual data to prevent using too much memory
                 path_cache_seg_pair = path_temp / f'seg_pair_{get_timestamp()}.pkl'
                 with path_cache_seg_pair.open(mode='wb') as f:
                     pickle.dump(seg_pair, f)
@@ -115,8 +116,6 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
                 self.handlers.append((path_cache_seg_pair, path_cache_roi_pair))
 
             else:
-                # self.handler is now a list of a FILES instead of actual data to prevent this list from taking up too much
-                # memory
                 self.handlers.append((seg_pair, roi_pair))
 
     def _prepare_indices(self):
@@ -158,35 +157,36 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         return len(self.indexes)
 
     def __getitem__(self, subvolume_index: int) -> dict:
-        """Return the specific index pair subvolume (input, ground truth).
+        """Return the specific processed subvolume corresponding to index (input, ground truth and metadata).
 
         Args:
-            subvolume_index (int): Subvolume index.
+            subvolume_index (int): Subvolume (patch) index.
         """
 
-        # Get the tuple that defines the boundaries for the subsample
+        # CONTEXT
+        # All 3D models are trained with 3D subvolumes (patches):
+        #    * 'self.handlers' contains paired data for all preprocessed 3D volumes
+        #    * 'self.indexes' is a list of coordinates for all 3D subvolumes
+        #      e.g. [{'x_min': 0, 'x_max': 32, 'y_min': 0, 'y_max': 32, 'z_min': 0, 'z_max': 16, 'handler_index': 0},
+        #            {'x_min': 0, 'x_max': 32, 'y_min': 0, 'y_max': 32, 'z_min': 16, 'z_max': 32, 'handler_index': 0}]
+        #      where 'handler_index' is the index of the 3D volume from which the subvolume is extracted
+        # Note that ROI is not available for 3D models
+
+        # Extract coordinates and paired data for the subvolume
+        # Get subvolume coordinates from 'self.indexes'
         coord: dict = self.indexes[subvolume_index]
-        x_min = coord.get(SegmentationDatasetKW.X_MIN)
-        x_max = coord.get(SegmentationDatasetKW.X_MAX)
-        y_min = coord.get(SegmentationDatasetKW.Y_MIN)
-        y_max = coord.get(SegmentationDatasetKW.Y_MAX)
-        z_min = coord.get(SegmentationDatasetKW.Z_MIN)
-        z_max = coord.get(SegmentationDatasetKW.Z_MAX)
-
-        # Obtain tuple reference to the pairs of file references
-        tuple_seg_roi_pair: tuple = self.handlers[coord.get(SegmentationDatasetKW.HANDLER_INDEX)]
-
-        # Disk Cache handling, either, load the seg_pair, not using ROI pair here.
+        # Extract subvolume pair from 'self.handlers'
         # copy.deepcopy is used to have different coordinates for reconstruction for a given handler,
         # to allow a different rater at each iteration of training, and to clean transforms params from previous
         # transforms i.e. remove params from previous iterations so that the coming transforms are different
+        tuple_seg_roi_pair: tuple = self.handlers[coord.get(SegmentationDatasetKW.HANDLER_INDEX)]
         if self.disk_cache:
             with tuple_seg_roi_pair[0].open(mode='rb') as f:
                 seg_pair = pickle.load(f)
         else:
             seg_pair, _ = copy.deepcopy(tuple_seg_roi_pair)
 
-        # In case multiple raters
+        # In case of multiple raters
         if seg_pair[SegmentationPairKW.GT] and isinstance(seg_pair[SegmentationPairKW.GT][0], list):
             # Randomly pick a rater
             idx_rater = random.randint(0, len(seg_pair[SegmentationPairKW.GT][0]) - 1)
@@ -196,15 +196,17 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
                 seg_pair[SegmentationPairKW.GT][idx_class] = seg_pair[SegmentationPairKW.GT][idx_class][idx_rater]
                 seg_pair[SegmentationPairKW.GT_METADATA][idx_class] = seg_pair[SegmentationPairKW.GT_METADATA][idx_class][idx_rater]
 
-        if seg_pair[SegmentationPairKW.INPUT_METADATA]:
-            metadata_input = seg_pair[SegmentationPairKW.INPUT_METADATA]
-        else:
-            metadata_input = []
+        # Extract metadata from paired data
+        metadata_input = seg_pair[SegmentationPairKW.INPUT_METADATA] if seg_pair[SegmentationPairKW.INPUT_METADATA] is not None else []
+        metadata_gt = seg_pair[SegmentationPairKW.GT_METADATA] if seg_pair[SegmentationPairKW.GT_METADATA] is not None else []
 
-        if seg_pair[SegmentationPairKW.GT_METADATA]:
-            metadata_gt = seg_pair[SegmentationPairKW.GT_METADATA]
-        else:
-            metadata_gt = []
+        # Extract min/max coordinates
+        x_min = coord.get(SegmentationDatasetKW.X_MIN)
+        x_max = coord.get(SegmentationDatasetKW.X_MAX)
+        y_min = coord.get(SegmentationDatasetKW.Y_MIN)
+        y_max = coord.get(SegmentationDatasetKW.Y_MAX)
+        z_min = coord.get(SegmentationDatasetKW.Z_MIN)
+        z_max = coord.get(SegmentationDatasetKW.Z_MAX)
 
         # Extract subvolume and gt from coordinates
         stack_input = np.asarray(seg_pair[SegmentationPairKW.INPUT])[
@@ -212,7 +214,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
                       x_min:x_max,
                       y_min:y_max,
                       z_min:z_max
-            ]
+        ]
 
         if seg_pair[SegmentationPairKW.GT]:
             stack_gt = np.asarray(seg_pair[SegmentationPairKW.GT])[
@@ -239,11 +241,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         if stack_gt is not None and not self.soft_gt:
             stack_gt = imed_postpro.threshold_predictions(stack_gt, thr=0.5).astype(np.uint8)
 
-        shape_x = x_max - x_min
-        shape_y = y_max - y_min
-        shape_z = z_max - z_min
-
-        # add coordinates to metadata to reconstruct volume
+        # Add coordinates to metadata to reconstruct volume
         for metadata in metadata_input:
             metadata[MetadataKW.COORD] = [
                 x_min, x_max,
@@ -251,6 +249,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
                 z_min, z_max,
             ]
 
+        # Combine all processed data for a given subvolume in dictionary
         subvolumes = {
             SegmentationPairKW.INPUT: stack_input,
             SegmentationPairKW.GT: stack_gt,
