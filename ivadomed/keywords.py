@@ -278,3 +278,7 @@ class SegmentationPairKW:
     GT = "gt"
     INPUT = "input"
     ROI = "roi"
+
+@dataclass(frozen=True)
+class MockerKW:
+    MODALITY_SUFFIX: str = "modality_suffix"

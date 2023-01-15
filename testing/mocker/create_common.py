@@ -17,7 +17,7 @@ class CreateSubject(multiprocessing.Process):
         index_subject,
         path_to_mock_data,
         list_sessions,
-        list_anatomy_modalities,
+        list_bids_details,
     ):
         """
         Constructor that focus on create all sessions/modalities for a given subject.
@@ -25,15 +25,14 @@ class CreateSubject(multiprocessing.Process):
         :param index_subject:
         :param path_to_mock_data:
         :param list_sessions:
-        :param list_anatomy_modalities:
+        :param list_bids_details:
         """
         super(CreateSubject, self).__init__()
         self.id = process_id
         self.index_subject = index_subject
         self.path_to_mock_data = path_to_mock_data
         self.list_sessions = list_sessions
-        self.list_bids_details = list_anatomy_modalities
-        self.list_bids_keywords = ["acq", "desc", "run"]
+        self.list_bids_details = list_bids_details
 
     @staticmethod
     @abstractmethod
@@ -57,8 +56,8 @@ class CreateSubject(multiprocessing.Process):
         self,
         file_stem: str,
         session: str,
-        contrast: str,
-        modality_category: str = "anat",
+        bids_detail: str,
+        bids_data_type: str = "anat",
     ):
         raise NotImplementedError
 
@@ -110,28 +109,32 @@ class CreateSubject(multiprocessing.Process):
                 raise ValueError(
                     f"Missing LABELS field in the provided subject_specific_bids_dict."
                 )
-    def generate_file_description_dict(self, bids_detail: dict) -> dict:
+    def generate_file_description_dict(self, bids_data_type: str) -> dict:
         """
         Fill a json dictionary with a description of the nifti image.
         :param bids_detail:
         :return:
         """
-        mock_meta_data = {
-            "Modality": "MR",
-            "MagneticFieldStrength": 3,
-            "Manufacturer": "MOCK",
-            "InstitutionName": "MOCK Research Center",
-            "MRAcquisitionType": "3D",
-            "SeriesDescription": bids_detail.get("MODALITY", ""),
-            "ProtocolName": bids_detail.get("MODALITY", ""),
-            "EchoTime": 1,
-            "RepetitionTime": 1,
-            "InversionTime": 1,
-            "FlipAngle": 1,
-            "SliceThickness": 1,
-            "ConversionSoftware": "MOCK",
-        }
-        return mock_meta_data
+        if bids_data_type == "anat":
+            mock_meta_data = {
+                # "Modality": "MR",
+                "MagneticFieldStrength": 3,
+                "Manufacturer": "MOCK",
+                "InstitutionName": "MOCK Research Center",
+                "MRAcquisitionType": "3D",
+                # "SeriesDescription": bids_detail.get("MODALITY", ""),
+                # "ProtocolName": bids_detail.get("MODALITY", ""),
+                "EchoTime": 1,
+                "RepetitionTime": 1,
+                "InversionTime": 1,
+                "FlipAngle": 1,
+                # "SliceThickness": 1,
+                "ConversionSoftware": "MOCK",
+            }
+            return mock_meta_data
+        elif bids_data_type == "micr" or bids_data_type == "dwi" or bids_data_type == "func":
+            logger.warning(f"{bids_data_type} json description generation not yet fully supported at the moment.")
+            return {}
 
     def generate_dataset_description_dict(self) -> dict:
         """
@@ -140,11 +143,10 @@ class CreateSubject(multiprocessing.Process):
         """
         mock_meta_dataset = {
             "Name": "MOCK multi-permuted_bids_detail multi-session dataset",
-            "BIDSVersion": "1.0.2",
-            "Researcher": "MOCK_RESEARCHER",
-            "Study": "MOCK_STUDY",
-            "PipelineDescription": {
-                "Name": "MOCK  ivadomed multi permuted_bids_detail multi session pipeline"
+            "BIDSVersion": "1.8.0",
+            "Authors": "MOCK_AUTHOR",
+            "GeneratedBy": {
+                "Name": "MOCK ivadomed multi permuted_bids_detail multi session pipeline"
             },
         }
         return mock_meta_dataset

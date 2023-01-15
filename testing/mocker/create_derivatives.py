@@ -74,7 +74,7 @@ class CreateBIDSDerivatives(CreateSubject):
         mock_json: dict = self.generate_dataset_description_dict()
 
         path_json_file: Path = (
-            self.path_to_mock_data / "derivatives" / "dataset_description.json"
+            self.path_to_mock_data / "derivatives" / "labels" / "dataset_description.json"
         )
         with open(str(path_json_file), "w") as f:
             json.dump(mock_json, f, indent=4, sort_keys=True)
@@ -137,26 +137,27 @@ class CreateBIDSDerivatives(CreateSubject):
             file_stem,
             session=session,
             bids_detail=bids_detail,
-            modality_category="anat",
+            bids_data_type="anat",
         )
 
         self.generate_a_nifti_label(
             file_stem, session=session, modality_category="anat"
         )
 
-
     def generate_a_json_file(
         self,
         file_stem: str,
         session: str or None,
         bids_detail: dict,
-        modality_category: str = "anat",
+        bids_data_type: str = "anat",
     ):
         """
         Generate a json file for a given modality_category and session.
+
         :param file_stem:
-        :param contrast:
         :param session:
+        :param bids_detail:
+        :param bids_data_type:
         :return:
         """
         # Generate JSON file
@@ -170,7 +171,7 @@ class CreateBIDSDerivatives(CreateSubject):
                 f"labels",
                 f"sub-{self.index_subject:02d}",
                 f"ses-{session:02d}",
-                f"{modality_category}",
+                f"{bids_data_type}",
                 file_name_json,
             )
         else:
@@ -180,7 +181,7 @@ class CreateBIDSDerivatives(CreateSubject):
                 f"derivatives",
                 f"labels",
                 f"sub-{self.index_subject:02d}",
-                f"{modality_category}",
+                f"{bids_data_type}",
                 file_name_json,
             )
         # ensure the parent folder exists
@@ -195,7 +196,7 @@ class CreateBIDSDerivatives(CreateSubject):
         self, file_stem: str, session: str or None, modality_category: str = "anat"
     ):
         """
-        Produce the expected nifti files for a given modality_category and session.
+        Produce the expected nifti files for a given bids_data_type and session.
         :param file_stem:
         :param modality_category:
         :param session:

@@ -1,6 +1,7 @@
 import pytest
 from typing import List
 
+from ivadomed.keywords import MockerKW
 from testing.functional_tests.t_utils import create_tmp_dir
 from testing.mocker.create_derivatives import CreateBIDSDerivatives
 from testing.mocker.create_subjects import CreateBIDSSubjects
@@ -19,12 +20,12 @@ def create_example_mock_bids_file_structures(path_temp: str):
         {
             "flip": [1, 2],  # Flip angle
             "mt": ["on", "off"],  # MT
-            "MODALITY": ["MTS"],  # Modality
+            MockerKW.MODALITY_SUFFIX: ["MTS"],  # Modality
         },
         {
             "flip": [2],  # Flip angle
             "mt": ["off"],  # MT
-            "MODALITY": ["MTS"],  # Modality
+            MockerKW.MODALITY_SUFFIX: ["MTS"],  # Modality
         }
     ]
 
@@ -34,7 +35,7 @@ def create_example_mock_bids_file_structures(path_temp: str):
     list_derivative_subject_specific_bids_dict = [
         {
             "mt": ["off"],  # MT
-            "MODALITY": ["MTS"],  # Modality
+            MockerKW.MODALITY_SUFFIX: ["MTS"],  # Modality
             "LABELS": ["lesion-manual-rater1", "lesion-manual-rater2"]
         },
     ]

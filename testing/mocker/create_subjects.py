@@ -75,14 +75,14 @@ class CreateBIDSSubjects(CreateSubject):
     ):
         # No session lists, single session
         if sessions is None:
-            self.create_session_specific_contrasts(None, list_bids_details)
+            self.create_session_specific_modality_suffix(None, list_bids_details)
 
         # Session lists
         else:
             for session in sessions:
-                self.create_session_specific_contrasts(session, list_bids_details)
+                self.create_session_specific_modality_suffix(session, list_bids_details)
 
-    def create_session_specific_contrasts(
+    def create_session_specific_modality_suffix(
         self, session: str or None, list_bids_details_in_lists: List[dict]
     ):
         """
@@ -127,7 +127,7 @@ class CreateBIDSSubjects(CreateSubject):
             file_stem,
             session=session,
             bids_detail=permuted_bids_detail,
-            modality_category="anat",
+            bids_data_type="anat",
         )
 
         self.generate_a_nifti_file(file_stem, session=session, modality_category="anat")
@@ -136,7 +136,7 @@ class CreateBIDSSubjects(CreateSubject):
         self, file_stem: str, modality_category: str, session: str or None
     ):
         """
-        Produce the expected nifti files for a given modality_category and session.
+        Produce the expected nifti files for a given bids_data_type and session.
         :param file_stem:
         :param modality_category:
         :param session:
@@ -170,13 +170,15 @@ class CreateBIDSSubjects(CreateSubject):
         file_stem: str,
         session: str or None,
         bids_detail: dict,
-        modality_category: str = "anat",
+        bids_data_type: str = "anat",
     ):
         """
         Generate a json file for a given modality_category and session.
+
         :param file_stem:
         :param bids_detail:
         :param session:
+        :param bids_data_type:
         :return:
         """
         # Generate JSON file
@@ -188,7 +190,7 @@ class CreateBIDSSubjects(CreateSubject):
                 self.path_to_mock_data,
                 f"sub-{self.index_subject:02d}",
                 f"ses-{session:02d}",
-                f"{modality_category}",
+                f"{bids_data_type}",
                 file_name_json,
             )
         else:
@@ -196,7 +198,7 @@ class CreateBIDSSubjects(CreateSubject):
             path_json_file: Path = Path(
                 self.path_to_mock_data,
                 f"sub-{self.index_subject:02d}",
-                f"{modality_category}",
+                f"{bids_data_type}",
                 file_name_json,
             )
         # ensure the parent folder exists
@@ -206,3 +208,21 @@ class CreateBIDSSubjects(CreateSubject):
         # Save mock_json dictionary into a json file:
         with open(path_json_file, "w") as f:
             json.dump(mock_json, f, indent=4, sort_keys=True)
+
+
+    def generate_modality_agnostic_samples_tsv(self):
+        pass
+
+    def generate_modality_agnostic_participant_tsv(self):
+        import csv
+        with open('participants.tsv', 'w', newline='') as tsvfile:
+            writer = csv.writer(tsvfile, delimiter='\t', lineterminator='\n')
+
+            writer.writerow([record.id, record.seq, record.format("qual")])
+
+        pass
+
+    def generate_readme(self):
+        pass
+    def generate_file_description_dict(self, bids_data_type: str) -> dict:
+        pass
