@@ -35,6 +35,14 @@ class Metavar(Enum):
 
 
 def initialize_wandb(wandb_params):
+    """Initializes WandB and based upon the parameters sets it up or disables it for experimental tracking
+    
+    Args:
+        wandb_params (dict): wandb parameters
+        
+    Returns:
+        bool, wandb_tracking: True if wandb tracking is enabled        
+    """
 
     try:
         # raise an error if the key is empty
