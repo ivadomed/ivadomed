@@ -238,6 +238,20 @@ def test_NormalizeInstance(im_seg):
     assert abs(do_tensor.mean() - 0.0) <= 1e-2
     assert abs(do_tensor.std() - 1.0) <= 1e-2
 
+    # Transform on Numpy - Uniform sample
+    im = np.ones(im[0].shape)
+    do_im, _ = transform(im.copy(), metadata_in)
+    # Check mean-substraction
+    assert abs(np.mean(do_im) - 0.0) <= 1e-2
+    assert abs(np.std(do_im)) < 1e-5
+
+    # Transform on Tensor - Uniform sample
+    tensor, metadata_tensor = NumpyToTensor()(im, metadata_in)
+    do_tensor, _ = transform(tensor, metadata_tensor)
+    # Check mean-subtraction
+    assert abs(do_tensor.mean() - 0.0) <= 1e-2
+    assert abs(do_tensor.std()) < 1e-5
+
 
 def _test_Crop(im_seg, crop_transform):
     im, seg = im_seg
