@@ -36,12 +36,11 @@ class Metavar(Enum):
 
 def initialize_wandb(wandb_params):
 
-    # If key is not defined or is empty, exit immediately.
-    # https://github.com/ivadomed/ivadomed/issues/1252
-    if wandb_params[WandbKW.WANDB_API_KEY] == '':
-        return False
-
     try:
+        # raise an error if the key is empty
+        if wandb_params[WandbKW.WANDB_API_KEY].strip():
+            raise ValueError()
+
         # Log on to WandB (assuming that the API Key is correct)
         # if not, login would raise an exception for the cases invalid API key and not found
         wandb.login(key=wandb_params[WandbKW.WANDB_API_KEY], anonymous='allow', timeout=60)
