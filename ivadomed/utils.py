@@ -38,7 +38,7 @@ def initialize_wandb(wandb_params):
 
     try:
         # raise an error if the key is empty
-        if wandb_params[WandbKW.WANDB_API_KEY].strip():
+        if not bool(wandb_params[WandbKW.WANDB_API_KEY].strip()):
             raise ValueError()
 
         # Log on to WandB (assuming that the API Key is correct)
