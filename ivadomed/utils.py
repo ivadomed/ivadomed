@@ -43,7 +43,6 @@ def initialize_wandb(wandb_params):
     Returns:
         bool, wandb_tracking: True if wandb tracking is enabled        
     """
-
     try:
         # raise an error if the key is empty
         if not bool(wandb_params[WandbKW.WANDB_API_KEY].strip()):
