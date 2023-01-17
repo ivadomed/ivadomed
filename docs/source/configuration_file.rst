@@ -173,8 +173,7 @@ without an account, since the metrics are logged on Tensorboard by default.
             "A private key used to sync the local wandb folder with the wandb dashboard accessible through the browser.\n",
             "The API key can be found from the browser in your WandB Account's Settings, under the section ``API Keys``.\n",
             "Note that once it is successfully authenticated, a message would be printed in the terminal notifying\n",
-            "that the API key is stored in the ``.netrc`` file in the ``/home`` folder. From then on, the value in this key-value\n",
-            "pair in the config file could be omitted, like ``'wandb_api_key': ''``"
+            "that the API key is stored in the ``.netrc`` file in the ``/home`` folder.
         ],
         "type": "string"
     }
