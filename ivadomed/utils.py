@@ -35,7 +35,19 @@ class Metavar(Enum):
 
 
 def initialize_wandb(wandb_params):
+    """Initializes WandB and based upon the parameters sets it up or disables it for experimental tracking
+    
+    Args:
+        wandb_params (dict): wandb parameters
+        
+    Returns:
+        bool, wandb_tracking: True if wandb tracking is enabled        
+    """
     try:
+        # raise an error if the key is empty
+        if not bool(wandb_params[WandbKW.WANDB_API_KEY].strip()):
+            raise ValueError()
+
         # Log on to WandB (assuming that the API Key is correct)
         # if not, login would raise an exception for the cases invalid API key and not found
         wandb.login(key=wandb_params[WandbKW.WANDB_API_KEY], anonymous='allow', timeout=60)
