@@ -171,21 +171,21 @@ def save_img(writer, epoch, dataset_type, input_samples, gt_samples, preds, wand
         elif isinstance(input_samples, list):
             input_samples = input_samples[0]
 
-        grid_img = vutils.make_grid(input_samples,
+        grid_img = vutils.make_grid(torch.flip(input_samples, [2,3]),
                                     normalize=True,
                                     scale_each=True)
         writer.add_image(dataset_type + '/Input', grid_img, epoch)
         if wandb_tracking:
             wandb.log({dataset_type+"/Input": wandb.Image(grid_img)})
 
-        grid_img = vutils.make_grid(convert_labels_to_RGB(preds),
+        grid_img = vutils.make_grid(convert_labels_to_RGB(torch.flip(preds, [2,3])),
                                     normalize=True,
                                     scale_each=True)
         writer.add_image(dataset_type + '/Predictions', grid_img, epoch)
         if wandb_tracking:
             wandb.log({dataset_type+"/Predictions": wandb.Image(grid_img)})
 
-        grid_img = vutils.make_grid(convert_labels_to_RGB(gt_samples),
+        grid_img = vutils.make_grid(convert_labels_to_RGB(torch.flip(gt_samples, [2,3])),
                                     normalize=True,
                                     scale_each=True)
         writer.add_image(dataset_type + '/Ground Truth', grid_img, epoch)
