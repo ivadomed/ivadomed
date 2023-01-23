@@ -66,7 +66,7 @@ General Parameters
 
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
-        "title": "log_directory",
+        "title": "path_output",
         "description": "Folder name that will contain the output files (e.g., trained model,
             predictions, results).",
         "type": "string"
@@ -173,8 +173,7 @@ without an account, since the metrics are logged on Tensorboard by default.
             "A private key used to sync the local wandb folder with the wandb dashboard accessible through the browser.\n",
             "The API key can be found from the browser in your WandB Account's Settings, under the section ``API Keys``.\n",
             "Note that once it is successfully authenticated, a message would be printed in the terminal notifying\n",
-            "that the API key is stored in the ``.netrc`` file in the ``/home`` folder. From then on, the value in this key-value\n",
-            "pair in the config file could be omitted, like ``'wandb_api_key': ''``"
+            "that the API key is stored in the ``.netrc`` file in the ``/home`` folder.
         ],
         "type": "string"
     }
@@ -449,7 +448,7 @@ will be randomly chosen.
         "title": "contrast_params",
         "type": "dict",
         "options": {
-            "train_validation": {
+            "training_validation": {
                 "type": "list[str]",
                 "$$description": [
                     "List of image contrasts (e.g. ``T1w``, ``T2w``) loaded for the training and\n",
@@ -459,11 +458,11 @@ will be randomly chosen.
                     "(i.e. model's ``in_channel=1``)."
                 ]
             },
-            "test": {
+            "testing": {
                 "type": "list[str]",
                 "$$description": [
                     "List of image contrasts (e.g. ``T1w``, ``T2w``) loaded in the testing dataset.\n",
-                    "Same comment as for ``train_validation`` regarding ``multichannel``."
+                    "Same comment as for ``training_validation`` regarding ``multichannel``."
                 ]
             },
             "balance": {
@@ -503,7 +502,7 @@ will be randomly chosen.
         "type": "boolean"
     }
 
-See details in both ``train_validation`` and ``test`` for the contrasts that are input.
+See details in both ``training_validation`` and ``testing`` for the contrasts that are input.
 
 
 
@@ -565,7 +564,11 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "slice_filter_params",
-        "description": "Discard a slice from the dataset if it meets a condition, see below.",
+        "$$description": [
+            "Discard a slice from the dataset if it meets a condition, defined below.\n",
+            "A slice is an entire 2D image taken from a 3D volume (e.g. an image of size 128x128 taken from a volume of size 128x128x16).\n",
+            "Therefore, the parameter ``slice_filter_params`` is applicable for 2D models only.",
+        ],
         "type": "dict",
         "options": {
             "filter_empty_input": {
@@ -611,25 +614,30 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "patch_filter_params",
         "$$description": [
-            "Discard a 2D patch from the dataset if it meets a condition at training time, defined below.\n",
-            "Contrary to the field ``slice_filter_params`` which applies at training and testing time, ",
-            "this parameter only applies during training time."
+            "Discard a 2D or 3D patch from the dataset if it meets a condition at training time, defined below.\n",
+            "A 2D patch is a portion of a 2D image (e.g. a patch of size 32x32 taken inside an image of size 128x128).\n",
+            "A 3D patch is a portion of a 3D volume (e.g. a patch of size 32x32x16 from a volume of size 128x128x16).\n",
+            "Therefore, the parameter ``patch_filter_params`` is applicable for 2D or 3D models.\n",
+            "In addition, contrary to ``slice_filter_params`` which applies at training and testing time, ``patch_filter_params``\n",
+            "is applied only at training time. This is because the reconstruction algorithm for predictions from patches\n",
+            "needs to have the predictions for all patches at testing time."
         ],
         "type": "dict",
         "options": {
             "filter_empty_input": {
                 "type": "boolean",
-                "description": "Discard 2D patches where all voxel intensities are zeros. Default: ``False``."
+                "description": "Discard 2D or 3D patches where all voxel intensities are zeros. Default: ``False``."
             },
             "filter_empty_mask": {
                 "type": "boolean",
-                "description": "Discard 2D patches where all voxel labels are zeros. Default: ``False``."
+                "description": "Discard 2D or 3D patches where all voxel labels are zeros. Default: ``False``."
             },
             "filter_absent_class": {
                 "type": "boolean",
                 "$$description": [
-                    "Discard 2D patches where all voxel labels are zero for one or more classes\n",
-                    "(this is most relevant for multi-class models that need GT for all classes). Default: ``False``."
+                    "Discard 2D or 3D patches where all voxel labels are zero for one or more classes\n",
+                    "(this is most relevant for multi-class models that need GT for all classes).\n",
+                    "Default: ``False``."
                 ]
             }
         }
