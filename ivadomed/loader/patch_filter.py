@@ -2,24 +2,24 @@ import numpy as np
 
 
 class PatchFilter(object):
-    """Filter 2D patches from dataset.
+    """Filter 2D or 3D patches from dataset.
 
     If a patch does not meet certain conditions, it is discarded from the dataset at training time.
 
     Args:
-        filter_empty_mask (bool): If True, 2D patches where all voxel labels are zeros are discarded at training time.
-        filter_absent_class (bool): If True, 2D patches where all voxel labels are zero for one or more classes are
+        filter_empty_mask (bool): If True, 2D or 3D patches where all voxel labels are zeros are discarded at training time.
+        filter_absent_class (bool): If True, 2D or 3D patches where all voxel labels are zero for one or more classes are
             discarded at training time.
-        filter_empty_input (bool): If True, 2D patches where all voxel intensities are zeros are discarded
+        filter_empty_input (bool): If True, 2D or 3D patches where all voxel intensities are zeros are discarded
             at training time.
         is_train (bool): Indicates if at training time.
 
     Attributes:
-        filter_empty_mask (bool): If True, 2D patches where all voxel labels are zeros are discarded at training time.
+        filter_empty_mask (bool): If True, 2D or 3D patches where all voxel labels are zeros are discarded at training time.
             Default: False.
-        filter_absent_class (bool): If True, 2D patches where all voxel labels are zero for one or more classes are
+        filter_absent_class (bool): If True, 2D or 3D patches where all voxel labels are zero for one or more classes are
             discarded at training time. Default: False.
-        filter_empty_input (bool): If True, 2D patches where all voxel intensities are zeros are discarded
+        filter_empty_input (bool): If True, 2D or 3D patches where all voxel intensities are zeros are discarded
             at training time. Default: False.
         is_train (bool): Indicates if at training time.
 
@@ -43,15 +43,15 @@ class PatchFilter(object):
 
         if self.is_train:
             if self.filter_empty_mask:
-                # Discard 2D patches that do not have ANY ground truth (i.e. all masks are empty) at training time
+                # Discard 2D or 3D patches that do not have ANY ground truth (i.e. all masks are empty) at training time
                 if not np.any(gt_data):
                     return False
             if self.filter_absent_class:
-                # Discard 2D patches that have absent classes (i.e. one or more masks are empty) at training time
+                # Discard 2D or 3D patches that have absent classes (i.e. one or more masks are empty) at training time
                 if not np.all([np.any(mask) for mask in gt_data]):
                     return False
             if self.filter_empty_input:
-                # Discard set of 2D patches if one of them is empty or filled with constant value
+                # Discard set of 2D or 3D patches if one of them is empty or filled with constant value
                 # (i.e. std == 0) at training time
                 if np.any([img.std() == 0 for img in input_data]):
                     return False
