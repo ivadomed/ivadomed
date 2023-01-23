@@ -66,7 +66,7 @@ General Parameters
 
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
-        "title": "log_directory",
+        "title": "path_output",
         "description": "Folder name that will contain the output files (e.g., trained model,
             predictions, results).",
         "type": "string"
@@ -448,7 +448,7 @@ will be randomly chosen.
         "title": "contrast_params",
         "type": "dict",
         "options": {
-            "train_validation": {
+            "training_validation": {
                 "type": "list[str]",
                 "$$description": [
                     "List of image contrasts (e.g. ``T1w``, ``T2w``) loaded for the training and\n",
@@ -458,11 +458,11 @@ will be randomly chosen.
                     "(i.e. model's ``in_channel=1``)."
                 ]
             },
-            "test": {
+            "testing": {
                 "type": "list[str]",
                 "$$description": [
                     "List of image contrasts (e.g. ``T1w``, ``T2w``) loaded in the testing dataset.\n",
-                    "Same comment as for ``train_validation`` regarding ``multichannel``."
+                    "Same comment as for ``training_validation`` regarding ``multichannel``."
                 ]
             },
             "balance": {
@@ -502,7 +502,7 @@ will be randomly chosen.
         "type": "boolean"
     }
 
-See details in both ``train_validation`` and ``test`` for the contrasts that are input.
+See details in both ``training_validation`` and ``testing`` for the contrasts that are input.
 
 
 
