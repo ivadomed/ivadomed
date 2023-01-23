@@ -140,7 +140,7 @@ When possible, the folder name will follow the following convention:
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "log_file",
-        "description": "Name of the file to be logged to, located within ``log_directory/``. Default: ``log``.",
+        "description": "Name of the file to be logged to, located within ``log_directory/``. Default: ``logs.log``.",
         "type": "string"
     }
 
@@ -149,7 +149,7 @@ When possible, the folder name will follow the following convention:
 .. code-block:: JSON
 
     {
-        "log_file": "log"
+        "log_file": "log_filename.log"
     }
 
 
