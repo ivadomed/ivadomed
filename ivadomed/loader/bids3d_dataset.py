@@ -10,6 +10,7 @@ from ivadomed.keywords import ModelParamsKW
 if typing.TYPE_CHECKING:
     from typing import List, Optional
     from ivadomed.loader.bids_dataframe import BidsDataframe
+    from ivadomed.loader.patch_filter import PatchFilter
 
 
 class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
@@ -27,9 +28,15 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
             to apply during training (Compose).
         metadata_choice: Choice between "mri_params", "contrasts", None or False, related to FiLM.
         roi_params (dict): Dictionary containing parameters related to ROI image processing.
+        subvolume_filter_fn (PatchFilter): Class that filters subvolumes according to their content.
         multichannel (bool): If True, the input contrasts are combined as input channels for the model. Otherwise, each
             contrast is processed individually (ie different sample / tensor).
+        subvolume_filter_fn (PatchFilter): Class that filters subvolumes according to their content.
         object_detection_params (dict): Object dection parameters.
+        task (str): Choice between segmentation or classification. If classification: GT is discrete values, \
+            If segmentation: GT is binary mask.
+        soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
+        truths are thresholded (0.5) after the data augmentation operations.
         is_input_dropout (bool): Return input with missing modalities.
     """
 
@@ -44,6 +51,7 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
                  transform: List[Optional[Compose]] = None,
                  metadata_choice: str | bool = False,
                  roi_params: dict = None,
+                 subvolume_filter_fn: PatchFilter = None,
                  multichannel: bool = False,
                  object_detection_params: dict = None,
                  task: str = "segmentation",
@@ -56,6 +64,7 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
                               roi_params=roi_params,
                               contrast_params=contrast_params,
                               model_params=model_params,
+                              patch_filter_fn=subvolume_filter_fn,
                               metadata_choice=metadata_choice,
                               slice_axis=slice_axis,
                               transform=transform,
@@ -68,6 +77,7 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
                          stride=model_params[ModelParamsKW.STRIDE_3D],
                          transform=transform,
                          slice_axis=slice_axis,
+                         subvolume_filter_fn=subvolume_filter_fn,
                          task=task,
                          soft_gt=soft_gt,
                          is_input_dropout=is_input_dropout)

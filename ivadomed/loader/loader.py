@@ -67,7 +67,6 @@ def load_dataset(bids_df: BidsDataframe,
     Note: For more details on the parameters transform_params, target_suffix, roi_params, contrast_params,
     slice_filter_params, patch_filter_params and object_detection_params see :doc:`configuration_file`.
     """
-
     # Compose transforms
     tranform_lst, _ = imed_transforms.prepare_transforms(copy.deepcopy(transforms_params), requires_undo)
 
@@ -86,6 +85,7 @@ def load_dataset(bids_df: BidsDataframe,
                                 slice_axis=imed_utils.AXIS_DCT[slice_axis],
                                 transform=tranform_lst,
                                 multichannel=multichannel,
+                                subvolume_filter_fn=PatchFilter(**patch_filter_params, is_train=False if dataset_type == "testing" else True),
                                 model_params=model_params,
                                 object_detection_params=object_detection_params,
                                 soft_gt=soft_gt,
