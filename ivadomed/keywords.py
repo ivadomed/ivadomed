@@ -282,3 +282,4 @@ class SegmentationPairKW:
 @dataclass(frozen=True)
 class MockerKW:
     MODALITY_SUFFIX: str = "modality_suffix"
+    DATA_TYPE: str = "data_type"

@@ -115,7 +115,9 @@ class CreateBIDSDerivatives(CreateSubject):
             bids_standard_keys, bids_values = zip(*a_bids_detail_dict.items())
 
             list_permuted_dicts: List[dict] = [
-                dict(zip(bids_standard_keys, a_set_of_permuted_values))
+                dict(
+                    zip(bids_standard_keys, a_set_of_permuted_values)
+                )
                 for a_set_of_permuted_values in itertools.product(*bids_values)
             ]
 
@@ -141,7 +143,9 @@ class CreateBIDSDerivatives(CreateSubject):
         )
 
         self.generate_a_nifti_label(
-            file_stem, session=session, modality_category="anat"
+            file_stem,
+            session=session,
+            bids_data_type="anat"
         )
 
     def generate_a_json_file(
@@ -149,10 +153,10 @@ class CreateBIDSDerivatives(CreateSubject):
         file_stem: str,
         session: str or None,
         bids_detail: dict,
-        bids_data_type: str = "anat",
+        bids_data_type: str,
     ):
         """
-        Generate a json file for a given modality_category and session.
+        Generate a json file for a given bids_data_type and session.
 
         :param file_stem:
         :param session:
@@ -186,19 +190,19 @@ class CreateBIDSDerivatives(CreateSubject):
             )
         # ensure the parent folder exists
         path_json_file.parent.mkdir(parents=True, exist_ok=True)
-        mock_json: object = self.generate_file_description_dict(bids_detail)
+        mock_json: object = self.generate_file_description_dict(bids_data_type)
 
         # Save mock_json dictionary into a json file:
         with open(path_json_file, "w") as f:
             json.dump(mock_json, f, indent=4, sort_keys=True)
 
     def generate_a_nifti_label(
-        self, file_stem: str, session: str or None, modality_category: str = "anat"
+        self, file_stem: str, session: str or None, bids_data_type: str = "anat"
     ):
         """
         Produce the expected nifti files for a given bids_data_type and session.
         :param file_stem:
-        :param modality_category:
+        :param bids_data_type:
         :param session:
         :return:
         """
@@ -212,7 +216,7 @@ class CreateBIDSDerivatives(CreateSubject):
                 f"labels",
                 f"sub-{self.index_subject:02d}",
                 f"ses-{session:02d}",
-                f"{modality_category}",
+                f"{bids_data_type}",
                 file_name_nii,
             )
         else:
@@ -222,7 +226,7 @@ class CreateBIDSDerivatives(CreateSubject):
                 f"derivatives",
                 f"labels",
                 f"sub-{self.index_subject:02d}",
-                f"{modality_category}",
+                f"{bids_data_type}",
                 file_name_nii,
             )
         # Ensure the parent folder exists

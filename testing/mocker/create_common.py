@@ -1,9 +1,13 @@
 import pprint
 from abc import abstractmethod
 
+import json
 import multiprocessing
+from pathlib import Path
 from typing import List
 from loguru import logger
+
+from ivadomed.keywords import MockerKW
 
 
 class CreateSubject(multiprocessing.Process):
@@ -57,7 +61,7 @@ class CreateSubject(multiprocessing.Process):
         file_stem: str,
         session: str,
         bids_detail: str,
-        bids_data_type: str = "anat",
+        bids_data_type: str,
     ):
         raise NotImplementedError
 
@@ -77,8 +81,8 @@ class CreateSubject(multiprocessing.Process):
 
         # Append all possible bids keywords
         for keyword in bids_details.keys():
-            if "MODALITY" in keyword:
-                stem += f"_{bids_details.get('MODALITY', '')}"
+            if MockerKW.DATA_TYPE in keyword:
+                stem += f"_{bids_details.get(MockerKW.DATA_TYPE, '')}"
             elif "LABELS" in keyword:
                 stem += f"_{bids_details.get('LABELS', '')}"
             else:
@@ -92,11 +96,12 @@ class CreateSubject(multiprocessing.Process):
         :return:
         """
         for subject_specific_bids_dict in list_subject_specific_bids_dicts:
-            if "MODALITY" not in subject_specific_bids_dict:
+            if MockerKW.DATA_TYPE not in subject_specific_bids_dict:
                 logger.critical(f"MODALITY is not present in the subject dictionary provided: {pprint.pformat(subject_specific_bids_dict)}")
                 raise ValueError(
                     f"Missing MODALITY field in the provided subject_specific_bids_dict."
                 )
+
     def reject_missing_labels(self, list_subject_specific_bids_dicts: List[dict]):
         """
         Validate the list of anatomy modalities.
@@ -109,32 +114,43 @@ class CreateSubject(multiprocessing.Process):
                 raise ValueError(
                     f"Missing LABELS field in the provided subject_specific_bids_dict."
                 )
+
     def generate_file_description_dict(self, bids_data_type: str) -> dict:
         """
         Fill a json dictionary with a description of the nifti image.
         :param bids_detail:
         :return:
         """
+        path_current_file = Path(__file__).resolve().parent
         if bids_data_type == "anat":
-            mock_meta_data = {
-                # "Modality": "MR",
-                "MagneticFieldStrength": 3,
-                "Manufacturer": "MOCK",
-                "InstitutionName": "MOCK Research Center",
-                "MRAcquisitionType": "3D",
-                # "SeriesDescription": bids_detail.get("MODALITY", ""),
-                # "ProtocolName": bids_detail.get("MODALITY", ""),
-                "EchoTime": 1,
-                "RepetitionTime": 1,
-                "InversionTime": 1,
-                "FlipAngle": 1,
-                # "SliceThickness": 1,
-                "ConversionSoftware": "MOCK",
-            }
-            return mock_meta_data
-        elif bids_data_type == "micr" or bids_data_type == "dwi" or bids_data_type == "func":
-            logger.warning(f"{bids_data_type} json description generation not yet fully supported at the moment.")
-            return {}
+            with open(f"{path_current_file}/example_mock_json/MRI-anatomy.json") as json_file:
+                mock_meta_data = json.load(json_file)
+
+        elif bids_data_type == "micr":
+            with open(f"{path_current_file}/example_mock_json/microscopy.json") as json_file:
+                mock_meta_data = json.load(json_file)
+
+        elif bids_data_type == "dwi":
+            logger.warning(f"{bids_data_type} json description generation not yet fully supported at the moment."
+                           f" Caution advised to manually review the formualted placeholder diffusion JSON file for BIDS"
+                           f" Compliance. ")
+            with open(f"{path_current_file}/example_mock_json/MRI-diffusion.json") as json_file:
+                mock_meta_data = json.load(json_file)
+
+        elif bids_data_type == "func":
+            logger.warning(f"{bids_data_type} json description generation not yet fully supported at the moment."
+                           f" Caution advised to manually review the formualted placeholder diffusion JSON file for BIDS"
+                           f" Compliance. ")
+            with open(f"{path_current_file}/example_mock_json/task_events.json") as json_file:
+                mock_meta_data = json.load(json_file)
+
+        else:
+            logger.critical(f"{bids_data_type} json description generation not yet fully supported at the moment."
+                           f" Using default MRI-Common pattern description!")
+            with open(f"{path_current_file}/example_mock_json/MRI-common.json") as json_file:
+                mock_meta_data = json.load(json_file)
+
+        return mock_meta_data
 
     def generate_dataset_description_dict(self) -> dict:
         """

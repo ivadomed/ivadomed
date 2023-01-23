@@ -7,7 +7,9 @@ from testing.mocker.create_derivatives import CreateBIDSDerivatives
 from testing.mocker.create_subjects import CreateBIDSSubjects
 
 def create_example_mock_bids_file_structures(path_temp: str):
-
+    ######################
+    # Subject Information
+    ######################
     list_subjects = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     list_subject_sessions = [1, 2, 3, 4, 5]
     # This must be in the order of appending
@@ -15,37 +17,43 @@ def create_example_mock_bids_file_structures(path_temp: str):
     list_subject_specific_bids_dict = [
         {
             "acq": ["MTon", "MToff", "T1w"],  # Acquisition
-            "MODALITY": ["MTS"],  # Modality
+            MockerKW.DATA_TYPE: ["MTS"],  # Modality
         },
         {
             "flip": [1, 2],  # Flip angle
             "mt": ["on", "off"],  # MT
-            MockerKW.MODALITY_SUFFIX: ["MTS"],  # Modality
+            MockerKW.DATA_TYPE: ["MTS"],  # Modality
         },
         {
             "flip": [2],  # Flip angle
             "mt": ["off"],  # MT
-            MockerKW.MODALITY_SUFFIX: ["MTS"],  # Modality
+            MockerKW.DATA_TYPE: ["MTS"],  # Modality
         }
     ]
 
+    ######################
+    # Derivative Information
+    ######################
     list_derivatives_subjects = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
     list_derivatives_subject_sessions = [1, 2, 3, 4, 5]
 
     list_derivative_subject_specific_bids_dict = [
         {
             "mt": ["off"],  # MT
-            MockerKW.MODALITY_SUFFIX: ["MTS"],  # Modality
+            MockerKW.DATA_TYPE: ["MTS"],  # Modality
             "LABELS": ["lesion-manual-rater1", "lesion-manual-rater2"]
         },
     ]
 
     create_mock_bids_file_structures(
         path_temp=path_temp,
+
         list_subjects=list_subjects,
         list_subject_sessions=list_subject_sessions,
-        list_derivatives_subjects=list_derivatives_subjects,
         list_subject_specific_bids_dict=list_subject_specific_bids_dict,
+
+        list_derivatives_subjects=list_derivatives_subjects,
         list_derivatives_subject_sessions=list_derivatives_subject_sessions,
         list_derivative_subject_specific_bids_dict=list_derivative_subject_specific_bids_dict
     )

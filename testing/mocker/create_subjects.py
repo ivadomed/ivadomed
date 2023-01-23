@@ -5,7 +5,9 @@ import multiprocessing
 from typing import List
 
 from nibabel import Nifti1Image
-
+import numpy as np
+import imageio
+from ivadomed.keywords import MockerKW
 from testing.mocker.create_common import CreateSubject
 from testing.mocker.nifti_mocker import (
     create_mock_nifti1_object,
@@ -65,6 +67,9 @@ class CreateBIDSSubjects(CreateSubject):
 
         # Save mock_json dictionary into a json file:
         mock_json: dict = self.generate_dataset_description_dict()
+        self.generate_modality_agnostic_samples_tsv()
+        self.generate_modality_agnostic_participant_tsv()
+        self.generate_readme()
 
         path_json_file: Path = self.path_to_mock_data / "dataset_description.json"
         with open(str(path_json_file), "w") as f:
@@ -123,22 +128,55 @@ class CreateBIDSSubjects(CreateSubject):
         """
         file_stem: str = self.create_file_stem(session, permuted_bids_detail)
 
+        # default to anat if data type is somehow omitted (all bids MUST have a data type)
+        bids_data_type = permuted_bids_detail.get(MockerKW.DATA_TYPE, "anat")
+
         self.generate_a_json_file(
             file_stem,
             session=session,
             bids_detail=permuted_bids_detail,
-            bids_data_type="anat",
+            bids_data_type=bids_data_type,
         )
 
-        self.generate_a_nifti_file(file_stem, session=session, modality_category="anat")
+        self.generate_a_nifti_file(
+            file_stem,
+            session=session,
+            bids_data_type=bids_data_type
+        )
+
+    def create_one_json_image_pair(self, session: str or None, permuted_bids_detail: dict):
+        """
+        Create an image/JSON pairs with an explicitly set list of session and model
+        :param session:
+        :param permuted_bids_detail:
+        :param kwargs:
+        :return:
+        """
+        file_stem: str = self.create_file_stem(session, permuted_bids_detail)
+
+        # default to anat if data type is somehow omitted (all bids MUST have a data type)
+        bids_data_type = permuted_bids_detail.get(MockerKW.DATA_TYPE, "micr")
+
+        self.generate_a_json_file(
+            file_stem,
+            session=session,
+            bids_detail=permuted_bids_detail,
+            bids_data_type=bids_data_type,
+        )
+
+        self.generate_an_image_file(
+            file_stem,
+            session=session,
+            bids_data_type=bids_data_type
+        )
 
     def generate_a_nifti_file(
-        self, file_stem: str, modality_category: str, session: str or None
+        self, file_stem: str, bids_data_type: str, session: str or None
     ):
         """
         Produce the expected nifti files for a given bids_data_type and session.
         :param file_stem:
-        :param modality_category:
+        :param bids_data_type:
         :param session:
         :return:
         """
@@ -150,7 +188,7 @@ class CreateBIDSSubjects(CreateSubject):
                 self.path_to_mock_data,
                 f"sub-{self.index_subject:02d}",
                 f"ses-{session:02d}",
-                f"{modality_category}",
+                f"{bids_data_type}",
                 file_name_nii,
             )
         else:
@@ -158,7 +196,7 @@ class CreateBIDSSubjects(CreateSubject):
             path_nii_file: Path = Path(
                 self.path_to_mock_data,
                 f"sub-{self.index_subject:02d}",
-                f"{modality_category}",
+                f"{bids_data_type}",
                 file_name_nii,
             )
         mock_data: Nifti1Image = create_mock_nifti1_object()
@@ -170,10 +208,10 @@ class CreateBIDSSubjects(CreateSubject):
         file_stem: str,
         session: str or None,
         bids_detail: dict,
-        bids_data_type: str = "anat",
+        bids_data_type: str,
     ):
         """
-        Generate a json file for a given modality_category and session.
+        Generate a json file for a given bids_data_type and session.
 
         :param file_stem:
         :param bids_detail:
@@ -209,20 +247,72 @@ class CreateBIDSSubjects(CreateSubject):
         with open(path_json_file, "w") as f:
             json.dump(mock_json, f, indent=4, sort_keys=True)
 
-
     def generate_modality_agnostic_samples_tsv(self):
-        pass
+        import csv
+        with open(f'{self.path_to_mock_data}/samples.tsv', 'w', newline='') as tsvfile:
+            writer = csv.writer(tsvfile, delimiter='\t', lineterminator='\n')
+            writer.writerow(["a", "b", "c"])
 
     def generate_modality_agnostic_participant_tsv(self):
         import csv
-        with open('participants.tsv', 'w', newline='') as tsvfile:
+        with open(f'{self.path_to_mock_data}/participants.tsv', 'w', newline='') as tsvfile:
             writer = csv.writer(tsvfile, delimiter='\t', lineterminator='\n')
-
-            writer.writerow([record.id, record.seq, record.format("qual")])
-
-        pass
+            writer.writerow(["d", "e", "f"])
 
     def generate_readme(self):
-        pass
+        # Write an example README file
+        readme_file: Path = Path(self.path_to_mock_data, "README.md")
+        with open(readme_file, "w") as f:
+            f.write(
+                """
+                # Mock BIDS data                
+                \nThis is a mock BIDS dataset for testing purposes.                
+                \n## Contributing
+                \nIf you would like to contribute to this Mock dataset, please contact the Mock maintainer.
+                \n## License
+                \n[MIT](https://choosealicense.com/licenses/mit/)
+                """
+            )
+
     def generate_file_description_dict(self, bids_data_type: str) -> dict:
         pass
+
+    def generate_an_image_file(self, file_stem, session, bids_data_type):
+        """
+        Create an image file with an explicitly set list of session and model
+        Args:
+            file_stem:
+            session:
+            bids_data_type:
+
+        Returns:
+        """
+        # Generate a mock PNG file
+        file_name_png: str = file_stem + ".png"
+        if session:
+            # path to JSON file
+            path_image_file: Path = Path(
+                self.path_to_mock_data,
+                f"sub-{self.index_subject:02d}",
+                f"ses-{session:02d}",
+                f"{bids_data_type}",
+                file_name_png,
+            )
+        else:
+            # path to JSON file
+            path_image_file: Path = Path(
+                self.path_to_mock_data,
+                f"sub-{self.index_subject:02d}",
+                f"{bids_data_type}",
+                file_name_png,
+            )
+
+        # Create a 100 by 100 pixel image require extensively
+
+        img = np.zeros([100, 100, 3], dtype=np.uint8)
+        img.fill(255)
+        # Save img to disk
+        path_image_file.parent.mkdir(parents=True, exist_ok=True)
+        imageio.imwrite(path_image_file, img)
+
+
