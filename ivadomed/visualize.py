@@ -171,6 +171,10 @@ def save_img(writer, epoch, dataset_type, input_samples, gt_samples, preds, wand
         elif isinstance(input_samples, list):
             input_samples = input_samples[0]
 
+        # the images fed to make_grid appear to be flipped by default even without any data augmentation, 
+        # possibly due to the orientation of the matrix. Hence, the images are flipped in the last two 
+        # dimensions in order for them to appear correctly in Tensorboard/WandB. For more details, see
+        # https://github.com/ivadomed/ivadomed/issues/1272
         grid_img = vutils.make_grid(torch.flip(input_samples, [2,3]),
                                     normalize=True,
                                     scale_each=True)
@@ -178,6 +182,7 @@ def save_img(writer, epoch, dataset_type, input_samples, gt_samples, preds, wand
         if wandb_tracking:
             wandb.log({dataset_type+"/Input": wandb.Image(grid_img)})
 
+        # flipping in the last two dimesions for same reason as above
         grid_img = vutils.make_grid(convert_labels_to_RGB(torch.flip(preds, [2,3])),
                                     normalize=True,
                                     scale_each=True)
@@ -185,6 +190,7 @@ def save_img(writer, epoch, dataset_type, input_samples, gt_samples, preds, wand
         if wandb_tracking:
             wandb.log({dataset_type+"/Predictions": wandb.Image(grid_img)})
 
+        # flipping in the last two dimesions for same reason as above
         grid_img = vutils.make_grid(convert_labels_to_RGB(torch.flip(gt_samples, [2,3])),
                                     normalize=True,
                                     scale_each=True)
