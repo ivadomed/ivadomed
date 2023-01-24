@@ -173,7 +173,9 @@ def save_img(writer, epoch, dataset_type, input_samples, gt_samples, preds, wand
 
         # Flipping the last two dimensions of the matrix for correct visualization in Tensorboard/WandB.
         # See https://github.com/ivadomed/ivadomed/issues/1272
-        grid_img = vutils.make_grid(torch.flip(input_samples, [2,3]),
+        if is_three_dim:
+            input_samples = torch.flip(input_samples, [2,3])
+        grid_img = vutils.make_grid(input_samples,
                                     normalize=True,
                                     scale_each=True)
         writer.add_image(dataset_type + '/Input', grid_img, epoch)
@@ -181,7 +183,9 @@ def save_img(writer, epoch, dataset_type, input_samples, gt_samples, preds, wand
             wandb.log({dataset_type+"/Input": wandb.Image(grid_img)})
 
         # flipping in the last two dimesions for same reason as above
-        grid_img = vutils.make_grid(convert_labels_to_RGB(torch.flip(preds, [2,3])),
+        if is_three_dim:
+            preds = torch.flip(preds, [2,3])
+        grid_img = vutils.make_grid(convert_labels_to_RGB(preds),
                                     normalize=True,
                                     scale_each=True)
         writer.add_image(dataset_type + '/Predictions', grid_img, epoch)
@@ -189,7 +193,9 @@ def save_img(writer, epoch, dataset_type, input_samples, gt_samples, preds, wand
             wandb.log({dataset_type+"/Predictions": wandb.Image(grid_img)})
 
         # flipping in the last two dimesions for same reason as above
-        grid_img = vutils.make_grid(convert_labels_to_RGB(torch.flip(gt_samples, [2,3])),
+        if is_three_dim:
+            gt_samples = torch.flip(gt_samples, [2,3])
+        grid_img = vutils.make_grid(convert_labels_to_RGB(gt_samples),
                                     normalize=True,
                                     scale_each=True)
         writer.add_image(dataset_type + '/Ground Truth', grid_img, epoch)
