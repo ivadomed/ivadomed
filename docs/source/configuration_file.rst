@@ -1083,7 +1083,7 @@ Training Parameters
                         "type": "string",
                         "$$description": [
                             "One of ``CosineAnnealingLR``, ``CosineAnnealingWarmRestarts`` and ``CyclicLR``.\n",
-                            "Please find documentation `here <https://pytorch.org/docs/stable/optim.html>`__.",
+                            "Please find documentation `here <https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate>`__.",
                             "Default: ``CosineAnnealingLR``."
                         ]
                     },
