@@ -52,7 +52,5 @@
 	"InstitutionAddress": "MOCK Address",
 	"InstitutionalDepartmentName": "MOCK Department Name",
 
-	"PhaseEncodingDirection": "j-",
-    "TotalReadoutTime": 19,
-    "IntendedFor": "MOCK Path"
+	"MultipartID": "MOCK Id 1"
 }

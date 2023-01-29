@@ -1,5 +1,4 @@
 {
-
 	"Manufacturer": "MOCK",
 	"ManufacturersModelName": "MOCK Model",
 	"DeviceSerialNumber": "MOCK Serial Number",
@@ -53,6 +52,5 @@
 	"InstitutionAddress": "MOCK Address",
 	"InstitutionalDepartmentName": "MOCK Department Name",
 
-	"EchoTime1": 20,
-	"EchoTime2": 21
+    "IntendedFor": "MOCK Path"
 }

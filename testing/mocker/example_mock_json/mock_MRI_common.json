@@ -50,7 +50,5 @@
 
 	"InstitutionName": "MOCK Research Center",
 	"InstitutionAddress": "MOCK Address",
-	"InstitutionalDepartmentName": "MOCK Department Name",
-
-	"EchoTime": 20
+	"InstitutionalDepartmentName": "MOCK Department Name"
 }

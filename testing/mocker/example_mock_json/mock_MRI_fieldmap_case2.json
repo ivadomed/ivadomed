@@ -50,10 +50,5 @@
 
 	"InstitutionName": "MOCK Research Center",
 	"InstitutionAddress": "MOCK Address",
-	"InstitutionalDepartmentName": "MOCK Department Name",
-
-	"MultipartID": "MOCK Id 1",
-	"PhaseEncodingDirection": "j-",
-  	"TotalReadoutTime": 19,
-  	"B0FieldSource": ["MOCK_SOURCE"]
+	"InstitutionalDepartmentName": "MOCK Department Name"
 }
