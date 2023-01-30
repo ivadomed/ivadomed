@@ -4,10 +4,6 @@
     "path_output": "spineGeneric",
     "model_name": "my_model",
     "debugging": false,
-    "object_detection_params": {
-        "object_detection_path": null,
-        "safety_factor": [1.0, 1.0, 1.0]
-    },
     "wandb": {
         "wandb_api_key": "",
         "project_name": "my_project",
@@ -46,6 +42,10 @@
         "balance": null,
         "train_fraction": 0.6,
         "test_fraction": 0.2
+    },
+    "object_detection_params": {
+        "object_detection_path": null,
+        "safety_factor": [1.0, 1.0, 1.0]
     },
     "training_parameters": {
         "batch_size": 32,

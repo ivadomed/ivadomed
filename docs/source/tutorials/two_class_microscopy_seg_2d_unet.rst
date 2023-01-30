@@ -314,3 +314,6 @@ The ground truth segmentations and predictions of the axons and myelin are prese
 
 .. image:: https://raw.githubusercontent.com/ivadomed/doc-figures/main/tutorials/two_classes_microscopy_seg_2d_unet/axon_myelin_predictions.png
    :align: center
+
+
+Another set of test image segmentations are also present in ``<PATH_TO_OUT_DIR>/pred_masks/`` with the suffix ``_pred-TP-FP-FN`` when the ``evaluation_parameters:object_detection_metrics`` is set to ``true``. These files include 3 possible values depending if each object detected in the prediction compared to the ground-truth is a True Positive (TP), False Positive (FP) or False Negative (FN). In PNG files (``.png``), the respective values for TP, FP and FN are 85, 170 and 255.

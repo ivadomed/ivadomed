@@ -412,6 +412,13 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
     kernel_3D = bool(ConfigKW.MODIFIED_3D_UNET in context and context[ConfigKW.MODIFIED_3D_UNET][ModelParamsKW.APPLIED]) or \
                 not context[ConfigKW.DEFAULT_MODEL][ModelParamsKW.IS_2D]
 
+    if (options is not None) and (OptionKW.NO_PATCH in options) and kernel_3D:
+        logger.warning(f"The 'no-patch' option is provided but is not available for 3D models. "
+                       f"'no-patch' is ignored.")
+    if (options is not None) and (OptionKW.OVERLAP_2D in options) and kernel_3D:
+        logger.warning(f"The 'overlap-2d' option is provided but is not available for 3D models. "
+                       f"'overlap-2d' is ignored.")
+
     # Assign length_2D and stride_2D for 2D patching
     length_2D = context[ConfigKW.DEFAULT_MODEL][ModelParamsKW.LENGTH_2D] if \
         ModelParamsKW.LENGTH_2D in context[ConfigKW.DEFAULT_MODEL] else []
@@ -419,21 +426,21 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
         ModelParamsKW.STRIDE_2D in context[ConfigKW.DEFAULT_MODEL] else []
 
     is_2d_patch = bool(length_2D)
-    if (options is not None) and (OptionKW.NO_PATCH in options):
+    if (options is not None) and (OptionKW.NO_PATCH in options) and not kernel_3D:
         if is_2d_patch:
             is_2d_patch = not options.get(OptionKW.NO_PATCH)
             length_2D = []
             stride_2D = []
         else:
-            logger.warning(f"The 'no_patch' option is provided but the model has no 'length_2D' and "
-                               f"'stride_2D' parameters in its configuration file "
-                               f"'{fname_model_metadata.split('/')[-1]}'. 2D patching is ignored, the segmentation "
-                               f"'is done on the entire image without patches.")
+            logger.warning(f"The 'no-patch' option is provided but the model has no 'length_2D' and "
+                           f"'stride_2D' parameters in its configuration file "
+                           f"'{fname_model_metadata.split('/')[-1]}'. 2D patching is ignored, the segmentation "
+                           f"is done on the entire image without patches.")
         if OptionKW.OVERLAP_2D in options:
-            logger.warning(f"The 'no_patch' option is provided along with the 'overlap_2D' option. "
+            logger.warning(f"The 'no-patch' option is provided along with the 'overlap-2D' option. "
                            f"2D patching is ignored, the segmentation is done on the entire image without patches.")
     else:
-        if (options is not None) and (OptionKW.OVERLAP_2D in options):
+        if (options is not None) and (OptionKW.OVERLAP_2D in options) and not kernel_3D:
             if (length_2D and stride_2D):
                 overlap_2D = options.get(OptionKW.OVERLAP_2D)
                 # Swap OverlapX and OverlapY resulting in an array in order [OverlapY, OverlapX]
@@ -442,7 +449,7 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
                 # Adjust stride_2D with overlap_2D
                 stride_2D = [x1 - x2 for (x1, x2) in zip(length_2D, overlap_2D)]
             else:
-                logger.warning(f"The 'overlap_2D' option is provided but the model has no 'length_2D' and "
+                logger.warning(f"The 'overlap-2d' option is provided but the model has no 'length_2D' and "
                                f"'stride_2D' parameters in its configuration file "
                                f"'{fname_model_metadata.split('/')[-1]}'. 2D patching is ignored, the segmentation "
                                f"is done on the entire image without patches.")
