@@ -923,6 +923,50 @@ Split Dataset
             For example: ``1 - 0.6 - 0.2 = 0.2``.
 
 
+Cascaded Models
+---------------
+
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "object_detection_params",
+        "type": "dict",
+        "required": "false",
+        "options": {
+            "object_detection_path": {
+                "type": "string",
+                "$$description": [
+                    "Path to the object detection model. The folder,\n",
+                    "configuration file, and model need to have the same name\n",
+                    "(e.g. ``findcord_tumor/``, ``findcord_tumor/findcord_tumor.json``, and\n",
+                    "``findcord_tumor/findcord_tumor.onnx``, respectively). The model's prediction\n",
+                    "will be used to generate bounding boxes. Default: ``null``."
+                ]
+            },
+            "safety_factor": {
+                "type": "[int, int, int]",
+                "$$description": [
+                    "List of length 3 containing the factors to multiply each dimension of the\n",
+                    "bounding box. Ex: If the original bounding box has a size of 10x20x30 with\n",
+                    "a safety factor of [1.5, 1.5, 1.5], the final dimensions of the bounding box\n",
+                    "will be 15x30x45 with an unchanged center. Default: ``[1.0, 1.0, 1.0]``."
+                ]
+            }
+       }
+   }
+
+.. code-block:: JSON
+
+    {
+        "object_detection_params": {
+            "object_detection_path": null,
+            "safety_factor": [1.0, 1.0, 1.0]
+        }
+    }
+
+
+
 Training Parameters
 -------------------
 
@@ -1423,49 +1467,6 @@ being used for the segmentation task).
             "stride_3D": [128, 128, 16],
             "attention": false,
             "n_filters": 8
-        }
-    }
-
-
-Cascaded Architecture Features
-------------------------------
-
-.. jsonschema::
-
-    {
-        "$schema": "http://json-schema.org/draft-04/schema#",
-        "title": "object_detection_params",
-        "type": "dict",
-        "required": "false",
-        "options": {
-            "object_detection_path": {
-                "type": "string",
-                "$$description": [
-                    "Path to object detection model and the configuration file. The folder,\n",
-                    "configuration file, and model need to have the same name\n",
-                    "(e.g. ``findcord_tumor/``, ``findcord_tumor/findcord_tumor.json``, and\n",
-                    "``findcord_tumor/findcord_tumor.onnx``, respectively). The model's prediction\n",
-                    "will be used to generate bounding boxes. Default: ``null``."
-                ]
-            },
-            "safety_factor": {
-                "type": "[int, int, int]",
-                "$$description": [
-                    "List of length 3 containing the factors to multiply each dimension of the\n",
-                    "bounding box. Ex: If the original bounding box has a size of 10x20x30 with\n",
-                    "a safety factor of [1.5, 1.5, 1.5], the final dimensions of the bounding box\n",
-                    "will be 15x30x45 with an unchanged center. Default: ``[1.0, 1.0, 1.0]``."
-                ]
-            }
-       }
-   }
-
-.. code-block:: JSON
-
-    {
-        "object_detection_params": {
-            "object_detection_path": null,
-            "safety_factor": [1.0, 1.0, 1.0]
         }
     }
 
