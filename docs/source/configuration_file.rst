@@ -761,11 +761,9 @@ Split Dataset
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "fname_split",
         "$$description": [
-            "File name of the log (`joblib <https://joblib.readthedocs.io/en/latest/>`__)\n",
-            "that contains the list of training/validation/testing filenames. This file can later\n",
-            "be used to re-train a model using the same data splitting scheme. If ``null``,\n",
-            "a new splitting scheme is performed. If specified, the .joblib file data splitting scheme\n",
-            "bypasses all the other split dataset parameters. Default: ``null``."
+            "Name of the `joblib <https://joblib.readthedocs.io/en/latest/>`__ file that was generated during a previous training, and that contains the list of training/validation/testing filenames.\n",
+            "Specifying the .joblib file ensures reproducible data splitting across multiple trainings. When specified, the other split parameters are\n", 
+            "ignored. If ``null`` is specified, a new splitting scheme is performed."
         ],
         "type": "string"
     }
