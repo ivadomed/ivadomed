@@ -70,10 +70,13 @@ def segment_image(fname_images: str, path_model: str, suffix_out: str, options: 
     """
     Applies a trained model on image(s). Output predictions are generated in the current directory.
 
+    For example::
+        ivadomed_segment_image -i t2s.nii.gz -m /usr/bob/my_model_directory
+
     Args:
-        fname_images (str): Image(s) to segment. You can specify more than one image (separate with space).
-        path_model (str): Path to folder that contains ONNX and/or PT model and ivadomed JSON config file.
-        suffix_out (str): Suffix to add to the input image. Default: '_pred'.
+        fname_images (str): Image(s) to segment. You can specify more than one image (separate with space). Flag: ``--image``, ``-i``
+        path_model (str): Path to folder that contains ONNX and/or PT model and ivadomed JSON config file. Flag: ``--model``, ``-m``
+        suffix_out (str): Suffix to add to the input image. Default: '_pred'. Flag: ``--suffix-out``, ``-s``
         options (dict): Options to pass to `imed_inference.segment_volume`.
 
     Returns:
