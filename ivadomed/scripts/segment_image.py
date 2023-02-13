@@ -71,6 +71,7 @@ def segment_image(fname_images: str, path_model: str, suffix_out: str, options: 
     Applies a trained model on image(s). Output predictions are generated in the current directory.
 
     For example::
+    
         ivadomed_segment_image -i t2s.nii.gz -m /usr/bob/my_model_directory
 
     Args:
