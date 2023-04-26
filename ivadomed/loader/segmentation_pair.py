@@ -318,9 +318,9 @@ class SegmentationPair(object):
         if "tif" in extension:
             img = np.expand_dims(imageio.v2.imread(filename, format='tiff-pil'), axis=-1).astype(np.uint8)
             if len(img.shape) > 3:
-                img = np.expand_dims(imageio.v2.imread(filename, format='tiff-pil', as_gray=True), axis=-1).astype(np.uint8)
+                img = np.expand_dims(imageio.v2.imread(filename, format='tiff-pil', mode='L'), axis=-1).astype(np.uint8)
         else:
-            img = np.expand_dims(imageio.v2.imread(filename, as_gray=True), axis=-1).astype(np.uint8)
+            img = np.expand_dims(imageio.v2.imread(filename, mode='L'), axis=-1).astype(np.uint8)
 
         # Binarize ground-truth values (0-255) to 0 and 1 in uint8 with threshold 0.5
         if is_gt:
