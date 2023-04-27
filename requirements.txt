@@ -7,7 +7,7 @@
 pyparsing<3,>=2.0.2
 csv-diff>=1.0
 loguru~=0.5
-imageio~=2.19
+imageio
 joblib~=1.0
 matplotlib>=3.3.0
 nibabel~=3.2
