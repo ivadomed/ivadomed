@@ -28,9 +28,12 @@ def test_tensorboard_save():
     summary_iterators = [EventAccumulator(str(dname)).Reload() for dname in dpath.iterdir()]
     for i in range(len(summary_iterators)):
         if summary_iterators[i].Tags()['images'] == ['Training/Input', 'Training/Predictions', 'Training/Ground Truth']:
-            input_retrieve = np.array(Image.open(io.BytesIO(summary_iterators[i].Images('Training/Input')[0][2])))
-            pred_retrieve = np.array(Image.open(io.BytesIO(summary_iterators[i].Images('Training/Predictions')[0][2])))
-            gt_retrieve = np.array(Image.open(io.BytesIO(summary_iterators[i].Images('Training/Ground Truth')[0][2])))
+            input_retrieve = np.array(Image.open(io.BytesIO(
+                summary_iterators[i].Images('Training/Input')[0].encoded_image_string)))
+            pred_retrieve = np.array(Image.open(io.BytesIO(
+                summary_iterators[i].Images('Training/Predictions')[0].encoded_image_string)))
+            gt_retrieve = np.array(Image.open(io.BytesIO(
+                summary_iterators[i].Images('Training/Ground Truth')[0].encoded_image_string)))
 
     assert np.allclose(imed_math.rescale_values_array(input_retrieve[:, :, 0], 0, 1), inp[0, 0, :, :])
     assert np.allclose(imed_math.rescale_values_array(pred_retrieve[:, :, 0], 0, 1), pred[0, 0, :, :])
