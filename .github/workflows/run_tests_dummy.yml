@@ -28,7 +28,7 @@ jobs:
     strategy:
       matrix:
         # This list must be kept **in sync** with the Required Statuses in https://github.com/ivadomed/ivadomed/settings/branch_protection_rules/5051948
-        os: [ "macos-latest", "windows-latest", "ubuntu-20.04" ]
+        os: [ "macos-latest", "ubuntu-20.04" ]
         python-version: [ 3.8 ]
         test-name:
           - integration-test
