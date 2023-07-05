@@ -76,7 +76,7 @@ def test_bids_df_anat(download_data_testing_test_files, loader_parameters):
 
 @pytest.mark.parametrize('loader_parameters', [{
     "path_data": [str(Path(__data_testing_dir__, "ct_scan"))],
-    "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
+    "bids_config": [str(Path(path_repo_root) / Path("ivadomed/config/config_bids.json"))],
     "target_suffix": ["_seg-manual"],
     "extensions": [".nii.gz"],
     "roi_params": {"suffix": None, "slice_filter_roi": None},
@@ -131,10 +131,9 @@ def test_bids_df_multi(download_data_testing_test_files, loader_parameters):
     assert diff == {'added': [], 'removed': [], 'changed': [],
                     'columns_added': [], 'columns_removed': []}
 
-
 @pytest.mark.parametrize('loader_parameters', [{
     "path_data": [str(Path(__data_testing_dir__, "ct_scan"))],
-    "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
+    "bids_config": [str(Path(path_repo_root) / Path("ivadomed/config/config_bids.json"))],
     "target_suffix": ["_seg-manual"],
     "extensions": [".nii.gz"],
     "roi_params": {"suffix": None, "slice_filter_roi": None},
