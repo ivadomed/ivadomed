@@ -5,6 +5,7 @@
 # This forces the older pip, if the user has the older pip, to behave itself.
 # This is to specially support users on Ubuntu 20.04 LTS; when Ubuntu 22.04 LTS comes out, this can be removed.
 pyparsing<3,>=2.0.2
+pybids<0.16.0
 csv-diff>=1.0
 loguru~=0.5
 imageio~=2.19
