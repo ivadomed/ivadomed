@@ -315,7 +315,13 @@ class SegmentationPair(object):
         """
         # For '.png', '.tif', '.tiff', '.jpg' and 'jpeg' extentions
         # Read image as 8 bit grayscale in numpy array (behavior TBD in ivadomed for RGB, RBGA or higher bit depth)
-        _img = imageio.v3.imread(filename)
+        if 'tif' in extension:
+            _img = imageio.v3.imread(filename, plugin='tifffile')
+            if len(_img.shape) > 2:
+                # convert multichannel TIFF to grayscale using ITU-R 601-2 luma transform
+                _img = np.dot(_img[..., :3], [0.299, 0.587, 0.114])
+        else:
+            _img = imageio.v3.imread(filename, plugin="pillow", mode="F")
         
         if len(_img.shape) < 3:
             _img = np.expand_dims(_img, axis=-1)
