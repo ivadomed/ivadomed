@@ -315,14 +315,24 @@ class SegmentationPair(object):
         """
         # For '.png', '.tif', '.tiff', '.jpg' and 'jpeg' extentions
         # Read image as 8 bit grayscale in numpy array (behavior TBD in ivadomed for RGB, RBGA or higher bit depth)
-        if 'tif' in extension:
-            _img = imageio.v3.imread(filename, plugin='tifffile')
-            if len(_img.shape) > 2:
-                # convert multichannel TIFF to grayscale using ITU-R 601-2 luma transform
-                _img = np.dot(_img[..., :3], [0.299, 0.587, 0.114])
-        else:
-            _img = imageio.v3.imread(filename, plugin="pillow", mode="F")
-        
+        props = imageio.v3.improps(filename) # new in v3 - standardized metadata
+        _img = imageio.v3.imread(filename)
+
+        # TIFF is a "wild" format. A few assumptions greatly simplify the code below:
+        # 1. the image is interleaved/channel-last (not planar)
+        # 2. the colorspace is one of: binary, gray, RGB, RGBA (not aliasing ones like YUV or CMYK)
+        # 3. the image is flat (not a volume or time-series)
+        # Note: All of these are trivially true for JPEG and PNG due to limitations of these formats.
+
+        # make grayscale (treats binary as 1-bit grayscale)
+        colorspace_idx = 2 + int(props.is_batch)
+        if _img.ndim <= colorspace_idx:  # binary or gray
+            pass  # nothing to do
+        elif _img.shape[colorspace_idx] == 3:  # RGB
+            _img = np.sum(_img * (.299, .587, .114), axis=-1)
+        else:  # RGBA
+            # discards alpha
+            _img = np.sum(_img * (.299, .587, .114, 0), axis=-1)
         if len(_img.shape) < 3:
             _img = np.expand_dims(_img, axis=-1)
         
