@@ -11,6 +11,7 @@ imageio>=2.31.4
 joblib~=1.0
 matplotlib>=3.3.0
 nibabel~=3.2
+onnx
 onnxruntime~=1.7
 pandas>=1.1,<1.5.0
 # We pin Pillow here because we're currently using an older version of `torch`, which in turn uses an
