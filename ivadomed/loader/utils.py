@@ -13,7 +13,6 @@ import pandas as pd
 import torch
 from loguru import logger
 from sklearn.model_selection import train_test_split
-from torch._six import string_classes
 from ivadomed import utils as imed_utils
 from ivadomed.keywords import SplitDatasetKW, LoaderParamsKW, ROIParamsKW, ContrastParamsKW
 import nibabel as nib
@@ -270,7 +269,7 @@ def imed_collate(batch: dict) -> dict | list | str | torch.Tensor:
         return torch.LongTensor(batch)
     elif isinstance(batch[0], float):
         return torch.DoubleTensor(batch)
-    elif isinstance(batch[0], string_classes):
+    elif isinstance(batch[0], str):
         return batch
     elif isinstance(batch[0], collections.abc.Mapping):
         return {key: imed_collate([d[key] for d in batch]) for key in batch[0]}
