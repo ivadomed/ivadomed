@@ -340,6 +340,9 @@ class SegmentationPair(object):
                     imageio.v3.imread(filename, plugin='PNG-PIL', as_gray=True),
                     axis=-1).astype(np.unint8)
         else:
+            # c.f for more details: https://github.com/ivadomed/ivadomed/pull/1297#discussion_r1267563980 and 
+            # https://github.com/ivadomed/ivadomed/pull/1297#discussion_r1267563980 
+            
             # TIFF is a "wild" format. A few assumptions greatly simplify the code below:
             # 1. the image is interleaved/channel-last (not planar)
             # 2. the colorspace is one of: binary, gray, RGB, RGBA (not aliasing ones like YUV or CMYK)
