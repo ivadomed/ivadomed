@@ -65,8 +65,8 @@ jobs:
       fail-fast: false
 
       matrix:
-        os: [ "macos-latest", "windows-latest", "ubuntu-20.04", "ubuntu-18.04" ]
-        python-version: [ '3.7', '3.8', '3.9', '3.10' ]
+        os: [ "macos-latest", "windows-latest", "ubuntu-20.04" ]
+        python-version: [ '3.8', '3.9', '3.10' ]
         test-name:
           - integration-test
 
