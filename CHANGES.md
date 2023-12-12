@@ -1,3 +1,33 @@
+ ## v2.9.9 (2023-12-11)
+[View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.9.8...release)
+
+**FEATURE**
+ - Introduce `segment_image` CLI. [View pull request](https://github.com/ivadomed/ivadomed/pull/1254)
+
+**CI**
+ - chore: remove ubuntu-18.04 and python 3.7 from `run_tests` workflow. [View pull request](https://github.com/ivadomed/ivadomed/pull/1298)
+
+**BUG**
+ - chore: Dependency Maintenance (imageio 2->3, pyBIDS<0.15.6, readthedocs.yml v2, Python 3.7->3.8). [View pull request](https://github.com/ivadomed/ivadomed/pull/1297)
+ - Fix NormalizeInstance for uniform samples. [View pull request](https://github.com/ivadomed/ivadomed/pull/1267)
+
+**INSTALLATION**
+ - Test out newer versions of PyTorch (`torch>=2.0.0`) for compatibility with downstream projects (SCT, ADS). [View pull request](https://github.com/ivadomed/ivadomed/pull/1304)
+
+**DOCUMENTATION**
+ - Update doc for segment_image.py. [View pull request](https://github.com/ivadomed/ivadomed/pull/1290)
+ - Clarified usage for `fname_split`. [View pull request](https://github.com/ivadomed/ivadomed/pull/1283)
+ - Point to the URL specific to the learning rate. [View pull request](https://github.com/ivadomed/ivadomed/pull/1281)
+ - Match location of `object_detection` in the template config file and in the documentation. [View pull request](https://github.com/ivadomed/ivadomed/pull/1278)
+ - Resolve the discrepancies. [View pull request](https://github.com/ivadomed/ivadomed/pull/1271)
+ - Clarify usage of --no-patch for 2D only. [View pull request](https://github.com/ivadomed/ivadomed/pull/1265)
+
+**ENHANCEMENT**
+ - Do not use wandb if not specified in the config file. [View pull request](https://github.com/ivadomed/ivadomed/pull/1253)
+
+**REFACTORING**
+ - Harmonize get_item in MRI2D dataset and MRI3D dataset. [View pull request](https://github.com/ivadomed/ivadomed/pull/1266)
+
  ## v2.9.8 (2023-01-04)
 [View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.9.7...release)
 
