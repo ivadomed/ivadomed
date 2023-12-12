@@ -8,6 +8,8 @@ import sys
 import platform
 import multiprocessing
 import re
+import wandb
+from functools import partial 
 
 from ivadomed.loader.bids_dataframe import BidsDataframe
 from ivadomed import evaluation as imed_evaluation
@@ -453,20 +455,50 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False, no_
 
         save_config_file(context, path_output)
 
-        # RUN TRAINING
-        best_training_dice, best_training_loss, best_validation_dice, best_validation_loss = imed_training.train(
-            model_params=model_params,
-            dataset_train=ds_train,
-            dataset_val=ds_valid,
-            training_params=context[ConfigKW.TRAINING_PARAMETERS],
-            wandb_params=context.get(ConfigKW.WANDB),
-            path_output=path_output,
-            device=device,
-            cuda_available=cuda_available,
-            metric_fns=metric_fns,
-            n_gif=n_gif,
-            resume_training=resume_training,
-            debugging=context[ConfigKW.DEBUGGING])
+        # TODO: feat: wandb sweeps
+        wandb_tracking = imed_utils.initialize_wandb(context.get(ConfigKW.WANDB))
+        
+        # TODO: add sweep condition
+        if wandb_tracking:
+            
+            sweep_config = context.get(ConfigKW.WANDB)['sweep_cfg']
+            
+            sweep_id = wandb.sweep(sweep_config, project="ivadomed_sweep_trial")
+            
+            trainer = partial(imed_training.train, model_params=model_params,
+                              dataset_train=ds_train, dataset_val=ds_valid,
+                              training_params=context[ConfigKW.TRAINING_PARAMETERS],
+                              wandb_tracking=wandb_tracking,
+                              wandb_params=context.get(ConfigKW.WANDB),
+                              path_output=path_output,
+                              device=device,
+                              cuda_available=cuda_available,
+                              metric_fns=metric_fns,
+                              n_gif=n_gif,
+                              resume_training=resume_training,
+                              debugging=context[ConfigKW.DEBUGGING])
+            
+            # TODO: check what does wandb agent return
+            wandb.agent(sweep_id, trainer, count=1)
+
+        else:
+            # TODO: update for no hyperparam optimization
+                
+            # # RUN TRAINING
+            # best_training_dice, best_training_loss, best_validation_dice, best_validation_loss = imed_training.train(
+            #     model_params=model_params,
+            #     dataset_train=ds_train,
+            #     dataset_val=ds_valid,
+            #     training_params=context[ConfigKW.TRAINING_PARAMETERS],
+            #     wandb_tracking=wandb_tracking,
+            #     wandb_params=context.get(ConfigKW.WANDB),
+            #     path_output=path_output,
+            #     device=device,
+            #     cuda_available=cuda_available,
+            #     metric_fns=metric_fns,
+            #     n_gif=n_gif,
+            #     resume_training=resume_training,
+            #     debugging=context[ConfigKW.DEBUGGING])
 
     if thr_increment:
         # LOAD DATASET
@@ -502,6 +534,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False, no_
         context[ConfigKW.POSTPROCESSING][PostprocessingKW.BINARIZE_PREDICTION] = {BinarizeProdictionKW.THR: thr}
         save_config_file(context, path_output)
 
+    # TODO: merge it above
     if command == 'train':
         return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
 

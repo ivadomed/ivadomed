@@ -27,7 +27,7 @@ from ivadomed.keywords import ModelParamsKW, ConfigKW, BalanceSamplesKW, Trainin
 cudnn.benchmark = True
 
 
-def train(model_params, dataset_train, dataset_val, training_params, path_output, device, wandb_params=None,
+def train(model_params, dataset_train, dataset_val, training_params, path_output, device, wandb_tracking, wandb_params=None,
           cuda_available=True, metric_fns=None, n_gif=0, resume_training=False, debugging=False):
     """Main command to train the network.
 
@@ -56,7 +56,7 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
     writer = SummaryWriter(log_dir=path_output)
 
     # Enable wandb tracking  if the required params are found in the config file and the api key is correct
-    wandb_tracking = imed_utils.initialize_wandb(wandb_params)
+    # wandb_tracking = imed_utils.initialize_wandb(wandb_params)
 
     if wandb_tracking:
         # Collect all hyperparameters into a dictionary
@@ -79,7 +79,7 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
     sampler_train, shuffle_train = get_sampler(dataset_train, conditions,
                                                training_params[TrainingParamsKW.BALANCE_SAMPLES][BalanceSamplesKW.TYPE])
 
-    train_loader = DataLoader(dataset_train, batch_size=training_params[TrainingParamsKW.BATCH_SIZE],
+    train_loader = DataLoader(dataset_train, batch_size=wandb.config.batch_size,
                               shuffle=shuffle_train, pin_memory=True, sampler=sampler_train,
                               collate_fn=imed_loader_utils.imed_collate,
                               num_workers=0)
