@@ -1225,7 +1225,7 @@ Architecture
 
 Architectures for both segmentation and classification are available and
 described in the :ref:`architectures` section. If the selected architecture is listed in the
-`loader <https://github.com/ivadomed/ivadomed/blob/lr/fixing_documentation/ivadomed/loader/loader.py>`__ file, a
+`loader <https://github.com/ivadomed/ivadomed/blob/master/ivadomed/loader/loader.py>`__ file, a
 classification (not segmentation) task is run. In the case of a
 classification task, the ground truth will correspond to a single label
 value extracted from ``target``, instead being an array (the latter
