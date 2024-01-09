@@ -9,7 +9,8 @@ onnx
 # So, pin to >=1.7.0 to avoid having to ask users to install libomp.
 # Avoid version 1.16.0 due to: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4225
 onnxruntime>=1.7.0,!=1.16.0
-pandas>=1.1
+# `pandas==2.0` removed the `DataFrame.append` call, which we currently use in approx. 13 places (per PyCharm search)
+pandas>=1.1,<2.0
 pybids>=0.14.0,<0.15.6
 scikit-learn>=0.20.3
 scikit-image~=0.17
