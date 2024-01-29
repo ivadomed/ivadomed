@@ -354,7 +354,7 @@ class SegmentationPair(object):
             # If the image is not a batch of images, then add a new axis. We do this to ensure that
             # we won't have to guess whether or not the last axis contains channel information.
             if not props.is_batch:
-                _img=np.expand_dims(_img, axis=-1)
+                _img=np.expand_dims(_img, axis = -1)
             # After this, image should either be [H, W, N] or [H, W, C, N]
 
             assert _img.ndim in [3, 4]
