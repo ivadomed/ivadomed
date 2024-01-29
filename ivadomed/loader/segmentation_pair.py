@@ -359,7 +359,7 @@ class SegmentationPair(object):
             assert _img.ndim in [3, 4]
 
             # Check if the image batch lacks a channel axis, i.e. is binary/grayscale
-            if _img.ndim <= 3  # ndim == 3 -> [H, W, N]
+            if _img.ndim <= 3:  # ndim == 3 -> [H, W, N]
                 pass  # nothing to do
 
             # Handle images that *do* have channel information
