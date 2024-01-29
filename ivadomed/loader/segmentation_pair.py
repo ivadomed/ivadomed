@@ -383,9 +383,9 @@ class SegmentationPair(object):
                     assert _img.shape[colorspace_idx] == 3
                     # Convert RGB to grayscale by multiplying RGB by CCIR 601 constants then summing
                     # See also: https://stackoverflow.com/a/689547
-                    _img[:, :, 0, :] = (_img[:, :, 0, :]*.299)
-                    _img[:, :, 1, :] = (_img[:, :, 1, :]*.587)
-                    _img[:, :, 2, :] = (_img[:, :, 2, :]*.114)
+                    _img[:, :, 0, :] = (_img[:, :, 0, :] * .299)
+                    _img[:, :, 1, :] = (_img[:, :, 1, :] * .587)
+                    _img[:, :, 2, :] = (_img[:, :, 2, :] * .114)
                     _img = np.sum(_img, axis=colorspace_idx)
 
             img = imageio.core.image_as_uint(_img, bitdepth=8)
