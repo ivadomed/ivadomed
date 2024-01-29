@@ -388,9 +388,6 @@ class SegmentationPair(object):
                     _img[:, :, 2, :] *= .114
                     _img = np.sum(_img, axis=colorspace_idx)
 
-            if _img.shape[-1] == 1:
-                _img = _img.squeeze(axis=-1)  # Remove [1] from last axis (i.e. single-image batches)  
-        
             img = imageio.core.image_as_uint(_img, bitdepth=8)
 
         # Binarize ground-truth values (0-255) to 0 and 1 in uint8 with threshold 0.5
