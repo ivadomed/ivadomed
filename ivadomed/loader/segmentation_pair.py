@@ -350,18 +350,45 @@ class SegmentationPair(object):
             # Note: All of these are trivially true for JPEG and PNG due to limitations of these formats.
 
             # make grayscale (treats binary as 1-bit grayscale)
-            colorspace_idx = 2 + int(props.is_batch)
-            if _img.ndim <= colorspace_idx:  # binary or gray
+            
+            # If the image is not a batch of images, then add a new axis. We do this to ensure that
+            # we won't have to guess whether or not the last axis contains channel information.
+            if not props.is_batch:
+                np.expand_dims(_img, axis=-1)
+            # After this, image should either be [H, W, N] or [H, W, C, N]
+            assert _img.ndim in [3, 4]
+
+            # Check if the image batch lacks a channel axis, i.e. is binary/grayscale
+            if _img.ndim <= 3  # ndim == 3 -> [H, W, N]
                 pass  # nothing to do
-            elif _img.shape[colorspace_idx]==2: #gray with alpha channel
-                _img = _img[:, :, 0]
-            elif _img.shape[colorspace_idx] == 3:  # RGB
-                _img = np.sum(_img * (.299, .587, .114), axis=-1)
-            else:  # RGBA
-                # discards alpha
-                _img = np.sum(_img * (.299, .587, .114, 0), axis=-1)
-            if len(_img.shape) < 3:
-                _img = np.expand_dims(_img, axis=-1)
+
+            # Handle images that *do* have channel information
+            else:
+                # Since we have an image batch ([H, W, C, N]), use axis=2
+                colorspace_idx = 2
+                n_channels = _img.shape[colorspace_idx]
+                # Handle the error case right away, to ensure all remaining cases will be n_channels <= 4
+                if n_channels > 4:
+                    raise ValueError(f"Number of image channels ({n_channels}) is greater than 4 (RGBA).")
+                # Grayscale + Alpha
+                # Or, grayscale without alpha that happens to have an extra C dimension (?)
+                elif n_channels in [1, 2]:  
+                 _img = _img[:, :, 0]  # Keep only the grayscale channel
+                # RGB or RGB+A
+                else:
+                    if n_channels == 4:  
+                        _img = _img[:, :, :3]  # Discard the alpha information
+                    # By this point, _img should only have 3 channels, or else something has gone wrong
+                    assert _img.shape[colorspace_idx] == 3
+                    # Convert RGB to grayscale by multiplying RGB by CCIR 601 constants then summing
+                    # See also: https://stackoverflow.com/a/689547
+                    _img[:, :, 0, :] *= .299
+                    _img[:, :, 1, :] *= .587
+                    _img[:, :, 2, :] *= .114
+                    _img = np.sum(_img, axis=colorspace_idx)
+
+            if _img.shape[-1] == 1:
+                _img = _img.squeeze(axis=-1)  # Remove [1] from last axis (i.e. single-image batches)  
         
             img = imageio.core.image_as_uint(_img, bitdepth=8)
 
