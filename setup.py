@@ -21,7 +21,7 @@ extra_requirements = {
     'docs': [
         # pin sphinx to match what RTD uses:
         # https://github.com/readthedocs/readthedocs.org/blob/ecac31de54bbb2c100f933e86eb22b0f4389ba84/requirements/pip.txt#L16
-        'sphinx',
+        'sphinx>-5.0',
         'sphinx_rtd_theme',
         'sphinx-tabs==3.2.0',
         'sphinx-toolbox==2.15.2',
