@@ -353,15 +353,10 @@ class SegmentationPair(object):
             
             # If the image is not a batch of images, then add a new axis. We do this to ensure that
             # we won't have to guess whether or not the last axis contains channel information.
-            print('Start')
-            print(props.is_batch)
-            print(_img.ndim)
             if not props.is_batch:
                 _img=np.expand_dims(_img, axis=-1)
             # After this, image should either be [H, W, N] or [H, W, C, N]
-            print(props.is_batch)
-            print(_img.ndim)
-            print('End')
+
             assert _img.ndim in [3, 4]
 
             # Check if the image batch lacks a channel axis, i.e. is binary/grayscale
