@@ -356,7 +356,7 @@ class SegmentationPair(object):
             colorspace_idx = 2
             if _img.ndim <= colorspace_idx:  # binary or gray
                 pass  # nothing to do
-            elif _img.shape[colorspace_idx]==2: #gray with alpha channel
+            elif _img.shape[colorspace_idx] == 2:  # gray with alpha channel
                 _img = _img[:, :, 0]
             elif _img.shape[colorspace_idx] == 3:  # RGB
                 _img = np.sum(_img * (.299, .587, .114), axis=-1)
