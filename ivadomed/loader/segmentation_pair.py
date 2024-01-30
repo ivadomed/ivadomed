@@ -350,9 +350,11 @@ class SegmentationPair(object):
             # Note: All of these are trivially true for JPEG and PNG due to limitations of these formats.
 
             # make grayscale (treats binary as 1-bit grayscale)
-            colorspace_idx = 2 + int(props.is_batch)
+            colorspace_idx = 2
             if _img.ndim <= colorspace_idx:  # binary or gray
                 pass  # nothing to do
+            elif _img.shape[colorspace_idx] == 2:  # gray with alpha channel
+                _img = _img[:, :, 0]
             elif _img.shape[colorspace_idx] == 3:  # RGB
                 _img = np.sum(_img * (.299, .587, .114), axis=-1)
             else:  # RGBA
@@ -360,7 +362,7 @@ class SegmentationPair(object):
                 _img = np.sum(_img * (.299, .587, .114, 0), axis=-1)
             if len(_img.shape) < 3:
                 _img = np.expand_dims(_img, axis=-1)
-        
+
             img = imageio.core.image_as_uint(_img, bitdepth=8)
 
         # Binarize ground-truth values (0-255) to 0 and 1 in uint8 with threshold 0.5
