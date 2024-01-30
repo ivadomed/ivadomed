@@ -350,9 +350,6 @@ class SegmentationPair(object):
             # Note: All of these are trivially true for JPEG and PNG due to limitations of these formats.
 
             # make grayscale (treats binary as 1-bit grayscale)
-
-
-            # make grayscale (treats binary as 1-bit grayscale)
             colorspace_idx = 2
             if _img.ndim <= colorspace_idx:  # binary or gray
                 pass  # nothing to do
