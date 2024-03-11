@@ -1,22 +1,16 @@
-# workarounds for pip 20.0.2's buggy dependency resolver
-# which doesn't account for cross-package constraints: https://pip.pypa.io/en/stable/user_guide/#changes-to-the-pip-dependency-resolver-in-20-3-2020
-# matplotlib pulls in the latest pyparsing, nibabel pulls in the latest packaging, and the two latests are in conflict.
-# > ERROR: packaging 21.2 has requirement pyparsing<3,>=2.0.2, but you'll have pyparsing 3.0.5 which is incompatible.
-# This forces the older pip, if the user has the older pip, to behave itself.
-# This is to specially support users on Ubuntu 20.04 LTS; when Ubuntu 22.04 LTS comes out, this can be removed.
-pyparsing<3,>=2.0.2
 csv-diff>=1.0
 loguru~=0.5
 imageio>=2.31.4
 joblib~=1.0
 matplotlib>=3.3.0
-nibabel~=3.2
+nibabel~=5.2
 onnx
 # 1.7.0>onnxruntime>=1.5.1 required `brew install libomp` on macOS.
 # So, pin to >=1.7.0 to avoid having to ask users to install libomp.
 # Avoid version 1.16.0 due to: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4225
 onnxruntime>=1.7.0,!=1.16.0
-pandas>=1.1,<1.5.0
+# `pandas==2.0` removed the `DataFrame.append` call, which we currently use in approx. 13 places (per PyCharm search)
+pandas>=1.1,<2.0
 pybids>=0.14.0,<0.15.6
 scikit-learn>=0.20.3
 scikit-image~=0.17
