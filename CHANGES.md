@@ -1,3 +1,14 @@
+ ## v2.9.10 (2024-03-12)
+[View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.9.9...release)
+
+**BUG**
+
+ - Fix edge case bug where grayscale image has an alpha channel, minor rtd fix.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1313)
+
+**DEPENDENCIES**
+
+ - Test upgrades for pinned dependencies to improve downstream compatibility.  [View pull request](https://github.com/ivadomed/ivadomed/pull/1308)
+
  ## v2.9.9 (2023-12-11)
 [View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.9.8...release)
 
