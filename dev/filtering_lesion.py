@@ -192,8 +192,8 @@ def plot_roc(thr_unc_lst, thr_pred_lst, res_dct, metric, fname_out):
 
 
 def run_inference(pred_folder, im_lst, thr_pred, gt_folder, target_suf, param_eval, unc_name=None, thr_unc=None):
-    # init df
-    df_results = pd.DataFrame()
+    # init df row list
+    df_lst = []
 
     # loop across images
     for fname_pref in im_lst:
@@ -236,8 +236,9 @@ def run_inference(pred_folder, im_lst, thr_pred, gt_folder, target_suf, param_ev
 
         # save results of this fname_pred
         results_pred['image_id'] = fname_pref.split('_')[0]
-        df_results = df_results.append(results_pred, ignore_index=True)
+        df_lst.append(results_pred)
 
+    df_results = pd.DataFrame(df_lst)
     return df_results
 
 
