@@ -4,7 +4,9 @@ imageio>=2.31.4
 joblib~=1.0
 matplotlib>=3.3.0
 nibabel~=5.2
-onnx
+# v1.16.2/v1.17.0 aren't built correctly for Windows:
+# https://github.com/onnx/onnx/issues/6267
+onnx<1.16.2
 # 1.7.0>onnxruntime>=1.5.1 required `brew install libomp` on macOS.
 # So, pin to >=1.7.0 to avoid having to ask users to install libomp.
 # Avoid version 1.16.0 due to: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4225
