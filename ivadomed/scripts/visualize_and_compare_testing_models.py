@@ -135,9 +135,7 @@ def visualize_and_compare_models(ofolders, metric="dice_class0", metadata=None):
     if len(ofolders) < 1:
         raise Exception('No folders were selected - Nothing to show')
 
-    columnNames = ["EvaluationModel", metric, 'subject']
-    df = pd.DataFrame([], columns=columnNames)
-
+    np_lst = []
     for folder in ofolders:
         result = pd.read_csv(str(Path(folder, 'results_eval', 'evaluation_3Dmetrics.csv')))
 
@@ -161,9 +159,12 @@ def visualize_and_compare_models(ofolders, metric="dice_class0", metadata=None):
 
             folders = [Path(folder).resolve().name] * len(scores)
             subject_id = result["image_id"]
-            combined = np.column_stack((folders, scores.astype(np.object, folders), subject_id)).T
-            singleFolderDF = pd.DataFrame(combined, columnNames).T
-            df = df.append(singleFolderDF, ignore_index=True)
+            combined = np.column_stack((folders, scores.astype(np.object, folders), subject_id))
+            np_lst.append(combined)
+
+    columnNames = ["EvaluationModel", metric, 'subject']
+    rows = np.vstack(np_lst)
+    df = pd.DataFrame(rows, columns=columnNames)
 
     nFolders = len(ofolders)
     combinedNumbers = list(itertools.combinations(range(nFolders), 2))
