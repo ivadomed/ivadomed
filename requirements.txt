@@ -4,6 +4,7 @@ imageio>=2.31.4
 joblib~=1.0
 matplotlib>=3.3.0
 nibabel~=5.2
+numpy<2.0
 # v1.16.2/v1.17.0 aren't built correctly for Windows:
 # https://github.com/onnx/onnx/issues/6267
 onnx<1.16.2
