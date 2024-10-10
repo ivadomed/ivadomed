@@ -37,8 +37,8 @@ def evaluate(bids_df, path_output, target_suffix, eval_params):
     if not path_results.is_dir():
         path_results.mkdir(parents=True)
 
-    # INIT DATA FRAME
-    df_results = pd.DataFrame()
+    # INIT DATA FRAME ROW LIST
+    df_lst = []
 
     # LIST PREDS
     subj_acq_lst = [f.name.split('_pred')[0] for f in path_preds.iterdir() if f.name.endswith('_pred.nii.gz')]
@@ -109,8 +109,9 @@ def evaluate(bids_df, path_output, target_suffix, eval_params):
 
         # SAVE RESULTS FOR THIS PRED
         results_pred['image_id'] = subj_acq
-        df_results = df_results.append(results_pred, ignore_index=True)
+        df_lst.append(results_pred)
 
+    df_results = pd.DataFrame(df_lst)
     df_results = df_results.set_index('image_id')
     df_results.to_csv(str(path_results.joinpath('evaluation_3Dmetrics.csv')))
 
