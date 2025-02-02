@@ -8,6 +8,7 @@ import sys
 import platform
 import multiprocessing
 import re
+from typing import Tuple
 
 from ivadomed.loader.bids_dataframe import BidsDataframe
 from ivadomed import evaluation as imed_evaluation
@@ -21,9 +22,12 @@ from ivadomed import inference as imed_inference
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, film as imed_film
 from ivadomed.keywords import ConfigKW, ModelParamsKW, LoaderParamsKW, ContrastParamsKW, BalanceSamplesKW, \
     TrainingParamsKW, ObjectDetectionParamsKW, UncertaintyKW, PostprocessingKW, BinarizeProdictionKW, MetricsKW, \
-    MetadataKW, OptionKW, SplitDatasetKW
+    MetadataKW, OptionKW, SplitDatasetKW, CommandKW, DataloaderKW, DatasetTypeKW
 from loguru import logger
 from pathlib import Path
+
+from ivadomed.loader.consolidation import ConsolidatedDataset
+from ivadomed.loader.generalized_loader_configuration import GeneralizedLoaderConfiguration
 
 cudnn.benchmark = True
 
@@ -126,6 +130,9 @@ def film_normalize_data(context, model_params, ds_train, ds_valid, path_output):
 
 
 def get_dataset(bids_df, loader_params, data_lst, transform_params, cuda_available, device, ds_type):
+    """
+    Obtain either the BIDS2D or BIDS3D type dataset.
+    """
     ds = imed_loader.load_dataset(bids_df, **{**loader_params, **{'data_list': data_lst,
                                                                   'transforms_params': transform_params,
                                                                   'dataset_type': ds_type}}, device=device,
@@ -142,14 +149,22 @@ def save_config_file(context, path_output):
         json.dump(context, fp, indent=4)
 
 
-def set_loader_params(context, is_train):
-    loader_params = copy.deepcopy(context[ConfigKW.LOADER_PARAMETERS])
-    if is_train:
-        loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.CONTRAST_LST] = \
-            loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.TRAINING_VALIDATION]
-    else:
-        loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.CONTRAST_LST] =\
-            loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.TESTING]
+def update_loader_params(context: dict, is_train: bool, loader_version: str):
+    """
+    Update the loader parameters dictionary
+    """
+    # Copy Get the loader parameter from context first.
+    loader_params: dict = copy.deepcopy(context[ConfigKW.LOADER_PARAMETERS])
+
+    # Only BIDS Loader has the contrast param key
+    if loader_version == LoaderParamsKW.TRADITIONAL_BIDS_LOADER:
+        if is_train:
+            loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.CONTRAST_LST] = \
+                loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.TRAINING_VALIDATION]
+        else:
+            loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.CONTRAST_LST] =\
+                loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.TESTING]
+
     if ConfigKW.FILMED_UNET in context and context[ConfigKW.FILMED_UNET][ModelParamsKW.APPLIED]:
         loader_params.update({LoaderParamsKW.METADATA_TYPE: context[ConfigKW.FILMED_UNET][ModelParamsKW.METADATA]})
 
@@ -161,11 +176,30 @@ def set_loader_params(context, is_train):
     return loader_params
 
 
-def set_model_params(context, loader_params):
-    model_params = copy.deepcopy(context[ConfigKW.DEFAULT_MODEL])
+def set_model_params(context: dict, loader_params: dict) -> Tuple[dict, dict]:
+    """
+    Update the model parameters using context.
+    Args:
+        context:
+        loader_params:
+
+    Returns:
+
+    """
+
+    # Normally use Default Model which is UNET
+    model_params: dict = copy.deepcopy(context[ConfigKW.DEFAULT_MODEL])
+
+    # Set the folder name to be the model name
     model_params[ModelParamsKW.FOLDER_NAME] = copy.deepcopy(context[ConfigKW.MODEL_NAME])
-    model_context_list = [model_name for model_name in MODEL_LIST
-                          if model_name in context and context[model_name][ModelParamsKW.APPLIED]]
+
+    # Generate the model Context List by checking against all support model lists and see if they needs to be applied
+    # Per the configuration file
+    model_context_list = []
+    for model_name in MODEL_LIST:
+        if model_name in context and context.get(model_name).get(ModelParamsKW.APPLIED):
+            model_context_list.append(model_name)
+
     if len(model_context_list) == 1:
         model_params[ModelParamsKW.NAME] = model_context_list[0]
         model_params.update(context[model_context_list[0]])
@@ -179,21 +213,38 @@ def set_model_params(context, loader_params):
               'Please select only one (i.e. only one where: "applied": true).')
         exit()
 
-    model_params[ModelParamsKW.IS_2D] = False if ConfigKW.MODIFIED_3D_UNET in model_params[ModelParamsKW.NAME] \
-        else model_params[ModelParamsKW.IS_2D]
+    if ConfigKW.MODIFIED_3D_UNET in model_params[ModelParamsKW.NAME]:
+        model_params[ModelParamsKW.IS_2D] = False
+    else:
+        model_params[ModelParamsKW.IS_2D]
+
     # Get in_channel from contrast_lst
     if loader_params[LoaderParamsKW.MULTICHANNEL]:
         model_params[ModelParamsKW.IN_CHANNEL] = \
             len(loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.CONTRAST_LST])
-    else:
-        model_params[ModelParamsKW.IN_CHANNEL] = 1
-    # Get out_channel from target_suffix
-    model_params[ModelParamsKW.OUT_CHANNEL] = len(loader_params[LoaderParamsKW.TARGET_SUFFIX])
+    # If new Loader V2, this needs to be determined based on the AllDataSet Spec
+    elif context.get(DataloaderKW.DATASET_GROUPS):
+        model_params[ModelParamsKW.IN_CHANNEL] = context.get(DataloaderKW.EXPECTED_INPUT)
+
+    # Old Loader V1
+    if loader_params[LoaderParamsKW.TARGET_SUFFIX]:
+        # Get out_channel from target_suffix
+        model_params[ModelParamsKW.OUT_CHANNEL] = len(loader_params[LoaderParamsKW.TARGET_SUFFIX])
+    # New loader V2, this needs to be determined based on the AllDataSet Spec
+    elif context.get(DataloaderKW.DATASET_GROUPS):
+        model_params[ModelParamsKW.OUT_CHANNEL] = context.get(DataloaderKW.EXPECTED_GT)
+
     # If multi-class output, then add background class
     if model_params[ModelParamsKW.OUT_CHANNEL] > 1:
-        model_params.update({ModelParamsKW.OUT_CHANNEL: model_params[ModelParamsKW.OUT_CHANNEL] + 1})
-    # Display for spec' check
+        model_params.update(
+            {
+                ModelParamsKW.OUT_CHANNEL: model_params[ModelParamsKW.OUT_CHANNEL] + 1
+            }
+        )
+
+    # Display for spec check
     imed_utils.display_selected_model_spec(params=model_params)
+
     # Update loader params
     if ConfigKW.OBJECT_DETECTION_PARAMS in context:
         object_detection_params = context[ConfigKW.OBJECT_DETECTION_PARAMS]
@@ -205,9 +256,11 @@ def set_model_params(context, loader_params):
 
     return model_params, loader_params
 
-
-def set_output_path(context):
-    path_output = copy.deepcopy(context[ConfigKW.PATH_OUTPUT])
+def set_output_path(context: dict) -> str:
+    """
+    Ensure output path exists
+    """
+    path_output = copy.deepcopy(context.get(ConfigKW.PATH_OUTPUT))
     if not Path(path_output).is_dir():
         logger.info(f'Creating output path: {path_output}')
         Path(path_output).mkdir(parents=True)
@@ -215,7 +268,6 @@ def set_output_path(context):
         logger.info(f'Output path already exists: {path_output}')
 
     return path_output
-
 
 def update_film_model_params(context, ds_test, model_params, path_output):
     clustering_path = Path(path_output, "clustering_models.joblib")
@@ -330,7 +382,7 @@ def run_segment_command(context, model_params, no_patch, overlap_2d):
                                            suffix="_pred.png")
 
 
-def run_command(context, n_gif=0, thr_increment=None, resume_training=False, no_patch=False, overlap_2d=None):
+def run_command(context: dict, n_gif=0, thr_increment=None, resume_training=False, no_patch=False, overlap_2d=None):
     """Run main command.
 
     This function is central in the ivadomed project as training / testing / evaluation commands
@@ -362,9 +414,26 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False, no_
             * If "segment" command: No return value.
 
     """
-    command = copy.deepcopy(context[ConfigKW.COMMAND])
+    # Command can only be: segment/train/test
+    command: str = copy.deepcopy(context[ConfigKW.COMMAND])
+
+    #################################
+    #  Loader Version Determination:
+    #################################
+    # If the new keywords are present, we use the new loader pathway. Ignoring all "contrast_params" keys etc for now.
+    if context.get(DataloaderKW.DATASET_GROUPS) and context.get(DataloaderKW.EXPECTED_GT) and context.get(DataloaderKW.EXPECTED_INPUT):
+        loader_version: str = LoaderParamsKW.MULTI_PATH_LOADER
+    else:
+        loader_version: str = LoaderParamsKW.TRADITIONAL_BIDS_LOADER
+        logger.info(f"Using {loader_version} loader version because new V2 loader keywords are not present in the context.")
+
+    #################################
+
     path_output = set_output_path(context)
-    path_log = Path(context.get('path_output'), context.get('log_file'))
+    path_log: Path = Path(
+        context.get('path_output'),
+        context.get('log_file')
+    )
     logger.remove()
     logger.add(str(path_log))
     logger.add(sys.stdout)
@@ -375,39 +444,155 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False, no_
     cuda_available, device = imed_utils.define_device(context[ConfigKW.GPU_IDS][0])
 
     # BACKWARDS COMPATIBILITY: If bids_path is string, assign to list - Do this here so it propagates to all functions
-    context[ConfigKW.LOADER_PARAMETERS][LoaderParamsKW.PATH_DATA] =\
-        imed_utils.format_path_data(context[ConfigKW.LOADER_PARAMETERS][LoaderParamsKW.PATH_DATA])
+    context[ConfigKW.LOADER_PARAMETERS][LoaderParamsKW.PATH_DATA] = imed_utils.format_path_data(
+            context[ConfigKW.LOADER_PARAMETERS][LoaderParamsKW.PATH_DATA]
+        )
 
-    # Loader params
-    loader_params = set_loader_params(context, command == "train")
+    # Set Loader params leveraging information from Loader_Parameters for the BIDS Loader version.
+    # Not needed in the alternative loader version.
+    loader_params: dict = update_loader_params(context, command == "train", loader_version)
 
-    # Get transforms for each subdataset
-    transform_train_params, transform_valid_params, transform_test_params = \
-        imed_transforms.get_subdatasets_transforms(context[ConfigKW.TRANSFORMATION])
+    # Get transforms dictionaries for each subdataset
+    transform_train_params, \
+    transform_valid_params, \
+    transform_test_params = imed_transforms.get_subdatasets_transforms(context[ConfigKW.TRANSFORMATION])
 
-    # MODEL PARAMETERS
+    # Update and populate model parameters AND loader parameters
     model_params, loader_params = set_model_params(context, loader_params)
 
-    if command == 'segment':
+    if command == CommandKW.SEGMENT and loader_version == LoaderParamsKW.TRADITIONAL_BIDS_LOADER:
         run_segment_command(context, model_params, no_patch, overlap_2d)
         return
 
-    # BIDSDataframe of all image files
-    # Indexing of derivatives is True for commands train and test
-    # split_method is used for removing unused subject files in bids_df for commands train and test
-    bids_df = BidsDataframe(loader_params, path_output, derivatives=True,
-        split_method=context.get(ConfigKW.SPLIT_DATASET).get(SplitDatasetKW.SPLIT_METHOD))
+    if loader_version == LoaderParamsKW.TRADITIONAL_BIDS_LOADER:
 
-    # Get subject filenames lists. "segment" command uses all participants of data path, hence no need to split
-    train_lst, valid_lst, test_lst = imed_loader_utils.get_subdatasets_subject_files_list(context[ConfigKW.SPLIT_DATASET],
-                                                                                          bids_df.df,
-                                                                                          path_output,
-                                                                                          context.get(ConfigKW.LOADER_PARAMETERS).get(
-                                                                                              LoaderParamsKW.SUBJECT_SELECTION))
+        # BIDSDataframe of all image files
+        # Indexing of derivatives is True for commands train and test
+        # split_method is used for removing unused subject files in bids_df for commands train and test
+        bids_df = BidsDataframe(
+            loader_params,
+            path_output,
+            derivatives=True,
+            split_method=context.get(ConfigKW.SPLIT_DATASET).get(SplitDatasetKW.SPLIT_METHOD)
+        )
 
-    # Generating sha256 for the training files
-    imed_utils.generate_sha_256(context, bids_df.df, train_lst)
+        # Get subject filenames lists. "segment" command uses all participants of data path, hence no need to split
+        train_lst, valid_lst, test_lst = imed_loader_utils.get_subdatasets_subject_files_list(context[ConfigKW.SPLIT_DATASET],
+                                                                                              bids_df.df,
+                                                                                              path_output,
+                                                                                              context.get(ConfigKW.LOADER_PARAMETERS).get(
+                                                                                                  LoaderParamsKW.SUBJECT_SELECTION))
 
+        # Generating sha256 for the training files into the bids DataFrame
+        imed_utils.generate_sha_256(context, bids_df.df, train_lst)
+
+    testing_params, transformation_dict = generate_test_params_dict(
+        context,
+        loader_params,
+        transform_test_params,
+        transform_train_params
+    )
+
+    # Display transforms for the various subsets
+    if command == CommandKW.TRAIN:
+        imed_utils.display_selected_transfoms(transform_train_params, dataset_type=[DatasetTypeKW.TRAINING])
+        imed_utils.display_selected_transfoms(transform_valid_params, dataset_type=[DatasetTypeKW.VALIDATION])
+    elif command == CommandKW.TEST:
+        imed_utils.display_selected_transfoms(transformation_dict, dataset_type=[DatasetTypeKW.TESTING])
+
+    # Check if multiple raters
+    check_multiple_raters(command==CommandKW.TRAIN, loader_params)
+
+    # Training when only with BIDS and via the older path.
+    if command == CommandKW.TRAIN:
+        if loader_version == LoaderParamsKW.TRADITIONAL_BIDS_LOADER:
+            best_training_dice, \
+            best_training_loss, \
+            best_validation_dice, \
+            best_validation_loss, \
+            ds_valid = execute_training_bids(
+                    bids_df,
+                    context,
+                    loader_params,
+                    model_params,
+                    n_gif,
+                    path_output,
+                    resume_training,
+                    train_lst,
+                    transform_train_params,
+                    transform_valid_params,
+                    valid_lst
+                )
+        elif loader_version == LoaderParamsKW.MULTI_PATH_LOADER:
+            best_training_dice, \
+            best_training_loss, \
+            best_validation_dice, \
+            best_validation_loss, \
+            ds_valid, \
+            model_params = \
+                execute_multi_path_training(
+                    context,
+                    model_params,
+                    n_gif,
+                    path_output,
+                    resume_training,
+                    transform_train_params,
+                    transform_valid_params,
+                )
+        else:
+            raise ValueError("The loader version is not supported.")
+
+    # Threshold Increment Analyses when dealing with BIDS dataset ONLY
+    if thr_increment:
+        if loader_version == LoaderParamsKW.TRADITIONAL_BIDS_LOADER:
+            execute_threshold_analyses(
+                bids_df,
+                command,
+                context,
+                cuda_available,
+                device,
+                ds_valid,
+                loader_params,
+                model_params,
+                path_output,
+                testing_params,
+                thr_increment,
+                train_lst,
+                transform_valid_params,
+                valid_lst
+            )
+        # todo: implement threshold increment analyses for multi-path loader
+
+        else:
+            raise ValueError("The threshold increment analyses is only supported for BIDS datasets.")
+
+
+
+    # Early return training results when on the bids loading path.
+    if command == CommandKW.TRAIN:
+        return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
+
+    if command == CommandKW.TEST:
+        if loader_version == LoaderParamsKW.TRADITIONAL_BIDS_LOADER:
+            df_results, pred_metrics = execute_traditional_test(bids_df,
+                                                                context,
+                                                                cuda_available,
+                                                                device,
+                                                                loader_params,
+                                                                model_params,
+                                                                path_output,
+                                                                test_lst,
+                                                                testing_params,
+                                                                transformation_dict)
+            return df_results, pred_metrics
+
+        # todo: implement test for multi-path loader
+
+        else:
+            raise ValueError(f"The loader version {loader_version} is not supported for testing currently.")
+
+
+def generate_test_params_dict(context, loader_params, transform_test_params, transform_train_params):
     # TESTING PARAMS
     # Aleatoric uncertainty
     if context[ConfigKW.UNCERTAINTY][UncertaintyKW.ALEATORIC] \
@@ -415,132 +600,194 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False, no_
         transformation_dict = transform_train_params
     else:
         transformation_dict = transform_test_params
+    # UndoTransform Function to undo transforms
     undo_transforms = imed_transforms.UndoCompose(imed_transforms.Compose(transformation_dict, requires_undo=True))
-    testing_params = copy.deepcopy(context[ConfigKW.TRAINING_PARAMETERS])
+    # Testing related parameters
+    # Used in Threshold analyses and Testing process
+    testing_params: dict = copy.deepcopy(context[ConfigKW.TRAINING_PARAMETERS])
     testing_params.update({ConfigKW.UNCERTAINTY: context[ConfigKW.UNCERTAINTY]})
-    testing_params.update({LoaderParamsKW.TARGET_SUFFIX: loader_params[LoaderParamsKW.TARGET_SUFFIX],
-                           ConfigKW.UNDO_TRANSFORMS: undo_transforms,
-                           LoaderParamsKW.SLICE_AXIS: loader_params[LoaderParamsKW.SLICE_AXIS]})
+    testing_params.update({
+        LoaderParamsKW.TARGET_SUFFIX: loader_params[LoaderParamsKW.TARGET_SUFFIX],
+        ConfigKW.UNDO_TRANSFORMS: undo_transforms,
+        LoaderParamsKW.SLICE_AXIS: loader_params[LoaderParamsKW.SLICE_AXIS]
+    })
+    return testing_params, transformation_dict
 
-    if command == "train":
-        imed_utils.display_selected_transfoms(transform_train_params, dataset_type=["training"])
-        imed_utils.display_selected_transfoms(transform_valid_params, dataset_type=["validation"])
-    elif command == "test":
-        imed_utils.display_selected_transfoms(transformation_dict, dataset_type=["testing"])
 
-    # Check if multiple raters
-    check_multiple_raters(command == "train", loader_params)
+def execute_training_bids(bids_df, context, loader_params, model_params, n_gif, path_output,
+                          resume_training, train_lst, transform_train_params, transform_valid_params, valid_lst):
 
-    if command == 'train':
+    cuda_available, device = imed_utils.define_device(context[ConfigKW.GPU_IDS][0])
+
+    # Get Validation BIDS dataset
+    ds_valid = get_dataset(bids_df, loader_params, valid_lst, transform_valid_params, cuda_available, device,
+                           'validation')
+    # Get Training BIDS dataset
+    ds_train = get_dataset(bids_df, loader_params, train_lst, transform_train_params, cuda_available, device,
+                           'training')
+    metric_fns = imed_metrics.get_metric_fns(ds_train.task)
+    # FiLM not supported, not gonna normalize data
+    train_onehotencoder = None
+    # Model directory
+    create_path_model(context, model_params, ds_train, path_output, train_onehotencoder)
+    save_config_file(context, path_output)
+    ###########################
+    # Run the training and validation to gather the metrics
+    # The main training process
+    ###########################
+    best_training_dice, \
+    best_training_loss, \
+    best_validation_dice, \
+    best_validation_loss = imed_training.train(
+        model_params=model_params,
+        dataset_train=ds_train,
+        dataset_val=ds_valid,
+        training_params=context[ConfigKW.TRAINING_PARAMETERS],
+        wandb_params=context.get(ConfigKW.WANDB),
+        path_output=path_output,
+        device=device,
+        cuda_available=cuda_available,
+        metric_fns=metric_fns,
+        n_gif=n_gif,
+        resume_training=resume_training,
+        debugging=context[ConfigKW.DEBUGGING]
+    )
+    return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss, ds_valid
+
+
+def execute_multi_path_training(context: dict,
+                                model_params: dict,
+                                n_gif: int,
+                                path_output: str,
+                                resume_training: bool,
+                                transform_train_params: dict,
+                                transform_valid_params: dict):
+
+    cuda_available, device = imed_utils.define_device(context.get(ConfigKW.GPU_IDS)[0])
+
+    from ivadomed.loader.all_dataset_group import AllDatasetGroups
+
+    # Build simple dict to contain key dictionary.
+    all_data_groups_dict = {}
+    all_data_groups_dict[DataloaderKW.DATASET_GROUPS] = context.get(DataloaderKW.DATASET_GROUPS)
+    all_data_groups_dict[DataloaderKW.EXPECTED_INPUT] = context.get(DataloaderKW.EXPECTED_INPUT)
+    all_data_groups_dict[DataloaderKW.EXPECTED_GT] = context.get(DataloaderKW.EXPECTED_GT)
+
+    # Build the generalized configuration object
+    # Build all dataset group object (FileDataset, BIDSDataset, RegexDataset etc, all being taken care of by this constructor)
+    all_data = AllDatasetGroups(
+        all_data_groups_dict,
+        GeneralizedLoaderConfiguration(model_params)
+    )
+
+    # Aggregate train across AllDatasetGroups
+    ds_train = ConsolidatedDataset.consolidate_AllDatasetGroups_to_a_specific_filedataset_type(all_data, DataloaderKW.TRAINING)
+    ds_train.load_filenames()
+
+    # Aggregate validation dataset across AllDatasetGroups
+    ds_valid = ConsolidatedDataset.consolidate_AllDatasetGroups_to_a_specific_filedataset_type(all_data, DataloaderKW.VALIDATION)
+    ds_valid.load_filenames()
+
+    metric_fns = imed_metrics.get_metric_fns(ds_train.task)
+    # If FiLM, normalize data
+    if ModelParamsKW.FILM_LAYERS in model_params and any(model_params[ModelParamsKW.FILM_LAYERS]):
+        model_params, ds_train, ds_valid, train_onehotencoder = \
+            film_normalize_data(context, model_params, ds_train, ds_valid, path_output)
+    else:
+        train_onehotencoder = None
+    # Model directory
+    create_path_model(context, model_params, ds_train, path_output, train_onehotencoder)
+    save_config_file(context, path_output)
+    ###########################
+    # Run the training and validation to gather the metrics
+    # The main training process
+    ###########################
+    best_training_dice, \
+    best_training_loss, \
+    best_validation_dice, \
+    best_validation_loss = imed_training.train(
+        model_params=model_params,
+        dataset_train=ds_train,
+        dataset_val=ds_valid,
+        training_params=context[ConfigKW.TRAINING_PARAMETERS],
+        wandb_params=context.get(ConfigKW.WANDB),
+        path_output=path_output,
+        device=device,
+        cuda_available=cuda_available,
+        metric_fns=metric_fns,
+        n_gif=n_gif,
+        resume_training=resume_training,
+        debugging=context[ConfigKW.DEBUGGING]
+    )
+    return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss, ds_valid, model_params
+
+
+def execute_threshold_analyses(bids_df, command, context, cuda_available, device, ds_valid, loader_params, model_params,
+                               path_output, testing_params, thr_increment, train_lst, transform_valid_params,
+                               valid_lst):
+    # LOAD DATASET
+    if command != 'train':  # If command == train, then ds_valid already load
         # Get Validation dataset
         ds_valid = get_dataset(bids_df, loader_params, valid_lst, transform_valid_params, cuda_available, device,
                                'validation')
+    # Get Training dataset with no Data Augmentation
+    ds_train = get_dataset(bids_df, loader_params, train_lst, transform_valid_params, cuda_available, device,
+                           'training')
+    # Choice of optimisation metric
+    if model_params[ModelParamsKW.NAME] in imed_utils.CLASSIFIER_LIST:
+        metric = MetricsKW.RECALL_SPECIFICITY
+    else:
+        metric = MetricsKW.DICE
+    # Model path
+    model_path = Path(path_output, "best_model.pt")
+    # Run analysis
+    thr = imed_testing.threshold_analysis(model_path=str(model_path),
+                                          ds_lst=[ds_train, ds_valid],
+                                          model_params=model_params,
+                                          testing_params=testing_params,
+                                          metric=metric,
+                                          increment=thr_increment,
+                                          fname_out=str(Path(path_output, "roc.png")),
+                                          cuda_available=cuda_available)
+    # Update threshold in config file
+    context[ConfigKW.POSTPROCESSING][PostprocessingKW.BINARIZE_PREDICTION] = {BinarizeProdictionKW.THR: thr}
+    save_config_file(context, path_output)
 
-        # Get Training dataset
-        ds_train = get_dataset(bids_df, loader_params, train_lst, transform_train_params, cuda_available, device,
-                               'training')
-        metric_fns = imed_metrics.get_metric_fns(ds_train.task)
 
-        # If FiLM, normalize data
-        if ModelParamsKW.FILM_LAYERS in model_params and any(model_params[ModelParamsKW.FILM_LAYERS]):
-            model_params, ds_train, ds_valid, train_onehotencoder = \
-                film_normalize_data(context, model_params, ds_train, ds_valid, path_output)
-        else:
-            train_onehotencoder = None
+def execute_traditional_test(bids_df, context, cuda_available, device, loader_params, model_params, path_output,
+                             test_lst, testing_params, transformation_dict):
+    # LOAD DATASET
+    # Warn user that the input-level dropout is set during inference
+    if loader_params[LoaderParamsKW.IS_INPUT_DROPOUT]:
+        logger.warning("Input-level dropout is set during testing. To turn this option off, set 'is_input_dropout'"
+                       "to 'false' in the configuration file.")
+    ds_test = imed_loader.load_dataset(bids_df, **{**loader_params, **{'data_list': test_lst,
+                                                                       'transforms_params': transformation_dict,
+                                                                       'dataset_type': 'testing',
+                                                                       'requires_undo': True}}, device=device,
+                                       cuda_available=cuda_available)
+    eval_params = context[ConfigKW.EVALUATION_PARAMETERS]
+    metric_fns = imed_metrics.get_metric_fns(ds_test.task, eval_params)
 
-        # Model directory
-        create_path_model(context, model_params, ds_train, path_output, train_onehotencoder)
-
-        save_config_file(context, path_output)
-
-        # RUN TRAINING
-        best_training_dice, best_training_loss, best_validation_dice, best_validation_loss = imed_training.train(
-            model_params=model_params,
-            dataset_train=ds_train,
-            dataset_val=ds_valid,
-            training_params=context[ConfigKW.TRAINING_PARAMETERS],
-            wandb_params=context.get(ConfigKW.WANDB),
-            path_output=path_output,
-            device=device,
-            cuda_available=cuda_available,
-            metric_fns=metric_fns,
-            n_gif=n_gif,
-            resume_training=resume_training,
-            debugging=context[ConfigKW.DEBUGGING])
-
-    if thr_increment:
-        # LOAD DATASET
-        if command != 'train':  # If command == train, then ds_valid already load
-            # Get Validation dataset
-            ds_valid = get_dataset(bids_df, loader_params, valid_lst, transform_valid_params, cuda_available, device,
-                                   'validation')
-
-        # Get Training dataset with no Data Augmentation
-        ds_train = get_dataset(bids_df, loader_params, train_lst, transform_valid_params, cuda_available, device,
-                               'training')
-
-        # Choice of optimisation metric
-        if model_params[ModelParamsKW.NAME] in imed_utils.CLASSIFIER_LIST:
-            metric = MetricsKW.RECALL_SPECIFICITY
-        else:
-            metric = MetricsKW.DICE
-
-        # Model path
-        model_path = Path(path_output, "best_model.pt")
-
-        # Run analysis
-        thr = imed_testing.threshold_analysis(model_path=str(model_path),
-                                              ds_lst=[ds_train, ds_valid],
-                                              model_params=model_params,
-                                              testing_params=testing_params,
-                                              metric=metric,
-                                              increment=thr_increment,
-                                              fname_out=str(Path(path_output, "roc.png")),
-                                              cuda_available=cuda_available)
-
-        # Update threshold in config file
-        context[ConfigKW.POSTPROCESSING][PostprocessingKW.BINARIZE_PREDICTION] = {BinarizeProdictionKW.THR: thr}
-        save_config_file(context, path_output)
-
-    if command == 'train':
-        return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
-
-    if command == 'test':
-        # LOAD DATASET
-        # Warn user that the input-level dropout is set during inference
-        if loader_params[LoaderParamsKW.IS_INPUT_DROPOUT]:
-            logger.warning("Input-level dropout is set during testing. To turn this option off, set 'is_input_dropout'"
-                           "to 'false' in the configuration file.")
-        ds_test = imed_loader.load_dataset(bids_df, **{**loader_params, **{'data_list': test_lst,
-                                                                           'transforms_params': transformation_dict,
-                                                                           'dataset_type': 'testing',
-                                                                           'requires_undo': True}}, device=device,
-                                           cuda_available=cuda_available)
-
-        eval_params = context[ConfigKW.EVALUATION_PARAMETERS]
-        metric_fns = imed_metrics.get_metric_fns(ds_test.task, eval_params)
-
-        if ModelParamsKW.FILM_LAYERS in model_params and any(model_params[ModelParamsKW.FILM_LAYERS]):
-            ds_test, model_params = update_film_model_params(context, ds_test, model_params, path_output)
-
-        # RUN INFERENCE
-        pred_metrics = imed_testing.test(model_params=model_params,
-                                         dataset_test=ds_test,
-                                         testing_params=testing_params,
-                                         path_output=path_output,
-                                         device=device,
-                                         cuda_available=cuda_available,
-                                         metric_fns=metric_fns,
-                                         postprocessing=context[ConfigKW.POSTPROCESSING])
-
-        # RUN EVALUATION
-        df_results = imed_evaluation.evaluate(bids_df, path_output=path_output,
-                                              target_suffix=loader_params[LoaderParamsKW.TARGET_SUFFIX],
+    if ModelParamsKW.FILM_LAYERS in model_params and any(model_params[ModelParamsKW.FILM_LAYERS]):
+        ds_test, model_params = update_film_model_params(context, ds_test, model_params, path_output)
+    # RUN INFERENCE
+    pred_metrics = imed_testing.test(model_params=model_params,
+                                     dataset_test=ds_test,
+                                     testing_params=testing_params,
+                                     path_output=path_output,
+                                     device=device,
+                                     cuda_available=cuda_available,
+                                     metric_fns=metric_fns,
+                                     postprocessing=context[ConfigKW.POSTPROCESSING])
+    # RUN EVALUATION
+    df_results = imed_evaluation.evaluate(bids_df, path_output=path_output,
+                                          target_suffix=loader_params[LoaderParamsKW.TARGET_SUFFIX],
                                               eval_params=eval_params)
-        return df_results, pred_metrics
+    return df_results, pred_metrics
 
 
-def create_dataset_and_ivadomed_version_log(context):
+def create_dataset_and_ivadomed_version_log(context: dict):
     path_data = context.get(ConfigKW.LOADER_PARAMETERS).get(LoaderParamsKW.PATH_DATA)
 
     ivadomed_version = imed_utils._version_string()
