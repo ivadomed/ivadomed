@@ -102,8 +102,8 @@ def train_worker(config, thr_incr):
         raise
 
     # Save config file in output path
-    config_copy = open(config[ConfigKW.PATH_OUTPUT] + "/config_file.json", "w")
-    json.dump(config, config_copy, indent=4)
+    with open(Path(config[ConfigKW.PATH_OUTPUT]) / "config_file.json", "w") as config_copy:
+        json.dump(config, config_copy, indent=4)
 
     return config[ConfigKW.PATH_OUTPUT], best_training_dice, best_training_loss, best_validation_dice, \
         best_validation_loss
